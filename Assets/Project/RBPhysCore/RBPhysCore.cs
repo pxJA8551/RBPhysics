@@ -84,11 +84,6 @@ namespace RBPhys
             List<(RBTrajectory, RBTrajectory)> collideInNextFrame = new List<(RBTrajectory, RBTrajectory)>();
 
             {
-                if (_trajectories_orderByXMin.Length != _activeTrajectories.Length + _staticTrajectories.Length)
-                {
-
-                }
-
                 //AABBのx最小値で昇順ソート
                 _trajectories_orderByXMin = _activeTrajectories;
                 _trajectories_orderByXMin.AddRange(_staticTrajectories);
@@ -142,9 +137,138 @@ namespace RBPhys
             {
                 foreach (var trajPair in collideInNextFrame)
                 {
-
+                    //現時点で衝突があるかを判定
+                    if (DetectCollides(trajPair.Item1, trajPair.Item2))
+                    {
+                    }
                 }
             }
+        }
+
+        static bool DetectCollides(RBTrajectory traj_a, RBTrajectory traj_b)
+        {
+            List<(RBCollider, RBCollider)> collidingCollisionPair = new List<(RBCollider, RBCollider)>();
+            (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
+            (RBCollider collider, RBColliderAABB aabb)[] trajAABB_b;
+
+            if (traj_a.isStatic)
+            {
+                trajAABB_a = new (RBCollider, RBColliderAABB)[] { (traj_a.collider, traj_a.collider.CalcAABB()) };
+            }
+            else
+            {
+                trajAABB_a = traj_a.rigidbody.GetColliders().Select(item => (item, item.CalcAABB())).ToArray();
+            }
+
+            if (traj_b.isStatic)
+            {
+                trajAABB_b = new (RBCollider, RBColliderAABB)[] { (traj_b.collider, traj_b.collider.CalcAABB()) };
+            }
+            else
+            {
+                trajAABB_b = traj_b.rigidbody.GetColliders().Select(item => (item, item.CalcAABB())).ToArray();
+            }
+
+            //AABBのx最小値でコライダを昇順ソート
+            trajAABB_a.OrderBy(item => item.aabb.GetMin().x);
+            trajAABB_b.OrderBy(item => item.aabb.GetMin().x);
+
+            //コライダ毎に接触を判定
+            for (int i = 0; i < trajAABB_a.Length; i++)
+            {
+                var collider_a = trajAABB_a[i];
+
+                float a_x_min = collider_a.aabb.GetMin().x;
+                float a_x_max = collider_a.aabb.GetMax().x;
+
+                for (int j = i + 1; j < trajAABB_b.Length; j++)
+                {
+                    var collider_b = trajAABB_b[j];
+
+                    float b_x_min = collider_b.aabb.GetMin().x;
+                    float b_x_max = collider_b.aabb.GetMax().x;
+
+                    if (a_x_max < b_x_min)
+                    {
+                        break;
+                    }
+
+                    bool aabbCollide = collider_a.aabb.OverlapAABB(collider_b.aabb);
+
+                    if (aabbCollide)
+                    {
+                        bool detailCollide = false;
+                        Vector3 penetrationVector = Vector3.zero;
+
+                        if (collider_a.collider.DetailType == RBColliderDetailType.OBB && collider_b.collider.DetailType == RBColliderDetailType.OBB)
+                        {
+                            //OBB-OBB衝突
+                            detailCollide = DetectCollide(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), out penetrationVector);
+                        }
+                        else if (collider_a.collider.DetailType == RBColliderDetailType.OBB && collider_b.collider.DetailType == RBColliderDetailType.Sphere)
+                        {
+                            //Sphere-OBB衝突
+                            detailCollide = DetectCollide(collider_a.collider.CalcOBB(), collider_b.collider.CalcSphere(), out penetrationVector);
+                        }
+                        else if (collider_a.collider.DetailType == RBColliderDetailType.Sphere && collider_b.collider.DetailType == RBColliderDetailType.OBB)
+                        {
+                            //Sphere-OBB衝突（逆転）
+                            detailCollide = DetectCollide(collider_b.collider.CalcOBB(), collider_a.collider.CalcSphere(), out penetrationVector);
+                        }
+                        else if (collider_a.collider.DetailType == RBColliderDetailType.Sphere && collider_b.collider.DetailType == RBColliderDetailType.Sphere)
+                        {
+                            //Sphere-Sphere衝突
+                            detailCollide = DetectCollide(collider_a.collider.CalcSphere(), collider_b.collider.CalcSphere(), out penetrationVector);
+                        }
+
+                        if (detailCollide)
+                        {
+
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        //OBB-OBB衝突判定
+        static bool DetectCollide(RBColliderOBB obb_a, RBColliderOBB obb_b, out Vector3 penetrationVector)
+        {
+            penetrationVector = Vector3.zero;
+
+            if (obb_a.isValidOBB && obb_b.isValidOBB) 
+            {
+
+            }
+
+            return false;
+        }
+
+        //OBB-Sphere衝突判定
+        static bool DetectCollide(RBColliderOBB obb_a, RBColliderSphere sphere_b, out Vector3 penetrationVector)
+        {
+            penetrationVector = Vector3.zero;
+
+            if (obb_a.isValidOBB && sphere_b.isValidSphere)
+            {
+
+            }
+
+            return false;
+        }
+
+        //Sphere-Sphere衝突判定
+        static bool DetectCollide(RBColliderSphere sphere_a, RBColliderSphere sphere_b, out Vector3 penetrationVector)
+        {
+            penetrationVector = Vector3.zero;
+
+            if (sphere_a.isValidSphere && sphere_b.isValidSphere)
+            {
+
+            }
+
+            return false;
         }
 
         static void VerifyVelocity(RBRigidbody rb)
@@ -156,9 +280,9 @@ namespace RBPhys
     public abstract class RBCollider : MonoBehaviour
     {
         RBRigidbody _parent;
-        RBColliderDetailType detailType;
 
         public RBRigidbody ParentRigidbody { get { return _parent; } }
+        public abstract RBColliderDetailType DetailType { get; }
 
         void Awake()
         {
@@ -191,6 +315,42 @@ namespace RBPhys
         public abstract RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot);
         public abstract RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot);
         public abstract RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot);
+
+        public virtual RBColliderSphere CalcSphere()
+        {
+            if (_parent != null)
+            {
+                return CalcSphere(_parent.Position, _parent.Rotation);
+            }
+            else
+            {
+                return CalcSphere(gameObject.transform.position, gameObject.transform.rotation);
+            }
+        }
+
+        public virtual RBColliderAABB CalcAABB()
+        {
+            if (_parent != null)
+            {
+                return CalcAABB(_parent.Position, _parent.Rotation);
+            }
+            else
+            {
+                return CalcAABB(gameObject.transform.position, gameObject.transform.rotation);
+            }
+        }
+
+        public virtual RBColliderOBB CalcOBB()
+        {
+            if (_parent != null)
+            {
+                return CalcOBB(_parent.Position, _parent.Rotation);
+            }
+            else
+            {
+                return CalcOBB(gameObject.transform.position, gameObject.transform.rotation);
+            }
+        }
     }
 
     public struct RBColliderAABB
@@ -319,9 +479,7 @@ namespace RBPhys
     public enum RBColliderDetailType
     {
         OBB,
-        Sphere,
-        Mesh,
-        AABB
+        Sphere
     }
 
     public struct RBTrajectory
@@ -333,22 +491,26 @@ namespace RBPhys
         public readonly RBRigidbody rigidbody;
         public readonly bool isStatic;
 
+        public readonly RBCollider collider;
+
         public RBTrajectory(RBRigidbody rigidbody, float dt)
         {
             RBColliderAABB aabb = new RBColliderAABB();
 
-            RBPhysUtil.PredictPosRot(rigidbody, out Vector3 nextPos, out Quaternion nextRot, dt);
+            Vector3 pos = rigidbody.Position;
+            Quaternion rot = rigidbody.Rotation;
 
             foreach (RBCollider c in rigidbody.GetColliders())
             {
                 if (c.isActiveAndEnabled)
                 {
-                    aabb.Encapsulate(c.CalcAABB(nextPos, nextRot));
+                    aabb.Encapsulate(c.CalcAABB(pos, rot));
                 }
             }
 
             trajectoryAABB = aabb;
             this.rigidbody = rigidbody;
+            this.collider = null;
             isStatic = false;
             isValidTrajectory = true;
         }
@@ -356,7 +518,8 @@ namespace RBPhys
         public RBTrajectory(RBCollider collider)
         {
             trajectoryAABB = collider.CalcAABB(collider.transform.position, collider.transform.rotation);
-            rigidbody = null;
+            this.rigidbody = null;
+            this.collider = collider;
             isStatic = true;
             isValidTrajectory = true;
         }
