@@ -85,10 +85,15 @@ namespace RBPhys
             return _colliders;
         }
 
-        void UpdateTransform()
+        public void UpdateTransform()
         {
             Position = transform.position;
             Rotation = transform.rotation;
+
+            foreach (RBCollider c in _colliders)
+            {
+                c.UpdateTransform();
+            }
         }
 
         public void ApplyTransform(float dt)

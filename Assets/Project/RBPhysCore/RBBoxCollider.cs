@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using TMPro.EditorUtilities;
 using UnityEditor;
 using UnityEngine;
 
@@ -18,7 +17,7 @@ namespace RBPhys
         public override RBColliderDetailType DetailType { get { return DETAIL_TYPE; } }
 
         public Vector3 Center { get { return _center; } set { _center = value; } }
-        public Vector3 Size { get { return Vector3.Scale(_size, gameObject.transform.lossyScale); } }
+        public Vector3 Size { get { return Vector3.Scale(_size, LossyScale); } }
         public Quaternion LocalRot { get { return Quaternion.Euler(_rotationEuler); } set { _rotationEuler = value.eulerAngles; } }
 
         public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot)

@@ -2,9 +2,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditorInternal;
+using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Assertions.Must;
 
 namespace RBPhys
 {
@@ -38,7 +37,7 @@ namespace RBPhys
             _colliders.Remove(c);
         }
 
-        public static void SimulateFixedStep(float dt)
+        public static async void SimulateFixedStep(float dt)
         {
             // ====== 物理フレームウインドウ ここまで ======
 
@@ -130,15 +129,32 @@ namespace RBPhys
                 }
             }
 
-            //衝突検知（ナローフェーズ）
-
+            //衝突検知（ナローフェーズ）と解消
             {
+                List<Task<Vector3>> penetrationTasks = new List<Task<Vector3>>();
+
                 foreach (var trajPair in collideInNextFrame)
                 {
-                    //現時点で衝突があるかを判定
-                    if (DetectCollides(trajPair.Item1, trajPair.Item2))
-                    {
-                    }
+                    //２オブジェクト間の侵入量を推定（非同期処理）
+                    penetrationTasks.Add(DetectCollisions(trajPair.Item1, trajPair.Item2));
+                }
+
+                await Task.WhenAll(penetrationTasks);
+
+                List<Task<(Vector3 velocityAdd, Vector3 angularVelocityAdd)>> velocityAddTasks = new List<Task<(Vector3, Vector3)>>();
+
+                Vector3 p = Vector3.zero;
+
+                int count = 0;
+                foreach (var t in penetrationTasks)
+                {
+                    var trajPair = collideInNextFrame[count++];
+                    Vector3 penetration = t.Result;
+
+                    //推定した２オブジェクト間の侵入量から、侵入を解消するために必要な速度、角速度の加算量を解析する。（非同期処理）
+
+                    //velocityAddTasks.Add(SolveCollisions());
+                    p += penetration;
                 }
             }
 
@@ -148,7 +164,7 @@ namespace RBPhys
             }
         }
 
-        static bool DetectCollides(RBTrajectory traj_a, RBTrajectory traj_b)
+        static async Task<Vector3> DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b)
         {
             List<(RBCollider, RBCollider)> collidingCollisionPair = new List<(RBCollider, RBCollider)>();
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
@@ -182,6 +198,8 @@ namespace RBPhys
                 trajAABB_a = trajAABB_a.OrderBy(item => item.aabb.GetMin().x).ToArray();
                 trajAABB_b = trajAABB_b.OrderBy(item => item.aabb.GetMin().x).ToArray();
 
+                List<Task<Vector3>> tasks = new List<Task<Vector3>>();
+
                 //コライダ毎に接触を判定
                 for (int i = 0; i < trajAABB_a.Length; i++)
                 {
@@ -197,53 +215,77 @@ namespace RBPhys
                         float b_x_min = collider_b.aabb.GetMin().x;
                         float b_x_max = collider_b.aabb.GetMax().x;
 
+                        if (b_x_max < a_x_min)
+                        {
+                            continue;
+                        }
+
                         if (a_x_max < b_x_min)
                         {
                             break;
                         }
 
-                        bool aabbCollide = collider_a.aabb.OverlapAABB(collider_b.aabb);
-
-                        if (aabbCollide)
+                        var t = Task.Run(() =>
                         {
-                            bool detailCollide = false;
-                            Vector3 penetration = Vector3.zero;
+                            bool aabbCollide = collider_a.aabb.OverlapAABB(collider_b.aabb);
 
-                            if (collider_a.collider.DetailType == RBColliderDetailType.OBB && collider_b.collider.DetailType == RBColliderDetailType.OBB)
+                            if (aabbCollide)
                             {
-                                //OBB-OBB衝突
-                                detailCollide = DetectCollide(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), penetrationDir, out penetration);
-                            }
-                            else if (collider_a.collider.DetailType == RBColliderDetailType.OBB && collider_b.collider.DetailType == RBColliderDetailType.Sphere)
-                            {
-                                //Sphere-OBB衝突
-                                detailCollide = DetectCollide(collider_a.collider.CalcOBB(), collider_b.collider.CalcSphere(), out penetration);
-                            }
-                            else if (collider_a.collider.DetailType == RBColliderDetailType.Sphere && collider_b.collider.DetailType == RBColliderDetailType.OBB)
-                            {
-                                //Sphere-OBB衝突（逆転）
-                                detailCollide = DetectCollide(collider_b.collider.CalcOBB(), collider_a.collider.CalcSphere(), out penetration);
-                            }
-                            else if (collider_a.collider.DetailType == RBColliderDetailType.Sphere && collider_b.collider.DetailType == RBColliderDetailType.Sphere)
-                            {
-                                //Sphere-Sphere衝突
-                                detailCollide = DetectCollide(collider_a.collider.CalcSphere(), collider_b.collider.CalcSphere(), out penetration);
+                                bool detailCollide = false;
+                                Vector3 penetration = Vector3.zero;
+
+                                if (collider_a.collider.DetailType == RBColliderDetailType.OBB && collider_b.collider.DetailType == RBColliderDetailType.OBB)
+                                {
+                                    //OBB-OBB衝突
+                                    detailCollide = DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), penetrationDir, out penetration);
+                                }
+                                else if (collider_a.collider.DetailType == RBColliderDetailType.OBB && collider_b.collider.DetailType == RBColliderDetailType.Sphere)
+                                {
+                                    //Sphere-OBB衝突
+                                    detailCollide = DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcSphere(), out penetration);
+                                }
+                                else if (collider_a.collider.DetailType == RBColliderDetailType.Sphere && collider_b.collider.DetailType == RBColliderDetailType.OBB)
+                                {
+                                    //Sphere-OBB衝突（逆転）
+                                    detailCollide = DetectCollision(collider_b.collider.CalcOBB(), collider_a.collider.CalcSphere(), out penetration);
+                                    penetration = -penetration;
+                                }
+                                else if (collider_a.collider.DetailType == RBColliderDetailType.Sphere && collider_b.collider.DetailType == RBColliderDetailType.Sphere)
+                                {
+                                    //Sphere-Sphere衝突
+                                    detailCollide = DetectCollision(collider_a.collider.CalcSphere(), collider_b.collider.CalcSphere(), out penetration);
+                                }
+
+                                return penetration;
                             }
 
-                            if (detailCollide)
-                            {
-                                return true;
-                            }
-                        }
+                            return Vector3.zero;
+
+                        });
+
+                        tasks.Add(t);
                     }
                 }
+
+                await Task.WhenAll(tasks).ConfigureAwait(false);
+
+                Vector3 pMin = Vector3.zero;
+                foreach (var t in tasks)
+                {
+                    if (t.Result != Vector3.zero && (pMin.magnitude < t.Result.magnitude || pMin == Vector3.zero))
+                    {
+                        pMin = t.Result;
+                    }
+                }
+
+                return pMin;
             }
 
-            return false;
+            return Vector3.zero;
         }
 
         //OBB-OBB衝突判定
-        static bool DetectCollide(RBColliderOBB obb_a, RBColliderOBB obb_b, Vector3 penetrationDir, out Vector3 penetration)
+        static bool DetectCollision(RBColliderOBB obb_a, RBColliderOBB obb_b, Vector3 penetrationDir, out Vector3 penetration)
         {
             penetration = Vector3.zero;
 
@@ -497,7 +539,7 @@ namespace RBPhys
         }
 
         //OBB-Sphere衝突判定
-        static bool DetectCollide(RBColliderOBB obb_a, RBColliderSphere sphere_b, out Vector3 penetration)
+        static bool DetectCollision(RBColliderOBB obb_a, RBColliderSphere sphere_b, out Vector3 penetration)
         {
             penetration = Vector3.zero;
 
@@ -510,7 +552,7 @@ namespace RBPhys
         }
 
         //Sphere-Sphere衝突判定
-        static bool DetectCollide(RBColliderSphere sphere_a, RBColliderSphere sphere_b, out Vector3 penetration)
+        static bool DetectCollision(RBColliderSphere sphere_a, RBColliderSphere sphere_b, out Vector3 penetration)
         {
             penetration = Vector3.zero;
 
@@ -520,6 +562,11 @@ namespace RBPhys
             }
 
             return false;
+        }
+
+        static Task<(Vector3 velocityAcc, Vector3 angularVelocityAcc)> SolveCollisions()
+        {
+            return null;
         }
 
         static void VerifyVelocity(RBRigidbody rb)
@@ -534,6 +581,10 @@ namespace RBPhys
 
         public RBRigidbody ParentRigidbody { get { return _parent; } }
         public abstract RBColliderDetailType DetailType { get; }
+
+        public Vector3 Pos { get; private set; }
+        public Quaternion Rot { get; private set; }
+        public Vector3 LossyScale { get; private set; }
 
         void Awake()
         {
@@ -558,6 +609,13 @@ namespace RBPhys
             _parent = null;
         }
 
+        public void UpdateTransform()
+        {
+            Pos = gameObject.transform.position;
+            Rot = gameObject.transform.rotation; 
+            LossyScale = gameObject.transform.lossyScale; 
+        }
+
         public RBRigidbody GetParentRigidbody()
         {
             return _parent;
@@ -569,38 +627,17 @@ namespace RBPhys
 
         public virtual RBColliderSphere CalcSphere()
         {
-            if (_parent != null)
-            {
-                return CalcSphere(_parent.Position, _parent.Rotation);
-            }
-            else
-            {
-                return CalcSphere(gameObject.transform.position, gameObject.transform.rotation);
-            }
+            return CalcSphere(Pos, Rot);
         }
 
         public virtual RBColliderAABB CalcAABB()
         {
-            if (_parent != null)
-            {
-                return CalcAABB(_parent.Position, _parent.Rotation);
-            }
-            else
-            {
-                return CalcAABB(gameObject.transform.position, gameObject.transform.rotation);
-            }
+            return CalcAABB(Pos, Rot);
         }
 
         public virtual RBColliderOBB CalcOBB()
         {
-            if (_parent != null)
-            {
-                return CalcOBB(_parent.Position, _parent.Rotation);
-            }
-            else
-            {
-                return CalcOBB(gameObject.transform.position, gameObject.transform.rotation);
-            }
+            return CalcOBB(Pos, Rot);
         }
     }
 
