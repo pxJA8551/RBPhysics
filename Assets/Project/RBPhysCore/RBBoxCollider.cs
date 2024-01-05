@@ -9,9 +9,13 @@ namespace RBPhys
 {
     public class RBBoxCollider : RBCollider
     {
+        const RBColliderDetailType DETAIL_TYPE = RBColliderDetailType.OBB;
+
         [SerializeField] Vector3 size;
         [SerializeField] Vector3 center;
         [SerializeField] Vector3 rotationEuler { get { return _localRot.eulerAngles; } set { _localRot = Quaternion.Euler(value); } }
+
+        public override RBColliderDetailType DetailType { get { return DETAIL_TYPE; } }
 
         Quaternion _localRot;
 
