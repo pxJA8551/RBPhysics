@@ -11,35 +11,37 @@ namespace RBPhys
     {
         const RBColliderDetailType DETAIL_TYPE = RBColliderDetailType.OBB;
 
-        [SerializeField] Vector3 size;
-        [SerializeField] Vector3 center;
-        [SerializeField] Vector3 rotationEuler { get { return _localRot.eulerAngles; } set { _localRot = Quaternion.Euler(value); } }
+        [SerializeField] Vector3 _size = Vector3.one;
+        [SerializeField] Vector3 _center = Vector3.zero;
+        [SerializeField] Vector3 _rotationEuler = Vector3.zero;
 
         public override RBColliderDetailType DetailType { get { return DETAIL_TYPE; } }
 
-        Quaternion _localRot;
+        public Vector3 Center { get { return _center; } set { _center = value; } }
+        public Vector3 Size { get { return Vector3.Scale(_size, gameObject.transform.lossyScale); } }
+        public Quaternion LocalRot { get { return Quaternion.Euler(_rotationEuler); } set { _rotationEuler = value.eulerAngles; } }
 
         public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot)
         {
-            return new RBColliderSphere(pos + center, Mathf.Sqrt(Mathf.Pow(size.x, 2) + Mathf.Pow(size.y, 2) + Mathf.Pow(size.z, 2)) / 2f);
+            return new RBColliderSphere(pos + Center, Mathf.Sqrt(Mathf.Pow(Size.x, 2) + Mathf.Pow(Size.y, 2) + Mathf.Pow(Size.z, 2)) / 2f);
         }
 
         public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot)
         {
-            Quaternion r = rot * _localRot;
-            Vector3 sDir = r * size / 2f;
+            Quaternion r = rot * LocalRot;
+            Vector3 sDir = r * Size;
 
             float size_prjX = Vector3.Dot(Vector3.right, sDir);
             float size_prjY = Vector3.Dot(Vector3.up, sDir);
             float size_prjZ = Vector3.Dot(Vector3.forward, sDir);
 
-            RBColliderAABB aabb = new RBColliderAABB(pos + center, new Vector3(size_prjX, size_prjY, size_prjZ));
+            RBColliderAABB aabb = new RBColliderAABB(pos + Center, new Vector3(size_prjX, size_prjY, size_prjZ));
             return aabb;
         }
 
         public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot)
         {
-            return new RBColliderOBB(pos + center, rot * _localRot, size);
+            return new RBColliderOBB(pos + Center, rot * LocalRot, Size);
         }
     }
 }

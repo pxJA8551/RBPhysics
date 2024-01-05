@@ -1,8 +1,6 @@
-using JetBrains.Annotations;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using UnityEditorInternal;
 using UnityEngine;
@@ -15,10 +13,10 @@ namespace RBPhys
         static List<RBRigidbody> _rigidbodies = new List<RBRigidbody>();
         static List<RBCollider> _colliders = new List<RBCollider>();
 
-        static RBTrajectory[] _activeTrajectories;
-        static RBTrajectory[] _staticTrajectories;
+        static RBTrajectory[] _activeTrajectories = new RBTrajectory[0];
+        static RBTrajectory[] _staticTrajectories = new RBTrajectory[0];
 
-        static RBTrajectory[] _trajectories_orderByXMin;
+        static RBTrajectory[] _trajectories_orderByXMin = new RBTrajectory[0];
 
         public static void AddRigidbody(RBRigidbody rb)
         {
@@ -46,7 +44,7 @@ namespace RBPhys
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                rb.ApplyTransform();
+                rb.ApplyTransform(dt);
             }
 
             // ====== 物理フレームウインドウ ここから ======
@@ -72,11 +70,11 @@ namespace RBPhys
             {
                 if (_colliders[i].GetParentRigidbody() == null)
                 {
-                    _activeTrajectories[i] = new RBTrajectory(_colliders[i]);
+                    _staticTrajectories[i] = new RBTrajectory(_colliders[i]);
                 }
                 else
                 {
-                    _activeTrajectories[i] = new RBTrajectory();
+                    _staticTrajectories[i] = new RBTrajectory();
                 }
             }
 
@@ -93,7 +91,7 @@ namespace RBPhys
                 {
                     RBTrajectory activeTraj = _trajectories_orderByXMin[i];
 
-                    if (activeTraj.isValidTrajectory && !activeTraj.isStatic) 
+                    if (activeTraj.isValidTrajectory) 
                     {
                         float x_min = activeTraj.trajectoryAABB.GetMin().x;
                         float x_max = activeTraj.trajectoryAABB.GetMax().x;
@@ -140,9 +138,14 @@ namespace RBPhys
                     //現時点で衝突があるかを判定
                     if (DetectCollides(trajPair.Item1, trajPair.Item2))
                     {
-
+                        Debug.Log("PASSED Detail Test");
                     }
                 }
+            }
+
+            foreach (RBRigidbody rb in _rigidbodies)
+            {
+                rb.ExpVelocity += new Vector3(0, -9.81f, 0) * dt;
             }
         }
 
@@ -177,8 +180,8 @@ namespace RBPhys
             if (penetrationDir != Vector3.zero) 
             {
                 //AABBのx最小値でコライダを昇順ソート
-                trajAABB_a.OrderBy(item => item.aabb.GetMin().x);
-                trajAABB_b.OrderBy(item => item.aabb.GetMin().x);
+                trajAABB_a = trajAABB_a.OrderBy(item => item.aabb.GetMin().x).ToArray();
+                trajAABB_b = trajAABB_b.OrderBy(item => item.aabb.GetMin().x).ToArray();
 
                 //コライダ毎に接触を判定
                 for (int i = 0; i < trajAABB_a.Length; i++)
@@ -188,7 +191,7 @@ namespace RBPhys
                     float a_x_min = collider_a.aabb.GetMin().x;
                     float a_x_max = collider_a.aabb.GetMax().x;
 
-                    for (int j = i + 1; j < trajAABB_b.Length; j++)
+                    for (int j = 0; j < trajAABB_b.Length; j++)
                     {
                         var collider_b = trajAABB_b[j];
 
@@ -264,9 +267,9 @@ namespace RBPhys
 
                     //分離軸１: aFwd
                     {
-                        float prjL = Vector3.Dot(d, aFwdN);
-                        float rA = obb_a.size.z;
-                        float rB = Vector3.Dot(sDir_b, aFwdN);
+                        float prjL = Mathf.Abs(Vector3.Dot(d, aFwdN));
+                        float rA = Mathf.Abs(obb_a.size.z);
+                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, aFwdN));
 
                         float dp = prjL * 2f - (rA + rB);
 
@@ -280,9 +283,9 @@ namespace RBPhys
 
                     //分離軸２: aRight
                     {
-                        float prjL = Vector3.Dot(d, aRightN);
-                        float rA = obb_a.size.x;
-                        float rB = Vector3.Dot(sDir_b, aRightN);
+                        float prjL = Mathf.Abs(Vector3.Dot(d, aRightN));
+                        float rA = Mathf.Abs(obb_a.size.x);
+                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, aRightN));
 
                         float dp = prjL * 2f - (rA + rB);
 
@@ -294,11 +297,11 @@ namespace RBPhys
                         penetrations[1] = aRightN * dp / 2f;
                     }
 
-                    //分離軸３: aRight
+                    //分離軸３: aUp
                     {
-                        float prjL = Vector3.Dot(d, aUpN);
-                        float rA = obb_a.size.y;
-                        float rB = Vector3.Dot(sDir_b, aUpN);
+                        float prjL = Mathf.Abs(Vector3.Dot(d, aUpN));
+                        float rA = Mathf.Abs(obb_a.size.y);
+                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, aUpN));
 
                         float dp = prjL * 2f - (rA + rB);
 
@@ -312,9 +315,9 @@ namespace RBPhys
 
                     //分離軸４: bFwd
                     {
-                        float prjL = Vector3.Dot(d, bFwdN);
-                        float rA = Vector3.Dot(sDir_a, bFwdN);
-                        float rB = obb_b.size.z;
+                        float prjL = Mathf.Abs(Vector3.Dot(d, bFwdN));
+                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, bFwdN));
+                        float rB = Mathf.Abs(obb_b.size.z);
 
                         float dp = prjL * 2f - (rA + rB);
 
@@ -328,9 +331,9 @@ namespace RBPhys
 
                     //分離軸５: bRight
                     {
-                        float prjL = Vector3.Dot(d, bRightN);
-                        float rA = Vector3.Dot(sDir_a, bRightN);
-                        float rB = obb_b.size.x;
+                        float prjL = Mathf.Abs(Vector3.Dot(d, bRightN));
+                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, bRightN));
+                        float rB = Mathf.Abs(obb_b.size.x);
 
                         float dp = prjL * 2f - (rA + rB);
 
@@ -344,9 +347,9 @@ namespace RBPhys
 
                     //分離軸６: bUp
                     {
-                        float prjL = Vector3.Dot(d, bUpN);
-                        float rA = Vector3.Dot(sDir_a, bUpN);
-                        float rB = obb_b.size.y;
+                        float prjL = Mathf.Abs(Vector3.Dot(d, bUpN));
+                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, bUpN));
+                        float rB = Mathf.Abs(obb_b.size.y);
 
                         float dp = prjL * 2f - (rA + rB);
 
@@ -362,9 +365,9 @@ namespace RBPhys
                     {
                         Vector3 p = Vector3.Cross(aFwdN, bFwdN);
 
-                        float prjL = Vector3.Dot(d, p);
-                        float rA = Vector3.Dot(sDir_a, p);
-                        float rB = Vector3.Dot(sDir_b, p);
+                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
+                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
 
                         if (prjL > rA + rB)
                         {
@@ -376,9 +379,9 @@ namespace RBPhys
                     {
                         Vector3 p = Vector3.Cross(aFwdN, bRightN);
 
-                        float prjL = Vector3.Dot(d, p);
-                        float rA = Vector3.Dot(sDir_a, p);
-                        float rB = Vector3.Dot(sDir_b, p);
+                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
+                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
 
                         if (prjL > rA + rB)
                         {
@@ -390,9 +393,9 @@ namespace RBPhys
                     {
                         Vector3 p = Vector3.Cross(aFwdN, bUpN);
 
-                        float prjL = Vector3.Dot(d, p);
-                        float rA = Vector3.Dot(sDir_a, p);
-                        float rB = Vector3.Dot(sDir_b, p);
+                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
+                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
 
                         if (prjL > rA + rB)
                         {
@@ -404,9 +407,9 @@ namespace RBPhys
                     {
                         Vector3 p = Vector3.Cross(aRightN, bFwdN);
 
-                        float prjL = Vector3.Dot(d, p);
-                        float rA = Vector3.Dot(sDir_a, p);
-                        float rB = Vector3.Dot(sDir_b, p);
+                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
+                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
 
                         if (prjL > rA + rB)
                         {
@@ -418,9 +421,9 @@ namespace RBPhys
                     {
                         Vector3 p = Vector3.Cross(aRightN, bRightN);
 
-                        float prjL = Vector3.Dot(d, p);
-                        float rA = Vector3.Dot(sDir_a, p);
-                        float rB = Vector3.Dot(sDir_b, p);
+                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
+                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
 
                         if (prjL > rA + rB)
                         {
@@ -432,9 +435,9 @@ namespace RBPhys
                     {
                         Vector3 p = Vector3.Cross(aRightN, bUpN);
 
-                        float prjL = Vector3.Dot(d, p);
-                        float rA = Vector3.Dot(sDir_a, p);
-                        float rB = Vector3.Dot(sDir_b, p);
+                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
+                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
 
                         if (prjL > rA + rB)
                         {
@@ -446,9 +449,9 @@ namespace RBPhys
                     {
                         Vector3 p = Vector3.Cross(aUpN, bFwdN);
 
-                        float prjL = Vector3.Dot(d, p);
-                        float rA = Vector3.Dot(sDir_a, p);
-                        float rB = Vector3.Dot(sDir_b, p);
+                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
+                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
 
                         if (prjL > rA + rB)
                         {
@@ -460,9 +463,9 @@ namespace RBPhys
                     {
                         Vector3 p = Vector3.Cross(aUpN, bRightN);
 
-                        float prjL = Vector3.Dot(d, p);
-                        float rA = Vector3.Dot(sDir_a, p);
-                        float rB = Vector3.Dot(sDir_b, p);
+                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
+                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
 
                         if (prjL > rA + rB)
                         {
@@ -474,9 +477,9 @@ namespace RBPhys
                     {
                         Vector3 p = Vector3.Cross(aUpN, bUpN);
 
-                        float prjL = Vector3.Dot(d, p);
-                        float rA = Vector3.Dot(sDir_a, p);
-                        float rB = Vector3.Dot(sDir_b, p);
+                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
+                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
 
                         if (prjL > rA + rB)
                         {
@@ -485,6 +488,7 @@ namespace RBPhys
                     }
 
                     penetration = penetrationDir * penetrations.Select(item => item.magnitude * (1f / Vector3.Dot(penetrationDir.normalized, item.normalized))).Min();
+
                     return true;
                 }
             }
@@ -604,7 +608,7 @@ namespace RBPhys
     {
         public bool isValidAABB;
         public Vector3 Center { get; private set; }
-        public Vector3 Size { get ; private set; }
+        public Vector3 Size { get; private set; }
         public Vector3 Extents { get { return Size / 2f; } }
 
         public RBColliderAABB(Vector3 center, Vector3 size)
@@ -645,6 +649,7 @@ namespace RBPhys
             {
                 Center = point;
                 Size = Vector3.zero;
+                isValidAABB = true;
             }
         }
         
@@ -664,6 +669,7 @@ namespace RBPhys
                 {
                     Center = aabb.Center;
                     Size = aabb.Size;
+                    isValidAABB = true;
                 }
             }
         }
@@ -768,7 +774,7 @@ namespace RBPhys
             {
                 if (c.isActiveAndEnabled)
                 {
-                    aabb.Encapsulate(c.CalcAABB(pos, rot));
+                    aabb.Encapsulate(c.CalcAABB());
                 }
             }
 

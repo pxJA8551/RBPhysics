@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace RBPhys
@@ -52,7 +53,7 @@ namespace RBPhys
 
         void FindColliders()
         {
-            _colliders = GetComponentsInChildren<RBCollider>(true).Concat(GetComponents<RBCollider>()).ToArray();
+            _colliders = GetComponentsInChildren<RBCollider>(true).ToArray();
 
             foreach (var c in _colliders)
             {
@@ -90,20 +91,15 @@ namespace RBPhys
             Rotation = transform.rotation;
         }
 
-        public void ApplyTransform()
+        public void ApplyTransform(float dt)
         {
-            transform.position = Position;
-            transform.rotation = Rotation;
-        }
+            _velocity = _expVelocity;
+            _angularVelocity = _expAngularVelocity;
 
-        public void OnBeforePhysCalculation()
-        {
+            transform.position = Position + (_velocity * dt);
+            transform.rotation = Rotation * Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized);
 
-        }
-
-        public void OnAfterPhysCalculation()
-        {
-
+            UpdateTransform();
         }
     }
 }
