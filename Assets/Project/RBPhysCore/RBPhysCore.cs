@@ -2,8 +2,11 @@ using JetBrains.Annotations;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using UnityEditorInternal;
 using UnityEngine;
+using UnityEngine.Assertions.Must;
 
 namespace RBPhys
 {
@@ -149,6 +152,8 @@ namespace RBPhys
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_b;
 
+            Vector3 penetrationDir = Vector3.zero;
+
             if (traj_a.isStatic)
             {
                 trajAABB_a = new (RBCollider, RBColliderAABB)[] { (traj_a.collider, traj_a.collider.CalcAABB()) };
@@ -156,6 +161,7 @@ namespace RBPhys
             else
             {
                 trajAABB_a = traj_a.rigidbody.GetColliders().Select(item => (item, item.CalcAABB())).ToArray();
+                penetrationDir = traj_a.rigidbody.Velocity;
             }
 
             if (traj_b.isStatic)
@@ -165,63 +171,67 @@ namespace RBPhys
             else
             {
                 trajAABB_b = traj_b.rigidbody.GetColliders().Select(item => (item, item.CalcAABB())).ToArray();
+                penetrationDir = traj_b.rigidbody.Velocity;
             }
 
-            //AABBÇÃxç≈è¨ílÇ≈ÉRÉâÉCÉ_Çè∏èáÉ\Å[Ég
-            trajAABB_a.OrderBy(item => item.aabb.GetMin().x);
-            trajAABB_b.OrderBy(item => item.aabb.GetMin().x);
-
-            //ÉRÉâÉCÉ_ñàÇ…ê⁄êGÇîªíË
-            for (int i = 0; i < trajAABB_a.Length; i++)
+            if (penetrationDir != Vector3.zero) 
             {
-                var collider_a = trajAABB_a[i];
+                //AABBÇÃxç≈è¨ílÇ≈ÉRÉâÉCÉ_Çè∏èáÉ\Å[Ég
+                trajAABB_a.OrderBy(item => item.aabb.GetMin().x);
+                trajAABB_b.OrderBy(item => item.aabb.GetMin().x);
 
-                float a_x_min = collider_a.aabb.GetMin().x;
-                float a_x_max = collider_a.aabb.GetMax().x;
-
-                for (int j = i + 1; j < trajAABB_b.Length; j++)
+                //ÉRÉâÉCÉ_ñàÇ…ê⁄êGÇîªíË
+                for (int i = 0; i < trajAABB_a.Length; i++)
                 {
-                    var collider_b = trajAABB_b[j];
+                    var collider_a = trajAABB_a[i];
 
-                    float b_x_min = collider_b.aabb.GetMin().x;
-                    float b_x_max = collider_b.aabb.GetMax().x;
+                    float a_x_min = collider_a.aabb.GetMin().x;
+                    float a_x_max = collider_a.aabb.GetMax().x;
 
-                    if (a_x_max < b_x_min)
+                    for (int j = i + 1; j < trajAABB_b.Length; j++)
                     {
-                        break;
-                    }
+                        var collider_b = trajAABB_b[j];
 
-                    bool aabbCollide = collider_a.aabb.OverlapAABB(collider_b.aabb);
+                        float b_x_min = collider_b.aabb.GetMin().x;
+                        float b_x_max = collider_b.aabb.GetMax().x;
 
-                    if (aabbCollide)
-                    {
-                        bool detailCollide = false;
-                        Vector3 penetrationVector = Vector3.zero;
-
-                        if (collider_a.collider.DetailType == RBColliderDetailType.OBB && collider_b.collider.DetailType == RBColliderDetailType.OBB)
+                        if (a_x_max < b_x_min)
                         {
-                            //OBB-OBBè’ìÀ
-                            detailCollide = DetectCollide(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), out penetrationVector);
-                        }
-                        else if (collider_a.collider.DetailType == RBColliderDetailType.OBB && collider_b.collider.DetailType == RBColliderDetailType.Sphere)
-                        {
-                            //Sphere-OBBè’ìÀ
-                            detailCollide = DetectCollide(collider_a.collider.CalcOBB(), collider_b.collider.CalcSphere(), out penetrationVector);
-                        }
-                        else if (collider_a.collider.DetailType == RBColliderDetailType.Sphere && collider_b.collider.DetailType == RBColliderDetailType.OBB)
-                        {
-                            //Sphere-OBBè’ìÀÅiãtì]Åj
-                            detailCollide = DetectCollide(collider_b.collider.CalcOBB(), collider_a.collider.CalcSphere(), out penetrationVector);
-                        }
-                        else if (collider_a.collider.DetailType == RBColliderDetailType.Sphere && collider_b.collider.DetailType == RBColliderDetailType.Sphere)
-                        {
-                            //Sphere-Sphereè’ìÀ
-                            detailCollide = DetectCollide(collider_a.collider.CalcSphere(), collider_b.collider.CalcSphere(), out penetrationVector);
+                            break;
                         }
 
-                        if (detailCollide)
+                        bool aabbCollide = collider_a.aabb.OverlapAABB(collider_b.aabb);
+
+                        if (aabbCollide)
                         {
-                            return true;
+                            bool detailCollide = false;
+                            Vector3 penetration = Vector3.zero;
+
+                            if (collider_a.collider.DetailType == RBColliderDetailType.OBB && collider_b.collider.DetailType == RBColliderDetailType.OBB)
+                            {
+                                //OBB-OBBè’ìÀ
+                                detailCollide = DetectCollide(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), penetrationDir, out penetration);
+                            }
+                            else if (collider_a.collider.DetailType == RBColliderDetailType.OBB && collider_b.collider.DetailType == RBColliderDetailType.Sphere)
+                            {
+                                //Sphere-OBBè’ìÀ
+                                detailCollide = DetectCollide(collider_a.collider.CalcOBB(), collider_b.collider.CalcSphere(), out penetration);
+                            }
+                            else if (collider_a.collider.DetailType == RBColliderDetailType.Sphere && collider_b.collider.DetailType == RBColliderDetailType.OBB)
+                            {
+                                //Sphere-OBBè’ìÀÅiãtì]Åj
+                                detailCollide = DetectCollide(collider_b.collider.CalcOBB(), collider_a.collider.CalcSphere(), out penetration);
+                            }
+                            else if (collider_a.collider.DetailType == RBColliderDetailType.Sphere && collider_b.collider.DetailType == RBColliderDetailType.Sphere)
+                            {
+                                //Sphere-Sphereè’ìÀ
+                                detailCollide = DetectCollide(collider_a.collider.CalcSphere(), collider_b.collider.CalcSphere(), out penetration);
+                            }
+
+                            if (detailCollide)
+                            {
+                                return true;
+                            }
                         }
                     }
                 }
@@ -231,22 +241,261 @@ namespace RBPhys
         }
 
         //OBB-OBBè’ìÀîªíË
-        static bool DetectCollide(RBColliderOBB obb_a, RBColliderOBB obb_b, out Vector3 penetrationVector)
+        static bool DetectCollide(RBColliderOBB obb_a, RBColliderOBB obb_b, Vector3 penetrationDir, out Vector3 penetration)
         {
-            penetrationVector = Vector3.zero;
+            penetration = Vector3.zero;
 
             if (obb_a.isValidOBB && obb_b.isValidOBB) 
             {
+                Vector3 d = obb_a.Center - obb_b.Center;
+                Vector3[] penetrations = new Vector3[6];
 
+                Vector3 sDir_a = obb_a.rot * obb_a.size;
+                Vector3 sDir_b = obb_b.rot * obb_b.size;
+
+                //http://marupeke296.com/COL_3D_No13_OBBvsOBB.html
+                {
+                    Vector3 aFwdN = obb_a.GetAxisForward();
+                    Vector3 aRightN = obb_a.GetAxisRight();
+                    Vector3 aUpN = obb_a.GetAxisUp();
+                    Vector3 bFwdN = obb_b.GetAxisForward();
+                    Vector3 bRightN = obb_b.GetAxisRight();
+                    Vector3 bUpN = obb_b.GetAxisUp();
+
+                    //ï™ó£é≤ÇP: aFwd
+                    {
+                        float prjL = Vector3.Dot(d, aFwdN);
+                        float rA = obb_a.size.z;
+                        float rB = Vector3.Dot(sDir_b, aFwdN);
+
+                        float dp = prjL * 2f - (rA + rB);
+
+                        if (dp > 0)
+                        {
+                            return false;
+                        }
+
+                        penetrations[0] = aFwdN * dp / 2f;
+                    }
+
+                    //ï™ó£é≤ÇQ: aRight
+                    {
+                        float prjL = Vector3.Dot(d, aRightN);
+                        float rA = obb_a.size.x;
+                        float rB = Vector3.Dot(sDir_b, aRightN);
+
+                        float dp = prjL * 2f - (rA + rB);
+
+                        if (dp > 0)
+                        {
+                            return false;
+                        }
+
+                        penetrations[1] = aRightN * dp / 2f;
+                    }
+
+                    //ï™ó£é≤ÇR: aRight
+                    {
+                        float prjL = Vector3.Dot(d, aUpN);
+                        float rA = obb_a.size.y;
+                        float rB = Vector3.Dot(sDir_b, aUpN);
+
+                        float dp = prjL * 2f - (rA + rB);
+
+                        if (dp > 0)
+                        {
+                            return false;
+                        }
+
+                        penetrations[2] = aUpN * dp / 2f;
+                    }
+
+                    //ï™ó£é≤ÇS: bFwd
+                    {
+                        float prjL = Vector3.Dot(d, bFwdN);
+                        float rA = Vector3.Dot(sDir_a, bFwdN);
+                        float rB = obb_b.size.z;
+
+                        float dp = prjL * 2f - (rA + rB);
+
+                        if (dp > 0)
+                        {
+                            return false;
+                        }
+
+                        penetrations[3] = bFwdN * dp / 2f;
+                    }
+
+                    //ï™ó£é≤ÇT: bRight
+                    {
+                        float prjL = Vector3.Dot(d, bRightN);
+                        float rA = Vector3.Dot(sDir_a, bRightN);
+                        float rB = obb_b.size.x;
+
+                        float dp = prjL * 2f - (rA + rB);
+
+                        if (dp > 0)
+                        {
+                            return false;
+                        }
+
+                        penetrations[4] = bRightN * dp / 2f;
+                    }
+
+                    //ï™ó£é≤ÇU: bUp
+                    {
+                        float prjL = Vector3.Dot(d, bUpN);
+                        float rA = Vector3.Dot(sDir_a, bUpN);
+                        float rB = obb_b.size.y;
+
+                        float dp = prjL * 2f - (rA + rB);
+
+                        if (dp > 0)
+                        {
+                            return false;
+                        }
+
+                        penetrations[5] = bUpN * dp / 2f;
+                    }
+
+                    //ï™ó£é≤ÇV: aFwd x bFwd
+                    {
+                        Vector3 p = Vector3.Cross(aFwdN, bFwdN);
+
+                        float prjL = Vector3.Dot(d, p);
+                        float rA = Vector3.Dot(sDir_a, p);
+                        float rB = Vector3.Dot(sDir_b, p);
+
+                        if (prjL > rA + rB)
+                        {
+                            return false;
+                        }
+                    }
+
+                    //ï™ó£é≤ÇW: aFwd x bRight
+                    {
+                        Vector3 p = Vector3.Cross(aFwdN, bRightN);
+
+                        float prjL = Vector3.Dot(d, p);
+                        float rA = Vector3.Dot(sDir_a, p);
+                        float rB = Vector3.Dot(sDir_b, p);
+
+                        if (prjL > rA + rB)
+                        {
+                            return false;
+                        }
+                    }
+
+                    //ï™ó£é≤ÇX: aFwd x bUp
+                    {
+                        Vector3 p = Vector3.Cross(aFwdN, bUpN);
+
+                        float prjL = Vector3.Dot(d, p);
+                        float rA = Vector3.Dot(sDir_a, p);
+                        float rB = Vector3.Dot(sDir_b, p);
+
+                        if (prjL > rA + rB)
+                        {
+                            return false;
+                        }
+                    }
+
+                    //ï™ó£é≤ÇPÇO: aRight x bFwd
+                    {
+                        Vector3 p = Vector3.Cross(aRightN, bFwdN);
+
+                        float prjL = Vector3.Dot(d, p);
+                        float rA = Vector3.Dot(sDir_a, p);
+                        float rB = Vector3.Dot(sDir_b, p);
+
+                        if (prjL > rA + rB)
+                        {
+                            return false;
+                        }
+                    }
+
+                    //ï™ó£é≤ÇPÇP: aRight x bRight
+                    {
+                        Vector3 p = Vector3.Cross(aRightN, bRightN);
+
+                        float prjL = Vector3.Dot(d, p);
+                        float rA = Vector3.Dot(sDir_a, p);
+                        float rB = Vector3.Dot(sDir_b, p);
+
+                        if (prjL > rA + rB)
+                        {
+                            return false;
+                        }
+                    }
+
+                    //ï™ó£é≤ÇPÇQ: aRight x bUp
+                    {
+                        Vector3 p = Vector3.Cross(aRightN, bUpN);
+
+                        float prjL = Vector3.Dot(d, p);
+                        float rA = Vector3.Dot(sDir_a, p);
+                        float rB = Vector3.Dot(sDir_b, p);
+
+                        if (prjL > rA + rB)
+                        {
+                            return false;
+                        }
+                    }
+
+                    //ï™ó£é≤ÇPÇR: aUp x bFwd
+                    {
+                        Vector3 p = Vector3.Cross(aUpN, bFwdN);
+
+                        float prjL = Vector3.Dot(d, p);
+                        float rA = Vector3.Dot(sDir_a, p);
+                        float rB = Vector3.Dot(sDir_b, p);
+
+                        if (prjL > rA + rB)
+                        {
+                            return false;
+                        }
+                    }
+
+                    //ï™ó£é≤ÇPÇS: aUp x bRight
+                    {
+                        Vector3 p = Vector3.Cross(aUpN, bRightN);
+
+                        float prjL = Vector3.Dot(d, p);
+                        float rA = Vector3.Dot(sDir_a, p);
+                        float rB = Vector3.Dot(sDir_b, p);
+
+                        if (prjL > rA + rB)
+                        {
+                            return false;
+                        }
+                    }
+
+                    //ï™ó£é≤ÇPÇT: aUp x bUp
+                    {
+                        Vector3 p = Vector3.Cross(aUpN, bUpN);
+
+                        float prjL = Vector3.Dot(d, p);
+                        float rA = Vector3.Dot(sDir_a, p);
+                        float rB = Vector3.Dot(sDir_b, p);
+
+                        if (prjL > rA + rB)
+                        {
+                            return false;
+                        }
+                    }
+
+                    penetration = penetrationDir * penetrations.Select(item => item.magnitude * (1f / Vector3.Dot(penetrationDir.normalized, item.normalized))).Min();
+                    return true;
+                }
             }
 
             return false;
         }
 
         //OBB-Sphereè’ìÀîªíË
-        static bool DetectCollide(RBColliderOBB obb_a, RBColliderSphere sphere_b, out Vector3 penetrationVector)
+        static bool DetectCollide(RBColliderOBB obb_a, RBColliderSphere sphere_b, out Vector3 penetration)
         {
-            penetrationVector = Vector3.zero;
+            penetration = Vector3.zero;
 
             if (obb_a.isValidOBB && sphere_b.isValidSphere)
             {
@@ -257,9 +506,9 @@ namespace RBPhys
         }
 
         //Sphere-Sphereè’ìÀîªíË
-        static bool DetectCollide(RBColliderSphere sphere_a, RBColliderSphere sphere_b, out Vector3 penetrationVector)
+        static bool DetectCollide(RBColliderSphere sphere_a, RBColliderSphere sphere_b, out Vector3 penetration)
         {
-            penetrationVector = Vector3.zero;
+            penetration = Vector3.zero;
 
             if (sphere_a.isValidSphere && sphere_b.isValidSphere)
             {
@@ -447,16 +696,33 @@ namespace RBPhys
     public struct RBColliderOBB
     {
         public Vector3 pos;
-        public Vector3 dirNormal;
+        public Quaternion rot;
         public Vector3 size;
         public bool isValidOBB;
 
-        public RBColliderOBB(Vector3 pos, Vector3 dirNormal, Vector3 size)
+        public Vector3 Center { get { return pos + rot * size / 2f; } }
+
+        public RBColliderOBB(Vector3 pos, Quaternion rot, Vector3 size)
         {
             this.pos = pos;
-            this.dirNormal = dirNormal;
+            this.rot = rot;
             this.size = size;
             isValidOBB = true;
+        }
+
+        public Vector3 GetAxisForward()
+        {
+            return rot * Vector3.forward;
+        }
+
+        public Vector3 GetAxisRight()
+        {
+            return rot * Vector3.right;
+        }
+
+        public Vector3 GetAxisUp()
+        {
+            return rot * Vector3.up;
         }
     }
 
