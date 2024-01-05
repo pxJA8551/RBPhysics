@@ -138,7 +138,6 @@ namespace RBPhys
                     //Œ»Žž“_‚ÅÕ“Ë‚ª‚ ‚é‚©‚ð”»’è
                     if (DetectCollides(trajPair.Item1, trajPair.Item2))
                     {
-                        Debug.Log("PASSED Detail Test");
                     }
                 }
             }
@@ -269,7 +268,7 @@ namespace RBPhys
                     {
                         float prjL = Mathf.Abs(Vector3.Dot(d, aFwdN));
                         float rA = Mathf.Abs(obb_a.size.z);
-                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, aFwdN));
+                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, aFwdN);
 
                         float dp = prjL * 2f - (rA + rB);
 
@@ -285,7 +284,7 @@ namespace RBPhys
                     {
                         float prjL = Mathf.Abs(Vector3.Dot(d, aRightN));
                         float rA = Mathf.Abs(obb_a.size.x);
-                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, aRightN));
+                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, aRightN);
 
                         float dp = prjL * 2f - (rA + rB);
 
@@ -301,7 +300,7 @@ namespace RBPhys
                     {
                         float prjL = Mathf.Abs(Vector3.Dot(d, aUpN));
                         float rA = Mathf.Abs(obb_a.size.y);
-                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, aUpN));
+                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, aUpN);
 
                         float dp = prjL * 2f - (rA + rB);
 
@@ -310,13 +309,14 @@ namespace RBPhys
                             return false;
                         }
 
+
                         penetrations[2] = aUpN * dp / 2f;
                     }
 
                     //•ª—£Ž²‚S: bFwd
                     {
                         float prjL = Mathf.Abs(Vector3.Dot(d, bFwdN));
-                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, bFwdN));
+                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, bFwdN);
                         float rB = Mathf.Abs(obb_b.size.z);
 
                         float dp = prjL * 2f - (rA + rB);
@@ -332,7 +332,7 @@ namespace RBPhys
                     //•ª—£Ž²‚T: bRight
                     {
                         float prjL = Mathf.Abs(Vector3.Dot(d, bRightN));
-                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, bRightN));
+                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, bRightN);
                         float rB = Mathf.Abs(obb_b.size.x);
 
                         float dp = prjL * 2f - (rA + rB);
@@ -348,7 +348,7 @@ namespace RBPhys
                     //•ª—£Ž²‚U: bUp
                     {
                         float prjL = Mathf.Abs(Vector3.Dot(d, bUpN));
-                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, bUpN));
+                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, bUpN);
                         float rB = Mathf.Abs(obb_b.size.y);
 
                         float dp = prjL * 2f - (rA + rB);
@@ -366,8 +366,8 @@ namespace RBPhys
                         Vector3 p = Vector3.Cross(aFwdN, bFwdN);
 
                         float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
-                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
+                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
+                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
 
                         if (prjL > rA + rB)
                         {
@@ -380,8 +380,8 @@ namespace RBPhys
                         Vector3 p = Vector3.Cross(aFwdN, bRightN);
 
                         float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
-                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
+                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
+                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
 
                         if (prjL > rA + rB)
                         {
@@ -394,8 +394,8 @@ namespace RBPhys
                         Vector3 p = Vector3.Cross(aFwdN, bUpN);
 
                         float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
-                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
+                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
+                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
 
                         if (prjL > rA + rB)
                         {
@@ -408,8 +408,8 @@ namespace RBPhys
                         Vector3 p = Vector3.Cross(aRightN, bFwdN);
 
                         float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
-                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
+                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
+                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
 
                         if (prjL > rA + rB)
                         {
@@ -422,8 +422,8 @@ namespace RBPhys
                         Vector3 p = Vector3.Cross(aRightN, bRightN);
 
                         float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
-                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
+                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
+                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
 
                         if (prjL > rA + rB)
                         {
@@ -436,8 +436,8 @@ namespace RBPhys
                         Vector3 p = Vector3.Cross(aRightN, bUpN);
 
                         float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
-                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
+                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
+                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
 
                         if (prjL > rA + rB)
                         {
@@ -450,8 +450,8 @@ namespace RBPhys
                         Vector3 p = Vector3.Cross(aUpN, bFwdN);
 
                         float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
-                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
+                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
+                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
 
                         if (prjL > rA + rB)
                         {
@@ -464,8 +464,8 @@ namespace RBPhys
                         Vector3 p = Vector3.Cross(aUpN, bRightN);
 
                         float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
-                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
+                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
+                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
 
                         if (prjL > rA + rB)
                         {
@@ -478,8 +478,8 @@ namespace RBPhys
                         Vector3 p = Vector3.Cross(aUpN, bUpN);
 
                         float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = Mathf.Abs(Vector3.Dot(sDir_a, p));
-                        float rB = Mathf.Abs(Vector3.Dot(sDir_b, p));
+                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
+                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
 
                         if (prjL > rA + rB)
                         {

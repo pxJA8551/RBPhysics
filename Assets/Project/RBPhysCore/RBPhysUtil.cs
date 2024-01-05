@@ -43,5 +43,13 @@ namespace RBPhys
             
             return !(a_max < b_min || b_max < a_min);
         }
+
+        public static float CalcOBBAxisSize(Vector3 size, Quaternion rot, Vector3 axis)
+        {
+            float fwd = Mathf.Abs(Vector3.Dot(rot * new Vector3(0, 0, size.z), axis));
+            float right = Mathf.Abs(Vector3.Dot(rot * new Vector3(size.x, 0, 0), axis));
+            float up = Mathf.Abs(Vector3.Dot(rot * new Vector3(0, size.y, 0), axis));
+            return fwd + right + up;
+        }
     }
 }

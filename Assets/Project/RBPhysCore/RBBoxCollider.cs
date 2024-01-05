@@ -23,7 +23,7 @@ namespace RBPhys
 
         public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot)
         {
-            return new RBColliderSphere(pos + Center, Mathf.Sqrt(Mathf.Pow(Size.x, 2) + Mathf.Pow(Size.y, 2) + Mathf.Pow(Size.z, 2)) / 2f);
+            return new RBColliderSphere(pos + rot * Center, Mathf.Sqrt(Mathf.Pow(Size.x, 2) + Mathf.Pow(Size.y, 2) + Mathf.Pow(Size.z, 2)) / 2f);
         }
 
         public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot)
@@ -31,17 +31,17 @@ namespace RBPhys
             Quaternion r = rot * LocalRot;
             Vector3 sDir = r * Size;
 
-            float size_prjX = Vector3.Dot(Vector3.right, sDir);
-            float size_prjY = Vector3.Dot(Vector3.up, sDir);
-            float size_prjZ = Vector3.Dot(Vector3.forward, sDir);
+            float size_prjX = RBPhysUtil.CalcOBBAxisSize(Size, rot, Vector3.right);
+            float size_prjY = RBPhysUtil.CalcOBBAxisSize(Size, rot, Vector3.up);
+            float size_prjZ = RBPhysUtil.CalcOBBAxisSize(Size, rot, Vector3.forward);
 
-            RBColliderAABB aabb = new RBColliderAABB(pos + Center, new Vector3(size_prjX, size_prjY, size_prjZ));
+            RBColliderAABB aabb = new RBColliderAABB(pos + rot * Center, new Vector3(size_prjX, size_prjY, size_prjZ));
             return aabb;
         }
 
         public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot)
         {
-            return new RBColliderOBB(pos + Center, rot * LocalRot, Size);
+            return new RBColliderOBB(pos + rot * Center, rot * LocalRot, Size);
         }
     }
 }
