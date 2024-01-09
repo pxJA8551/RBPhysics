@@ -217,7 +217,6 @@ namespace RBPhys
 
             if (penetration != Vector3.zero)
             {
-
             }
 
             return (false, null, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
