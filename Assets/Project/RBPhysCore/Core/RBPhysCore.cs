@@ -1,11 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using TMPro;
 using UnityEngine;
-using UnityEngine.Assertions.Must;
+using static RBPhys.RBColliderCollision;
 
 namespace RBPhys
 {
@@ -21,7 +22,7 @@ namespace RBPhys
 
         static RBTrajectory[] _trajectories_orderByXMin = new RBTrajectory[0];
 
-        static IEnumerable<RBCollision> _collisions = new List<RBCollision>();
+        static IEnumerable<RBCollision > _collisions = new List<RBCollision>();
         static List<RBCollision> _collisionsInFrame = new List<RBCollision>();
 
         static List<Task<(bool collide, RBCollision col, Vector3 velAcc_a, Vector3 angVelAcc_a, Vector3 velAcc_b, Vector3 angVelAcc_b)>> _solveCollisionTasks = new List<Task<(bool collide, RBCollision col, Vector3 velAcc_a, Vector3 angVelAcc_a, Vector3 velAcc_b, Vector3 angVelAcc_b)>>();
@@ -46,8 +47,13 @@ namespace RBPhys
             _colliders.Remove(c);
         }
 
-        public static void OpenPhysicsFrameWindow(float dt)
+        static System.Diagnostics.Stopwatch _physCoreSw = new System.Diagnostics.Stopwatch();
+
+        public static void OpenPhysicsFrameWindow(float dt, ref RBPhysCoreProfiler profiler)
         {
+            profiler.Init();
+            _physCoreSw.Reset();
+
             foreach (RBRigidbody rb in _rigidbodies)
             {
                 rb.UpdateTransform();
@@ -57,9 +63,9 @@ namespace RBPhys
 
             // ====== ï®óùÉtÉåÅ[ÉÄÉEÉCÉìÉhÉE Ç±Ç±Ç©ÇÁ ======
 
-            SolveStaticColliders();
-
             //ìÆìIÅEê√ìIãOìπåvéZ
+
+            _physCoreSw.Restart();
 
             if (_activeTrajectories.Length != _rigidbodies.Count)
             {
@@ -73,6 +79,9 @@ namespace RBPhys
 
             for (int i = 0; i < _rigidbodies.Count; i++)
             {
+                profiler.activeTrajectories++;
+                profiler.activeColliders += _rigidbodies[i].GetColliders().Length;
+
                 _activeTrajectories[i] = new RBTrajectory(_rigidbodies[i], dt);
             }
 
@@ -80,6 +89,8 @@ namespace RBPhys
             {
                 if (_colliders[i].GetParentRigidbody() == null)
                 {
+                    profiler.staticTrajectories++;
+                    profiler.staticColliders++;
                     _staticTrajectories[i] = new RBTrajectory(_colliders[i]);
                 }
                 else
@@ -87,6 +98,11 @@ namespace RBPhys
                     _staticTrajectories[i] = new RBTrajectory();
                 }
             }
+
+            profiler.time_calcTrajectoryMs = _physCoreSw.ElapsedMilliseconds;
+            _physCoreSw.Reset();
+
+            SolveColliders(dt, profiler);
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
@@ -108,11 +124,13 @@ namespace RBPhys
             }
         }
 
-        public static async void SolveStaticColliders()
+        public static async void SolveColliders(float dt, RBPhysCoreProfiler profiler)
         {
             //è’ìÀåüímÅiÉuÉçÅ[ÉhÉtÉFÅ[ÉYÅj
-
+            
             List<(RBTrajectory, RBTrajectory)> collideInNextFrame = new List<(RBTrajectory, RBTrajectory)>();
+
+            _physCoreSw.Restart();
 
             {
                 //AABBÇÃxç≈è¨ílÇ≈è∏èáÉ\Å[Ég
@@ -132,7 +150,7 @@ namespace RBPhys
                         {
                             RBTrajectory targetTraj = _trajectories_orderByXMin[j];
 
-                            if (activeTraj.isStatic || targetTraj.isStatic)
+                            if (!activeTraj.isStatic || !targetTraj.isStatic)
                             {
                                 if (targetTraj.isValidTrajectory)
                                 {
@@ -166,13 +184,18 @@ namespace RBPhys
                 }
             }
 
+            profiler.time_narrowPhaseAndSolveCollisionsMs = _physCoreSw.ElapsedMilliseconds;
+            profiler.aabbCollisions = collideInNextFrame.Count;
+
+            _physCoreSw.Restart();
+
             //è’ìÀåüímÅiÉiÉçÅ[ÉtÉFÅ[ÉYÅjÇ∆âè¡
             {
                 _solveCollisionTasks.Clear();
 
                 foreach (var trajPair in collideInNextFrame)
                 {
-                    //ÇQÉIÉuÉWÉFÉNÉgä‘ÇÃêNì¸ó ÇêÑíËÅiîÒìØä˙èàóùÅj
+                    //ÇQÉIÉuÉWÉFÉNÉgä‘ÇÃêNì¸Çâè¡ÅiîÒìØä˙èàóùÅj
                     _solveCollisionTasks.Add(SolveCollisions(trajPair.Item1, trajPair.Item2));
                 }
 
@@ -206,17 +229,37 @@ namespace RBPhys
                     }
                 }
 
-                _collisions = _collisions.Intersect(_collisionsInFrame);
+                _collisions = _collisionsInFrame.ToList();
                 _collisionsInFrame.Clear();
             }
+
+            profiler.time_narrowPhaseAndSolveCollisionsMs = _physCoreSw.ElapsedMilliseconds;
         }
 
         static async Task<(bool collide, RBCollision col, Vector3 vel_a, Vector3 angVel_a, Vector3 vel_b, Vector3 angVel_b)> SolveCollisions(RBTrajectory traj_a, RBTrajectory traj_b)
         {
-            Vector3 penetration = await DetectCollisions(traj_a, traj_b).ConfigureAwait(false);
+            (Vector3 penetration, RBCollider collider_a, RBCollider collider_b) penetration = await DetectCollisions(traj_a, traj_b).ConfigureAwait(false);
 
-            if (penetration != Vector3.zero)
+            if (penetration.penetration != Vector3.zero) 
             {
+                RBCollision rbc = FindCollision(traj_a, traj_b, penetration.collider_a, penetration.collider_b);
+
+                if (rbc == null)
+                {
+                    rbc = new RBCollision(traj_a, penetration.collider_a, traj_b, penetration.collider_b, penetration.penetration);
+                }
+
+                rbc.penetration = penetration.penetration;
+
+                Vector3 cg_a = traj_a.isStatic ? traj_a.collider.GameObjectPos : traj_a.rigidbody.Position;
+                Vector3 cg_b = traj_b.isStatic ? traj_b.collider.GameObjectPos : traj_b.rigidbody.Position;
+
+                float d = GetNearestDist(rbc.collider_a, rbc.collider_b, rbc.cg_a, rbc.cg_b, rbc.penetration, out Vector3 aNearest, out Vector3 bNearest);
+
+                Debug.Log(aNearest);
+                Debug.Log(bNearest);
+
+                return (true, rbc, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
             }
 
             return (false, null, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
@@ -260,14 +303,14 @@ namespace RBPhys
                     if ((r.rigidbody_a, r.collider_b) == ab || (r.collider_a, r.rigidbody_b) == ba)
                     {
                         return r;
-                    } 
+                    }
                 }
             }
 
             return null;
         }
 
-        static async Task<Vector3> DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b)
+        static async Task<(Vector3, RBCollider collider_a, RBCollider collider_b)> DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b)
         {
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_b;
@@ -300,7 +343,7 @@ namespace RBPhys
                 trajAABB_a = trajAABB_a.OrderBy(item => item.aabb.GetMin().x).ToArray();
                 trajAABB_b = trajAABB_b.OrderBy(item => item.aabb.GetMin().x).ToArray();
 
-                List<Task<Vector3>> tasks = new List<Task<Vector3>>();
+                List<Task<(Vector3 penetration, RBCollider collider_a, RBCollider collider_b)>> tasks = new List<Task<(Vector3, RBCollider, RBCollider)>>();
 
                 //ÉRÉâÉCÉ_ñàÇ…ê⁄êGÇîªíË
                 for (int i = 0; i < trajAABB_a.Length; i++)
@@ -331,38 +374,42 @@ namespace RBPhys
                         {
                             bool aabbCollide = collider_a.aabb.OverlapAABB(collider_b.aabb);
 
+                            (Vector3 penetration, RBCollider collider_a, RBCollider collider_b) penetration = (Vector3.zero, collider_a.collider, collider_b.collider);
+
                             if (aabbCollide)
                             {
                                 bool detailCollide = false;
-                                Vector3 penetration = Vector3.zero;
 
                                 if (collider_a.collider.DetailType == RBColliderDetailType.OBB && collider_b.collider.DetailType == RBColliderDetailType.OBB)
                                 {
                                     //OBB-OBBè’ìÀ
-                                    detailCollide = DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), Vector3.up, out penetration);
+                                    detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), Vector3.up, out Vector3 p);
+                                    penetration.penetration = p;
                                 }
                                 else if (collider_a.collider.DetailType == RBColliderDetailType.OBB && collider_b.collider.DetailType == RBColliderDetailType.Sphere)
                                 {
                                     //Sphere-OBBè’ìÀ
-                                    detailCollide = DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcSphere(), out penetration);
+                                    detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcSphere(), out Vector3 p);
+                                    penetration.penetration = p;
                                 }
                                 else if (collider_a.collider.DetailType == RBColliderDetailType.Sphere && collider_b.collider.DetailType == RBColliderDetailType.OBB)
                                 {
                                     //Sphere-OBBè’ìÀÅiãtì]Åj
-                                    detailCollide = DetectCollision(collider_b.collider.CalcOBB(), collider_a.collider.CalcSphere(), out penetration);
-                                    penetration = -penetration;
+                                    detailCollide = RBColliderCollision.DetectCollision(collider_b.collider.CalcOBB(), collider_a.collider.CalcSphere(), out Vector3 p);
+                                    p = -p;
+                                    penetration.penetration = p;
                                 }
                                 else if (collider_a.collider.DetailType == RBColliderDetailType.Sphere && collider_b.collider.DetailType == RBColliderDetailType.Sphere)
                                 {
                                     //Sphere-Sphereè’ìÀ
-                                    detailCollide = DetectCollision(collider_a.collider.CalcSphere(), collider_b.collider.CalcSphere(), out penetration);
+                                    detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcSphere(), collider_b.collider.CalcSphere(), out Vector3 p);
+                                    penetration.penetration = p;
                                 }
 
                                 return penetration;
                             }
 
-                            return Vector3.zero;
-
+                            return penetration;
                         });
 
                         tasks.Add(t);
@@ -371,10 +418,11 @@ namespace RBPhys
 
                 await Task.WhenAll(tasks).ConfigureAwait(false);
 
-                Vector3 pMax = Vector3.zero;
+                (Vector3 penetration, RBCollider collider_a, RBCollider collider_b) pMax = (Vector3.zero, null, null);
+
                 foreach (var t in tasks)
                 {
-                    if (t.Result != Vector3.zero && (pMax.magnitude > t.Result.magnitude || pMax == Vector3.zero))
+                    if (t.Result.penetration != Vector3.zero && (pMax.penetration.magnitude > t.Result.penetration.magnitude || pMax.penetration == Vector3.zero))
                     {
                         pMax = t.Result;
                     }
@@ -383,290 +431,7 @@ namespace RBPhys
                 return pMax;
             }
 
-            return Vector3.zero;
-        }
-
-        //OBB-OBBè’ìÀîªíË
-        static bool DetectCollision(RBColliderOBB obb_a, RBColliderOBB obb_b, Vector3 penetrationDir, out Vector3 penetration)
-        {
-            penetration = Vector3.zero;
-
-            if (obb_a.isValidOBB && obb_b.isValidOBB) 
-            {
-                Vector3 d = obb_a.Center - obb_b.Center;
-                Vector3[] penetrations = new Vector3[6];
-
-                Vector3 sDir_a = obb_a.rot * obb_a.size;
-                Vector3 sDir_b = obb_b.rot * obb_b.size;
-
-                //http://marupeke296.com/COL_3D_No13_OBBvsOBB.html
-                {
-                    Vector3 aFwdN = obb_a.GetAxisForward();
-                    Vector3 aRightN = obb_a.GetAxisRight();
-                    Vector3 aUpN = obb_a.GetAxisUp();
-                    Vector3 bFwdN = obb_b.GetAxisForward();
-                    Vector3 bRightN = obb_b.GetAxisRight();
-                    Vector3 bUpN = obb_b.GetAxisUp();
-
-                    //ï™ó£é≤ÇP: aFwd
-                    {
-                        float prjL = Mathf.Abs(Vector3.Dot(d, aFwdN));
-                        float rA = Mathf.Abs(obb_a.size.z);
-                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, aFwdN);
-
-                        float dp = prjL * 2f - (rA + rB);
-
-                        if (dp > 0)
-                        {
-                            return false;
-                        }
-
-                        penetrations[0] = aFwdN * dp / 2f;
-                    }
-
-                    //ï™ó£é≤ÇQ: aRight
-                    {
-                        float prjL = Mathf.Abs(Vector3.Dot(d, aRightN));
-                        float rA = Mathf.Abs(obb_a.size.x);
-                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, aRightN);
-
-                        float dp = prjL * 2f - (rA + rB);
-
-                        if (dp > 0)
-                        {
-                            return false;
-                        }
-
-                        penetrations[1] = aRightN * dp / 2f;
-                    }
-
-                    //ï™ó£é≤ÇR: aUp
-                    {
-                        float prjL = Mathf.Abs(Vector3.Dot(d, aUpN));
-                        float rA = Mathf.Abs(obb_a.size.y);
-                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, aUpN);
-
-                        float dp = prjL * 2f - (rA + rB);
-
-                        if (dp > 0)
-                        {
-                            return false;
-                        }
-
-
-                        penetrations[2] = aUpN * dp / 2f;
-                    }
-
-                    //ï™ó£é≤ÇS: bFwd
-                    {
-                        float prjL = Mathf.Abs(Vector3.Dot(d, bFwdN));
-                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, bFwdN);
-                        float rB = Mathf.Abs(obb_b.size.z);
-
-                        float dp = prjL * 2f - (rA + rB);
-
-                        if (dp > 0)
-                        {
-                            return false;
-                        }
-
-                        penetrations[3] = bFwdN * dp / 2f;
-                    }
-
-                    //ï™ó£é≤ÇT: bRight
-                    {
-                        float prjL = Mathf.Abs(Vector3.Dot(d, bRightN));
-                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, bRightN);
-                        float rB = Mathf.Abs(obb_b.size.x);
-
-                        float dp = prjL * 2f - (rA + rB);
-
-                        if (dp > 0)
-                        {
-                            return false;
-                        }
-
-                        penetrations[4] = bRightN * dp / 2f;
-                    }
-
-                    //ï™ó£é≤ÇU: bUp
-                    {
-                        float prjL = Mathf.Abs(Vector3.Dot(d, bUpN));
-                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, bUpN);
-                        float rB = Mathf.Abs(obb_b.size.y);
-
-                        float dp = prjL * 2f - (rA + rB);
-
-                        if (dp > 0)
-                        {
-                            return false;
-                        }
-
-                        penetrations[5] = bUpN * dp / 2f;
-                    }
-
-                    //ï™ó£é≤ÇV: aFwd x bFwd
-                    {
-                        Vector3 p = Vector3.Cross(aFwdN, bFwdN);
-
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
-                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
-
-                        if (prjL > rA + rB)
-                        {
-                            return false;
-                        }
-                    }
-
-                    //ï™ó£é≤ÇW: aFwd x bRight
-                    {
-                        Vector3 p = Vector3.Cross(aFwdN, bRightN);
-
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
-                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
-
-                        if (prjL > rA + rB)
-                        {
-                            return false;
-                        }
-                    }
-
-                    //ï™ó£é≤ÇX: aFwd x bUp
-                    {
-                        Vector3 p = Vector3.Cross(aFwdN, bUpN);
-
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
-                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
-
-                        if (prjL > rA + rB)
-                        {
-                            return false;
-                        }
-                    }
-
-                    //ï™ó£é≤ÇPÇO: aRight x bFwd
-                    {
-                        Vector3 p = Vector3.Cross(aRightN, bFwdN);
-
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
-                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
-
-                        if (prjL > rA + rB)
-                        {
-                            return false;
-                        }
-                    }
-
-                    //ï™ó£é≤ÇPÇP: aRight x bRight
-                    {
-                        Vector3 p = Vector3.Cross(aRightN, bRightN);
-
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
-                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
-
-                        if (prjL > rA + rB)
-                        {
-                            return false;
-                        }
-                    }
-
-                    //ï™ó£é≤ÇPÇQ: aRight x bUp
-                    {
-                        Vector3 p = Vector3.Cross(aRightN, bUpN);
-
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
-                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
-
-                        if (prjL > rA + rB)
-                        {
-                            return false;
-                        }
-                    }
-
-                    //ï™ó£é≤ÇPÇR: aUp x bFwd
-                    {
-                        Vector3 p = Vector3.Cross(aUpN, bFwdN);
-
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
-                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
-
-                        if (prjL > rA + rB)
-                        {
-                            return false;
-                        }
-                    }
-
-                    //ï™ó£é≤ÇPÇS: aUp x bRight
-                    {
-                        Vector3 p = Vector3.Cross(aUpN, bRightN);
-
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
-                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
-
-                        if (prjL > rA + rB)
-                        {
-                            return false;
-                        }
-                    }
-
-                    //ï™ó£é≤ÇPÇT: aUp x bUp
-                    {
-                        Vector3 p = Vector3.Cross(aUpN, bUpN);
-
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = RBPhysUtil.CalcOBBAxisSize(obb_a.size, obb_a.rot, p);
-                        float rB = RBPhysUtil.CalcOBBAxisSize(obb_b.size, obb_b.rot, p);
-
-                        if (prjL > rA + rB)
-                        {
-                            return false;
-                        }
-                    }
-
-                    penetration = penetrationDir * penetrations
-                        .Select(item => item.magnitude * (1f / Vector3.Dot(penetrationDir.normalized, item.normalized)))
-                        .Where(item => float.IsNormal(item))
-                        .Min();
-
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        //OBB-Sphereè’ìÀîªíË
-        static bool DetectCollision(RBColliderOBB obb_a, RBColliderSphere sphere_b, out Vector3 penetration)
-        {
-            penetration = Vector3.zero;
-
-            if (obb_a.isValidOBB && sphere_b.isValidSphere)
-            {
-
-            }
-
-            return false;
-        }
-
-        //Sphere-Sphereè’ìÀîªíË
-        static bool DetectCollision(RBColliderSphere sphere_a, RBColliderSphere sphere_b, out Vector3 penetration)
-        {
-            penetration = Vector3.zero;
-
-            if (sphere_a.isValidSphere && sphere_b.isValidSphere)
-            {
-
-            }
-
-            return false;
+            return (Vector3.zero, null, null);
         }
 
         static async Task<(Vector3 velAdd_a, Vector3 angVelAdd_a, Vector3 velAdd_b, Vector3 angVelAdd_b)> SolveCollisions(RBCollision collision)
@@ -686,6 +451,75 @@ namespace RBPhys
         {
 
         }
+
+        public class RBPhysCoreProfiler
+        {
+            public long time_calcTrajectoryMs;
+            public int staticColliders;
+            public int activeColliders;
+            public int activeTrajectories;
+            public int staticTrajectories;
+
+            public long time_broardPhaseMs;
+            public int aabbCollisions;
+
+            public long time_narrowPhaseAndSolveCollisionsMs;
+            public int detailCollisions;
+            public int detailObbColliders;
+            public int detailSphereColliders;
+            public int collisionsSolved;
+
+            public long GetTimeSumMs()
+            {
+                return time_calcTrajectoryMs + time_broardPhaseMs + time_narrowPhaseAndSolveCollisionsMs;
+            }
+
+            public int GetColliderCount()
+            {
+                return staticColliders + activeColliders;
+            }
+
+            public int GetTrajetoriesCount()
+            {
+                return activeColliders + staticTrajectories;
+            }
+
+            public void Init()
+            {
+                time_calcTrajectoryMs = 0;
+                staticColliders = 0;
+                activeColliders = 0;
+                activeTrajectories = 0;
+                staticTrajectories = 0;
+
+                time_broardPhaseMs = 0;
+                aabbCollisions = 0;
+
+                time_narrowPhaseAndSolveCollisionsMs = 0;
+                detailCollisions = 0;
+                collisionsSolved = 0;
+            }
+
+            public string GetLogText()
+            {
+                return String.Format("Solved {0} collisions in {1}ms.", collisionsSolved, GetTimeSumMs());
+            }
+
+            public string GetLogTextColliders()
+            {
+                return String.Format("Solver detected {0} active colliders and {1} static colliders", activeColliders, staticColliders);
+            }
+
+            public string GetLogTextTrajectory()
+            {
+                return String.Format("Calculated {0} active TRAJ and {1} static TRAJ in {2}ms", activeTrajectories, staticTrajectories);
+            }
+
+            public string GetLogTextCollisions()
+            {
+                return String.Format("Solved {0} collisions in N/P({1}ms in {2}ms of frame). {3} TRAJ pair passed B/P({4}ms).", collisionsSolved, time_narrowPhaseAndSolveCollisionsMs, GetTimeSumMs(), aabbCollisions, time_broardPhaseMs);
+            }
+        }
     }
 
     public class RBCollision
@@ -698,6 +532,7 @@ namespace RBPhys
         public RBRigidbody rigidbody_b;
 
         public Vector3 penetration;
+        public Vector3 contactTangent;
 
         public Vector3 j_va;
         public Vector3 j_wa;
@@ -705,6 +540,9 @@ namespace RBPhys
         public Vector3 j_wb;
         public float totalLambda;
         public float effectiveMass;
+
+        public Vector3 cg_a;
+        public Vector3 cg_b;
 
         public RBCollision(RBTrajectory traj_a, RBCollider col_a, RBTrajectory traj_b, RBCollider col_b, Vector3 penetration)
         {
@@ -716,8 +554,11 @@ namespace RBPhys
             collider_b = col_b;
             rigidbody_b = traj_b.rigidbody;
 
-            Vector3 normal = col_b.GameObjectPos - col_a.GameObjectPos;
-            
+            this.penetration = penetration;
+            contactTangent = (traj_a.isStatic ? Vector3.zero : traj_a.rigidbody.Velocity) - (traj_b.isStatic ? Vector3.zero : traj_b.rigidbody.Velocity);
+
+            cg_a = traj_a.isStatic ? traj_a.collider.GameObjectPos : traj_a.rigidbody.Position;
+            cg_b = traj_b.isStatic ? traj_b.collider.GameObjectPos : traj_b.rigidbody.Position;
         }
 
         public void Update(Vector3 penetration)
@@ -740,6 +581,7 @@ namespace RBPhys
             this.Size = RBPhysUtil.V3Abs(size);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3 GetMin()
         {
             Vector3 p = Center - Extents;
@@ -747,6 +589,7 @@ namespace RBPhys
             return Vector3.Min(p, q);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3 GetMax()
         {
             Vector3 p = Center - Extents;
@@ -754,6 +597,7 @@ namespace RBPhys
             return Vector3.Max(p, q);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Encapsulate(Vector3 point)
         {
             if (isValidAABB)
@@ -774,7 +618,8 @@ namespace RBPhys
                 isValidAABB = true;
             }
         }
-        
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Encapsulate(RBColliderAABB aabb)
         {
             if (aabb.isValidAABB)
@@ -796,11 +641,13 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsPoint(Vector3 point)
         {
             return isValidAABB && RBPhysUtil.IsV3Less(GetMin(), point) && RBPhysUtil.IsV3Less(point, GetMax());
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool OverlapAABB(RBColliderAABB ext)
         {
             if (isValidAABB && ext.isValidAABB)
@@ -838,19 +685,46 @@ namespace RBPhys
             isValidOBB = true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float GetAxisSize(Vector3 axis)
+        {
+            float fwd = Mathf.Abs(Vector3.Dot(rot * new Vector3(0, 0, size.z), axis));
+            float right = Mathf.Abs(Vector3.Dot(rot * new Vector3(size.x, 0, 0), axis));
+            float up = Mathf.Abs(Vector3.Dot(rot * new Vector3(0, size.y, 0), axis));
+            return fwd + right + up;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3 GetAxisForward()
         {
             return rot * Vector3.forward;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3 GetAxisRight()
         {
             return rot * Vector3.right;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3 GetAxisUp()
         {
             return rot * Vector3.up;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3[] GetVertices()
+        {
+            Vector3 xyz = pos + new Vector3(0, 0, 0);
+            Vector3 Xyz = pos + new Vector3(size.x, 0, 0);
+            Vector3 xYz = pos + new Vector3(0, size.y, 0);
+            Vector3 XYz = pos + new Vector3(size.x, size.y, 0);
+            Vector3 xyZ = pos + new Vector3(0, 0, size.z);
+            Vector3 XyZ = pos + new Vector3(size.x, 0, size.z);
+            Vector3 xYZ = pos + new Vector3(0, size.y, size.z);
+            Vector3 XYZ = pos + new Vector3(size.x, size.y, size.z);
+
+            return new Vector3[] { xyz, Xyz, xYz, XYz, xyZ, XyZ, xYZ, XYZ };
         }
     }
 
