@@ -50,7 +50,7 @@ namespace RBPhys
         {
             Vector3 size = Vector3.Scale(Size, scale);
 
-            return new RBColliderOBB(pos + rot * Center, rot * LocalRot, size);
+            return new RBColliderOBB(pos + rot * (Center - size / 2f), rot * LocalRot, size);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -7,8 +7,6 @@ namespace RBPhys
 {
     public class RBPhysCoreExecutor : MonoBehaviour
     {
-        RBPhysCore.RBPhysCoreProfiler profiler = new RBPhysCore.RBPhysCoreProfiler();
-
         void FixedUpdate()
         {
             StartCoroutine(PhysicsFrame(Time.fixedDeltaTime));
@@ -16,16 +14,11 @@ namespace RBPhys
 
         IEnumerator PhysicsFrame(float dt)
         {
-            RBPhysCore.OpenPhysicsFrameWindow(dt, ref profiler);
+            RBPhysCore.OpenPhysicsFrameWindow(dt);
 
             yield return new WaitForFixedUpdate();
 
             RBPhysCore.ClosePhysicsFrameWindow(dt);
-
-            if (profiler.aabbCollisions > 0)
-            {
-                Debug.Log(profiler.GetLogTextCollisions());
-            }
         }
     }
 }

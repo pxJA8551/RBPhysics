@@ -47,13 +47,8 @@ namespace RBPhys
             _colliders.Remove(c);
         }
 
-        static System.Diagnostics.Stopwatch _physCoreSw = new System.Diagnostics.Stopwatch();
-
-        public static void OpenPhysicsFrameWindow(float dt, ref RBPhysCoreProfiler profiler)
+        public static void OpenPhysicsFrameWindow(float dt)
         {
-            profiler.Init();
-            _physCoreSw.Reset();
-
             foreach (RBRigidbody rb in _rigidbodies)
             {
                 rb.UpdateTransform();
@@ -64,8 +59,6 @@ namespace RBPhys
             // ====== 物理フレームウインドウ ここから ======
 
             //動的・静的軌道計算
-
-            _physCoreSw.Restart();
 
             if (_activeTrajectories.Length != _rigidbodies.Count)
             {
@@ -79,9 +72,6 @@ namespace RBPhys
 
             for (int i = 0; i < _rigidbodies.Count; i++)
             {
-                profiler.activeTrajectories++;
-                profiler.activeColliders += _rigidbodies[i].GetColliders().Length;
-
                 _activeTrajectories[i] = new RBTrajectory(_rigidbodies[i], dt);
             }
 
@@ -89,8 +79,6 @@ namespace RBPhys
             {
                 if (_colliders[i].GetParentRigidbody() == null)
                 {
-                    profiler.staticTrajectories++;
-                    profiler.staticColliders++;
                     _staticTrajectories[i] = new RBTrajectory(_colliders[i]);
                 }
                 else
@@ -99,10 +87,7 @@ namespace RBPhys
                 }
             }
 
-            profiler.time_calcTrajectoryMs = _physCoreSw.ElapsedMilliseconds;
-            _physCoreSw.Reset();
-
-            SolveColliders(dt, profiler);
+            SolveColliders(dt);
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
@@ -124,13 +109,11 @@ namespace RBPhys
             }
         }
 
-        public static async void SolveColliders(float dt, RBPhysCoreProfiler profiler)
+        public static async void SolveColliders(float dt)
         {
             //衝突検知（ブロードフェーズ）
             
             List<(RBTrajectory, RBTrajectory)> collideInNextFrame = new List<(RBTrajectory, RBTrajectory)>();
-
-            _physCoreSw.Restart();
 
             {
                 //AABBのx最小値で昇順ソート
@@ -184,11 +167,6 @@ namespace RBPhys
                 }
             }
 
-            profiler.time_narrowPhaseAndSolveCollisionsMs = _physCoreSw.ElapsedMilliseconds;
-            profiler.aabbCollisions = collideInNextFrame.Count;
-
-            _physCoreSw.Restart();
-
             //衝突検知（ナローフェーズ）と解消
             {
                 _solveCollisionTasks.Clear();
@@ -229,12 +207,9 @@ namespace RBPhys
                     }
                 }
 
-                _collisions = _collisionsInFrame.ToList();
+                _collisions = _collisionsInFrame.ToArray();
                 _collisionsInFrame.Clear();
             }
-
-            profiler.time_narrowPhaseAndSolveCollisionsMs = _physCoreSw.ElapsedMilliseconds;
-            profiler.collisionsSolved = _collisionsInFrame.Count;
         }
 
         static async Task<(bool collide, RBCollision col, Vector3 vel_a, Vector3 angVel_a, Vector3 vel_b, Vector3 angVel_b)> SolveCollisions(RBTrajectory traj_a, RBTrajectory traj_b)
@@ -252,15 +227,15 @@ namespace RBPhys
 
                 rbc.penetration = penetration.penetration;
 
-                Vector3 cg_a = traj_a.isStatic ? traj_a.collider.GameObjectPos : traj_a.rigidbody.Position;
-                Vector3 cg_b = traj_b.isStatic ? traj_b.collider.GameObjectPos : traj_b.rigidbody.Position;
-
                 float d = GetNearestDist(rbc.collider_a, rbc.collider_b, rbc.cg_a, rbc.cg_b, rbc.penetration, out Vector3 aNearest, out Vector3 bNearest);
 
-                Debug.Log(aNearest);
-                Debug.Log(bNearest);
+                if (d > 0)
+                {
+                    Debug.Log(aNearest);
+                    Debug.Log(bNearest);
 
-                return (true, rbc, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
+                    return (true, rbc, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
+                }
             }
 
             return (false, null, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
@@ -452,73 +427,6 @@ namespace RBPhys
         {
 
         }
-
-        public class RBPhysCoreProfiler
-        {
-            public long time_calcTrajectoryMs;
-            public int staticColliders;
-            public int activeColliders;
-            public int activeTrajectories;
-            public int staticTrajectories;
-
-            public long time_broardPhaseMs;
-            public int aabbCollisions;
-
-            public long time_narrowPhaseAndSolveCollisionsMs;
-            public int detailObbColliders;
-            public int detailSphereColliders;
-            public int collisionsSolved;
-
-            public long GetTimeSumMs()
-            {
-                return time_calcTrajectoryMs + time_broardPhaseMs + time_narrowPhaseAndSolveCollisionsMs;
-            }
-
-            public int GetColliderCount()
-            {
-                return staticColliders + activeColliders;
-            }
-
-            public int GetTrajetoriesCount()
-            {
-                return activeColliders + staticTrajectories;
-            }
-
-            public void Init()
-            {
-                time_calcTrajectoryMs = 0;
-                staticColliders = 0;
-                activeColliders = 0;
-                activeTrajectories = 0;
-                staticTrajectories = 0;
-
-                time_broardPhaseMs = 0;
-                aabbCollisions = 0;
-
-                time_narrowPhaseAndSolveCollisionsMs = 0;
-                collisionsSolved = 0;
-            }
-
-            public string GetLogText()
-            {
-                return String.Format("Solved {0} collisions in {1}ms.", collisionsSolved, GetTimeSumMs());
-            }
-
-            public string GetLogTextColliders()
-            {
-                return String.Format("Solver detected {0} active colliders and {1} static colliders", activeColliders, staticColliders);
-            }
-
-            public string GetLogTextTrajectory()
-            {
-                return String.Format("Calculated {0} active TRAJ and {1} static TRAJ in {2}ms", activeTrajectories, staticTrajectories);
-            }
-
-            public string GetLogTextCollisions()
-            {
-                return String.Format("Solved {0} collisions in N/P({1}ms in {2}ms of frame). {3} TRAJ pair passed B/P({4}ms).", collisionsSolved, time_narrowPhaseAndSolveCollisionsMs, GetTimeSumMs(), aabbCollisions, time_broardPhaseMs);
-            }
-        }
     }
 
     public class RBCollision
@@ -556,8 +464,8 @@ namespace RBPhys
             this.penetration = penetration;
             contactTangent = (traj_a.isStatic ? Vector3.zero : traj_a.rigidbody.Velocity) - (traj_b.isStatic ? Vector3.zero : traj_b.rigidbody.Velocity);
 
-            cg_a = traj_a.isStatic ? traj_a.collider.GameObjectPos : traj_a.rigidbody.Position;
-            cg_b = traj_b.isStatic ? traj_b.collider.GameObjectPos : traj_b.rigidbody.Position;
+            cg_a = traj_a.isStatic ? col_a.GetColliderCenter() : traj_a.rigidbody.CenterOfGravityWorld;
+            cg_b = traj_b.isStatic ? col_b.GetColliderCenter() : traj_b.rigidbody.CenterOfGravityWorld;
         }
 
         public void Update(Vector3 penetration)

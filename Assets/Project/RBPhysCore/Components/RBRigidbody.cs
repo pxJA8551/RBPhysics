@@ -12,6 +12,8 @@ namespace RBPhys
         Vector3 inertiaTensor;
         Quaternion inertiaTensorRotation;
 
+        Vector3 _centerOfGravity;
+
         Vector3 _velocity;
         Vector3 _angularVelocity;
         Vector3 _expVelocity;
@@ -27,6 +29,9 @@ namespace RBPhys
         [HideInInspector] public Vector3 ExpAngularVelocity { get { return _expAngularVelocity; } set { _expAngularVelocity = value; } }
         [HideInInspector] public Vector3 Position { get { return _position; } set { _position = value; } }
         [HideInInspector] public Quaternion Rotation { get { return _rotation; } set { _rotation = value; } }
+
+        [HideInInspector] public Vector3 CenterOfGravity { get { return _centerOfGravity; } set { _centerOfGravity = value; } }
+        [HideInInspector] public Vector3 CenterOfGravityWorld { get { return Position + Rotation * _centerOfGravity; } }
 
         void Awake()
         {
