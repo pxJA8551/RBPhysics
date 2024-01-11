@@ -72,7 +72,7 @@ namespace RBPhys
 
             for (int i = 0; i < _rigidbodies.Count; i++)
             {
-                _activeTrajectories[i] = new RBTrajectory(_rigidbodies[i], dt);
+                _activeTrajectories[i] = new RBTrajectory(_rigidbodies[i]);
             }
 
             for (int i = 0; i < _colliders.Count; i++)
@@ -214,11 +214,34 @@ namespace RBPhys
 
         static async Task<(bool collide, RBCollision col, Vector3 vel_a, Vector3 angVel_a, Vector3 vel_b, Vector3 angVel_b)> SolveCollisions(RBTrajectory traj_a, RBTrajectory traj_b)
         {
-            (Vector3 penetration, RBCollider collider_a, RBCollider collider_b) penetration = await DetectCollisions(traj_a, traj_b).ConfigureAwait(false);
+            RBCollision rbc = FindCollision(traj_a, traj_b);
+
+            Vector3 velocityDiff = Vector3.zero;
+            if (!traj_a.isStatic)
+            {
+                velocityDiff += traj_a.rigidbody.Velocity;
+            }
+            if (!traj_b.isStatic)
+            {
+                velocityDiff -= traj_b.rigidbody.Velocity;
+            }
+
+            (Vector3 penetration, RBCollider collider_a, RBCollider collider_b) penetration;
+            if (rbc == null)
+            {
+                penetration = await DetectCollisions(traj_a, traj_b, velocityDiff.normalized).ConfigureAwait(false);
+            }
+            else
+            {
+                penetration = await DetectCollisions(new RBTrajectory(rbc.rigidbody_a), new RBTrajectory(rbc.rigidbody_b), rbc.contactTangent).ConfigureAwait(false);
+            }
 
             if (penetration.penetration != Vector3.zero) 
             {
-                RBCollision rbc = FindCollision(traj_a, traj_b, penetration.collider_a, penetration.collider_b);
+                if (rbc == null)
+                {
+                    rbc = FindCollision(traj_a, traj_b, penetration.collider_a, penetration.collider_b);
+                }
 
                 if (rbc == null)
                 {
@@ -286,12 +309,56 @@ namespace RBPhys
             return null;
         }
 
-        static async Task<(Vector3, RBCollider collider_a, RBCollider collider_b)> DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b)
+        static RBCollision FindCollision(RBTrajectory traj_a, RBTrajectory traj_b)
+        {
+            if (!traj_a.isStatic && !traj_b.isStatic)
+            {
+                var ab = (traj_a.rigidbody, traj_b.rigidbody);
+                var ba = (traj_b.rigidbody, traj_a.rigidbody);
+
+                foreach (RBCollision r in _collisions)
+                {
+                    if ((r.rigidbody_a, r.rigidbody_b) == ab || (r.rigidbody_a, r.rigidbody_b) == ba)
+                    {
+                        return r;
+                    }
+                }
+            }
+            else if (traj_a.isStatic && !traj_b.isStatic)
+            {
+                var ab = (traj_a.collider, traj_b.rigidbody);
+                var ba = (traj_b.rigidbody, traj_a.collider);
+
+                foreach (RBCollision r in _collisions)
+                {
+                    if ((r.collider_a, r.rigidbody_b) == ab || (r.rigidbody_a, r.collider_b) == ba)
+                    {
+                        return r;
+                    }
+                }
+            }
+            else if (!traj_a.isStatic && traj_b.isStatic)
+            {
+                var ab = (traj_a.rigidbody, traj_a.collider);
+                var ba = (traj_a.collider, traj_a.rigidbody);
+
+                foreach (RBCollision r in _collisions)
+                {
+                    if ((r.rigidbody_a, r.collider_b) == ab || (r.collider_a, r.rigidbody_b) == ba)
+                    {
+                        return r;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+
+        static async Task<(Vector3, RBCollider collider_a, RBCollider collider_b)> DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b, Vector3 penetrationDir)
         {
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_b;
-
-            Vector3 penetrationDir = Vector3.zero;
 
             if (traj_a.isStatic)
             {
@@ -359,7 +426,7 @@ namespace RBPhys
                                 if (collider_a.collider.DetailType == RBColliderDetailType.OBB && collider_b.collider.DetailType == RBColliderDetailType.OBB)
                                 {
                                     //OBB-OBBè’ìÀ
-                                    detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), Vector3.up, out Vector3 p);
+                                    detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), penetrationDir, out Vector3 p);
                                     penetration.penetration = p;
                                 }
                                 else if (collider_a.collider.DetailType == RBColliderDetailType.OBB && collider_b.collider.DetailType == RBColliderDetailType.Sphere)
@@ -668,7 +735,7 @@ namespace RBPhys
 
         public readonly RBCollider[] colliders;
 
-        public RBTrajectory(RBRigidbody rigidbody, float dt)
+        public RBTrajectory(RBRigidbody rigidbody)
         {
             RBColliderAABB aabb = new RBColliderAABB();
 

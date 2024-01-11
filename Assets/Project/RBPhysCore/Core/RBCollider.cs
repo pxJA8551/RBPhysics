@@ -90,6 +90,8 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool DetectCollision(RBColliderOBB obb_a, RBColliderOBB obb_b, Vector3 penetrationDir, out Vector3 penetration)
         {
+            penetrationDir = Vector3.Normalize(penetrationDir);
+
             Vector3[] penetrations = new Vector3[6];
             penetration = Vector3.zero;
 
@@ -333,7 +335,7 @@ namespace RBPhys
                     }
 
                     penetration = penetrationDir * penetrations
-                        .Select(item => item.magnitude * (1f / Vector3.Dot(penetrationDir.normalized, item.normalized)))
+                        .Select(item => Mathf.Abs(item.magnitude * (1f / Vector3.Dot(penetrationDir, item.normalized))))
                         .Where(item => !float.IsNaN(item) && !float.IsInfinity(item))
                         .Min();
 
@@ -387,7 +389,7 @@ namespace RBPhys
                 float nearestAB = GetNearestDist(obb_a, obb_b, cg_b, out Vector3 anAB, out Vector3 bnAB);
                 float nearestBA = GetNearestDist(obb_b, obb_a, cg_a, out Vector3 bnBA, out Vector3 anBA);
 
-                if (nearestAB < nearestBA)
+                if ((nearestAB < nearestBA || nearestBA <= 0) && nearestAB > 0)
                 {
                     aNearest = anAB - penetration;
                     bNearest = bnAB;
@@ -395,9 +397,12 @@ namespace RBPhys
                 }
                 else
                 {
-                    aNearest = anBA - penetration;
-                    bNearest = bnBA;
-                    return Vector3.Distance(aNearest, bNearest);
+                    if (nearestBA > 0)
+                    {
+                        aNearest = anBA - penetration;
+                        bNearest = bnBA;
+                        return Vector3.Distance(aNearest, bNearest);
+                    }
                 }
             }
 
@@ -551,8 +556,8 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float GetNearestDist(Vector3[] rectPointsClockwise, (Vector3 begin, Vector3 end) edgeLX, (Vector3 begin, Vector3 end) edgeLY, Vector3 normal, Vector3 d, Vector3 cg, RBColliderOBB obb, out Vector3 aNearest, out Vector3 bNearest, out bool faceParallel)
         {
-            aNearest = -Vector3.one;
-            bNearest = -Vector3.one;
+            aNearest = Vector3.zero;
+            bNearest = Vector3.zero;
 
             Vector3[] b_verts = obb.GetVertices();
 
@@ -566,6 +571,7 @@ namespace RBPhys
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[5], b_verts[7], b_verts[3], b_verts[1] };
                 float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, bRightN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
+                Debug.Log(dist);
                 if (dist > 0)
                 {
                     if (faceParallel)
@@ -697,10 +703,12 @@ namespace RBPhys
             edges_a[3] = (rectPointsClockwise_a[3], rectPointsClockwise_a[0]);
 
             (Vector3 begin, Vector3 end)[] edges_b = new (Vector3 begin, Vector3 end)[4];
-            edges_a[0] = (rectPointsClockwise_b[0], rectPointsClockwise_b[1]);
-            edges_a[1] = (rectPointsClockwise_b[1], rectPointsClockwise_b[2]);
-            edges_a[2] = (rectPointsClockwise_b[2], rectPointsClockwise_b[3]);
-            edges_a[3] = (rectPointsClockwise_b[3], rectPointsClockwise_b[0]);
+            edges_b[0] = (rectPointsClockwise_b[0], rectPointsClockwise_b[1]);
+            edges_b[1] = (rectPointsClockwise_b[1], rectPointsClockwise_b[2]);
+            edges_b[2] = (rectPointsClockwise_b[2], rectPointsClockwise_b[3]);
+            edges_b[3] = (rectPointsClockwise_b[3], rectPointsClockwise_b[0]);
+            Debug.Log(rectPointsClockwise_b[0]);
+            Debug.Log(edges_a[0]);
 
             Vector3 center_b = edges_b[0].begin;
 
@@ -727,7 +735,7 @@ namespace RBPhys
 
             (Vector3 begin, Vector3 end)[] edges_b_prjOnA = edges_b.Select(item => ProjectEdgeOnPlane(item, normal_a, center_a)).ToArray();
 
-            (Vector3 nearest, float dist, bool edgeParallel)[] nearests = new (Vector3 nearest, float dist, bool edgeParallel)[8];
+            (Vector3 nearest, float dist, bool edgeParallel)[] nearests = new (Vector3 nearest, float dist, bool edgeParallel)[4];
 
             int count = 0;
 
@@ -751,6 +759,7 @@ namespace RBPhys
             }
 
             int parallelCount = nearests.Count(item => item.edgeParallel);
+            Debug.Log(parallelCount);
 
             if (np.index != -1)
             {
@@ -769,7 +778,7 @@ namespace RBPhys
                 }
             }
 
-            return 0;
+            return -1;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -781,7 +790,7 @@ namespace RBPhys
             (Vector3 dir, Vector3 center) tangentLine = (tangentEdge_inAnotherRect.end - tangentEdge_inAnotherRect.begin, tangentEdge_inAnotherRect.begin);
 
             Vector3 projectionNormal = Vector3.Cross(edge.end - edge.begin, tangentLine.dir).normalized;
-
+            
             if (projectionNormal == Vector3.zero)
             {
                 parallel = true;
