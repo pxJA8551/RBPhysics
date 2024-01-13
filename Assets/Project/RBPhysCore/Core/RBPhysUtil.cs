@@ -88,10 +88,18 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 CalcContactPointOnSameNormal((Vector3 dir, Vector3 center) line_a, (Vector3 dir, Vector3 center) line_b, Vector3 planeNormal)
+        public static Vector3 CalcContactPointOnSameNormal((Vector3 dir, Vector3 center) line_a, (Vector3 dir, Vector3 center) line_b)
         {
-            Vector3 rB = ProjectPointOnPlane(line_b.center, Vector3.Cross(planeNormal, line_a.dir), line_a.center) - line_b.center;
-            float length = rB.magnitude / Mathf.Sqrt(1 - Mathf.Pow(Vector3.Dot(line_a.dir.normalized, line_b.dir.normalized), 2));
+            float div = Mathf.Sqrt(1 - Mathf.Pow(Vector3.Dot(line_a.dir.normalized, line_b.dir.normalized), 2));
+
+            if (div == 0 && false)
+            {
+                return ProjectPointOnLine(line_b.center, line_a);
+            }
+
+            Vector3 rB = ProjectPointOnLine(line_b.center, line_a) - line_b.center;
+
+            float length = rB.magnitude / div;
             Vector3 rbContact = length * -line_b.dir + line_b.center;
 
             return rbContact;
@@ -112,12 +120,24 @@ namespace RBPhys
             Vector3 d = edge.end - edge.begin;
             Vector3 revPrjEnd = ReverseProject(d, d, linePrjOn.dir);
 
-            (Vector3 dir, Vector3 center) edgeLined = (d, edge.begin);
-            Vector3 contact = CalcContactPointOnSameNormal(edgeLined, linePrjOn, Vector3.Cross(edgeLined.dir, linePrjOn.dir));
+            if (Vector3.Cross(d, linePrjOn.dir) == Vector3.zero)
+            {
+                return ProjectEdgeOnLine(edge, linePrjOn);
+            }
 
+            (Vector3 dir, Vector3 center) edgeLined = (d, edge.begin);
+
+            Vector3 contact = CalcContactPointOnSameNormal(edgeLined, linePrjOn);
             Vector3 r = edge.begin - contact;
 
-            Vector3 revPrjBegin = contact + (revPrjEnd * (r.magnitude / d.magnitude * Mathf.Sign(Vector3.Dot(r, d))));
+            float div = d.magnitude * Mathf.Sign(Vector3.Dot(d, r));
+
+            if (div == 0)
+            {
+                return (contact, contact);
+            }
+
+            Vector3 revPrjBegin = contact + (revPrjEnd * (r.magnitude / div));
             revPrjEnd += revPrjBegin;
 
             return (revPrjBegin, revPrjEnd);
@@ -126,7 +146,14 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 ReverseProject(Vector3 projected, Vector3 prjOnDir, Vector3 revPrjDir)
         {
-            return revPrjDir.normalized * (projected.magnitude / Vector3.Dot(prjOnDir.normalized, revPrjDir.normalized));
+            float div = Vector3.Dot(prjOnDir.normalized, revPrjDir.normalized);
+
+            if (div == 0)
+            {
+                return Vector3.zero;
+            }
+
+            return revPrjDir.normalized * (projected.magnitude / div);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

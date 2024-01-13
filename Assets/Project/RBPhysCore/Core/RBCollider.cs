@@ -720,23 +720,33 @@ namespace RBPhys
                 return Vector3.Distance(aNearest, bNearest);
             }
 
-            Vector3 rP = (ProjectPointOnPlane(center_b, normal_a, center_a) - center_b);
-            Vector3 rPC_dirN = -Vector3.Cross(-normal_b, dir).normalized;
-            Vector3 rPC = rPC_dirN * rP.magnitude / Mathf.Sqrt(1 - Mathf.Pow(Vector3.Dot(normal_a, -normal_b), 2));
+            float div = Mathf.Sqrt(1 - Mathf.Pow(Vector3.Dot(normal_a, -normal_b), 2));
 
-            Vector3 center = center_b + rPC;
+            Vector3 center;
+            if (div == 0)
+            {
+                center = ProjectPointOnPlane(center_b, normal_a, center_a);
+            }
+            else
+            {
+                Vector3 rP = (ProjectPointOnPlane(center_b, normal_a, center_a) - center_b);
+                Vector3 rPC_dirN = -Vector3.Cross(-normal_b, dir).normalized;
+                Vector3 rPC = rPC_dirN * (rP.magnitude / div);
+
+                center = center_b + rPC;
+            }
 
             (Vector3 begin, Vector3 end) tangentEdgeLx = ReverseProjectEdgeOnLine(edgeLX, (dir, center));
             (Vector3 begin, Vector3 end) tangentEdgeLy = ReverseProjectEdgeOnLine(edgeLY, (dir, center));
 
             tangentEdge = GetDuplicatedEdge(tangentEdgeLx, tangentEdgeLy);
 
-            if (Vector3.Cross(dir, tangentEdgeLx.end - tangentEdgeLx.begin) == Vector3.zero)
+            if (Vector3.Cross(dir, tangentEdgeLx.end - tangentEdgeLx.begin) == Vector3.zero && !IsV3EpsilonEqual(tangentEdgeLx.begin, tangentEdgeLx.end))
             {
                 tangentEdge = tangentEdgeLx;
             }
 
-            if (Vector3.Cross(dir, tangentEdgeLy.end - tangentEdgeLy.begin) == Vector3.zero)
+            if (Vector3.Cross(dir, tangentEdgeLy.end - tangentEdgeLy.begin) == Vector3.zero && !IsV3EpsilonEqual(tangentEdgeLy.begin, tangentEdgeLy.end))
             {
                 tangentEdge = tangentEdgeLy;
             }
@@ -779,7 +789,7 @@ namespace RBPhys
                 }
                 else if (parallelCount == 2)
                 {
-                    Vector3 nearest = ProjectPointOnEdge(cg, edges_b[np.index]);
+                    Vector3 nearest = ProjectPointOnEdge(cg, tangentEdge);
                     aNearest = ProjectPointOnRect(nearest, rectPointsClockwise_a, normal_a);
                     bNearest = nearest;
                     return Vector3.Distance(aNearest, bNearest);
@@ -802,7 +812,6 @@ namespace RBPhys
             if (projectionNormal == Vector3.zero)
             {
                 parallel = true;
-
                 return Vector3.Distance(edge.begin, ProjectPointOnLine(edge.begin, tangentLine));
             }
 
@@ -810,7 +819,7 @@ namespace RBPhys
             (Vector3 begin, Vector3 end) edgePrj = (ProjectPointOnPlane(edge.begin, prjPlane.normal, prjPlane.center), ProjectPointOnPlane(edge.end, prjPlane.normal, prjPlane.center));
             (Vector3 dir, Vector3 center) edgePrjLined = (edgePrj.end - edgePrj.begin, (edgePrj.begin + edgePrj.end) / 2f);
 
-            Vector3 contact = (CalcContactPointOnSameNormal(tangentLine, edgePrjLined, prjPlane.normal));
+            Vector3 contact = (CalcContactPointOnSameNormal(tangentLine, edgePrjLined));
 
             Vector3 prjCenter = ProjectPointOnPlane(edgePrjLined.center, prjPlane.normal, prjPlane.center);
             Vector3 prjNearest = prjCenter + Vector3.ClampMagnitude(contact - prjCenter, Vector3.Distance(edgePrj.begin, edgePrj.end) / 2f);
