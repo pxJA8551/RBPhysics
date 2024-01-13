@@ -384,14 +384,14 @@ namespace RBPhys
                 RBColliderOBB obb_a = collider_a.CalcOBB();
                 RBColliderOBB obb_b = collider_b.CalcOBB();
 
-                obb_a.pos += penetration; //適当な方向に衝突を解消したOBBで計算するためにOBBの位置を変更
+                obb_a.pos -= penetration; //適当な方向に衝突を解消したOBBで計算するためにOBBの位置を変更
 
                 float nearestAB = GetNearestDist(obb_a, obb_b, cg_b, out Vector3 anAB, out Vector3 bnAB);
                 float nearestBA = GetNearestDist(obb_b, obb_a, cg_a, out Vector3 bnBA, out Vector3 anBA);
 
                 if ((nearestAB < nearestBA || nearestBA <= 0) && nearestAB > 0)
                 {
-                    aNearest = anAB - penetration;
+                    aNearest = anAB + penetration;
                     bNearest = bnAB;
                     return Vector3.Distance(aNearest, bNearest);
                 }
@@ -399,7 +399,7 @@ namespace RBPhys
                 {
                     if (nearestBA > 0)
                     {
-                        aNearest = anBA - penetration;
+                        aNearest = anBA + penetration;
                         bNearest = bnBA;
                         return Vector3.Distance(aNearest, bNearest);
                     }
@@ -426,7 +426,7 @@ namespace RBPhys
 
             Vector3 d = obb_b.Center - obb_a.Center;
 
-            if (Vector3.Dot(d, normal_a_x) > 0)
+            if (Vector3.Dot(d, normal_a_x) > 0 && false)
             {
                 Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[5], obb_a_verts[7], obb_a_verts[3], obb_a_verts[1] };
                 (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, 0, obb_a.size.z / 2f), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, obb_a.size.y, obb_a.size.z / 2f));
@@ -446,7 +446,7 @@ namespace RBPhys
                 }
             }
 
-            if (Vector3.Dot(d, -normal_a_x) > 0)
+            if (Vector3.Dot(d, -normal_a_x) > 0 && false)
             {
                 Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[0], obb_a_verts[2], obb_a_verts[6], obb_a_verts[4] };
                 (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(0, 0, obb_a.size.z / 2f), obb_a.pos + obb_a.rot * new Vector3(0, obb_a.size.y, obb_a.size.z / 2f));
@@ -486,7 +486,7 @@ namespace RBPhys
                 }
             }
 
-            if (Vector3.Dot(d, -normal_a_y) > 0)
+            if (Vector3.Dot(d, -normal_a_y) > 0 && false)
             {
                 Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[1], obb_a_verts[5], obb_a_verts[4], obb_a_verts[0] };
                 (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, 0, 0), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, 0, obb_a.size.z));
@@ -499,7 +499,7 @@ namespace RBPhys
                 }
             }
             
-            if (Vector3.Dot(d, normal_a_z) > 0)
+            if (Vector3.Dot(d, normal_a_z) > 0 && false)
             {
                 Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[0], obb_a_verts[2], obb_a_verts[3], obb_a_verts[1] };
                 (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, 0, 0), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, obb_a.size.y, 0));
@@ -519,7 +519,7 @@ namespace RBPhys
                 }
             }
 
-            if (Vector3.Dot(d, -normal_a_z) > 0)
+            if (Vector3.Dot(d, -normal_a_z) > 0 && false)
             {
                 Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[5], obb_a_verts[7], obb_a_verts[6], obb_a_verts[4] };
                 (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, 0, obb_a.size.z), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, obb_a.size.y, obb_a.size.z));
@@ -567,11 +567,10 @@ namespace RBPhys
             Vector3 bUpN = obb.GetAxisUp();
             Vector3 bForwardN = obb.GetAxisForward();
 
-            if (Vector3.Dot(d, bRightN) > 0)
+            if (Vector3.Dot(d, bRightN) > 0 && false)
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[5], b_verts[7], b_verts[3], b_verts[1] };
                 float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, bRightN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
-                Debug.Log(dist);
                 if (dist > 0)
                 {
                     if (faceParallel)
@@ -587,7 +586,7 @@ namespace RBPhys
 
             if (Vector3.Dot(d, -bRightN) > 0)
             {
-                Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[4], b_verts[6], b_verts[2], b_verts[0] };
+                Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[0], b_verts[2], b_verts[6], b_verts[4] };
                 float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, -bRightN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
                 if (dist > 0)
                 {
@@ -602,7 +601,7 @@ namespace RBPhys
                 }
             }
 
-            if (Vector3.Dot(d, bUpN) > 0)
+            if (Vector3.Dot(d, bUpN) > 0 && false)
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[2], b_verts[6], b_verts[7], b_verts[3] };
                 float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, bUpN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
@@ -619,7 +618,7 @@ namespace RBPhys
                 }
             }
 
-            if (Vector3.Dot(d, -bUpN) > 0)
+            if (Vector3.Dot(d, -bUpN) > 0 && false)
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[1], b_verts[5], b_verts[4], b_verts[0] };
                 float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, -bUpN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
@@ -627,7 +626,6 @@ namespace RBPhys
                 {
                     if (faceParallel)
                     {
-                        Debug.Log(an);
                         aNearest = an;
                         bNearest = bn;
                         return dist;
@@ -637,7 +635,7 @@ namespace RBPhys
                 }
             }
 
-            if (Vector3.Dot(d, bForwardN) > 0)
+            if (Vector3.Dot(d, bForwardN) > 0 && false)
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[0], b_verts[2], b_verts[3], b_verts[1] };
                 float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, bForwardN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
@@ -654,7 +652,7 @@ namespace RBPhys
                 }
             }
 
-            if (Vector3.Dot(d, -bForwardN) > 0)
+            if (Vector3.Dot(d, -bForwardN) > 0 && false)
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] {b_verts[5], b_verts[7], b_verts[6], b_verts[4] };
                 float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, -bForwardN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
@@ -707,13 +705,11 @@ namespace RBPhys
             edges_b[1] = (rectPointsClockwise_b[1], rectPointsClockwise_b[2]);
             edges_b[2] = (rectPointsClockwise_b[2], rectPointsClockwise_b[3]);
             edges_b[3] = (rectPointsClockwise_b[3], rectPointsClockwise_b[0]);
-            Debug.Log(rectPointsClockwise_b[0]);
-            Debug.Log(edges_a[0]);
 
             Vector3 center_b = edges_b[0].begin;
 
             (Vector3 begin, Vector3 end) tangentEdge;
-            Vector3 dir = Vector3.Cross(normal_a, normal_b);
+            Vector3 dir = Vector3.Cross(normal_a, -normal_b).normalized;
 
             if (dir == Vector3.zero)
             {
@@ -725,13 +721,25 @@ namespace RBPhys
             }
 
             Vector3 rP = (ProjectPointOnPlane(center_b, normal_a, center_a) - center_b);
-            Vector3 rPC_dirN = Vector3.Cross(rP, dir).normalized;
-            Vector3 rPC = rPC_dirN * (rP.magnitude / Mathf.Sqrt(1 - Mathf.Pow(Vector3.Dot(normal_a, -normal_b), 2)));
+            Vector3 rPC_dirN = -Vector3.Cross(-normal_b, dir).normalized;
+            Vector3 rPC = rPC_dirN * rP.magnitude / Mathf.Sqrt(1 - Mathf.Pow(Vector3.Dot(normal_a, -normal_b), 2));
 
             Vector3 center = center_b + rPC;
-            (Vector3 begin, Vector3 end) tangentEdgeLx = ProjectEdgeOnLine(edgeLX, (dir, center));
-            (Vector3 begin, Vector3 end) tangentEdgeLy = ProjectEdgeOnLine(edgeLY, (dir, center));
+
+            (Vector3 begin, Vector3 end) tangentEdgeLx = ReverseProjectEdgeOnLine(edgeLX, (dir, center));
+            (Vector3 begin, Vector3 end) tangentEdgeLy = ReverseProjectEdgeOnLine(edgeLY, (dir, center));
+
             tangentEdge = GetDuplicatedEdge(tangentEdgeLx, tangentEdgeLy);
+
+            if (Vector3.Cross(dir, tangentEdgeLx.end - tangentEdgeLx.begin) == Vector3.zero)
+            {
+                tangentEdge = tangentEdgeLx;
+            }
+
+            if (Vector3.Cross(dir, tangentEdgeLy.end - tangentEdgeLy.begin) == Vector3.zero)
+            {
+                tangentEdge = tangentEdgeLy;
+            }
 
             (Vector3 begin, Vector3 end)[] edges_b_prjOnA = edges_b.Select(item => ProjectEdgeOnPlane(item, normal_a, center_a)).ToArray();
 
@@ -759,7 +767,6 @@ namespace RBPhys
             }
 
             int parallelCount = nearests.Count(item => item.edgeParallel);
-            Debug.Log(parallelCount);
 
             if (np.index != -1)
             {
@@ -767,6 +774,7 @@ namespace RBPhys
                 {
                     aNearest = ProjectPointOnRect(np.nearest, rectPointsClockwise_a, normal_a);
                     bNearest = np.nearest;
+
                     return Vector3.Distance(aNearest, bNearest);
                 }
                 else if (parallelCount == 2)
@@ -790,11 +798,12 @@ namespace RBPhys
             (Vector3 dir, Vector3 center) tangentLine = (tangentEdge_inAnotherRect.end - tangentEdge_inAnotherRect.begin, tangentEdge_inAnotherRect.begin);
 
             Vector3 projectionNormal = Vector3.Cross(edge.end - edge.begin, tangentLine.dir).normalized;
-            
+
             if (projectionNormal == Vector3.zero)
             {
                 parallel = true;
-                return Vector3.Distance(edge.begin, tangentLine.center);
+
+                return Vector3.Distance(edge.begin, ProjectPointOnLine(edge.begin, tangentLine));
             }
 
             (Vector3 normal, Vector3 center) prjPlane = (projectionNormal, tangentLine.center);
