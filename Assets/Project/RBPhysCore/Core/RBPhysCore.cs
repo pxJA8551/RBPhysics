@@ -213,151 +213,6 @@ namespace RBPhys
             }
         }
 
-        static async Task<(bool collide, RBCollision col, Vector3 vel_a, Vector3 angVel_a, Vector3 vel_b, Vector3 angVel_b)> SolveCollisions(RBTrajectory traj_a, RBTrajectory traj_b)
-        {
-            RBCollision rbc = FindCollision(traj_a, traj_b);
-
-            Vector3 velocityDiff = Vector3.zero;
-            if (!traj_a.isStatic)
-            {
-                velocityDiff += traj_a.rigidbody.Velocity;
-            }
-            if (!traj_b.isStatic)
-            {
-                velocityDiff -= traj_b.rigidbody.Velocity;
-            }
-
-            (Vector3 penetration, RBCollider collider_a, RBCollider collider_b) penetration;
-            if (rbc == null)
-            {
-                penetration = await DetectCollisions(traj_a, traj_b, velocityDiff.normalized).ConfigureAwait(false);
-            }
-            else
-            {
-                penetration = await DetectCollisions(new RBTrajectory(rbc.collider_a), new RBTrajectory(rbc.collider_b), rbc.contactTangent).ConfigureAwait(false);
-            }
-
-            if (penetration.penetration != Vector3.zero) 
-            {
-                if (rbc == null)
-                {
-                    rbc = FindCollision(traj_a, traj_b, penetration.collider_a, penetration.collider_b);
-                }
-
-                if (rbc == null)
-                {
-                    rbc = new RBCollision(traj_a, penetration.collider_a, traj_b, penetration.collider_b, penetration.penetration);
-                }
-
-                rbc.penetration = penetration.penetration;
-
-                float d = GetNearestDist(rbc.collider_a, rbc.collider_b, rbc.cg_a, rbc.cg_b, rbc.penetration, out Vector3 aNearest, out Vector3 bNearest);
-
-                if (d > 0)
-                {
-                    //Debug.Log((aNearest, bNearest, penetration));
-                    //Debug.Log(aNearest);
-                    //Debug.Log(bNearest);
-                    //Debug.Log(penetration);
-
-                    return (true, rbc, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
-                }
-            }
-
-            return (false, null, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
-        }
-
-        static RBCollision FindCollision(RBTrajectory traj_a, RBTrajectory traj_b, RBCollider col_a, RBCollider col_b)
-        {
-            if (!traj_a.isStatic && !traj_b.isStatic)
-            {
-                var ab = (traj_a.rigidbody, traj_b.rigidbody);
-                var ba = (traj_b.rigidbody, traj_a.rigidbody);
-
-                foreach (RBCollision r in _collisions)
-                {
-                    if ((r.rigidbody_a, r.rigidbody_b) == ab || (r.rigidbody_a, r.rigidbody_b) == ba)
-                    {
-                        return r;
-                    }
-                }
-            }
-            else if (traj_a.isStatic && !traj_b.isStatic)
-            {
-                var ab = (col_a, traj_b.rigidbody);
-                var ba = (traj_b.rigidbody, col_a);
-
-                foreach (RBCollision r in _collisions)
-                {
-                    if ((r.collider_a, r.rigidbody_b) == ab || (r.rigidbody_a, r.collider_b) == ba)
-                    {
-                        return r;
-                    }
-                }
-            }
-            else if (!traj_a.isStatic && traj_b.isStatic)
-            {
-                var ab = (traj_a.rigidbody, col_b);
-                var ba = (col_b, traj_a.rigidbody);
-
-                foreach (RBCollision r in _collisions)
-                {
-                    if ((r.rigidbody_a, r.collider_b) == ab || (r.collider_a, r.rigidbody_b) == ba)
-                    {
-                        return r;
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        static RBCollision FindCollision(RBTrajectory traj_a, RBTrajectory traj_b)
-        {
-            if (!traj_a.isStatic && !traj_b.isStatic)
-            {
-                var ab = (traj_a.rigidbody, traj_b.rigidbody);
-                var ba = (traj_b.rigidbody, traj_a.rigidbody);
-
-                foreach (RBCollision r in _collisions)
-                {
-                    if ((r.rigidbody_a, r.rigidbody_b) == ab || (r.rigidbody_a, r.rigidbody_b) == ba)
-                    {
-                        return r;
-                    }
-                }
-            }
-            else if (traj_a.isStatic && !traj_b.isStatic)
-            {
-                var ab = (traj_a.collider, traj_b.rigidbody);
-                var ba = (traj_b.rigidbody, traj_a.collider);
-
-                foreach (RBCollision r in _collisions)
-                {
-                    if ((r.collider_a, r.rigidbody_b) == ab || (r.rigidbody_a, r.collider_b) == ba)
-                    {
-                        return r;
-                    }
-                }
-            }
-            else if (!traj_a.isStatic && traj_b.isStatic)
-            {
-                var ab = (traj_a.rigidbody, traj_a.collider);
-                var ba = (traj_a.collider, traj_a.rigidbody);
-
-                foreach (RBCollision r in _collisions)
-                {
-                    if ((r.rigidbody_a, r.collider_b) == ab || (r.collider_a, r.rigidbody_b) == ba)
-                    {
-                        return r;
-                    }
-                }
-            }
-
-            return null;
-        }
-
-
         static async Task<(Vector3, RBCollider collider_a, RBCollider collider_b)> DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b, Vector3 penetrationDir)
         {
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
@@ -480,7 +335,152 @@ namespace RBPhys
             return (Vector3.zero, null, null);
         }
 
-        static async Task<(Vector3 velAdd_a, Vector3 angVelAdd_a, Vector3 velAdd_b, Vector3 angVelAdd_b)> SolveCollisions(RBCollision collision)
+        static async Task<(bool collide, RBCollision col, Vector3 vel_a, Vector3 angVel_a, Vector3 vel_b, Vector3 angVel_b)> SolveCollisions(RBTrajectory traj_a, RBTrajectory traj_b)
+        {
+            RBCollision rbc = FindCollision(traj_a, traj_b);
+
+            Vector3 velocityDiff = Vector3.zero;
+            if (!traj_a.isStatic)
+            {
+                velocityDiff += traj_a.rigidbody.Velocity;
+            }
+            if (!traj_b.isStatic)
+            {
+                velocityDiff -= traj_b.rigidbody.Velocity;
+            }
+
+            (Vector3 penetration, RBCollider collider_a, RBCollider collider_b) penetration;
+            if (rbc == null)
+            {
+                penetration = await DetectCollisions(traj_a, traj_b, velocityDiff.normalized).ConfigureAwait(false);
+            }
+            else
+            {
+                penetration = await DetectCollisions(new RBTrajectory(rbc.collider_a), new RBTrajectory(rbc.collider_b), rbc.contactTangent).ConfigureAwait(false);
+            }
+
+            if (penetration.penetration != Vector3.zero)
+            {
+                if (rbc == null)
+                {
+                    rbc = FindCollision(traj_a, traj_b, penetration.collider_a, penetration.collider_b);
+                }
+
+                if (rbc == null)
+                {
+                    rbc = new RBCollision(traj_a, penetration.collider_a, traj_b, penetration.collider_b, penetration.penetration);
+                }
+
+                rbc.penetration = penetration.penetration;
+
+                float d = GetNearestDist(rbc.collider_a, rbc.collider_b, rbc.cg_a, rbc.cg_b, rbc.penetration, out Vector3 aNearest, out Vector3 bNearest);
+
+                rbc.contactTangent = aNearest - bNearest;
+
+                if (d > 0)
+                {
+                    Debug.Log((aNearest, bNearest, penetration.penetration));
+
+                    var v = await SolveCollision(rbc, aNearest, bNearest);
+
+                    return (true, rbc, v.velAdd_a, v.angVelAdd_a, v.velAdd_b, v.angVelAdd_b);
+                }
+            }
+
+            return (false, null, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
+        }
+
+        static RBCollision FindCollision(RBTrajectory traj_a, RBTrajectory traj_b, RBCollider col_a, RBCollider col_b)
+        {
+            if (!traj_a.isStatic && !traj_b.isStatic)
+            {
+                var ab = (traj_a.rigidbody, traj_b.rigidbody);
+                var ba = (traj_b.rigidbody, traj_a.rigidbody);
+
+                foreach (RBCollision r in _collisions)
+                {
+                    if ((r.rigidbody_a, r.rigidbody_b) == ab || (r.rigidbody_a, r.rigidbody_b) == ba)
+                    {
+                        return r;
+                    }
+                }
+            }
+            else if (traj_a.isStatic && !traj_b.isStatic)
+            {
+                var ab = (col_a, traj_b.rigidbody);
+                var ba = (traj_b.rigidbody, col_a);
+
+                foreach (RBCollision r in _collisions)
+                {
+                    if ((r.collider_a, r.rigidbody_b) == ab || (r.rigidbody_a, r.collider_b) == ba)
+                    {
+                        return r;
+                    }
+                }
+            }
+            else if (!traj_a.isStatic && traj_b.isStatic)
+            {
+                var ab = (traj_a.rigidbody, col_b);
+                var ba = (col_b, traj_a.rigidbody);
+
+                foreach (RBCollision r in _collisions)
+                {
+                    if ((r.rigidbody_a, r.collider_b) == ab || (r.collider_a, r.rigidbody_b) == ba)
+                    {
+                        return r;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        static RBCollision FindCollision(RBTrajectory traj_a, RBTrajectory traj_b)
+        {
+            if (!traj_a.isStatic && !traj_b.isStatic)
+            {
+                var ab = (traj_a.rigidbody, traj_b.rigidbody);
+                var ba = (traj_b.rigidbody, traj_a.rigidbody);
+
+                foreach (RBCollision r in _collisions)
+                {
+                    if ((r.rigidbody_a, r.rigidbody_b) == ab || (r.rigidbody_a, r.rigidbody_b) == ba)
+                    {
+                        return r;
+                    }
+                }
+            }
+            else if (traj_a.isStatic && !traj_b.isStatic)
+            {
+                var ab = (traj_a.collider, traj_b.rigidbody);
+                var ba = (traj_b.rigidbody, traj_a.collider);
+
+                foreach (RBCollision r in _collisions)
+                {
+                    if ((r.collider_a, r.rigidbody_b) == ab || (r.rigidbody_a, r.collider_b) == ba)
+                    {
+                        return r;
+                    }
+                }
+            }
+            else if (!traj_a.isStatic && traj_b.isStatic)
+            {
+                var ab = (traj_a.rigidbody, traj_a.collider);
+                var ba = (traj_a.collider, traj_a.rigidbody);
+
+                foreach (RBCollision r in _collisions)
+                {
+                    if ((r.rigidbody_a, r.collider_b) == ab || (r.collider_a, r.rigidbody_b) == ba)
+                    {
+                        return r;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        static async Task<(Vector3 velAdd_a, Vector3 angVelAdd_a, Vector3 velAdd_b, Vector3 angVelAdd_b)> SolveCollision(RBCollision collision, Vector3 aNearest, Vector3 bNearest)
         {
             Vector3 velocityAdd_a = Vector3.zero;
             Vector3 angularVelocityAdd_a = Vector3.zero;

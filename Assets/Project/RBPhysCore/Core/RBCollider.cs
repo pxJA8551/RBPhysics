@@ -426,7 +426,7 @@ namespace RBPhys
 
             Vector3 d = obb_b.Center - obb_a.Center;
 
-            if (Vector3.Dot(d, normal_a_x) > 0 && false)
+            if (Vector3.Dot(d, normal_a_x) > 0)
             {
                 Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[5], obb_a_verts[7], obb_a_verts[3], obb_a_verts[1] };
                 (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, 0, obb_a.size.z / 2f), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, obb_a.size.y, obb_a.size.z / 2f));
@@ -446,7 +446,7 @@ namespace RBPhys
                 }
             }
 
-            if (Vector3.Dot(d, -normal_a_x) > 0 && false)
+            if (Vector3.Dot(d, -normal_a_x) > 0)
             {
                 Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[0], obb_a_verts[2], obb_a_verts[6], obb_a_verts[4] };
                 (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(0, 0, obb_a.size.z / 2f), obb_a.pos + obb_a.rot * new Vector3(0, obb_a.size.y, obb_a.size.z / 2f));
@@ -486,7 +486,7 @@ namespace RBPhys
                 }
             }
 
-            if (Vector3.Dot(d, -normal_a_y) > 0 && false)
+            if (Vector3.Dot(d, -normal_a_y) > 0)
             {
                 Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[1], obb_a_verts[5], obb_a_verts[4], obb_a_verts[0] };
                 (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, 0, 0), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, 0, obb_a.size.z));
@@ -499,7 +499,7 @@ namespace RBPhys
                 }
             }
             
-            if (Vector3.Dot(d, normal_a_z) > 0 && false)
+            if (Vector3.Dot(d, normal_a_z) > 0)
             {
                 Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[0], obb_a_verts[2], obb_a_verts[3], obb_a_verts[1] };
                 (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, 0, 0), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, obb_a.size.y, 0));
@@ -519,7 +519,7 @@ namespace RBPhys
                 }
             }
 
-            if (Vector3.Dot(d, -normal_a_z) > 0 && false)
+            if (Vector3.Dot(d, -normal_a_z) > 0)
             {
                 Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[5], obb_a_verts[7], obb_a_verts[6], obb_a_verts[4] };
                 (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, 0, obb_a.size.z), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, obb_a.size.y, obb_a.size.z));
@@ -567,7 +567,7 @@ namespace RBPhys
             Vector3 bUpN = obb.GetAxisUp();
             Vector3 bForwardN = obb.GetAxisForward();
 
-            if (Vector3.Dot(d, bRightN) > 0 && false)
+            if (Vector3.Dot(d, bRightN) > 0)
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[5], b_verts[7], b_verts[3], b_verts[1] };
                 float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, bRightN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
@@ -601,7 +601,7 @@ namespace RBPhys
                 }
             }
 
-            if (Vector3.Dot(d, bUpN) > 0 && false)
+            if (Vector3.Dot(d, bUpN) > 0)
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[2], b_verts[6], b_verts[7], b_verts[3] };
                 float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, bUpN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
@@ -618,7 +618,7 @@ namespace RBPhys
                 }
             }
 
-            if (Vector3.Dot(d, -bUpN) > 0 && false)
+            if (Vector3.Dot(d, -bUpN) > 0)
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[1], b_verts[5], b_verts[4], b_verts[0] };
                 float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, -bUpN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
@@ -635,7 +635,7 @@ namespace RBPhys
                 }
             }
 
-            if (Vector3.Dot(d, bForwardN) > 0 && false)
+            if (Vector3.Dot(d, bForwardN) > 0)
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[0], b_verts[2], b_verts[3], b_verts[1] };
                 float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, bForwardN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
@@ -652,7 +652,7 @@ namespace RBPhys
                 }
             }
 
-            if (Vector3.Dot(d, -bForwardN) > 0 && false)
+            if (Vector3.Dot(d, -bForwardN) > 0)
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] {b_verts[5], b_verts[7], b_verts[6], b_verts[4] };
                 float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, -bForwardN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
