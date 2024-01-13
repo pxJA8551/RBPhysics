@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Runtime.CompilerServices;
 using UnityEditor.Build;
 using UnityEngine;
+using UnityEngine.Assertions.Must;
 
 namespace RBPhys
 {
@@ -90,26 +91,53 @@ namespace RBPhys
         public static Vector3 CalcContactPointOnSameNormal((Vector3 dir, Vector3 center) line_a, (Vector3 dir, Vector3 center) line_b, Vector3 planeNormal)
         {
             Vector3 rB = ProjectPointOnPlane(line_b.center, Vector3.Cross(planeNormal, line_a.dir), line_a.center) - line_b.center;
-            float length = rB.magnitude / Mathf.Sqrt(1 - Mathf.Pow(Vector3.Dot(line_a.dir, line_b.dir), 2));
+            float length = rB.magnitude / Mathf.Sqrt(1 - Mathf.Pow(Vector3.Dot(line_a.dir.normalized, line_b.dir.normalized), 2));
             Vector3 rbContact = length * -line_b.dir + line_b.center;
 
             return rbContact;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static (Vector3 begin, Vector3 end) ProjectEdgeOnLine((Vector3 begin, Vector3 end) edge, (Vector3 dir, Vector3 center) edgePrjOn)
+        public static (Vector3 begin, Vector3 end) ProjectEdgeOnLine((Vector3 begin, Vector3 end) edge, (Vector3 dir, Vector3 center) linePrjOn)
         {
-            Vector3 prjBegin = ProjectPointOnLine(edge.begin, edgePrjOn);
-            Vector3 prjEnd = ProjectPointOnLine(edge.end, edgePrjOn);
+            Vector3 prjBegin = ProjectPointOnLine(edge.begin, linePrjOn);
+            Vector3 prjEnd = ProjectPointOnLine(edge.end, linePrjOn);
 
             return (prjBegin, prjEnd);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static (Vector3 begin, Vector3 end) ProjectEdgeOnEdge((Vector3 begin, Vector3 end) edge, (Vector3 dir, Vector3 center) edgePrjOn)
+        public static (Vector3 begin, Vector3 end) ReverseProjectEdgeOnLine((Vector3 begin, Vector3 end) edge, (Vector3 dir, Vector3 center) linePrjOn)
+        {
+            Vector3 d = edge.end - edge.begin;
+            Vector3 revPrjEnd = ReverseProject(d, d, linePrjOn.dir);
+
+            (Vector3 dir, Vector3 center) edgeLined = (d, edge.begin);
+            Vector3 contact = CalcContactPointOnSameNormal(edgeLined, linePrjOn, Vector3.Cross(edgeLined.dir, linePrjOn.dir));
+
+            Vector3 r = edge.begin - contact;
+
+            Vector3 revPrjBegin = contact + (revPrjEnd * (r.magnitude / d.magnitude * Mathf.Sign(Vector3.Dot(r, d))));
+            revPrjEnd += revPrjBegin;
+
+            return (revPrjBegin, revPrjEnd);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 ReverseProject(Vector3 projected, Vector3 prjOnDir, Vector3 revPrjDir)
+        {
+            return revPrjDir.normalized * (projected.magnitude / Vector3.Dot(prjOnDir.normalized, revPrjDir.normalized));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static (Vector3 begin, Vector3 end) ProjectEdgeOnEdge((Vector3 begin, Vector3 end) edge, (Vector3 begin, Vector3 end) edgePrjOn)
         {
             Vector3 prjBegin = ProjectPointOnEdge(edge.begin, edgePrjOn);
             Vector3 prjEnd = ProjectPointOnEdge(edge.end, edgePrjOn);
+            (Vector3 begin, Vector3 end) prjEdge = (prjBegin, prjEnd);
+
+            prjBegin = ProjectPointOnEdge(edgePrjOn.begin, prjEdge);
+            prjEnd = ProjectPointOnEdge(edgePrjOn.end, prjEdge);
 
             return (prjBegin, prjEnd);
         }
@@ -123,8 +151,8 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 ProjectPointOnEdge(Vector3 p, (Vector3 begin, Vector3 end) edge)
         {
-            Vector3 d = edge.end - edge.begin;
-            return edge.begin + Vector3.ClampMagnitude(Vector3.Project(p - edge.begin, d), d.magnitude);
+            Vector3 dN = (edge.end - edge.begin).normalized;
+            return edge.begin + (dN * Mathf.Max(0, Vector3.Dot(p - edge.begin, dN)));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

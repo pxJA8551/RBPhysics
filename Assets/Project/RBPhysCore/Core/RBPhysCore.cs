@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Rendering;
 using static RBPhys.RBColliderCollision;
 
 namespace RBPhys
@@ -233,7 +234,7 @@ namespace RBPhys
             }
             else
             {
-                penetration = await DetectCollisions(new RBTrajectory(rbc.rigidbody_a), new RBTrajectory(rbc.rigidbody_b), rbc.contactTangent).ConfigureAwait(false);
+                penetration = await DetectCollisions(new RBTrajectory(rbc.collider_a), new RBTrajectory(rbc.collider_b), rbc.contactTangent).ConfigureAwait(false);
             }
 
             if (penetration.penetration != Vector3.zero) 
@@ -254,8 +255,10 @@ namespace RBPhys
 
                 if (d > 0)
                 {
-                    Debug.Log(aNearest);
-                    Debug.Log(bNearest);
+                    //Debug.Log((aNearest, bNearest, penetration));
+                    //Debug.Log(aNearest);
+                    //Debug.Log(bNearest);
+                    //Debug.Log(penetration);
 
                     return (true, rbc, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
                 }
@@ -689,14 +692,14 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3[] GetVertices()
         {
-            Vector3 xyz = pos + new Vector3(0, 0, 0);
-            Vector3 Xyz = pos + new Vector3(size.x, 0, 0);
-            Vector3 xYz = pos + new Vector3(0, size.y, 0);
-            Vector3 XYz = pos + new Vector3(size.x, size.y, 0);
-            Vector3 xyZ = pos + new Vector3(0, 0, size.z);
-            Vector3 XyZ = pos + new Vector3(size.x, 0, size.z);
-            Vector3 xYZ = pos + new Vector3(0, size.y, size.z);
-            Vector3 XYZ = pos + new Vector3(size.x, size.y, size.z);
+            Vector3 xyz = pos + rot * new Vector3(0, 0, 0);
+            Vector3 Xyz = pos + rot * new Vector3(size.x, 0, 0);
+            Vector3 xYz = pos + rot * new Vector3(0, size.y, 0);
+            Vector3 XYz = pos + rot * new Vector3(size.x, size.y, 0);
+            Vector3 xyZ = pos + rot * new Vector3(0, 0, size.z);
+            Vector3 XyZ = pos + rot * new Vector3(size.x, 0, size.z);
+            Vector3 xYZ = pos + rot * new Vector3(0, size.y, size.z);
+            Vector3 XYZ = pos + rot * new Vector3(size.x, size.y, size.z);
 
             return new Vector3[] { xyz, Xyz, xYz, XYz, xyZ, XyZ, xYZ, XYZ };
         }
@@ -738,9 +741,6 @@ namespace RBPhys
         public RBTrajectory(RBRigidbody rigidbody)
         {
             RBColliderAABB aabb = new RBColliderAABB();
-
-            Vector3 pos = rigidbody.Position;
-            Quaternion rot = rigidbody.Rotation;
 
             foreach (RBCollider c in rigidbody.GetColliders())
             {
