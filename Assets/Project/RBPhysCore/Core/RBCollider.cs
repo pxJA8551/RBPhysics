@@ -375,7 +375,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async Task<(float dist, Vector3 aNearest, Vector3 bNearest)> GetNearestDistAsync(RBCollider collider_a, RBCollider collider_b, Vector3 cg_a, Vector3 cg_b, Vector3 penetration)
+        public static async Task<(float dist, Vector3 aNearest, Vector3 bNearest)> GetNearestDist(RBCollider collider_a, RBCollider collider_b, Vector3 cg_a, Vector3 cg_b, Vector3 penetration)
         {
             //OBB-OBB
             if (collider_a.DetailType == RBColliderDetailType.OBB && collider_b.DetailType == RBColliderDetailType.OBB)
