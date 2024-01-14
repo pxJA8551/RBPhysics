@@ -1,16 +1,21 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Profiling;
 using UnityEngine;
+using static RBPhys.RBPhysUtil;
 
 namespace RBPhys
 {
     public class RBRigidbody : MonoBehaviour
     {
         public float mass;
-        Vector3 inertiaTensor;
-        Quaternion inertiaTensorRotation;
+        public Vector3 inertiaTensor;
+        public Quaternion inertiaTensorRotation;
+
+        public float InverseMass { get { return 1 / mass; } }
+
+        public Vector3 InverseInertia { get { return V3Rcp(inertiaTensor); } }
+        public Vector3 InverseInertiaWs { get { return inertiaTensorRotation * V3Rcp(inertiaTensor); } }
 
         Vector3 _centerOfGravity;
 
@@ -38,6 +43,7 @@ namespace RBPhys
             RBPhysCore.AddRigidbody(this);
             FindColliders();
             UpdateTransform();
+            RecalculateInertiaTensor();
         }
 
         void OnDestroy()
@@ -110,6 +116,11 @@ namespace RBPhys
             transform.rotation = Rotation * Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized);
 
             UpdateTransform();
+        }
+
+        public void RecalculateInertiaTensor()
+        {
+            
         }
     }
 }

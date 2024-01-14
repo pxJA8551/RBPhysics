@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using UnityEditor.Networking.PlayerConnection;
 using UnityEngine;
 using UnityEngine.Rendering;
 using static RBPhys.RBColliderCollision;
@@ -361,6 +362,8 @@ namespace RBPhys
 
             if (penetration.penetration != Vector3.zero)
             {
+                bool newCollision = false;
+
                 if (rbc == null)
                 {
                     rbc = FindCollision(traj_a, traj_b, penetration.collider_a, penetration.collider_b);
@@ -369,6 +372,7 @@ namespace RBPhys
                 if (rbc == null)
                 {
                     rbc = new RBCollision(traj_a, penetration.collider_a, traj_b, penetration.collider_b, penetration.penetration);
+                    newCollision = true;
                 }
 
                 rbc.penetration = penetration.penetration;
@@ -379,11 +383,16 @@ namespace RBPhys
                 Vector3 aNearest = p.aNearest;
                 Vector3 bNearest = p.bNearest;
 
+                if (newCollision)
+                {
+                    rbc.InitJacobians(penetration.penetration, aNearest, bNearest);
+                }
+
                 rbc.ContactTangent = bNearest - aNearest;
 
                 if (d > 0)
                 {
-                    var v = await SolveCollision(rbc, aNearest, bNearest).ConfigureAwait(false);
+                    var v = SolveCollision(rbc, aNearest, bNearest);
 
                     return (true, rbc, v.velAdd_a, v.angVelAdd_a, v.velAdd_b, v.angVelAdd_b);
                 }
@@ -482,15 +491,32 @@ namespace RBPhys
             return null;
         }
 
-        static async Task<(Vector3 velAdd_a, Vector3 angVelAdd_a, Vector3 velAdd_b, Vector3 angVelAdd_b)> SolveCollision(RBCollision collision, Vector3 aNearest, Vector3 bNearest)
+        static (Vector3 velAdd_a, Vector3 angVelAdd_a, Vector3 velAdd_b, Vector3 angVelAdd_b) SolveCollision(RBCollision col, Vector3 aNearest, Vector3 bNearest)
         {
-            Vector3 velocityAdd_a = Vector3.zero;
-            Vector3 angularVelocityAdd_a = Vector3.zero;
+            Vector3 velocityAdd_a;
+            Vector3 angularVelocityAdd_a;
 
-            Vector3 velocityAdd_b = Vector3.zero;
-            Vector3 angularVelocityAdd_b = Vector3.zero;
+            Vector3 velocityAdd_b;
+            Vector3 angularVelocityAdd_b;
 
             //２オブジェクト間の関係を解析
+
+            float jv = 0;
+            jv += Vector3.Dot(col.j_va, col.Velocity_a);
+            jv += Vector3.Dot(col.j_wa, col.AngularVelocity_a);
+            jv += Vector3.Dot(col.j_vb, col.Velocity_b);
+            jv += Vector3.Dot(col.j_wb, col.AngularVelocity_b);
+
+            float lambda = col.effectiveMass * (-jv);
+            float oldTotalLambda = col.totalLambda;
+            col.totalLambda = Mathf.Max(0, col.totalLambda + lambda);
+            lambda = col.totalLambda - oldTotalLambda;
+
+            velocityAdd_a = col.InverseMass_a * col.j_va * lambda;
+            angularVelocityAdd_a = Vector3.Scale(col.InverseInertia_a, col.j_wa) * lambda;
+
+            velocityAdd_b = col.InverseMass_b * col.j_vb * lambda;
+            angularVelocityAdd_b = Vector3.Scale(col.InverseInertia_b, col.j_wb) * lambda;
 
             return (velocityAdd_a, angularVelocityAdd_a, velocityAdd_b, angularVelocityAdd_b);
         }
@@ -523,12 +549,25 @@ namespace RBPhys
         public Vector3 cg_a;
         public Vector3 cg_b;
 
+        public Vector3 Velocity_a { get { return rigidbody_a?.Velocity ?? Vector3.zero; } }
+        public Vector3 AngularVelocity_a { get { return rigidbody_a?.AngularVelocity ?? Vector3.zero; } }
+
+        public Vector3 Velocity_b { get { return rigidbody_b?.Velocity ?? Vector3.zero; } }
+        public Vector3 AngularVelocity_b { get { return rigidbody_b?.AngularVelocity ?? Vector3.zero; } }
+
+        public float InverseMass_a { get { return rigidbody_a?.InverseMass ?? 0; } }
+        public Vector3 InverseInertiaWs_a { get { return rigidbody_a?.InverseInertiaWs ?? Vector3.zero; } }
+        public Vector3 InverseInertia_a { get { return rigidbody_a?.InverseInertia ?? Vector3.zero; } }
+
+        public float InverseMass_b { get { return rigidbody_b?.InverseMass ?? 0; } }
+        public Vector3 InverseInertia_b { get { return rigidbody_b?.InverseInertia ?? Vector3.zero; } }
+        public Vector3 InverseInertiaWs_b { get { return rigidbody_b?.InverseInertiaWs ?? Vector3.zero; } }
+
         Vector3 _contactTangent;
 
         public RBCollision(RBTrajectory traj_a, RBCollider col_a, RBTrajectory traj_b, RBCollider col_b, Vector3 penetration)
         {
-            isValidCollision = true;
-            totalLambda = 0;
+            Init(traj_a.rigidbody, traj_b.rigidbody);
 
             collider_a = col_a;
             rigidbody_a = traj_a.rigidbody;
@@ -540,6 +579,30 @@ namespace RBPhys
 
             cg_a = traj_a.isStatic ? col_a.GetColliderCenter() : traj_a.rigidbody.CenterOfGravityWorld;
             cg_b = traj_b.isStatic ? col_b.GetColliderCenter() : traj_b.rigidbody.CenterOfGravityWorld;
+        }
+
+        public void Init(RBRigidbody a, RBRigidbody b)
+        {
+            float k = 0;
+            k += a?.InverseMass ?? 0;
+            k += Vector3.Dot(j_wa, Vector3.Scale(a?.InverseInertiaWs ?? Vector3.zero, j_wa));
+            k += b?.InverseMass ?? 0;
+            k += Vector3.Dot(j_wb, Vector3.Scale(b?.InverseInertiaWs ?? Vector3.zero, j_wb));
+
+            effectiveMass = 1f / k;
+            totalLambda = 0;
+
+            isValidCollision = true;
+        }
+
+        public void InitJacobians(Vector3 penetration, Vector3 aNearest, Vector3 bNearest)
+        {
+            Vector3 pDirN = penetration.normalized;
+
+            j_va = -pDirN;
+            j_wa = -Vector3.Cross(aNearest - rigidbody_a?.CenterOfGravityWorld ?? aNearest, pDirN);
+            j_vb = pDirN;
+            j_wb = Vector3.Cross(bNearest - rigidbody_b?.CenterOfGravityWorld ?? bNearest, pDirN);
         }
 
         public void Update(Vector3 penetration)
