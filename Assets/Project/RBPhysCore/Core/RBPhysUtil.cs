@@ -10,6 +10,12 @@ namespace RBPhys
         public const float EPSILON_FLOAT32 = 0.000001f;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float V3Volume(Vector3 v)
+        {
+            return Mathf.Abs(v.x * v.y * v.z);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 V3Abs(Vector3 v)
         {
             return new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));

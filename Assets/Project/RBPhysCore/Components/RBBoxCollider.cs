@@ -8,13 +8,13 @@ namespace RBPhys
 {
     public class RBBoxCollider : RBCollider
     {
-        const RBColliderDetailType DETAIL_TYPE = RBColliderDetailType.OBB;
+        const RBGeometryType GEOMETRY_TYPE = RBGeometryType.OBB;
 
         [SerializeField] Vector3 _size = Vector3.one;
         [SerializeField] Vector3 _center = Vector3.zero;
         [SerializeField] Vector3 _rotationEuler = Vector3.zero;
 
-        public override RBColliderDetailType DetailType { get { return DETAIL_TYPE; } }
+        public override RBGeometryType GeometryType { get { return GEOMETRY_TYPE; } }
 
         public Vector3 Center { get { return _center; } set { _center = value; } }
         public Vector3 Size { get { return _size; } }

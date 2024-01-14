@@ -8,6 +8,8 @@ namespace RBPhys
 {
     public class RBRigidbody : MonoBehaviour
     {
+        const int DIAGONALIZE_MAX_ITERATION = 24;
+
         public float mass;
         public Vector3 inertiaTensor;
         public Quaternion inertiaTensorRotation;
@@ -120,7 +122,31 @@ namespace RBPhys
 
         public void RecalculateInertiaTensor()
         {
-            
+
+        }
+
+        void ComputeMassAndInertia(List<RBCollider> colliders, out Vector3 inertiaTensor, out Quaternion inertiaTensorRotation)
+        {
+            inertiaTensor = Vector3.zero;
+            inertiaTensorRotation = Quaternion.identity;
+
+            foreach (RBCollider c in colliders)
+            {
+                switch (c.GeometryType)
+                {
+                    case RBGeometryType.Sphere:
+                        {
+
+                        }
+                        break;
+
+                    case RBGeometryType.OBB:
+                        {
+
+                        }
+                        break;
+                }
+            }
         }
     }
 }

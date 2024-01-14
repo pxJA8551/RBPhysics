@@ -15,7 +15,7 @@ namespace RBPhys
         RBRigidbody _parent;
 
         public RBRigidbody ParentRigidbody { get { return _parent; } }
-        public abstract RBColliderDetailType DetailType { get; }
+        public abstract RBGeometryType GeometryType { get; }
 
         public Vector3 GameObjectPos { get; private set; }
         public Quaternion GameObjectRot { get; private set; }
@@ -375,7 +375,7 @@ namespace RBPhys
         public static async Task<(float dist, Vector3 aNearest, Vector3 bNearest)> GetNearestDistAsync(RBCollider collider_a, RBCollider collider_b, Vector3 cg_a, Vector3 cg_b, Vector3 penetration)
         {
             //OBB-OBB
-            if (collider_a.DetailType == RBColliderDetailType.OBB && collider_b.DetailType == RBColliderDetailType.OBB)
+            if (collider_a.GeometryType == RBGeometryType.OBB && collider_b.GeometryType == RBGeometryType.OBB)
             {
                 RBColliderOBB obb_a = collider_a.CalcOBB();
                 RBColliderOBB obb_b = collider_b.CalcOBB();
