@@ -373,7 +373,11 @@ namespace RBPhys
 
                 rbc.penetration = penetration.penetration;
 
-                float d = GetNearestDist(rbc.collider_a, rbc.collider_b, rbc.cg_a, rbc.cg_b, rbc.penetration, out Vector3 aNearest, out Vector3 bNearest);
+                var p = await GetNearestDistAsync(rbc.collider_a, rbc.collider_b, rbc.cg_a, rbc.cg_b, rbc.penetration);
+
+                float d = p.dist;
+                Vector3 aNearest = p.aNearest;
+                Vector3 bNearest = p.bNearest;
 
                 rbc.contactTangent = aNearest - bNearest;
 
