@@ -373,7 +373,7 @@ namespace RBPhys
 
                 rbc.penetration = penetration.penetration;
 
-                var p = await GetNearestDistAsync(rbc.collider_a, rbc.collider_b, rbc.cg_a, rbc.cg_b, rbc.penetration);
+                var p = await GetNearestDistAsync(rbc.collider_a, rbc.collider_b, rbc.cg_a, rbc.cg_b, rbc.penetration).ConfigureAwait(false);
 
                 float d = p.dist;
                 Vector3 aNearest = p.aNearest;
@@ -383,9 +383,7 @@ namespace RBPhys
 
                 if (d > 0)
                 {
-                    Debug.Log((aNearest, bNearest, penetration.penetration));
-
-                    var v = await SolveCollision(rbc, aNearest, bNearest);
+                    var v = await SolveCollision(rbc, aNearest, bNearest).ConfigureAwait(false);
 
                     return (true, rbc, v.velAdd_a, v.angVelAdd_a, v.velAdd_b, v.angVelAdd_b);
                 }

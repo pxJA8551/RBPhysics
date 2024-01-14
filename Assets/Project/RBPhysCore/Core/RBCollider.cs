@@ -388,7 +388,7 @@ namespace RBPhys
                 var t_ab = GetNearestDistAsync(obb_a, obb_b, penetration, cg_b);
                 var t_ba = GetNearestDistAsync(obb_b, obb_a, -penetration, cg_a);
 
-                await Task.WhenAll(t_ab, t_ba);
+                await Task.WhenAll(t_ab, t_ba).ConfigureAwait(false);
 
                 var nearestAB = t_ab.Result;
                 var nearestBA = t_ba.Result;
