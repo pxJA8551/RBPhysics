@@ -375,7 +375,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async Task<(float dist, Vector3 aNearest, Vector3 bNearest)> GetNearestDist(RBCollider collider_a, RBCollider collider_b, Vector3 cg_a, Vector3 cg_b, Vector3 penetration)
+        public static async Task<(float dist, Vector3 aNearest, Vector3 bNearest)> GetNearestDistAsync(RBCollider collider_a, RBCollider collider_b, Vector3 cg_a, Vector3 cg_b, Vector3 penetration)
         {
             //OBB-OBB
             if (collider_a.DetailType == RBColliderDetailType.OBB && collider_b.DetailType == RBColliderDetailType.OBB)
@@ -385,15 +385,15 @@ namespace RBPhys
 
                 obb_a.pos -= penetration; //適当な方向に衝突を解消したOBBで計算するためにOBBの位置を変更
 
-                var t_ab = GetNearestDistAsync(obb_a, obb_b, -penetration, cg_b);
-                var t_ba = GetNearestDistAsync(obb_b, obb_a, penetration, cg_a);
+                var t_ab = GetNearestDistAsync(obb_a, obb_b, penetration, cg_b);
+                var t_ba = GetNearestDistAsync(obb_b, obb_a, -penetration, cg_a);
 
                 await Task.WhenAll(t_ab, t_ba);
 
                 var nearestAB = t_ab.Result;
                 var nearestBA = t_ba.Result;
 
-                if ((nearestAB.dist < nearestBA.dist || nearestBA.dist <= 0) && nearestAB.dist > 0)
+                if (nearestAB.dist > 0 && (nearestAB.dist < nearestBA.dist || nearestBA.dist <= 0))
                 {
                     Vector3 aNearest = nearestAB.an + penetration;
                     Vector3 bNearest = nearestAB.bn;
@@ -548,6 +548,7 @@ namespace RBPhys
             await Task.WhenAll(nearests).ConfigureAwait(false);
 
             (float dist, Vector3 aNearest, Vector3 bNearest) nearest = (-1, Vector3.zero, Vector3.zero);
+
             foreach (var t in nearests)
             {
                 var p = t.Result;

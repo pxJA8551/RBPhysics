@@ -225,7 +225,7 @@ namespace RBPhys
             else
             {
                 trajAABB_a = traj_a.rigidbody.GetColliders().Select(item => (item, item.CalcAABB())).ToArray();
-                penetrationDir += traj_a.rigidbody.Velocity;
+                //penetrationDir += traj_a.rigidbody.Velocity;
             }
 
             if (traj_b.isStatic)
@@ -235,7 +235,7 @@ namespace RBPhys
             else
             {
                 trajAABB_b = traj_b.rigidbody.GetColliders().Select(item => (item, item.CalcAABB())).ToArray();
-                penetrationDir -= traj_b.rigidbody.Velocity;
+                //penetrationDir -= traj_b.rigidbody.Velocity;
             }
 
             if (penetrationDir != Vector3.zero) 
@@ -342,11 +342,11 @@ namespace RBPhys
             Vector3 velocityDiff = Vector3.zero;
             if (!traj_a.isStatic)
             {
-                velocityDiff += traj_a.rigidbody.Velocity;
+                velocityDiff -= traj_a.rigidbody.Velocity;
             }
             if (!traj_b.isStatic)
             {
-                velocityDiff -= traj_b.rigidbody.Velocity;
+                velocityDiff += traj_b.rigidbody.Velocity;
             }
 
             (Vector3 penetration, RBCollider collider_a, RBCollider collider_b) penetration;
@@ -356,7 +356,7 @@ namespace RBPhys
             }
             else
             {
-                penetration = await DetectCollisions(new RBTrajectory(rbc.collider_a), new RBTrajectory(rbc.collider_b), rbc.contactTangent).ConfigureAwait(false);
+                penetration = await DetectCollisions(new RBTrajectory(rbc.collider_a), new RBTrajectory(rbc.collider_b), rbc.ContactTangent).ConfigureAwait(false);
             }
 
             if (penetration.penetration != Vector3.zero)
@@ -379,7 +379,7 @@ namespace RBPhys
                 Vector3 aNearest = p.aNearest;
                 Vector3 bNearest = p.bNearest;
 
-                rbc.contactTangent = aNearest - bNearest;
+                rbc.ContactTangent = bNearest - aNearest;
 
                 if (d > 0)
                 {
@@ -513,7 +513,7 @@ namespace RBPhys
         public RBRigidbody rigidbody_b;
 
         public Vector3 penetration;
-        public Vector3 contactTangent;
+        public Vector3 ContactTangent { get { return _contactTangent;  } set { _contactTangent = value.normalized; } }
 
         public Vector3 j_va;
         public Vector3 j_wa;
@@ -524,6 +524,8 @@ namespace RBPhys
 
         public Vector3 cg_a;
         public Vector3 cg_b;
+
+        Vector3 _contactTangent;
 
         public RBCollision(RBTrajectory traj_a, RBCollider col_a, RBTrajectory traj_b, RBCollider col_b, Vector3 penetration)
         {
@@ -536,7 +538,7 @@ namespace RBPhys
             rigidbody_b = traj_b.rigidbody;
 
             this.penetration = penetration;
-            contactTangent = (traj_a.isStatic ? Vector3.zero : traj_a.rigidbody.Velocity) - (traj_b.isStatic ? Vector3.zero : traj_b.rigidbody.Velocity);
+            ContactTangent = (traj_b.isStatic ? Vector3.zero : traj_b.rigidbody.Velocity) - (traj_a.isStatic ? Vector3.zero : traj_a.rigidbody.Velocity);
 
             cg_a = traj_a.isStatic ? col_a.GetColliderCenter() : traj_a.rigidbody.CenterOfGravityWorld;
             cg_b = traj_b.isStatic ? col_b.GetColliderCenter() : traj_b.rigidbody.CenterOfGravityWorld;
