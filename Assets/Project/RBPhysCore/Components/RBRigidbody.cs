@@ -122,31 +122,54 @@ namespace RBPhys
 
         public void RecalculateInertiaTensor()
         {
-
+            ComputeMassAndInertia(_colliders, out inertiaTensor, out inertiaTensorRotation);
         }
 
-        void ComputeMassAndInertia(List<RBCollider> colliders, out Vector3 inertiaTensor, out Quaternion inertiaTensorRotation)
+        void ComputeMassAndInertia(RBCollider[] colliders, out Vector3 inertiaTensor, out Quaternion inertiaTensorRotation)
         {
             inertiaTensor = Vector3.zero;
             inertiaTensorRotation = Quaternion.identity;
 
+            float totalVolume = colliders.Select(item => item.CalcVolume()).Sum();
+
+            RBInertiaTensor it = new RBInertiaTensor();
+
             foreach (RBCollider c in colliders)
             {
+                float v = c.CalcVolume();
+                float r = v / totalVolume;
+
+                RBInertiaTensor geometryIt = new RBInertiaTensor();
+                float m = mass * r;
+
+                Vector3 relPos = transform.InverseTransformPoint(c.GameObjectPos);
+                Quaternion relRot = c.GameObjectRot * Quaternion.Inverse(Rotation);
+
                 switch (c.GeometryType)
                 {
                     case RBGeometryType.Sphere:
                         {
-
+                            geometryIt.SetInertiaSphere(c.CalcSphere(), relPos, relRot, m);
                         }
                         break;
 
                     case RBGeometryType.OBB:
                         {
-
+                            geometryIt.SetInertiaOBB(c.CalcOBB(), relPos, relRot, m);
                         }
                         break;
                 }
+
+                it.Merge(geometryIt);
             }
+
+            Vector3 diagonalizedIt = RBMatrix3x3.Diagonalize(it.InertiaTensor, out Quaternion itRot);
+
+            Debug.Log(diagonalizedIt);
+            Debug.Log(itRot);
+
+            inertiaTensor = diagonalizedIt;
+            inertiaTensorRotation = itRot;
         }
     }
 }

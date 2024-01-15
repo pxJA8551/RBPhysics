@@ -59,7 +59,7 @@ namespace RBPhys
         {
             RBMatrix3x3 rotM = new RBMatrix3x3(rot);
 
-            _inertiaTensor = rotM * _inertiaTensor * rotM.Transpose();
+            _inertiaTensor = rotM * _inertiaTensor * rotM.Transposed();
             _cg = rot * _cg;
             
             Vector3 c0 = new Vector3(0, _cg.z, -_cg.y);
@@ -97,11 +97,14 @@ namespace RBPhys
 
         public void Merge(RBInertiaTensor t)
         {
-            float mass = _mass + t._mass;
-            Vector3 cg = (_cg * _mass + t._cg * t._mass) / mass;
+            if (t.Mass > 0)
+            {
+                float mass = _mass + t._mass;
+                Vector3 cg = (_cg * _mass + t._cg * t._mass) / mass;
 
-            _mass = mass;
-            _inertiaTensor += t._inertiaTensor;
+                _mass = mass;
+                _inertiaTensor += t._inertiaTensor;
+            }
         }
     }
 }

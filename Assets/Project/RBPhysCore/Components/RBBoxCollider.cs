@@ -21,6 +21,13 @@ namespace RBPhys
         public Quaternion LocalRot { get { return Quaternion.Euler(_rotationEuler); } set { _rotationEuler = value.eulerAngles; } }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override float CalcVolume(Vector3 scale)
+        {
+            Vector3 s = Vector3.Scale(Size, scale);
+            return Mathf.Abs(s.x * s.y * s.z);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot, Vector3 scale)
         {
             Vector3 size = Vector3.Scale(Size, scale);

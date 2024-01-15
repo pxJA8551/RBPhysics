@@ -3,13 +3,16 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Xml.Schema;
 using UnityEngine;
+using UnityEngine.Animations;
 
 namespace RBPhys
 {
     public struct RBMatrix3x3
     {
+        //I(Row)(Column)
         float I00;
         float I01;
         float I02;
@@ -101,6 +104,39 @@ namespace RBPhys
             this = new RBMatrix3x3(c0, c1, c2);
         }
 
+        public Vector3 this[int indexColumn]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get
+            {
+                return indexColumn switch
+                {
+                    0 => C0,
+                    1 => C1,
+                    2 => C2,
+                    _ => throw new NotImplementedException()
+                };
+            }
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set
+            {
+                switch (indexColumn)
+                {
+                    case 0:
+                        C0 = value;
+                        break;
+                    case 1:
+                        C1 = value;
+                        break;
+                    case 2:
+                        C2 = value;
+                        break;
+                    default:
+                        throw new NotImplementedException();
+                }
+            }
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RBMatrix3x3 operator +(RBMatrix3x3 a, RBMatrix3x3 b)
         {
@@ -162,7 +198,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBMatrix3x3 Inverse()
+        public RBMatrix3x3 Inversed()
         {
             float det = 0;
             det += I00 * I11 * I22;
@@ -189,7 +225,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBMatrix3x3 Transpose()
+        public RBMatrix3x3 Transposed()
         {
             return new RBMatrix3x3(I00, I10, I20, I01, I11, I21, I02, I12, I22);
         }
@@ -218,6 +254,74 @@ namespace RBPhys
             r.C1 = new Vector3(0, d.y, 0);
             r.C2 = new Vector3(0, 0, d.z);
             return r;
+        }
+
+        //éQè∆: https://github.com/NVIDIAGameWorks/PhysX-3.4/blob/master/PxShared/src/foundation/src/PsMathUtils.cpp
+        //    : PxVec3 physx::PxDiagonalize(const PxMat33& m, PxQuat& massFrame)
+
+        const int DIAGONALIZE_MAX_ITERATION = 24;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 Diagonalize(RBMatrix3x3 matrix, out Quaternion rotation)
+        {
+            rotation = Quaternion.identity;
+
+            Quaternion q = Quaternion.identity;
+
+            RBMatrix3x3 d = new RBMatrix3x3();
+
+            for (int i = 0; i < DIAGONALIZE_MAX_ITERATION; i++)
+            {
+                RBMatrix3x3 axis = new RBMatrix3x3(q);
+                d = axis.Transposed() * matrix * axis;
+
+                float d0 = Mathf.Abs(d[1][2]);
+                float d1 = Mathf.Abs(d[0][2]);
+                float d2 = Mathf.Abs(d[0][1]);
+                int a = d0 > d1 && d0 > d2 ? 0 : d1 > d2 ? 1 : 2;
+
+                int a1 = (a + 1) % 3;
+                int a2 = (a1 + 1) % 3;
+
+                if (d[a1][a2] == 0.0f || Mathf.Abs(d[a1][a1] - d[a2][a2]) > 2e6f * Mathf.Abs(2 * d[a1][a2]))
+                {
+                    break;
+                }
+
+                float w = (d[a1][a1] - d[a2][a2]) / (2 * d[a1][a2]);
+                float absw = Mathf.Abs(w);
+
+                //?????????????????????????
+
+                Quaternion r;
+                if (absw > 1000)
+                {
+                    r = IndexedRotation(a, 1f / (4 * w), 1f);
+                }
+                else
+                {
+                    float t = 1 / (absw + Mathf.Sqrt(w * w + 1));
+                    float h = 1 / Mathf.Sqrt(t * t + 1);
+
+                    r = IndexedRotation(a, Mathf.Sqrt((1 - h) / 2f) * Mathf.Sign(w), Mathf.Sqrt((1 + h) / 2f));
+                }
+
+                q = (q * r).normalized;
+            }
+
+            rotation = q;
+            return new Vector3(d.C0.x, d.C1.y, d.C2.z);
+        }
+
+        //éQè∆: PxQuat indexedRotation(PxU32 axis, PxReal s, PxReal c)
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static Quaternion IndexedRotation(int axis, float s, float c)
+        {
+            float[] v = new float[3];
+            v[axis] = s;
+
+            return new Quaternion(v[0], v[1], v[2], c);
         }
     }
 }

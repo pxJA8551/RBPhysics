@@ -56,9 +56,15 @@ namespace RBPhys
             return _parent;
         }
 
+        public abstract float CalcVolume(Vector3 scale);
         public abstract RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot, Vector3 scale);
         public abstract RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot, Vector3 scale);
         public abstract RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot, Vector3 scale);
+
+        public virtual float CalcVolume()
+        {
+            return CalcVolume(GameObjectLossyScale);
+        }
 
         public virtual RBColliderSphere CalcSphere()
         {
