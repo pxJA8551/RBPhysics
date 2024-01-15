@@ -101,26 +101,31 @@ namespace RBPhys
             this = new RBMatrix3x3(c0, c1, c2);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RBMatrix3x3 operator +(RBMatrix3x3 a, RBMatrix3x3 b)
         {
             return new RBMatrix3x3(a.C0 + b.C0, a.C1 + b.C1, a.C2 + b.C2);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RBMatrix3x3 operator -(RBMatrix3x3 a, RBMatrix3x3 b)
         {
             return new RBMatrix3x3(a.C0 + b.C0, a.C1 + b.C1, a.C2 + b.C2);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RBMatrix3x3 operator *(float s, RBMatrix3x3 m)
         {
             return new RBMatrix3x3(s * m.C0, s * m.C1, s * m.C2);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RBMatrix3x3 operator *(RBMatrix3x3 m, float s)
         {
             return m * s;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator *(RBMatrix3x3 m, Vector3 v)
         {
             float x = Vector3.Dot(m.R0, v);
@@ -130,6 +135,7 @@ namespace RBPhys
             return new Vector3(x, y, z);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 operator *(Vector3 v, RBMatrix3x3 m)
         {
             float x = Vector3.Dot(v, m.C0);
@@ -139,6 +145,7 @@ namespace RBPhys
             return new Vector3(x, y, z);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RBMatrix3x3 operator *(RBMatrix3x3 a, RBMatrix3x3 b)
         {
             Vector3 c0 = a * b.C0;
@@ -148,40 +155,43 @@ namespace RBPhys
             return CreateFromCols(c0, c1, c2);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float Mul(Vector3 a, RBMatrix3x3 m, Vector3 b)
         {
             return Vector3.Dot(a * m, b);
         }
 
-        public static RBMatrix3x3 Inverse(RBMatrix3x3 m)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public RBMatrix3x3 Inverse()
         {
             float det = 0;
-            det += m.I00 * m.I11 * m.I22;
-            det += m.I01 * m.I12 * m.I20;
-            det += m.I10 * m.I21 * m.I02;
-            det -= m.I02 * m.I11 * m.I20;
-            det -= m.I01 * m.I10 * m.I22;
-            det -= m.I12 * m.I21 * m.I00;
+            det += I00 * I11 * I22;
+            det += I01 * I12 * I20;
+            det += I10 * I21 * I02;
+            det -= I02 * I11 * I20;
+            det -= I01 * I10 * I22;
+            det -= I12 * I21 * I00;
 
             float detInv = 1 / det;
 
             float[] values = new float[9];
-            values[0] = (m.I11 * m.I22 - m.I21 * m.I12) * detInv;
-            values[1] = (m.I12 * m.I20 - m.I10 * m.I22) * detInv;
-            values[2] = (m.I10 * m.I21 - m.I20 * m.I11) * detInv;
-            values[3] = (m.I02 * m.I21 - m.I01 * m.I22) * detInv;
-            values[4] = (m.I00 * m.I22 - m.I02 * m.I20) * detInv;
-            values[5] = (m.I20 * m.I01 - m.I00 * m.I21) * detInv;
-            values[6] = (m.I01 * m.I12 - m.I02 * m.I11) * detInv;
-            values[7] = (m.I10 * m.I02 - m.I00 * m.I12) * detInv;
-            values[8] = (m.I00 * m.I11 - m.I10 * m.I01) * detInv;
+            values[0] = (I11 * I22 - I21 * I12) * detInv;
+            values[1] = (I12 * I20 - I10 * I22) * detInv;
+            values[2] = (I10 * I21 - I20 * I11) * detInv;
+            values[3] = (I02 * I21 - I01 * I22) * detInv;
+            values[4] = (I00 * I22 - I02 * I20) * detInv;
+            values[5] = (I20 * I01 - I00 * I21) * detInv;
+            values[6] = (I01 * I12 - I02 * I11) * detInv;
+            values[7] = (I10 * I02 - I00 * I12) * detInv;
+            values[8] = (I00 * I11 - I10 * I01) * detInv;
 
             return new RBMatrix3x3(values);
         }
 
-        public static RBMatrix3x3 Transpose(RBMatrix3x3 m)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public RBMatrix3x3 Transpose()
         {
-            return new RBMatrix3x3(m.I00, m.I10, m.I20, m.I01, m.I11, m.I21, m.I02, m.I12, m.I22);
+            return new RBMatrix3x3(I00, I10, I20, I01, I11, I21, I02, I12, I22);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
