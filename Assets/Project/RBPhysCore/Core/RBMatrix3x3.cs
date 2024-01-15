@@ -158,7 +158,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RBMatrix3x3 operator *(RBMatrix3x3 m, float s)
         {
-            return m * s;
+            return s * m;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

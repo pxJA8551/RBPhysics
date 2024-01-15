@@ -11,13 +11,10 @@ namespace RBPhys
         const int DIAGONALIZE_MAX_ITERATION = 24;
 
         public float mass;
-        public Vector3 inertiaTensor;
-        public Quaternion inertiaTensorRotation;
+        [HideInInspector] public Vector3 inertiaTensor;
+        [HideInInspector] public Quaternion inertiaTensorRotation;
 
-        public float InverseMass { get { return 1 / mass; } }
-
-        public Vector3 InverseInertia { get { return V3Rcp(inertiaTensor); } }
-        public Vector3 InverseInertiaWs { get { return inertiaTensorRotation * V3Rcp(inertiaTensor); } }
+        [SerializeField] Rigidbody rb;
 
         Vector3 _centerOfGravity;
 
@@ -30,15 +27,28 @@ namespace RBPhys
 
         RBCollider[] _colliders;
 
-        [HideInInspector] public Vector3 Velocity { get { return _velocity; } }
-        [HideInInspector] public Vector3 AngularVelocity { get { return _angularVelocity; } }
-        [HideInInspector] public Vector3 ExpVelocity { get { return _expVelocity; } set { _expVelocity = value; } }
-        [HideInInspector] public Vector3 ExpAngularVelocity { get { return _expAngularVelocity; } set { _expAngularVelocity = value; } }
-        [HideInInspector] public Vector3 Position { get { return _position; } set { _position = value; } }
-        [HideInInspector] public Quaternion Rotation { get { return _rotation; } set { _rotation = value; } }
+        public Vector3 Velocity { get { return _velocity; } }
+        public Vector3 AngularVelocity { get { return _angularVelocity; } }
+        public Vector3 ExpVelocity { get { return _expVelocity; } set { _expVelocity = value; } }
+        public Vector3 ExpAngularVelocity { get { return _expAngularVelocity; } set { _expAngularVelocity = value; } }
+        public Vector3 Position { get { return _position; } set { _position = value; } }
+        public Quaternion Rotation { get { return _rotation; } set { _rotation = value; } }
 
-        [HideInInspector] public Vector3 CenterOfGravity { get { return _centerOfGravity; } set { _centerOfGravity = value; } }
-        [HideInInspector] public Vector3 CenterOfGravityWorld { get { return Position + Rotation * _centerOfGravity; } }
+        public Vector3 CenterOfGravity { get { return _centerOfGravity; } set { _centerOfGravity = value; } }
+        public Vector3 CenterOfGravityWorld { get { return Position + Rotation * _centerOfGravity; } }
+
+        public float InverseMass { get { return 1 / mass; } }
+
+        public Vector3 InverseInertia { get { return inertiaTensorRotation * V3Rcp(inertiaTensor); } }
+        public Vector3 InverseInertiaWs
+        {
+            get
+            {
+                Vector3 i = inertiaTensor;
+                Quaternion r = Rotation * inertiaTensorRotation;
+                return r * V3Rcp(i);
+            }
+        }
 
         void Awake()
         {
@@ -107,6 +117,9 @@ namespace RBPhys
             {
                 c.UpdateTransform();
             }
+
+            inertiaTensor = rb.inertiaTensor;
+            inertiaTensorRotation = rb.inertiaTensorRotation;
         }
 
         public void ApplyTransform(float dt)
@@ -165,11 +178,10 @@ namespace RBPhys
 
             Vector3 diagonalizedIt = RBMatrix3x3.Diagonalize(it.InertiaTensor, out Quaternion itRot);
 
-            Debug.Log(diagonalizedIt);
-            Debug.Log(itRot);
-
             inertiaTensor = diagonalizedIt;
             inertiaTensorRotation = itRot;
+
+            _centerOfGravity = it.CenterOfGravity;
         }
     }
 }

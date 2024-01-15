@@ -51,6 +51,23 @@ namespace RBPhys
             return IsF32EpsilonEqual(a.x, b.x, epsilon) && IsF32EpsilonEqual(a.y, b.y, epsilon) && IsF32EpsilonEqual(a.z, b.z, epsilon);
         }
 
+        static float sqrt3Inv = 1 / Mathf.Sqrt(3);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void V3FromOrthogonalBasis(Vector3 v, out Vector3 a, out Vector3 b)
+        {
+            if (Mathf.Abs(v.x) >= sqrt3Inv)
+            {
+                a = new Vector3(v.y, -v.x, 0).normalized;
+            }
+            else
+            {
+                a = new Vector3(0, v.z, -v.y).normalized;
+            }
+
+            b = Vector3.Cross(a, v);
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PredictPosRot(RBRigidbody rb, out Vector3 position, out Quaternion rotation, float dt)
         {

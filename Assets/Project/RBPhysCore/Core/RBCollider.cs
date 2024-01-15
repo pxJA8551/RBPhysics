@@ -21,6 +21,10 @@ namespace RBPhys
         public Quaternion GameObjectRot { get; private set; }
         public Vector3 GameObjectLossyScale { get; private set; }
 
+        public float beta = 0.5f;
+        public float restitution = 0.0f; //”½”­ŒW”
+        public float friction = 0.6f;
+
         void Awake()
         {
             RBPhysCore.AddCollider(this);
@@ -339,10 +343,13 @@ namespace RBPhys
                         }
                     }
 
-                    penetration = penetrationDir * penetrations
-                        .Select(item => Mathf.Abs(item.magnitude * (1f / Vector3.Dot(penetrationDir, item.normalized))))
-                        .Where(item => !float.IsNaN(item) && !float.IsInfinity(item))
-                        .Min();
+                    if (penetrations.Any()) 
+                    {
+                        penetration = penetrationDir * penetrations
+                            .Select(item => Mathf.Abs(item.magnitude * (1f / Vector3.Dot(penetrationDir, item.normalized))))
+                            .Where(item => !float.IsNaN(item) && !float.IsInfinity(item))
+                            .Min();
+                    }
 
                     return true;
                 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -111,7 +112,7 @@ namespace RBPhys
             }
         }
 
-        public static async void SolveColliders(float dt)
+        public static void SolveColliders(float dt)
         {
             //衝突検知（ブロードフェーズ）
             
@@ -176,10 +177,10 @@ namespace RBPhys
                 foreach (var trajPair in collideInNextFrame)
                 {
                     //２オブジェクト間の侵入を解消（非同期処理）
-                    _solveCollisionTasks.Add(SolveCollisions(trajPair.Item1, trajPair.Item2));
+                    _solveCollisionTasks.Add(SolveCollisions(trajPair.Item1, trajPair.Item2, dt));
                 }
 
-                await Task.WhenAll(_solveCollisionTasks);
+                Task.WhenAll(_solveCollisionTasks); // 同期処理
 
                 foreach (var t in _solveCollisionTasks)
                 {
@@ -192,6 +193,12 @@ namespace RBPhys
                         Vector3 angularVelocityAcc_a = r.angVelAcc_a;
                         Vector3 velocityAcc_b = r.velAcc_b;
                         Vector3 angularVelocityAcc_b = r.angVelAcc_b;
+
+                        //Debug.Log(collision.penetration);
+                        //Debug.Log(velocityAcc_a);
+                        //Debug.Log(angularVelocityAcc_a);
+                        //Debug.Log(velocityAcc_b);
+                        //Debug.Log(angularVelocityAcc_b);
 
                         if (collision.rigidbody_a != null)
                         {
@@ -336,7 +343,7 @@ namespace RBPhys
             return (Vector3.zero, null, null);
         }
 
-        static async Task<(bool collide, RBCollision col, Vector3 vel_a, Vector3 angVel_a, Vector3 vel_b, Vector3 angVel_b)> SolveCollisions(RBTrajectory traj_a, RBTrajectory traj_b)
+        static async Task<(bool collide, RBCollision col, Vector3 vel_a, Vector3 angVel_a, Vector3 vel_b, Vector3 angVel_b)> SolveCollisions(RBTrajectory traj_a, RBTrajectory traj_b, float dt)
         {
             RBCollision rbc = FindCollision(traj_a, traj_b);
 
@@ -357,13 +364,11 @@ namespace RBPhys
             }
             else
             {
-                penetration = await DetectCollisions(new RBTrajectory(rbc.collider_a), new RBTrajectory(rbc.collider_b), rbc.ContactTangent).ConfigureAwait(false);
+                penetration = await DetectCollisions(new RBTrajectory(rbc.collider_a), new RBTrajectory(rbc.collider_b), rbc.ContactNormal).ConfigureAwait(false);
             }
 
             if (penetration.penetration != Vector3.zero)
             {
-                bool newCollision = false;
-
                 if (rbc == null)
                 {
                     rbc = FindCollision(traj_a, traj_b, penetration.collider_a, penetration.collider_b);
@@ -372,8 +377,9 @@ namespace RBPhys
                 if (rbc == null)
                 {
                     rbc = new RBCollision(traj_a, penetration.collider_a, traj_b, penetration.collider_b, penetration.penetration);
-                    newCollision = true;
                 }
+
+                rbc.InitVelocityConstraint(dt);
 
                 rbc.penetration = penetration.penetration;
 
@@ -383,16 +389,11 @@ namespace RBPhys
                 Vector3 aNearest = p.aNearest;
                 Vector3 bNearest = p.bNearest;
 
-                if (newCollision)
-                {
-                    rbc.InitJacobians(penetration.penetration, aNearest, bNearest);
-                }
-
-                rbc.ContactTangent = bNearest - aNearest;
+                rbc.Update(penetration.penetration, aNearest, bNearest);
 
                 if (d > 0)
                 {
-                    var v = SolveCollision(rbc, aNearest, bNearest);
+                    var v = SolveCollision(rbc, dt);
 
                     return (true, rbc, v.velAdd_a, v.angVelAdd_a, v.velAdd_b, v.angVelAdd_b);
                 }
@@ -491,33 +492,9 @@ namespace RBPhys
             return null;
         }
 
-        static (Vector3 velAdd_a, Vector3 angVelAdd_a, Vector3 velAdd_b, Vector3 angVelAdd_b) SolveCollision(RBCollision col, Vector3 aNearest, Vector3 bNearest)
+        static (Vector3 velAdd_a, Vector3 angVelAdd_a, Vector3 velAdd_b, Vector3 angVelAdd_b) SolveCollision(RBCollision col, float dt)
         {
-            Vector3 velocityAdd_a;
-            Vector3 angularVelocityAdd_a;
-
-            Vector3 velocityAdd_b;
-            Vector3 angularVelocityAdd_b;
-
-            //２オブジェクト間の関係を解析
-
-            float jv = 0;
-            jv += Vector3.Dot(col.j_va, col.Velocity_a);
-            jv += Vector3.Dot(col.j_wa, col.AngularVelocity_a);
-            jv += Vector3.Dot(col.j_vb, col.Velocity_b);
-            jv += Vector3.Dot(col.j_wb, col.AngularVelocity_b);
-
-            float lambda = col.effectiveMass * (-jv);
-            float oldTotalLambda = col.totalLambda;
-            col.totalLambda = Mathf.Max(0, col.totalLambda + lambda);
-            lambda = col.totalLambda - oldTotalLambda;
-
-            velocityAdd_a = col.InverseMass_a * col.j_va * lambda;
-            angularVelocityAdd_a = Vector3.Scale(col.InverseInertia_a, col.j_wa) * lambda;
-
-            velocityAdd_b = col.InverseMass_b * col.j_vb * lambda;
-            angularVelocityAdd_b = Vector3.Scale(col.InverseInertia_b, col.j_wb) * lambda;
-
+            col.SolveVelocityConstraints(dt, out Vector3 velocityAdd_a, out Vector3 angularVelocityAdd_a, out Vector3 velocityAdd_b, out Vector3 angularVelocityAdd_b);
             return (velocityAdd_a, angularVelocityAdd_a, velocityAdd_b, angularVelocityAdd_b);
         }
 
@@ -536,18 +513,18 @@ namespace RBPhys
         public RBCollider collider_b;
         public RBRigidbody rigidbody_b;
 
-        public Vector3 penetration;
-        public Vector3 ContactTangent { get { return _contactTangent;  } set { _contactTangent = value.normalized; } }
-
-        public Vector3 j_va;
-        public Vector3 j_wa;
-        public Vector3 j_vb;
-        public Vector3 j_wb;
-        public float totalLambda;
-        public float effectiveMass;
-
         public Vector3 cg_a;
         public Vector3 cg_b;
+        public Vector3 aNearest;
+        public Vector3 bNearest;
+        public Vector3 penetration;
+        public Vector3 ContactNormal { get { return _contactNormal;  } set { _contactNormal = value.normalized; } }
+        public Vector3 rA;
+        public Vector3 rB;
+
+        Jacobian _jN; //Normal
+        Jacobian _jT; //Tangent
+        Jacobian _jB; //Bi-Tangent
 
         public Vector3 Velocity_a { get { return rigidbody_a?.Velocity ?? Vector3.zero; } }
         public Vector3 AngularVelocity_a { get { return rigidbody_a?.AngularVelocity ?? Vector3.zero; } }
@@ -560,54 +537,162 @@ namespace RBPhys
         public Vector3 InverseInertia_a { get { return rigidbody_a?.InverseInertia ?? Vector3.zero; } }
 
         public float InverseMass_b { get { return rigidbody_b?.InverseMass ?? 0; } }
-        public Vector3 InverseInertia_b { get { return rigidbody_b?.InverseInertia ?? Vector3.zero; } }
         public Vector3 InverseInertiaWs_b { get { return rigidbody_b?.InverseInertiaWs ?? Vector3.zero; } }
+        public Vector3 InverseInertia_b { get { return rigidbody_b?.InverseInertia ?? Vector3.zero; } }
 
-        Vector3 _contactTangent;
+        Vector3 _contactNormal;
 
         public RBCollision(RBTrajectory traj_a, RBCollider col_a, RBTrajectory traj_b, RBCollider col_b, Vector3 penetration)
         {
-            Init(traj_a.rigidbody, traj_b.rigidbody);
-
             collider_a = col_a;
             rigidbody_a = traj_a.rigidbody;
             collider_b = col_b;
             rigidbody_b = traj_b.rigidbody;
 
-            this.penetration = penetration;
-            ContactTangent = (traj_b.isStatic ? Vector3.zero : traj_b.rigidbody.Velocity) - (traj_a.isStatic ? Vector3.zero : traj_a.rigidbody.Velocity);
-
             cg_a = traj_a.isStatic ? col_a.GetColliderCenter() : traj_a.rigidbody.CenterOfGravityWorld;
             cg_b = traj_b.isStatic ? col_b.GetColliderCenter() : traj_b.rigidbody.CenterOfGravityWorld;
+
+            this.penetration = penetration;
+            ContactNormal = (traj_b.isStatic ? Vector3.zero : traj_b.rigidbody.Velocity) - (traj_a.isStatic ? Vector3.zero : traj_a.rigidbody.Velocity);
         }
 
-        public void Init(RBRigidbody a, RBRigidbody b)
+        public void Update(Vector3 penetration, Vector3 aNearest, Vector3 bNearest)
         {
-            float k = 0;
-            k += a?.InverseMass ?? 0;
-            k += Vector3.Dot(j_wa, Vector3.Scale(a?.InverseInertiaWs ?? Vector3.zero, j_wa));
-            k += b?.InverseMass ?? 0;
-            k += Vector3.Dot(j_wb, Vector3.Scale(b?.InverseInertiaWs ?? Vector3.zero, j_wb));
+            this.aNearest = aNearest;
+            this.bNearest = bNearest;
 
-            effectiveMass = 1f / k;
-            totalLambda = 0;
+            this.penetration = penetration;
+            ContactNormal = penetration;
 
-            isValidCollision = true;
+            rA = aNearest - rigidbody_a?.CenterOfGravityWorld ?? Vector3.zero;
+            rB = bNearest - rigidbody_b?.CenterOfGravityWorld ?? Vector3.zero;
         }
 
-        public void InitJacobians(Vector3 penetration, Vector3 aNearest, Vector3 bNearest)
+        public void InitVelocityConstraint(float dt)
         {
-            Vector3 pDirN = penetration.normalized;
+            _jN = new Jacobian(Jacobian.Type.Normal);
+            _jT = new Jacobian(Jacobian.Type.Tangent);
+            _jB = new Jacobian(Jacobian.Type.Tangent);
 
-            j_va = -pDirN;
-            j_wa = -Vector3.Cross(aNearest - rigidbody_a?.CenterOfGravityWorld ?? aNearest, pDirN);
-            j_vb = pDirN;
-            j_wb = Vector3.Cross(bNearest - rigidbody_b?.CenterOfGravityWorld ?? bNearest, pDirN);
+            Vector3 tangent;
+            Vector3 bitangent;
+
+            RBPhysUtil.V3FromOrthogonalBasis(-ContactNormal, out tangent, out bitangent);
+
+            _jN.Init(this, -ContactNormal, dt);
+            _jT.Init(this, tangent, dt);
+            _jB.Init(this, bitangent, dt);
         }
 
-        public void Update(Vector3 penetration)
+        public void SolveVelocityConstraints(float dt, out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b)
         {
+            _jN.Resolve(this, dt, out Vector3 vAdd_a_n, out Vector3 avAdd_a_n, out Vector3 vAdd_b_n, out Vector3 avAdd_b_n);
+            _jT.Resolve(this, dt, out Vector3 vAdd_a_t, out Vector3 avAdd_a_t, out Vector3 vAdd_b_t, out Vector3 avAdd_b_t);
+            _jB.Resolve(this, dt, out Vector3 vAdd_a_b, out Vector3 avAdd_a_b, out Vector3 vAdd_b_b, out Vector3 avAdd_b_b);
 
+            vAdd_a = vAdd_a_n + vAdd_a_t + vAdd_a_b;
+            avAdd_a = avAdd_a_n + avAdd_a_t + avAdd_a_b;
+            vAdd_b = vAdd_b_n + vAdd_b_t + vAdd_b_b;
+            avAdd_b = avAdd_b_n + avAdd_b_t + avAdd_b_b;
+        }
+
+        struct Jacobian
+        {
+            Type _type;
+
+            Vector3 _va;
+            Vector3 _wa;
+            Vector3 _vb;
+            Vector3 _wb;
+
+            float _bias;
+            float _totalLambda;
+            float _effectiveMass;
+
+            public enum Type
+            {
+                Normal,
+                Tangent
+            }
+
+            public Jacobian(Type type)
+            {
+                _type = type;
+                _va = Vector3.zero;
+                _wa = Vector3.zero;
+                _vb = Vector3.zero;
+                _wb = Vector3.zero;
+
+                _bias = 0;
+                _totalLambda = 0;
+                _effectiveMass = 0;
+            }
+
+            public void Init(RBCollision col, Vector3 dir, float dt)
+            {
+                Vector3 pDirN = dir.normalized;
+
+                _va = -pDirN;
+                _wa = -Vector3.Cross(col.rA, pDirN);
+                _vb = pDirN;
+                _wb = Vector3.Cross(col.rB, pDirN);
+
+                _bias = 0;
+
+                if (_type == Type.Normal)
+                {
+                    float beta = col.collider_a.beta * col.collider_b.beta;
+                    float restitution = col.collider_a.restitution * col.collider_b.restitution;
+                    Vector3 relVel = Vector3.zero;
+                    relVel -= col.Velocity_a;
+                    relVel -= Vector3.Cross(col.rA, col.AngularVelocity_a);
+                    relVel += col.Velocity_b;
+                    relVel += Vector3.Cross(col.rB, col.AngularVelocity_b);
+
+                    float closingVelocity = Vector3.Dot(relVel, pDirN);
+                    _bias = -(beta / dt) * col.penetration.magnitude + restitution * closingVelocity;
+                }
+
+                float k = 0;
+                k += col.InverseMass_a;
+                k += Vector3.Dot(_wa, Vector3.Scale(col.InverseInertiaWs_a, _wa));
+                k += col.InverseMass_b;
+                k += Vector3.Dot(_wb, Vector3.Scale(col.InverseInertiaWs_b, _wb));
+
+                _effectiveMass = 1 / k;
+                _totalLambda = 0;
+            }
+
+            public void Resolve(RBCollision col, float dt, out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b)
+            {
+                float jv = 0;
+                jv += Vector3.Dot(_va, col.Velocity_a);
+                jv += Vector3.Dot(_wa, col.AngularVelocity_a);
+                jv += Vector3.Dot(_vb, col.Velocity_b);
+                jv += Vector3.Dot(_wb, col.AngularVelocity_b);
+
+                float lambda = _effectiveMass * (-(jv + _bias));
+
+                float oldTotalLambda = _totalLambda;
+
+                if (_type == Type.Normal)
+                {
+                    _totalLambda = Mathf.Max(0.0f, _totalLambda + lambda);
+                }
+                else if (_type == Type.Tangent)
+                {
+                    float friction = col.collider_a.friction * col.collider_b.friction;
+                    float maxFriction = friction * col._jN._totalLambda;
+                    _totalLambda = Mathf.Clamp(_totalLambda + lambda, -maxFriction, maxFriction);
+                }
+
+                lambda = _totalLambda - oldTotalLambda;
+
+                vAdd_a = col.InverseMass_a * _va * lambda;
+                avAdd_a = Vector3.Scale(col.InverseInertiaWs_a, _wa) * 0;
+                vAdd_b = col.InverseMass_b * _vb * lambda;
+                avAdd_b = Vector3.Scale(col.InverseInertiaWs_b, _wb) * 0;
+            }
         }
     }
 
