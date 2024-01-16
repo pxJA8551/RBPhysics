@@ -183,7 +183,7 @@ namespace RBPhys
                     _solveCollisionTasks.Add(SolveCollisions(trajPair.Item1, trajPair.Item2, dt));
                 }
 
-                Task.WhenAll(_solveCollisionTasks); // “¯Šúˆ—
+                Task.WhenAll(_solveCollisionTasks); // ”ñ“¯Šúˆ—‚ð•¡”‘Ò‹@‚·‚é“¯Šúˆ—
 
                 foreach (var t in _solveCollisionTasks)
                 {
@@ -271,7 +271,7 @@ namespace RBPhys
 
                 rbc.InitVelocityConstraint(dt);
 
-                //Debug.Log((aNearest, bNearest));
+                Debug.Log((d, aNearest, bNearest));
 
                 if (d > 0)
                 {
@@ -568,8 +568,15 @@ namespace RBPhys
             this.penetration = penetration;
             ContactNormal = penetration;
 
-            rA = aNearest - rigidbody_a?.CenterOfGravityWorld ?? Vector3.zero;
-            rB = bNearest - rigidbody_b?.CenterOfGravityWorld ?? Vector3.zero;
+            cg_a = rigidbody_a?.CenterOfGravityWorld ?? Vector3.zero;
+            cg_b = rigidbody_b?.CenterOfGravityWorld ?? Vector3.zero;
+
+            rA = aNearest - cg_a;
+            rB = bNearest - cg_b;
+
+            Debug.Log(rB);
+            Debug.Log(bNearest);
+            Debug.Log(cg_b);
         }
 
         public void InitVelocityConstraint(float dt)
@@ -578,26 +585,30 @@ namespace RBPhys
             _jT = new Jacobian(Jacobian.Type.Tangent);
             _jB = new Jacobian(Jacobian.Type.Tangent);
 
-            Vector3 tangent;
-            Vector3 bitangent;
+            Vector3 contactNormal = ContactNormal;
+            Vector3 tangent = Vector3.zero;
+            Vector3 bitangent = Vector3.zero;
 
-            RBPhysUtil.V3FromOrthogonalBasis(ContactNormal, out tangent, out bitangent);
+            Vector3.OrthoNormalize(ref contactNormal, ref tangent, ref bitangent);
 
-            _jN.Init(this, ContactNormal, dt);
+            _jN.Init(this, contactNormal, dt);
             _jT.Init(this, tangent, dt);
             _jB.Init(this, bitangent, dt);
         }
 
         public void SolveVelocityConstraints(float dt, out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b)
         {
-            _jN.Resolve(this, dt, out Vector3 vAdd_a_n, out Vector3 avAdd_a_n, out Vector3 vAdd_b_n, out Vector3 avAdd_b_n);
-            _jT.Resolve(this, dt, out Vector3 vAdd_a_t, out Vector3 avAdd_a_t, out Vector3 vAdd_b_t, out Vector3 avAdd_b_t);
-            _jB.Resolve(this, dt, out Vector3 vAdd_a_b, out Vector3 avAdd_a_b, out Vector3 vAdd_b_b, out Vector3 avAdd_b_b);
+            vAdd_a = Vector3.zero;
+            avAdd_a = Vector3.zero;
+            vAdd_b = Vector3.zero;
+            avAdd_b = Vector3.zero;
 
-            vAdd_a = vAdd_a_n + vAdd_a_t + vAdd_a_b;
-            avAdd_a = avAdd_a_n + avAdd_a_t + avAdd_a_b;
-            vAdd_b = vAdd_b_n + vAdd_b_t + vAdd_b_b;
-            avAdd_b = avAdd_b_n + avAdd_b_t + avAdd_b_b;
+            _jN.Resolve(this, dt, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
+            _jT.Resolve(this, dt, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
+            _jB.Resolve(this, dt, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
+
+            Debug.Log(rB);
+            Debug.Log((vAdd_a, avAdd_a, vAdd_b, avAdd_b));
         }
 
         struct Jacobian
@@ -622,6 +633,7 @@ namespace RBPhys
             public Jacobian(Type type)
             {
                 _type = type;
+
                 _va = Vector3.zero;
                 _wa = Vector3.zero;
                 _vb = Vector3.zero;
@@ -634,7 +646,7 @@ namespace RBPhys
 
             public void Init(RBCollision col, Vector3 dir, float dt)
             {
-                Vector3 pDirN = dir.normalized;
+                Vector3 pDirN = dir;
 
                 _va = pDirN;
                 _wa = Vector3.Cross(col.rA, pDirN);
@@ -667,13 +679,15 @@ namespace RBPhys
                 _totalLambda = 0;
             }
 
-            public void Resolve(RBCollision col, float dt, out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b)
+            public void Resolve(RBCollision col, float dt, ref Vector3 vAdd_a, ref Vector3 avAdd_a, ref Vector3 vAdd_b, ref Vector3 avAdd_b)
             {
+                Debug.Log(_wb);
+
                 float jv = 0;
-                jv += Vector3.Dot(_va, col.ExpVelocity_a);
-                jv += Vector3.Dot(_wa, col.ExpAngularVelocity_a);
-                jv += Vector3.Dot(_vb, col.ExpVelocity_b);
-                jv += Vector3.Dot(_wb, col.ExpAngularVelocity_b);
+                jv += Vector3.Dot(_va, col.ExpVelocity_a + vAdd_a);
+                jv += Vector3.Dot(_wa, col.ExpAngularVelocity_a + avAdd_a);
+                jv += Vector3.Dot(_vb, col.ExpVelocity_b + vAdd_b);
+                jv += Vector3.Dot(_wb, col.ExpAngularVelocity_b + avAdd_b);
 
                 float lambda = _effectiveMass * (-(jv + _bias));
 
@@ -692,10 +706,10 @@ namespace RBPhys
 
                 lambda = _totalLambda - oldTotalLambda;
 
-                vAdd_a = col.InverseMass_a * _va * lambda;
-                avAdd_a = Vector3.Scale(col.InverseInertiaWs_a, _wa) * lambda;
-                vAdd_b = col.InverseMass_b * _vb * lambda;
-                avAdd_b = Vector3.Scale(col.InverseInertiaWs_b, _wb) * lambda;
+                vAdd_a += col.InverseMass_a * _va * lambda;
+                avAdd_a += Vector3.Scale(col.InverseInertiaWs_a, _wa) * lambda;
+                vAdd_b += col.InverseMass_b * _vb * lambda;
+                avAdd_b += Vector3.Scale(col.InverseInertiaWs_b, _wb) * lambda;
             }
         }
     }

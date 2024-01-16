@@ -21,9 +21,9 @@ namespace RBPhys
         public Quaternion GameObjectRot { get; private set; }
         public Vector3 GameObjectLossyScale { get; private set; }
 
-        public float beta = 0.5f;
+        public float beta = 0.8f;
         public float restitution = 0.0f; //îΩî≠åWêî
-        public float friction = 0.6f;
+        public float friction = 0.6f; //ñÄéCåWêî
 
         void Awake()
         {
@@ -576,6 +576,10 @@ namespace RBPhys
 
             (float dist, Vector3 aNearest, Vector3 bNearest)[] nearests = new (float dist, Vector3 aNearest, Vector3 bNearest)[3];
 
+            nearests[0] = (-1, Vector3.zero, Vector3.zero);
+            nearests[1] = (-1, Vector3.zero, Vector3.zero);
+            nearests[2] = (-1, Vector3.zero, Vector3.zero);
+
             Vector3 bRightN = obb.GetAxisRight();
             Vector3 bUpN = obb.GetAxisUp();
             Vector3 bForwardN = obb.GetAxisForward();
@@ -797,7 +801,6 @@ namespace RBPhys
                 {
                     aNearest = ProjectPointOnRect(np.nearest, rectPointsClockwise_a, normal_a);
                     bNearest = np.nearest;
-
                     return Vector3.Distance(aNearest, bNearest);
                 }
                 else if (parallelCount == 2)

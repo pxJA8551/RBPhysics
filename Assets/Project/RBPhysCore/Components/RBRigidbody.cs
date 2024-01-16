@@ -107,6 +107,17 @@ namespace RBPhys
             return _colliders;
         }
 
+        public void ApplyTransform(float dt)
+        {
+            _velocity = _expVelocity;
+            _angularVelocity = _expAngularVelocity;
+
+            transform.position = Position + (_velocity * dt);
+            transform.rotation = Rotation * Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized);
+
+            UpdateTransform();
+        }
+
         public void UpdateTransform()
         {
             Position = transform.position;
@@ -119,17 +130,6 @@ namespace RBPhys
 
             inertiaTensor = rb.inertiaTensor;
             inertiaTensorRotation = rb.inertiaTensorRotation;
-        }
-
-        public void ApplyTransform(float dt)
-        {
-            _velocity = _expVelocity;
-            _angularVelocity = _expAngularVelocity;
-
-            transform.position = Position + (_velocity * dt);
-            transform.rotation = Rotation * Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized);
-
-            UpdateTransform();
         }
 
         public void RecalculateInertiaTensor()
