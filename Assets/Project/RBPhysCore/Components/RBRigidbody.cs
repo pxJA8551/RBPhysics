@@ -39,14 +39,13 @@ namespace RBPhys
 
         public float InverseMass { get { return 1 / mass; } }
 
-        public Vector3 InverseInertia { get { return inertiaTensorRotation * V3Rcp(inertiaTensor); } }
         public Vector3 InverseInertiaWs
         {
             get
             {
                 Vector3 i = inertiaTensor;
                 Quaternion r = Rotation * inertiaTensorRotation;
-                return r * V3Rcp(i);
+                return r * (Quaternion.Inverse(r) * V3Rcp(i));
             }
         }
 

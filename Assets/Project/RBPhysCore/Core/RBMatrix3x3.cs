@@ -198,7 +198,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBMatrix3x3 Inversed()
+        public RBMatrix3x3 Inverted()
         {
             float det = 0;
             det += I00 * I11 * I22;

@@ -102,6 +102,7 @@ namespace RBPhys
                 float mass = _mass + t._mass;
                 Vector3 cg = (_cg * _mass + t._cg * t._mass) / mass;
 
+                _cg = cg;
                 _mass = mass;
                 _inertiaTensor += t._inertiaTensor;
             }
