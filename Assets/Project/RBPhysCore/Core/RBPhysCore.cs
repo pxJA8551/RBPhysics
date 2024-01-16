@@ -261,17 +261,17 @@ namespace RBPhys
 
                 rbc.penetration = penetration.penetration;
 
-                var p = await GetNearestDistAsync(rbc.collider_a, rbc.collider_b, rbc.cg_a, rbc.cg_b, rbc.penetration).ConfigureAwait(false);
+                var p = await GetNearestDistAsync(rbc.collider_a, rbc.collider_b, rbc.cg_b, rbc.penetration).ConfigureAwait(false);
 
                 float d = p.dist;
                 Vector3 aNearest = p.aNearest;
                 Vector3 bNearest = p.bNearest;
 
-                rbc.Update(penetration.penetration, aNearest, bNearest);
+                Debug.Log((d, aNearest, bNearest, p.pDir, penetration.penetration, penetration.penetration.normalized));
+
+                rbc.Update(penetration.penetration, -p.pDir, aNearest, bNearest);
 
                 rbc.InitVelocityConstraint(dt);
-
-                Debug.Log((d, aNearest, bNearest));
 
                 if (d > 0)
                 {
@@ -560,23 +560,19 @@ namespace RBPhys
             ContactNormal = (traj_b.isStatic ? Vector3.zero : traj_b.rigidbody.Velocity) - (traj_a.isStatic ? Vector3.zero : traj_a.rigidbody.Velocity);
         }
 
-        public void Update(Vector3 penetration, Vector3 aNearest, Vector3 bNearest)
+        public void Update(Vector3 penetration, Vector3 contactNormal, Vector3 aNearest, Vector3 bNearest)
         {
             this.aNearest = aNearest;
             this.bNearest = bNearest;
 
             this.penetration = penetration;
-            ContactNormal = penetration;
+            ContactNormal = contactNormal;
 
             cg_a = rigidbody_a?.CenterOfGravityWorld ?? Vector3.zero;
             cg_b = rigidbody_b?.CenterOfGravityWorld ?? Vector3.zero;
 
             rA = aNearest - cg_a;
             rB = bNearest - cg_b;
-
-            Debug.Log(rB);
-            Debug.Log(bNearest);
-            Debug.Log(cg_b);
         }
 
         public void InitVelocityConstraint(float dt)
@@ -607,8 +603,7 @@ namespace RBPhys
             _jT.Resolve(this, dt, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
             _jB.Resolve(this, dt, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
 
-            Debug.Log(rB);
-            Debug.Log((vAdd_a, avAdd_a, vAdd_b, avAdd_b));
+            //Debug.Log((vAdd_a, avAdd_a, vAdd_b, avAdd_b));
         }
 
         struct Jacobian
@@ -677,12 +672,17 @@ namespace RBPhys
 
                 _effectiveMass = 1 / k;
                 _totalLambda = 0;
+
+                //Debug.Log(pDirN);
+                //Debug.Log(col.rB);
+                //Debug.Log(col.aNearest);
+                //Debug.Log(col.bNearest);
+                //Debug.Log(col.cg_b);
+                //Debug.Log(_wb);
             }
 
             public void Resolve(RBCollision col, float dt, ref Vector3 vAdd_a, ref Vector3 avAdd_a, ref Vector3 vAdd_b, ref Vector3 avAdd_b)
             {
-                Debug.Log(_wb);
-
                 float jv = 0;
                 jv += Vector3.Dot(_va, col.ExpVelocity_a + vAdd_a);
                 jv += Vector3.Dot(_wa, col.ExpAngularVelocity_a + avAdd_a);

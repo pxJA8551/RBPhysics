@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.Assertions.Must;
+using UnityEngine.UIElements;
 
 namespace RBPhys
 {
@@ -25,6 +27,23 @@ namespace RBPhys
         public static Vector3 V3Rcp(Vector3 v)
         {
             return new Vector3(1f / v.x, 1f / v.y, 1f / v.z);
+        }
+
+        static float sqrt3Inv = 1 / Mathf.Sqrt(3);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void V3FromOrthogonalBasis(Vector3 v, out Vector3 a, out Vector3 b)
+        {
+            if (Mathf.Abs(v.x) >= sqrt3Inv)
+            {
+                a = new Vector3(v.y, -v.x, 0).normalized;
+            }
+            else
+            {
+                a = new Vector3(0, v.z, -v.y).normalized;
+            }
+
+            b = Vector3.Cross(a, v);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -91,21 +110,26 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 CalcContactPointOnSameNormal((Vector3 dir, Vector3 center) line_a, (Vector3 dir, Vector3 center) line_b)
+        public static Vector3 CalcNearest((Vector3 dir, Vector3 center) line_a, (Vector3 dir, Vector3 center) line_b)
         {
-            float div = Mathf.Sqrt(1 - Mathf.Pow(Vector3.Dot(line_a.dir.normalized, line_b.dir.normalized), 2));
+            Vector3 aDirN = line_a.dir.normalized;
+            Vector3 bDirN = line_b.dir.normalized;
 
-            if (div == 0 && false)
-            {
-                return ProjectPointOnLine(line_b.center, line_a);
-            }
+            float dotAb = Vector3.Dot(aDirN, bDirN);
+            float div = 1 - dotAb * dotAb;
 
-            Vector3 rB = ProjectPointOnLine(line_b.center, line_a) - line_b.center;
+            Vector3 aToB = line_b.center - line_a.center;
 
-            float length = rB.magnitude / div;
-            Vector3 rbContact = length * -line_b.dir + line_b.center;
+            float r1 = (Vector3.Dot(aToB, aDirN) - dotAb * Vector3.Dot(aToB, bDirN)) / div;
+            float r2 = (dotAb * Vector3.Dot(aToB, aDirN) - Vector3.Dot(aToB, bDirN)) / div;
 
-            return rbContact;
+            Vector3 aBegin = line_a.center;
+            Vector3 bBegin = line_b.center;
+
+            Vector3 aNearest = aBegin + r1 * aDirN;
+            Vector3 bNearest = bBegin + r2 * bDirN;
+
+            return aNearest;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -130,7 +154,7 @@ namespace RBPhys
 
             (Vector3 dir, Vector3 center) edgeLined = (d, edge.begin);
 
-            Vector3 contact = CalcContactPointOnSameNormal(edgeLined, linePrjOn);
+            Vector3 contact = CalcNearest(edgeLined, linePrjOn);
             Vector3 r = edge.begin - contact;
 
             float div = d.magnitude * Mathf.Sign(Vector3.Dot(d, r));

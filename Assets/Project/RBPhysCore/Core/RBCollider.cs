@@ -389,7 +389,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async Task<(float dist, Vector3 aNearest, Vector3 bNearest)> GetNearestDistAsync(RBCollider collider_a, RBCollider collider_b, Vector3 cg_a, Vector3 cg_b, Vector3 penetration)
+        public static async Task<(float dist, Vector3 aNearest, Vector3 bNearest, Vector3 pDir)> GetNearestDistAsync(RBCollider collider_a, RBCollider collider_b, Vector3 cg_b, Vector3 penetration)
         {
             //OBB-OBB
             if (collider_a.GeometryType == RBGeometryType.OBB && collider_b.GeometryType == RBGeometryType.OBB)
@@ -405,16 +405,16 @@ namespace RBPhys
                 {
                     Vector3 aNearest = nearestAB.an - penetration;
                     Vector3 bNearest = nearestAB.bn;
-                    return (Vector3.Distance(aNearest, bNearest), aNearest, bNearest);
+                    return (Vector3.Distance(aNearest, bNearest), aNearest, bNearest, nearestAB.pDir);
                 }
             }
 
-            return (0, Vector3.zero, Vector3.zero);
+            return (0, Vector3.zero, Vector3.zero, Vector3.zero);
         }
 
         //OBB-OBBç≈ãﬂì_îªíË
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async Task<(float dist, Vector3 an, Vector3 bn)> GetNearestDistAsync(RBColliderOBB obb_a, RBColliderOBB obb_b, Vector3 penetration, Vector3 cg)
+        public static async Task<(float dist, Vector3 an, Vector3 bn, Vector3 pDir)> GetNearestDistAsync(RBColliderOBB obb_a, RBColliderOBB obb_b, Vector3 penetration, Vector3 cg)
         {
             Vector3 normal_a_x = obb_a.GetAxisRight();
             Vector3 normal_a_y = obb_a.GetAxisUp();
@@ -422,23 +422,23 @@ namespace RBPhys
 
             Vector3[] obb_a_verts = obb_a.GetVertices();
 
-            List<Task<(float dist, Vector3 aNearest, Vector3 bNearest, bool faceParallel)>> nearests = new List<Task<(float dist, Vector3 aNearest, Vector3 bNearest, bool faceParallel)>>();
+            List<Task<(float dist, Vector3 aNearest, Vector3 bNearest, bool faceParallel, Vector3 pDir)>> nearests = new List<Task<(float dist, Vector3 aNearest, Vector3 bNearest, bool faceParallel, Vector3 pDir)>>();
 
             if (Vector3.Dot(penetration, normal_a_x) < 0)
             {
                 var t = Task.Run(() =>
                 {
-                    Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[5], obb_a_verts[7], obb_a_verts[3], obb_a_verts[1] };
+                    Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[1], obb_a_verts[3], obb_a_verts[7], obb_a_verts[5] };
                     (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, 0, obb_a.size.z / 2f), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, obb_a.size.y, obb_a.size.z / 2f));
                     (Vector3 begin, Vector3 end) edgeLY = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, obb_a.size.y / 2f, 0), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, obb_a.size.y / 2f, obb_a.size.z));
                     float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal_a_x, cg, obb_b, out Vector3 an, out Vector3 bn, out bool faceParallel);
 
                     if (dist >= 0)
                     {
-                        return (dist, an, bn, faceParallel);
+                        return (dist, an, bn, faceParallel, normal_a_x);
                     }
 
-                    return (-1, Vector3.zero, Vector3.zero, false);
+                    return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
 
                 nearests.Add(t);
@@ -448,17 +448,17 @@ namespace RBPhys
             {
                 var t = Task.Run(() =>
                 {
-                    Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[0], obb_a_verts[2], obb_a_verts[6], obb_a_verts[4] };
+                    Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[4], obb_a_verts[6], obb_a_verts[2], obb_a_verts[0] };
                     (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(0, 0, obb_a.size.z / 2f), obb_a.pos + obb_a.rot * new Vector3(0, obb_a.size.y, obb_a.size.z / 2f));
                     (Vector3 begin, Vector3 end) edgeLY = (obb_a.pos + obb_a.rot * new Vector3(0, obb_a.size.y / 2f, 0), obb_a.pos + obb_a.rot * new Vector3(0, obb_a.size.y / 2f, obb_a.size.z));
                     float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, -normal_a_x, cg, obb_b, out Vector3 an, out Vector3 bn, out bool faceParallel);
 
                     if (dist >= 0)
                     {
-                        return (dist, an, bn, faceParallel);
+                        return (dist, an, bn, faceParallel, -normal_a_x);
                     }
 
-                    return (-1, Vector3.zero, Vector3.zero, false);
+                    return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
 
                 nearests.Add(t);
@@ -475,10 +475,10 @@ namespace RBPhys
 
                     if (dist >= 0)
                     {
-                        return (dist, an, bn, faceParallel);
+                        return (dist, an, bn, faceParallel, normal_a_y);
                     }
 
-                    return (-1, Vector3.zero, Vector3.zero, false);
+                    return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
 
                 nearests.Add(t);
@@ -495,10 +495,10 @@ namespace RBPhys
 
                     if (dist >= 0)
                     {
-                        return (dist, an, bn, faceParallel);
+                        return (dist, an, bn, faceParallel, -normal_a_y);
                     }
 
-                    return (-1, Vector3.zero, Vector3.zero, false);
+                    return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
 
                 nearests.Add(t);
@@ -508,17 +508,17 @@ namespace RBPhys
             {
                 var t = Task.Run(() =>
                 {
-                    Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[0], obb_a_verts[2], obb_a_verts[3], obb_a_verts[1] };
-                    (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, 0, 0), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, obb_a.size.y, 0));
-                    (Vector3 begin, Vector3 end) edgeLY = (obb_a.pos + obb_a.rot * new Vector3(0, obb_a.size.y / 2f, 0), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, obb_a.size.y / 2f, 0));
+                    Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[5], obb_a_verts[7], obb_a_verts[6], obb_a_verts[4] };
+                    (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, 0, obb_a.size.z), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, obb_a.size.y, obb_a.size.z));
+                    (Vector3 begin, Vector3 end) edgeLY = (obb_a.pos + obb_a.rot * new Vector3(0, obb_a.size.y / 2f, obb_a.size.z), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, obb_a.size.y / 2f, obb_a.size.z));
                     float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal_a_z, cg, obb_b, out Vector3 an, out Vector3 bn, out bool faceParallel);
 
                     if (dist >= 0)
                     {
-                        return (dist, an, bn, faceParallel);
+                        return (dist, an, bn, faceParallel, normal_a_z);
                     }
 
-                    return (-1, Vector3.zero, Vector3.zero, false);
+                    return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
 
                 nearests.Add(t);
@@ -528,17 +528,17 @@ namespace RBPhys
             {
                 var t = Task.Run(() =>
                 {
-                    Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[5], obb_a_verts[7], obb_a_verts[6], obb_a_verts[4] };
-                    (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, 0, obb_a.size.z), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, obb_a.size.y, obb_a.size.z));
-                    (Vector3 begin, Vector3 end) edgeLY = (obb_a.pos + obb_a.rot * new Vector3(0, obb_a.size.y / 2f, obb_a.size.z), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, obb_a.size.y / 2f, obb_a.size.z));
+                    Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[0], obb_a_verts[2], obb_a_verts[3], obb_a_verts[1] };
+                    (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, 0, 0), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, obb_a.size.y, 0));
+                    (Vector3 begin, Vector3 end) edgeLY = (obb_a.pos + obb_a.rot * new Vector3(0, obb_a.size.y / 2f, 0), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, obb_a.size.y / 2f, 0));
                     float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, -normal_a_z, cg, obb_b, out Vector3 an, out Vector3 bn, out bool faceParallel);
 
                     if (dist >= 0)
                     {
-                        return (dist, an, bn, faceParallel);
+                        return (dist, an, bn, faceParallel, -normal_a_z);
                     }
 
-                    return (-1, Vector3.zero, Vector3.zero, false);
+                    return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
 
                 nearests.Add(t);
@@ -546,7 +546,7 @@ namespace RBPhys
 
             await Task.WhenAll(nearests).ConfigureAwait(false);
 
-            (float dist, Vector3 aNearest, Vector3 bNearest) nearest = (-1, Vector3.zero, Vector3.zero);
+            (float dist, Vector3 aNearest, Vector3 bNearest, Vector3 pDir) nearest = (-1, Vector3.zero, Vector3.zero, Vector3.zero);
 
             foreach (var t in nearests)
             {
@@ -554,12 +554,12 @@ namespace RBPhys
 
                 if (p.faceParallel)
                 {
-                    return (p.dist, p.aNearest, p.bNearest);
+                    return (p.dist, p.aNearest, p.bNearest, p.pDir);
                 }
 
                 if (p.dist >= 0 && (nearest.dist == -1 || p.dist < nearest.dist))
                 {
-                    nearest = (p.dist, p.aNearest, p.bNearest);
+                    nearest = (p.dist, p.aNearest, p.bNearest, p.pDir);
                 }
             }
 
@@ -586,7 +586,7 @@ namespace RBPhys
 
             if (Vector3.Dot(normal, bRightN) < 0)
             {
-                Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[5], b_verts[7], b_verts[3], b_verts[1] };
+                Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[1], b_verts[3], b_verts[7], b_verts[5] };
                 float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, bRightN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
                 if (dist >= 0)
                 {
@@ -603,7 +603,7 @@ namespace RBPhys
 
             if (Vector3.Dot(normal, -bRightN) < 0)
             {
-                Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[0], b_verts[2], b_verts[6], b_verts[4] };
+                Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[4], b_verts[6], b_verts[2], b_verts[0] };
                 float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, -bRightN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
                 if (dist >= 0)
                 {
@@ -654,7 +654,7 @@ namespace RBPhys
 
             if (Vector3.Dot(normal, bForwardN) < 0)
             {
-                Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[0], b_verts[2], b_verts[3], b_verts[1] };
+                Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[5], b_verts[7], b_verts[6], b_verts[4] };
                 float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, bForwardN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
                 if (dist >= 0)
                 {
@@ -671,7 +671,7 @@ namespace RBPhys
 
             if (Vector3.Dot(normal, -bForwardN) < 0)
             {
-                Vector3[] rectPointsClockwise_b = new Vector3[4] {b_verts[5], b_verts[7], b_verts[6], b_verts[4] };
+                Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[0], b_verts[2], b_verts[3], b_verts[1] };
                 float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, -bForwardN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
                 if (dist >= 0)
                 {
@@ -778,6 +778,7 @@ namespace RBPhys
             {
                 float d = GetNearestDist(edge, tangentEdge, out Vector3 nearest, out bool edgeParallel);
                 nearests[count++] = (nearest, d, edgeParallel);
+                Vector3 dirT = (tangentEdge.end - tangentEdge.begin);
             }
 
             float dMin = -1;
@@ -786,9 +787,9 @@ namespace RBPhys
             for(int i = 0; i < nearests.Length; i++)
             {
                 var n = nearests[i];
-                np = (n.nearest, n.dist, n.edgeParallel, i);
                 if (dMin == -1 || n.dist < dMin)
                 {
+                    np = (n.nearest, n.dist, n.edgeParallel, i);
                     dMin = n.dist;
                 }
             }
@@ -831,20 +832,14 @@ namespace RBPhys
                 return Vector3.Distance(edge.begin, ProjectPointOnLine(edge.begin, tangentLine));
             }
 
-            (Vector3 normal, Vector3 center) prjPlane = (projectionNormal, tangentLine.center);
-            (Vector3 begin, Vector3 end) edgePrj = (ProjectPointOnPlane(edge.begin, prjPlane.normal, prjPlane.center), ProjectPointOnPlane(edge.end, prjPlane.normal, prjPlane.center));
-            (Vector3 dir, Vector3 center) edgePrjLined = (edgePrj.end - edgePrj.begin, (edgePrj.begin + edgePrj.end) / 2f);
+            (Vector3 dir, Vector3 center) edgeLined = (edge.end - edge.begin, (edge.begin + edge.end) / 2f);
 
-            Vector3 contact = (CalcContactPointOnSameNormal(tangentLine, edgePrjLined));
+            Vector3 contact = (CalcNearest(edgeLined, tangentLine));
 
-            Vector3 prjCenter = ProjectPointOnPlane(edgePrjLined.center, prjPlane.normal, prjPlane.center);
-            Vector3 prjNearest = prjCenter + Vector3.ClampMagnitude(contact - prjCenter, Vector3.Distance(edgePrj.begin, edgePrj.end) / 2f);
-
-            Vector3 bToPrjB = ProjectPointOnPlane(edge.begin, prjPlane.normal, prjPlane.center) - edge.begin;
-
-            nearest = prjNearest - bToPrjB;
-
-            return Vector3.Distance(nearest, ProjectPointOnEdge(prjNearest, tangentLine));
+            nearest = ProjectPointOnEdge(contact, edge);
+            Vector3 pN = ProjectPointOnEdge(nearest, tangentEdge_inAnotherRect);
+            nearest = ProjectPointOnEdge(pN, edge);
+            return Vector3.Distance(nearest, pN);
         }
     }
 }
