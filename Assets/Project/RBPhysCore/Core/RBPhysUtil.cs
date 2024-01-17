@@ -110,7 +110,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 CalcNearest((Vector3 dir, Vector3 center) line_a, (Vector3 dir, Vector3 center) line_b)
+        public static void CalcNearest((Vector3 dir, Vector3 center) line_a, (Vector3 dir, Vector3 center) line_b, out Vector3 aNearest, out Vector3 bNearest)
         {
             Vector3 aDirN = line_a.dir.normalized;
             Vector3 bDirN = line_b.dir.normalized;
@@ -126,9 +126,14 @@ namespace RBPhys
             Vector3 aBegin = line_a.center;
             Vector3 bBegin = line_b.center;
 
-            Vector3 aNearest = aBegin + r1 * aDirN;
-            Vector3 bNearest = bBegin + r2 * bDirN;
+            aNearest = aBegin + r1 * aDirN;
+            bNearest = bBegin + r2 * bDirN;
+        }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 CalcNearest((Vector3 dir, Vector3 center) line_a, (Vector3 dir, Vector3 center) line_b)
+        {
+            CalcNearest(line_a, line_b, out Vector3 aNearest, out Vector3 bNearest);
             return aNearest;
         }
 
@@ -205,8 +210,8 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 ProjectPointOnEdge(Vector3 p, (Vector3 begin, Vector3 end) edge)
         {
-            Vector3 dN = (edge.end - edge.begin).normalized;
-            return edge.begin + (dN * Mathf.Max(0, Vector3.Dot(p - edge.begin, dN)));
+            Vector3 dN = (edge.end - edge.begin);
+            return edge.begin + (dN.normalized * Mathf.Clamp(Vector3.Dot(dN, p - edge.begin), 0, dN.magnitude));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -223,6 +228,7 @@ namespace RBPhys
             Vector3 prjP = ProjectPointOnPlane(point, rectPlaneNormal, rectPointsClockwise[0]);
 
             bool isInside = RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormal), -1, 0.01f) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormal), -1, 0.01f) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormal), -1, 0.01f) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormal), -1, 0.01f);
+            isInside |= RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormal), 1, 0.01f) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormal), 1, 0.01f) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormal), 1, 0.01f) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormal), 1, 0.01f);
 
             if (isInside)
             {

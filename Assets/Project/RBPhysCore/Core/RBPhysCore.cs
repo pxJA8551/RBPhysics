@@ -15,7 +15,7 @@ namespace RBPhys
 {
     public static class RBPhysCore
     {
-        public const int COLLIDER_SOLVER_ITERATION = 6;
+        public const int COLLIDER_SOLVER_ITERATION = 1;
         public const int DEFAULT_SOLVER_ITERATION = 6;
 
         static List<RBRigidbody> _rigidbodies = new List<RBRigidbody>();
@@ -56,6 +56,11 @@ namespace RBPhys
             foreach (RBRigidbody rb in _rigidbodies)
             {
                 rb.UpdateTransform();
+            }
+
+            foreach (RBCollider c in _colliders)
+            {
+                c.UpdateTransform();
             }
 
             _colliders.ForEach(item => item.UpdateTransform());
@@ -201,6 +206,7 @@ namespace RBPhys
                         //Debug.Log(angularVelocityAcc_a);
                         //Debug.Log(velocityAcc_b);
                         //Debug.Log(angularVelocityAcc_b);
+                        //Debug.Log((velocityAcc_a, angularVelocityAcc_a, velocityAcc_b, angularVelocityAcc_b));
 
                         if (collision.rigidbody_a != null)
                         {
@@ -267,13 +273,11 @@ namespace RBPhys
                 Vector3 aNearest = p.aNearest;
                 Vector3 bNearest = p.bNearest;
 
-                Debug.Log((d, aNearest, bNearest, p.pDir, penetration.penetration, penetration.penetration.normalized));
-
                 rbc.Update(penetration.penetration, -p.pDir, aNearest, bNearest);
 
                 rbc.InitVelocityConstraint(dt);
 
-                if (d > 0)
+                if (0 <= d)
                 {
                     var v = SolveCollision(rbc, dt);
 
@@ -296,7 +300,6 @@ namespace RBPhys
             else
             {
                 trajAABB_a = traj_a.rigidbody.GetColliders().Select(item => (item, item.CalcAABB())).ToArray();
-                //penetrationDir += traj_a.rigidbody.Velocity;
             }
 
             if (traj_b.isStatic)
@@ -306,7 +309,6 @@ namespace RBPhys
             else
             {
                 trajAABB_b = traj_b.rigidbody.GetColliders().Select(item => (item, item.CalcAABB())).ToArray();
-                //penetrationDir -= traj_b.rigidbody.Velocity;
             }
 
             if (penetrationDir != Vector3.zero)
@@ -568,8 +570,8 @@ namespace RBPhys
             this.penetration = penetration;
             ContactNormal = contactNormal;
 
-            cg_a = rigidbody_a?.CenterOfGravityWorld ?? Vector3.zero;
-            cg_b = rigidbody_b?.CenterOfGravityWorld ?? Vector3.zero;
+            cg_a = rigidbody_a?.CenterOfGravityWorld ?? collider_a.GetColliderCenter();
+            cg_b = rigidbody_b?.CenterOfGravityWorld ?? collider_b.GetColliderCenter();
 
             rA = aNearest - cg_a;
             rB = bNearest - cg_b;
@@ -602,8 +604,6 @@ namespace RBPhys
             _jN.Resolve(this, dt, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
             _jT.Resolve(this, dt, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
             _jB.Resolve(this, dt, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
-
-            //Debug.Log((vAdd_a, avAdd_a, vAdd_b, avAdd_b));
         }
 
         struct Jacobian
@@ -646,7 +646,7 @@ namespace RBPhys
                 _va = pDirN;
                 _wa = Vector3.Cross(col.rA, pDirN);
                 _vb = -pDirN;
-                _wb = -Vector3.Cross(col.rB, pDirN);
+                _wb = Vector3.Cross(col.rB, -pDirN);
 
                 _bias = 0;
 
@@ -672,13 +672,6 @@ namespace RBPhys
 
                 _effectiveMass = 1 / k;
                 _totalLambda = 0;
-
-                //Debug.Log(pDirN);
-                //Debug.Log(col.rB);
-                //Debug.Log(col.aNearest);
-                //Debug.Log(col.bNearest);
-                //Debug.Log(col.cg_b);
-                //Debug.Log(_wb);
             }
 
             public void Resolve(RBCollision col, float dt, ref Vector3 vAdd_a, ref Vector3 avAdd_a, ref Vector3 vAdd_b, ref Vector3 avAdd_b)
@@ -707,8 +700,8 @@ namespace RBPhys
                 lambda = _totalLambda - oldTotalLambda;
 
                 vAdd_a += col.InverseMass_a * _va * lambda;
-                avAdd_a += Vector3.Scale(col.InverseInertiaWs_a, _wa) * lambda;
                 vAdd_b += col.InverseMass_b * _vb * lambda;
+                avAdd_a += Vector3.Scale(col.InverseInertiaWs_a, _wa) * lambda;
                 avAdd_b += Vector3.Scale(col.InverseInertiaWs_b, _wb) * lambda;
             }
         }
