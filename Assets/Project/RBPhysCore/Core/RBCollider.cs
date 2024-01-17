@@ -346,12 +346,13 @@ namespace RBPhys
                     if (penetrations.Any()) 
                     {
                         var p = penetrations
-                            .Select(item => Mathf.Abs(item.magnitude * (1f / Vector3.Dot(penetrationDir, item.normalized))))
-                            .Where(item => !float.IsNaN(item) && !float.IsInfinity(item));
+                            .Select(item => item == Vector3.zero ? 0 : Mathf.Abs(item.magnitude * (1f / Vector3.Dot(penetrationDir, item.normalized))))
+                            .Where(item => !float.IsNaN(item) && !float.IsInfinity(item))
+                            .ToArray();
 
                         if (p.Any()) 
                         {
-                            penetration = penetrationDir * p.Min();
+                            penetration = penetrationDir * Mathf.Max(EPSILON_FLOAT32, p.Min());
 
                             return true;
                         }
@@ -416,6 +417,8 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static async Task<(float dist, Vector3 an, Vector3 bn, Vector3 pDir)> GetNearestDistAsync(RBColliderOBB obb_a, RBColliderOBB obb_b, Vector3 penetration, Vector3 cg)
         {
+            Vector3 pDirN = penetration.normalized;
+
             Vector3 normal_a_x = obb_a.GetAxisRight();
             Vector3 normal_a_y = obb_a.GetAxisUp();
             Vector3 normal_a_z = obb_a.GetAxisForward();
@@ -424,7 +427,7 @@ namespace RBPhys
 
             List<Task<(float dist, Vector3 aNearest, Vector3 bNearest, bool faceParallel, Vector3 pDir)>> nearests = new List<Task<(float dist, Vector3 aNearest, Vector3 bNearest, bool faceParallel, Vector3 pDir)>>();
 
-            if (Vector3.Dot(penetration, normal_a_x) < 0)
+            if (Vector3.Dot(pDirN, normal_a_x) != 0)
             {
                 var t = Task.Run(() =>
                 {
@@ -441,10 +444,12 @@ namespace RBPhys
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
 
+                t.ConfigureAwait(false).GetAwaiter().GetResult();
+
                 nearests.Add(t);
             }
 
-            if (Vector3.Dot(penetration, -normal_a_x) < 0)
+            if (Vector3.Dot(pDirN, -normal_a_x) != 0)
             {
                 var t = Task.Run(() =>
                 {
@@ -461,10 +466,12 @@ namespace RBPhys
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
 
+                t.ConfigureAwait(false).GetAwaiter().GetResult();
+
                 nearests.Add(t);
             }
 
-            if (Vector3.Dot(penetration, normal_a_y) < 0)
+            if (Vector3.Dot(pDirN, normal_a_y) != 0)
             {
                 var t = Task.Run(() =>
                 {
@@ -481,10 +488,12 @@ namespace RBPhys
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
 
+                t.ConfigureAwait(false).GetAwaiter().GetResult();
+
                 nearests.Add(t);
             }
 
-            if (Vector3.Dot(penetration, -normal_a_y) < 0)
+            if (Vector3.Dot(pDirN, -normal_a_y) != 0)
             {
                 var t = Task.Run(() =>
                 {
@@ -501,10 +510,12 @@ namespace RBPhys
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
 
+                t.ConfigureAwait(false).GetAwaiter().GetResult();
+
                 nearests.Add(t);
             }
 
-            if (Vector3.Dot(penetration, normal_a_z) < 0)
+            if (Vector3.Dot(pDirN, normal_a_z) != 0)
             {
                 var t = Task.Run(() =>
                 {
@@ -521,10 +532,12 @@ namespace RBPhys
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
 
+                t.ConfigureAwait(false).GetAwaiter().GetResult();
+
                 nearests.Add(t);
             }
 
-            if (Vector3.Dot(penetration, -normal_a_z) < 0)
+            if (Vector3.Dot(pDirN, -normal_a_z) != 0)
             {
                 var t = Task.Run(() =>
                 {
@@ -540,6 +553,8 @@ namespace RBPhys
 
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
+
+                t.ConfigureAwait(false).GetAwaiter().GetResult();
 
                 nearests.Add(t);
             }
@@ -737,21 +752,10 @@ namespace RBPhys
                 return Vector3.Distance(aNearest, bNearest);
             }
 
-            float div = Mathf.Sqrt(1 - Mathf.Pow(Vector3.Dot(normal_a, -normal_b), 2));
+            (Vector3 dir, Vector3 center) cLineOnA = (Vector3.Cross(normal_a, dir), ProjectPointOnPlane(center_b, normal_a, center_a));
+            (Vector3 dir, Vector3 center) cLineOnB = (Vector3.Cross(-normal_b, dir), center_b);
 
-            Vector3 center;
-            if (div == 0)
-            {
-                center = ProjectPointOnPlane(center_b, normal_a, center_a);
-            }
-            else
-            {
-                Vector3 rP = (ProjectPointOnPlane(center_b, normal_a, center_a) - center_b);
-                Vector3 rPC_dirN = -Vector3.Cross(-normal_b, dir).normalized;
-                Vector3 rPC = rPC_dirN * (rP.magnitude / div);
-
-                center = center_b + rPC;
-            }
+            Vector3 center = CalcNearest(cLineOnA, cLineOnB);
 
             (Vector3 begin, Vector3 end) tangentEdgeLx = ReverseProjectEdgeOnLine(edgeLX, (dir, center));
             (Vector3 begin, Vector3 end) tangentEdgeLy = ReverseProjectEdgeOnLine(edgeLY, (dir, center));
@@ -768,17 +772,17 @@ namespace RBPhys
                 tangentEdge = tangentEdgeLy;
             }
 
-            (Vector3 begin, Vector3 end)[] edges_b_prjOnA = edges_b.Select(item => ProjectEdgeOnPlane(item, normal_a, center_a)).ToArray();
-
             (Vector3 nearest, float dist, bool edgeParallel)[] nearests = new (Vector3 nearest, float dist, bool edgeParallel)[4];
 
             int count = 0;
 
-            foreach (var edge in edges_b_prjOnA)
+            foreach (var edge in edges_b)
             {
                 float d = GetNearestDist(edge, tangentEdge, out Vector3 nearest, out bool edgeParallel);
+
+                nearest = ProjectPointOnEdge(nearest, edge);
+
                 nearests[count++] = (nearest, d, edgeParallel);
-                Vector3 dirT = (tangentEdge.end - tangentEdge.begin);
             }
 
             float dMin = -1;
@@ -802,13 +806,16 @@ namespace RBPhys
                 {
                     aNearest = ProjectPointOnRect(np.nearest, rectPointsClockwise_a, normal_a);
                     bNearest = np.nearest;
+
                     return Vector3.Distance(aNearest, bNearest);
                 }
                 else if (parallelCount == 2)
                 {
                     Vector3 nearest = ProjectPointOnEdge(cg, tangentEdge);
+
                     aNearest = ProjectPointOnRect(nearest, rectPointsClockwise_a, normal_a);
-                    bNearest = nearest;
+                    bNearest = ProjectPointOnRect(nearest, rectPointsClockwise_b, normal_b);
+
                     return Vector3.Distance(aNearest, bNearest);
                 }
             }
@@ -822,24 +829,20 @@ namespace RBPhys
             nearest = Vector3.zero;
             parallel = false;
 
-            (Vector3 dir, Vector3 center) tangentLine = (tangentEdge_inAnotherRect.end - tangentEdge_inAnotherRect.begin, tangentEdge_inAnotherRect.begin);
-
-            Vector3 projectionNormal = Vector3.Cross(edge.end - edge.begin, tangentLine.dir).normalized;
-
-            if (projectionNormal == Vector3.zero)
-            {
-                parallel = true;
-                return Vector3.Distance(edge.begin, ProjectPointOnLine(edge.begin, tangentLine));
-            }
+            (Vector3 dir, Vector3 center) tangentLined = (tangentEdge_inAnotherRect.end - tangentEdge_inAnotherRect.begin, tangentEdge_inAnotherRect.begin);
 
             (Vector3 dir, Vector3 center) edgeLined = (edge.end - edge.begin, (edge.begin + edge.end) / 2f);
 
-            Vector3 contact = (CalcNearest(edgeLined, tangentLine));
+            if (Vector3.Cross(tangentLined.dir, edgeLined.dir) == Vector3.zero)
+            {
+                parallel = true;
+                return Vector3.Distance(edge.begin, ProjectPointOnLine(edge.begin, tangentLined));
+            }
 
-            nearest = ProjectPointOnEdge(contact, edge);
-            Vector3 pN = ProjectPointOnEdge(nearest, tangentEdge_inAnotherRect);
-            nearest = ProjectPointOnEdge(pN, edge);
-            return Vector3.Distance(nearest, pN);
+            CalcNearest(edgeLined, tangentLined, out Vector3 aNearest, out Vector3 bNearest);
+            nearest = aNearest;
+
+            return Vector3.Distance(aNearest, bNearest);
         }
     }
 }
