@@ -444,8 +444,6 @@ namespace RBPhys
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
 
-                t.ConfigureAwait(false).GetAwaiter().GetResult();
-
                 nearests.Add(t);
             }
 
@@ -465,8 +463,6 @@ namespace RBPhys
 
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
-
-                t.ConfigureAwait(false).GetAwaiter().GetResult();
 
                 nearests.Add(t);
             }
@@ -488,8 +484,6 @@ namespace RBPhys
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
 
-                t.ConfigureAwait(false).GetAwaiter().GetResult();
-
                 nearests.Add(t);
             }
 
@@ -509,8 +503,6 @@ namespace RBPhys
 
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
-
-                t.ConfigureAwait(false).GetAwaiter().GetResult();
 
                 nearests.Add(t);
             }
@@ -532,8 +524,6 @@ namespace RBPhys
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
 
-                t.ConfigureAwait(false).GetAwaiter().GetResult();
-
                 nearests.Add(t);
             }
 
@@ -553,8 +543,6 @@ namespace RBPhys
 
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
                 });
-
-                t.ConfigureAwait(false).GetAwaiter().GetResult();
 
                 nearests.Add(t);
             }
