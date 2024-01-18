@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using UnityEditor;
@@ -22,7 +23,7 @@ namespace RBPhys
         public Vector3 GameObjectLossyScale { get; private set; }
 
         public float beta = 0.8f;
-        public float restitution = 0.0f; //”½”­ŒW”
+        public float restitution = 0.3f; //”½”­ŒW” 0‚æ‚è‘å‚«‚¢’l‚É
         public float friction = 0.6f; //–€ŽCŒW”
 
         void Awake()
@@ -101,7 +102,7 @@ namespace RBPhys
         {
             penetrationDir = Vector3.Normalize(penetrationDir);
 
-            Vector3[] penetrations = new Vector3[6];
+            Vector3[] penetrations = new Vector3[15];
             penetration = Vector3.zero;
 
             if (obb_a.isValidOBB && obb_b.isValidOBB)
@@ -165,7 +166,6 @@ namespace RBPhys
                             return false;
                         }
 
-
                         penetrations[2] = aUpN * dp / 2f;
                     }
 
@@ -219,141 +219,248 @@ namespace RBPhys
 
                     //•ª—£Ž²‚V: aFwd x bFwd
                     {
-                        Vector3 p = Vector3.Cross(aFwdN, bFwdN);
+                        Vector3 p = Vector3.Cross(aFwdN, bFwdN).normalized;
 
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = obb_a.GetAxisSize(p);
-                        float rB = obb_b.GetAxisSize(p);
-
-                        if (prjL > rA + rB)
+                        if (p == Vector3.zero)
                         {
-                            return false;
+                            penetrations[6] = Vector3.negativeInfinity;
+                        }
+                        else
+                        {
+                            float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                            float rA = obb_a.GetAxisSize(p);
+                            float rB = obb_b.GetAxisSize(p);
+
+                            float dp = prjL * 2f - (rA + rB);
+
+                            if (dp > 0)
+                            {
+                                return false;
+                            }
+
+                            penetrations[6] = p * dp / 2f;
                         }
                     }
 
                     //•ª—£Ž²‚W: aFwd x bRight
                     {
-                        Vector3 p = Vector3.Cross(aFwdN, bRightN);
+                        Vector3 p = Vector3.Cross(aFwdN, bRightN).normalized;
 
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = obb_a.GetAxisSize(p);
-                        float rB = obb_b.GetAxisSize(p);
-
-                        if (prjL > rA + rB)
+                        if (p == Vector3.zero)
                         {
-                            return false;
+                            penetrations[7] = Vector3.negativeInfinity;
+                        }
+                        else
+                        {
+                            float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                            float rA = obb_a.GetAxisSize(p);
+                            float rB = obb_b.GetAxisSize(p);
+
+                            float dp = prjL * 2f - (rA + rB);
+
+                            if (dp > 0)
+                            {
+                                return false;
+                            }
+
+                            penetrations[7] = p * dp / 2f;
                         }
                     }
 
                     //•ª—£Ž²‚X: aFwd x bUp
                     {
-                        Vector3 p = Vector3.Cross(aFwdN, bUpN);
+                        Vector3 p = Vector3.Cross(aFwdN, bUpN).normalized;
 
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = obb_a.GetAxisSize(p);
-                        float rB = obb_b.GetAxisSize(p);
-
-                        if (prjL > rA + rB)
+                        if (p == Vector3.zero)
                         {
-                            return false;
+                            penetrations[8] = Vector3.negativeInfinity;
+                        }
+                        else
+                        {
+                            float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                            float rA = obb_a.GetAxisSize(p);
+                            float rB = obb_b.GetAxisSize(p);
+
+                            float dp = prjL * 2f - (rA + rB);
+
+                            if (dp > 0)
+                            {
+                                return false;
+                            }
+
+                            penetrations[8] = p * dp / 2f;
                         }
                     }
 
                     //•ª—£Ž²‚P‚O: aRight x bFwd
                     {
-                        Vector3 p = Vector3.Cross(aRightN, bFwdN);
+                        Vector3 p = Vector3.Cross(aRightN, bFwdN).normalized;
 
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = obb_a.GetAxisSize(p);
-                        float rB = obb_b.GetAxisSize(p);
-
-                        if (prjL > rA + rB)
+                        if (p == Vector3.zero)
                         {
-                            return false;
+                            penetrations[9] = Vector3.negativeInfinity;
+                        }
+                        else
+                        {
+                            float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                            float rA = obb_a.GetAxisSize(p);
+                            float rB = obb_b.GetAxisSize(p);
+
+                            float dp = prjL * 2f - (rA + rB);
+
+                            if (dp > 0)
+                            {
+                                return false;
+                            }
+
+                            penetrations[9] = p * dp / 2f;
                         }
                     }
 
                     //•ª—£Ž²‚P‚P: aRight x bRight
                     {
-                        Vector3 p = Vector3.Cross(aRightN, bRightN);
+                        Vector3 p = Vector3.Cross(aRightN, bRightN).normalized;
 
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = obb_a.GetAxisSize(p);
-                        float rB = obb_b.GetAxisSize(p);
-
-                        if (prjL > rA + rB)
+                        if (p == Vector3.zero)
                         {
-                            return false;
+                            penetrations[10] = Vector3.negativeInfinity;
+                        }
+                        else
+                        {
+                            float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                            float rA = obb_a.GetAxisSize(p);
+                            float rB = obb_b.GetAxisSize(p);
+
+                            float dp = prjL * 2f - (rA + rB);
+
+                            if (dp > 0)
+                            {
+                                return false;
+                            }
+
+                            penetrations[10] = p * dp / 2f;
                         }
                     }
 
                     //•ª—£Ž²‚P‚Q: aRight x bUp
                     {
-                        Vector3 p = Vector3.Cross(aRightN, bUpN);
+                        Vector3 p = Vector3.Cross(aRightN, bUpN).normalized;
 
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = obb_a.GetAxisSize(p);
-                        float rB = obb_b.GetAxisSize(p);
-
-                        if (prjL > rA + rB)
+                        if (p == Vector3.zero)
                         {
-                            return false;
+                            penetrations[11] = Vector3.negativeInfinity;
+                        }
+                        else
+                        {
+                            float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                            float rA = obb_a.GetAxisSize(p);
+                            float rB = obb_b.GetAxisSize(p);
+
+                            float dp = prjL * 2f - (rA + rB);
+
+                            if (dp > 0)
+                            {
+                                return false;
+                            }
+
+                            penetrations[11] = p * dp / 2f;
                         }
                     }
 
                     //•ª—£Ž²‚P‚R: aUp x bFwd
                     {
-                        Vector3 p = Vector3.Cross(aUpN, bFwdN);
+                        Vector3 p = Vector3.Cross(aUpN, bFwdN).normalized;
 
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = obb_a.GetAxisSize(p);
-                        float rB = obb_b.GetAxisSize(p);
-
-                        if (prjL > rA + rB)
+                        if (p == Vector3.zero)
                         {
-                            return false;
+                            penetrations[12] = Vector3.negativeInfinity;
+                        }
+                        else
+                        {
+                            float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                            float rA = obb_a.GetAxisSize(p);
+                            float rB = obb_b.GetAxisSize(p);
+
+                            float dp = prjL * 2f - (rA + rB);
+
+                            if (dp > 0)
+                            {
+                                return false;
+                            }
+
+                            penetrations[12] = p * dp / 2f;
                         }
                     }
 
                     //•ª—£Ž²‚P‚S: aUp x bRight
                     {
-                        Vector3 p = Vector3.Cross(aUpN, bRightN);
+                        Vector3 p = Vector3.Cross(aUpN, bRightN).normalized;
 
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = obb_a.GetAxisSize(p);
-                        float rB = obb_b.GetAxisSize(p);
-
-                        if (prjL > rA + rB)
+                        if (p == Vector3.zero)
                         {
-                            return false;
+                            penetrations[13] = Vector3.negativeInfinity;
+                        }
+                        else
+                        {
+                            float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                            float rA = obb_a.GetAxisSize(p);
+                            float rB = obb_b.GetAxisSize(p);
+
+                            float dp = prjL * 2f - (rA + rB);
+
+                            if (dp > 0)
+                            {
+                                return false;
+                            }
+
+                            penetrations[13] = p * dp / 2f;
                         }
                     }
 
                     //•ª—£Ž²‚P‚T: aUp x bUp
                     {
-                        Vector3 p = Vector3.Cross(aUpN, bUpN);
+                        Vector3 p = Vector3.Cross(aUpN, bUpN).normalized;
 
-                        float prjL = Mathf.Abs(Vector3.Dot(d, p));
-                        float rA = obb_a.GetAxisSize(p);
-                        float rB = obb_b.GetAxisSize(p);
-
-                        if (prjL > rA + rB)
+                        if (p == Vector3.zero)
                         {
-                            return false;
+                            penetrations[14] = Vector3.negativeInfinity;
+                        }
+                        else
+                        {
+                            float prjL = Mathf.Abs(Vector3.Dot(d, p));
+                            float rA = obb_a.GetAxisSize(p);
+                            float rB = obb_b.GetAxisSize(p);
+
+                            float dp = prjL * 2f - (rA + rB);
+
+                            if (dp > 0)
+                            {
+                                return false;
+                            }
+
+                            penetrations[14] = p * dp / 2f;
                         }
                     }
 
                     if (penetrations.Any()) 
                     {
-                        var p = penetrations
-                            .Select(item => item == Vector3.zero ? 0 : Mathf.Abs(item.magnitude * (1f / Vector3.Dot(penetrationDir, item.normalized))))
-                            .Where(item => !float.IsNaN(item) && !float.IsInfinity(item))
-                            .ToArray();
-
-                        if (p.Any()) 
+                        if (penetrationDir != Vector3.zero)
                         {
-                            penetration = penetrationDir * Mathf.Max(EPSILON_FLOAT32, p.Min());
+                            var p = penetrations
+                                .Select(item => item == Vector3.zero ? 0 : Mathf.Abs(item.magnitude * (1f / Vector3.Dot(penetrationDir, item.normalized))))
+                                .Where(item => !float.IsNaN(item) && !float.IsInfinity(item))
+                                .ToArray();
 
+                            if (p.Any())
+                            {
+                                penetration = penetrationDir * Mathf.Max(EPSILON_FLOAT32, p.Min());
+
+                                return true;
+                            }
+                        }
+                        else
+                        {
+                            penetration = penetrations.OrderBy(item => item.sqrMagnitude).ToArray()[0];
                             return true;
                         }
                     }
@@ -390,7 +497,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static async Task<(float dist, Vector3 aNearest, Vector3 bNearest, Vector3 pDir)> GetNearestDistAsync(RBCollider collider_a, RBCollider collider_b, Vector3 cg_b, Vector3 penetration)
+        public static async Task<(float dist, Vector3 aNearest, Vector3 bNearest, Vector3 pDir)> GetNearestDistAsync(RBCollider collider_a, RBCollider collider_b, Vector3 cg_a, Vector3 cg_b, Vector3 penetration)
         {
             //OBB-OBB
             if (collider_a.GeometryType == RBGeometryType.OBB && collider_b.GeometryType == RBGeometryType.OBB)
@@ -434,11 +541,11 @@ namespace RBPhys
                     Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[1], obb_a_verts[3], obb_a_verts[7], obb_a_verts[5] };
                     (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, 0, obb_a.size.z / 2f), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, obb_a.size.y, obb_a.size.z / 2f));
                     (Vector3 begin, Vector3 end) edgeLY = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, obb_a.size.y / 2f, 0), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, obb_a.size.y / 2f, obb_a.size.z));
-                    float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal_a_x, cg, obb_b, out Vector3 an, out Vector3 bn, out bool faceParallel);
+                    float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal_a_x, cg, obb_b, out Vector3 an, out Vector3 bn, out Vector3 pDirL, out bool faceParallel);
 
                     if (dist >= 0)
                     {
-                        return (dist, an, bn, faceParallel, normal_a_x);
+                        return (dist, an, bn, faceParallel, pDirL);
                     }
 
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
@@ -454,11 +561,11 @@ namespace RBPhys
                     Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[4], obb_a_verts[6], obb_a_verts[2], obb_a_verts[0] };
                     (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(0, 0, obb_a.size.z / 2f), obb_a.pos + obb_a.rot * new Vector3(0, obb_a.size.y, obb_a.size.z / 2f));
                     (Vector3 begin, Vector3 end) edgeLY = (obb_a.pos + obb_a.rot * new Vector3(0, obb_a.size.y / 2f, 0), obb_a.pos + obb_a.rot * new Vector3(0, obb_a.size.y / 2f, obb_a.size.z));
-                    float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, -normal_a_x, cg, obb_b, out Vector3 an, out Vector3 bn, out bool faceParallel);
+                    float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, -normal_a_x, cg, obb_b, out Vector3 an, out Vector3 bn, out Vector3 pDirL, out bool faceParallel);
 
                     if (dist >= 0)
                     {
-                        return (dist, an, bn, faceParallel, -normal_a_x);
+                        return (dist, an, bn, faceParallel, pDirL);
                     }
 
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
@@ -474,11 +581,11 @@ namespace RBPhys
                     Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[2], obb_a_verts[6], obb_a_verts[7], obb_a_verts[3] };
                     (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, obb_a.size.y, 0), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, obb_a.size.y, obb_a.size.z));
                     (Vector3 begin, Vector3 end) edgeLY = (obb_a.pos + obb_a.rot * new Vector3(0, obb_a.size.y, obb_a.size.z / 2f), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, obb_a.size.y, obb_a.size.z / 2f));
-                    float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal_a_y, cg, obb_b, out Vector3 an, out Vector3 bn, out bool faceParallel);
+                    float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal_a_y, cg, obb_b, out Vector3 an, out Vector3 bn, out Vector3 pDirL, out bool faceParallel);
 
                     if (dist >= 0)
                     {
-                        return (dist, an, bn, faceParallel, normal_a_y);
+                        return (dist, an, bn, faceParallel, pDirL);
                     }
 
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
@@ -494,11 +601,11 @@ namespace RBPhys
                     Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[1], obb_a_verts[5], obb_a_verts[4], obb_a_verts[0] };
                     (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, 0, 0), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, 0, obb_a.size.z));
                     (Vector3 begin, Vector3 end) edgeLY = (obb_a.pos + obb_a.rot * new Vector3(0, 0, obb_a.size.z / 2f), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, 0, obb_a.size.z / 2f));
-                    float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, -normal_a_y, cg, obb_b, out Vector3 an, out Vector3 bn, out bool faceParallel);
+                    float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, -normal_a_y, cg, obb_b, out Vector3 an, out Vector3 bn, out Vector3 pDirL, out bool faceParallel);
 
                     if (dist >= 0)
                     {
-                        return (dist, an, bn, faceParallel, -normal_a_y);
+                        return (dist, an, bn, faceParallel, pDirL);
                     }
 
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
@@ -514,11 +621,11 @@ namespace RBPhys
                     Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[5], obb_a_verts[7], obb_a_verts[6], obb_a_verts[4] };
                     (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, 0, obb_a.size.z), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, obb_a.size.y, obb_a.size.z));
                     (Vector3 begin, Vector3 end) edgeLY = (obb_a.pos + obb_a.rot * new Vector3(0, obb_a.size.y / 2f, obb_a.size.z), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, obb_a.size.y / 2f, obb_a.size.z));
-                    float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal_a_z, cg, obb_b, out Vector3 an, out Vector3 bn, out bool faceParallel);
+                    float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal_a_z, cg, obb_b, out Vector3 an, out Vector3 bn, out Vector3 pDirL, out bool faceParallel);
 
                     if (dist >= 0)
                     {
-                        return (dist, an, bn, faceParallel, normal_a_z);
+                        return (dist, an, bn, faceParallel, pDirL);
                     }
 
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
@@ -534,11 +641,11 @@ namespace RBPhys
                     Vector3[] rectPointsClockwise = new Vector3[4] { obb_a_verts[0], obb_a_verts[2], obb_a_verts[3], obb_a_verts[1] };
                     (Vector3 begin, Vector3 end) edgeLX = (obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, 0, 0), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x / 2f, obb_a.size.y, 0));
                     (Vector3 begin, Vector3 end) edgeLY = (obb_a.pos + obb_a.rot * new Vector3(0, obb_a.size.y / 2f, 0), obb_a.pos + obb_a.rot * new Vector3(obb_a.size.x, obb_a.size.y / 2f, 0));
-                    float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, -normal_a_z, cg, obb_b, out Vector3 an, out Vector3 bn, out bool faceParallel);
+                    float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, -normal_a_z, cg, obb_b, out Vector3 an, out Vector3 bn, out Vector3 pDirL, out bool faceParallel);
 
                     if (dist >= 0)
                     {
-                        return (dist, an, bn, faceParallel, -normal_a_z);
+                        return (dist, an, bn, faceParallel, pDirL);
                     }
 
                     return (-1, Vector3.zero, Vector3.zero, false, Vector3.zero);
@@ -570,98 +677,103 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float GetNearestDist(Vector3[] rectPointsClockwise, (Vector3 begin, Vector3 end) edgeLX, (Vector3 begin, Vector3 end) edgeLY, Vector3 normal, Vector3 cg, RBColliderOBB obb, out Vector3 aNearest, out Vector3 bNearest, out bool faceParallel)
+        public static float GetNearestDist(Vector3[] rectPointsClockwise, (Vector3 begin, Vector3 end) edgeLX, (Vector3 begin, Vector3 end) edgeLY, Vector3 normal, Vector3 cg, RBColliderOBB obb, out Vector3 aNearest, out Vector3 bNearest, out Vector3 pDir, out bool faceParallel)
         {
             aNearest = Vector3.zero;
             bNearest = Vector3.zero;
+            pDir = Vector3.zero;
 
             Vector3[] b_verts = obb.GetVertices();
 
-            (float dist, Vector3 aNearest, Vector3 bNearest)[] nearests = new (float dist, Vector3 aNearest, Vector3 bNearest)[6];
+            (float dist, Vector3 aNearest, Vector3 bNearest, Vector3 pDirL)[] nearests = new (float dist, Vector3 aNearest, Vector3 bNearest, Vector3 pDirL)[6];
 
-            nearests[0] = (-1, Vector3.zero, Vector3.zero);
-            nearests[1] = (-1, Vector3.zero, Vector3.zero);
-            nearests[2] = (-1, Vector3.zero, Vector3.zero);
-            nearests[3] = (-1, Vector3.zero, Vector3.zero);
-            nearests[4] = (-1, Vector3.zero, Vector3.zero);
-            nearests[5] = (-1, Vector3.zero, Vector3.zero);
+            nearests[0] = (-1, Vector3.zero, Vector3.zero, Vector3.zero);
+            nearests[1] = (-1, Vector3.zero, Vector3.zero, Vector3.zero);
+            nearests[2] = (-1, Vector3.zero, Vector3.zero, Vector3.zero);
+            nearests[3] = (-1, Vector3.zero, Vector3.zero, Vector3.zero);
+            nearests[4] = (-1, Vector3.zero, Vector3.zero, Vector3.zero);
+            nearests[5] = (-1, Vector3.zero, Vector3.zero, Vector3.zero);
 
             Vector3 bRightN = obb.GetAxisRight();
             Vector3 bUpN = obb.GetAxisUp();
             Vector3 bForwardN = obb.GetAxisForward();
 
-            if (Vector3.Dot(normal, bRightN) != 0)
+            if (Vector3.Dot(normal, bRightN) < 0)
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[1], b_verts[3], b_verts[7], b_verts[5] };
-                float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, bRightN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
+                float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, bRightN, cg, out Vector3 an, out Vector3 bn, out Vector3 pDirL, out faceParallel);
                 if (dist >= 0)
                 {
                     if (faceParallel)
                     {
                         aNearest = an;
                         bNearest = bn;
+                        pDir = pDirL;
                         return dist;
                     }
 
-                    nearests[0] = (dist, an, bn);
+                    nearests[0] = (dist, an, bn, pDirL);
                 }
             }
 
-            if (Vector3.Dot(normal, -bRightN) != 0)
+            if (Vector3.Dot(normal, -bRightN) < 0)
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[4], b_verts[6], b_verts[2], b_verts[0] };
-                float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, -bRightN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
+                float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, -bRightN, cg, out Vector3 an, out Vector3 bn, out Vector3 pDirL, out faceParallel);
                 if (dist >= 0)
                 {
                     if (faceParallel)
                     {
                         aNearest = an;
                         bNearest = bn;
+                        pDir = pDirL;
                         return dist;
                     }
 
-                    nearests[1] = (dist, an, bn);
+                    nearests[0] = (dist, an, bn, pDirL);
                 }
             }
 
-            if (Vector3.Dot(normal, bUpN) != 0)
+            if (Vector3.Dot(normal, bUpN) < 0)
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[2], b_verts[6], b_verts[7], b_verts[3] };
-                float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, bUpN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
+                float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, bUpN, cg, out Vector3 an, out Vector3 bn, out Vector3 pDirL, out faceParallel);
                 if (dist >= 0)
                 {
                     if (faceParallel)
                     {
                         aNearest = an;
                         bNearest = bn;
+                        pDir = pDirL;
                         return dist;
                     }
 
-                    nearests[2] = (dist, an, bn);
+                    nearests[1] = (dist, an, bn, pDirL);
                 }
             }
 
-            if (Vector3.Dot(normal, -bUpN) != 0)
+            if (Vector3.Dot(normal, -bUpN) < 0)
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[1], b_verts[5], b_verts[4], b_verts[0] };
-                float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, -bUpN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
+                float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, -bUpN, cg, out Vector3 an, out Vector3 bn, out Vector3 pDirL, out faceParallel);
                 if (dist >= 0)
                 {
                     if (faceParallel)
                     {
                         aNearest = an;
                         bNearest = bn;
+                        pDir = pDirL;
                         return dist;
                     }
 
-                    nearests[3] = (dist, an, bn);
+                    nearests[1] = (dist, an, bn, pDirL);
                 }
             }
 
-            if (Vector3.Dot(normal, bForwardN) != 0)
+            if (Vector3.Dot(normal, bForwardN) < 0)
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[5], b_verts[7], b_verts[6], b_verts[4] };
-                float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, bForwardN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
+                float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, bForwardN, cg, out Vector3 an, out Vector3 bn, out Vector3 pDirL, out faceParallel);
                 if (dist >= 0)
                 {
                     if (faceParallel)
@@ -671,28 +783,29 @@ namespace RBPhys
                         return dist;
                     }
 
-                    nearests[4] = (dist, an, bn);
+                    nearests[2] = (dist, an, bn, pDirL);
                 }
             }
 
-            if (Vector3.Dot(normal, -bForwardN) != 0)
+            if (Vector3.Dot(normal, -bForwardN) < 0)
             {
                 Vector3[] rectPointsClockwise_b = new Vector3[4] { b_verts[0], b_verts[2], b_verts[3], b_verts[1] };
-                float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, -bForwardN, cg, out Vector3 an, out Vector3 bn, out faceParallel);
+                float dist = GetNearestDist(rectPointsClockwise, edgeLX, edgeLY, normal, rectPointsClockwise_b, -bForwardN, cg, out Vector3 an, out Vector3 bn, out Vector3 pDirL, out faceParallel);
                 if (dist >= 0)
                 {
                     if (faceParallel)
                     {
                         aNearest = an;
                         bNearest = bn;
+                        pDir = pDirL;
                         return dist;
                     }
 
-                    nearests[5] = (dist, an, bn);
+                    nearests[2] = (dist, an, bn, pDirL);
                 }
             }
 
-            (float dist, Vector3 aNearest, Vector3 bNearest) nearest = (-1, Vector3.zero, Vector3.zero);
+            (float dist, Vector3 aNearest, Vector3 bNearest, Vector3 pDirL) nearest = (-1, Vector3.zero, Vector3.zero, Vector3.zero);
             foreach (var p in nearests)
             {
                 if (p.dist >= 0 && (nearest.dist == -1 || p.dist < nearest.dist))
@@ -703,16 +816,18 @@ namespace RBPhys
 
             aNearest = nearest.aNearest;
             bNearest = nearest.bNearest;
+            pDir = nearest.pDirL;
             faceParallel = false;
 
             return nearest.dist;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float GetNearestDist(Vector3[] rectPointsClockwise_a, (Vector3 begin, Vector3 end) edgeLX, (Vector3 begin, Vector3 end) edgeLY, Vector3 normal_a, Vector3[] rectPointsClockwise_b, Vector3 normal_b, Vector3 cg, out Vector3 aNearest, out Vector3 bNearest, out bool faceParallel)
+        public static float GetNearestDist(Vector3[] rectPointsClockwise_a, (Vector3 begin, Vector3 end) edgeLX, (Vector3 begin, Vector3 end) edgeLY, Vector3 normal_a, Vector3[] rectPointsClockwise_b, Vector3 normal_b, Vector3 cg, out Vector3 aNearest, out Vector3 bNearest, out Vector3 pDir, out bool faceParallel)
         {
             aNearest = Vector3.zero;
             bNearest = Vector3.zero;
+            pDir = Vector3.zero;
             faceParallel = false;
 
             Vector3 center_a = rectPointsClockwise_a[0];
@@ -740,6 +855,7 @@ namespace RBPhys
                 Vector3 nearest = ProjectPointOnRect(cg, rectPointsClockwise_b, normal_b);
                 aNearest = ProjectPointOnRect(nearest, rectPointsClockwise_a, normal_a);
                 bNearest = nearest;
+                pDir = normal_a;
                 return Vector3.Distance(aNearest, bNearest);
             }
 
@@ -796,7 +912,25 @@ namespace RBPhys
                 if (parallelCount == 0)
                 {
                     aNearest = ProjectPointOnRect(np.nearest, rectPointsClockwise_a, normal_a);
-                    bNearest = np.nearest;
+                    bNearest = ProjectPointOnRect(aNearest, rectPointsClockwise_b, normal_b, out bool isInsideB, out int index_b);
+                    aNearest = ProjectPointOnRect(bNearest, rectPointsClockwise_a, normal_a, out bool isInsideA, out int index_a);
+
+                    if (isInsideA && !isInsideB)
+                    {
+                        pDir = normal_a;
+                    }
+                    else if(!isInsideA && isInsideB)
+                    {
+                        pDir = -normal_b;
+                    }
+                    else
+                    {
+                        if (index_a != -1 && index_b != -1)
+                        {
+                            pDir = Vector3.Cross(rectPointsClockwise_a[(index_a + 1) % 4] - rectPointsClockwise_a[index_a], rectPointsClockwise_b[(index_b + 1) % 4] - rectPointsClockwise_b[index_b]).normalized;
+                            pDir *= Mathf.Sign(Vector3.Dot(normal_a, pDir));
+                        }
+                    }
 
                     return Vector3.Distance(aNearest, bNearest);
                 }
@@ -804,12 +938,31 @@ namespace RBPhys
                 {
                     Vector3 nearest = ProjectPointOnEdge(cg, tangentEdge);
 
-                    aNearest = ProjectPointOnRect(nearest, rectPointsClockwise_a, normal_a);
-                    bNearest = ProjectPointOnRect(nearest, rectPointsClockwise_b, normal_b);
+                    aNearest = ProjectPointOnRect(nearest, rectPointsClockwise_a, normal_a, out bool isInsideA, out int index_a);
+                    bNearest = ProjectPointOnRect(nearest, rectPointsClockwise_b, normal_b, out bool isInsideB, out int index_b);
+
+                    if (isInsideA && !isInsideB)
+                    {
+                        pDir = normal_a;
+                    }
+                    else if (!isInsideA && isInsideB)
+                    {
+                        pDir = -normal_b;
+                    }
+                    else
+                    {
+                        if (index_a != -1 && index_b != -1)
+                        {
+                            pDir = Vector3.Cross(rectPointsClockwise_a[(index_a + 1) % 4] - rectPointsClockwise_a[index_a], rectPointsClockwise_b[(index_b + 1) % 4] - rectPointsClockwise_b[index_b]).normalized;
+                            pDir *= Mathf.Sign(Vector3.Dot(normal_a, pDir));
+                        }
+                    }
 
                     return Vector3.Distance(aNearest, bNearest);
                 }
             }
+
+            pDir = Vector3.zero;
 
             return -1;
         }

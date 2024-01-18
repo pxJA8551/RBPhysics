@@ -6,7 +6,6 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using UnityEditor.Networking.PlayerConnection;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UIElements;
@@ -16,7 +15,7 @@ namespace RBPhys
 {
     public static class RBPhysCore
     {
-        public const int COLLIDER_SOLVER_ITERATION = 1;
+        public const int COLLIDER_SOLVER_ITERATION = 6;
         public const int DEFAULT_SOLVER_ITERATION = 6;
 
         static List<RBRigidbody> _rigidbodies = new List<RBRigidbody>();
@@ -237,64 +236,41 @@ namespace RBPhys
 
         static async Task<(bool collide, RBCollision[] cols, Vector3 vel_a, Vector3 angVel_a, Vector3 vel_b, Vector3 angVel_b)> SolveCollisions(RBTrajectory traj_a, RBTrajectory traj_b, float dt)
         {
-            RBCollision rbc = FindCollision(traj_a, traj_b);
+            List<RBCollision> collisions;
 
-            Vector3 velocityDiff = Vector3.zero;
-            if (!traj_a.isStatic)
-            {
-                velocityDiff -= traj_a.rigidbody.Velocity;
-            }
-            if (!traj_b.isStatic)
-            {
-                velocityDiff += traj_b.rigidbody.Velocity;
-            }
-
-            List<(Vector3 penetration, RBCollider collider_a, RBCollider collider_b)> collisions;
-
-            if (rbc == null)
-            {
-                collisions = await DetectCollisions(traj_a, traj_b, velocityDiff.normalized).ConfigureAwait(false);
-            }
-            else
-            {
-                collisions = await DetectCollisions(new RBTrajectory(rbc.collider_a), new RBTrajectory(rbc.collider_b), rbc.ContactNormal).ConfigureAwait(false);
-            }
+            collisions = await DetectCollisions(traj_a, traj_b).ConfigureAwait(false);
 
             List<Task<(bool collide, RBCollision col, Vector3 vel_a, Vector3 angVel_a, Vector3 vel_b, Vector3 angVel_b)>> solveCollisionTasks = new List<Task<(bool collide, RBCollision col, Vector3 vel_a, Vector3 angVel_a, Vector3 vel_b, Vector3 angVel_b)>>();
 
-            foreach (var scPn in collisions)
+            foreach (var rbc in collisions)
             {
-                var task = Task.Run(() =>
+                if (rbc != null)
                 {
-                    if (scPn.penetration != Vector3.zero)
+                    var task = Task.Run(() =>
                     {
-                        if (rbc == null)
+                        if (rbc.penetration != Vector3.zero)
                         {
-                            rbc = new RBCollision(traj_a, scPn.collider_a, traj_b, scPn.collider_b, scPn.penetration);
+                            var p = GetNearestDistAsync(rbc.collider_a, rbc.collider_b, rbc.cg_a, rbc.cg_b, rbc.penetration).Result;
+
+                            float d = p.dist;
+                            Vector3 aNearest = p.aNearest;
+                            Vector3 bNearest = p.bNearest;
+
+                            rbc.Update(rbc.penetration, -p.pDir, aNearest, bNearest);
+                            rbc.InitVelocityConstraint(dt);
+
+                            if (0 <= d)
+                            {
+                                var v = SolveCollision(rbc, dt);
+                                return (true, rbc, v.velAdd_a, v.angVelAdd_a, v.velAdd_b, v.angVelAdd_b);
+                            }
                         }
 
-                        rbc.penetration = scPn.penetration;
+                        return (false, null, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
+                    });
 
-                        var p = GetNearestDistAsync(rbc.collider_a, rbc.collider_b, rbc.cg_b, rbc.penetration).Result;
-
-                        float d = p.dist;
-                        Vector3 aNearest = p.aNearest;
-                        Vector3 bNearest = p.bNearest;
-
-                        rbc.Update(scPn.penetration, -p.pDir, aNearest, bNearest);
-                        rbc.InitVelocityConstraint(dt);
-
-                        if (0 <= d)
-                        {
-                            var v = SolveCollision(rbc, dt);
-                            return (true, rbc, v.velAdd_a, v.angVelAdd_a, v.velAdd_b, v.angVelAdd_b);
-                        }
-                    }
-
-                    return (false, null, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
-                });
-
-                solveCollisionTasks.Add(task);
+                    solveCollisionTasks.Add(task);
+                }
             }
 
             await Task.WhenAll(solveCollisionTasks).ConfigureAwait(false);
@@ -321,9 +297,9 @@ namespace RBPhys
             return (colsNew.Any(), colsNew.ToArray(), vAdd_a, avAdd_a, vAdd_b, avAdd_b);
         }
 
-        static async Task<List<(Vector3, RBCollider collider_a, RBCollider collider_b)>> DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b, Vector3 penetrationDir)
+        static async Task<List<RBCollision>> DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b)
         {
-            List<(Vector3, RBCollider collider_a, RBCollider collider_b)> ret = new List<(Vector3, RBCollider collider_a, RBCollider collider_b)>();
+            List<RBCollision> ret = new List<RBCollision>();
 
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_b;
@@ -346,91 +322,106 @@ namespace RBPhys
                 trajAABB_b = traj_b.rigidbody.GetColliders().Select(item => (item, item.CalcAABB())).ToArray();
             }
 
-            if (penetrationDir != Vector3.zero)
+            //AABBのx最小値でコライダを昇順ソート
+            trajAABB_a = trajAABB_a.OrderBy(item => item.aabb.GetMin().x).ToArray();
+            trajAABB_b = trajAABB_b.OrderBy(item => item.aabb.GetMin().x).ToArray();
+
+            List<Task<RBCollision>> tasks = new List<Task<RBCollision>>();
+
+            //コライダ毎に接触を判定
+            for (int i = 0; i < trajAABB_a.Length; i++)
             {
-                //AABBのx最小値でコライダを昇順ソート
-                trajAABB_a = trajAABB_a.OrderBy(item => item.aabb.GetMin().x).ToArray();
-                trajAABB_b = trajAABB_b.OrderBy(item => item.aabb.GetMin().x).ToArray();
+                var collider_a = trajAABB_a[i];
 
-                List<Task<(Vector3 penetration, RBCollider collider_a, RBCollider collider_b)>> tasks = new List<Task<(Vector3, RBCollider, RBCollider)>>();
+                float a_x_min = collider_a.aabb.GetMin().x;
+                float a_x_max = collider_a.aabb.GetMax().x;
 
-                //コライダ毎に接触を判定
-                for (int i = 0; i < trajAABB_a.Length; i++)
+                for (int j = 0; j < trajAABB_b.Length; j++)
                 {
-                    var collider_a = trajAABB_a[i];
+                    var collider_b = trajAABB_b[j];
 
-                    float a_x_min = collider_a.aabb.GetMin().x;
-                    float a_x_max = collider_a.aabb.GetMax().x;
+                    float b_x_min = collider_b.aabb.GetMin().x;
+                    float b_x_max = collider_b.aabb.GetMax().x;
 
-                    for (int j = 0; j < trajAABB_b.Length; j++)
+                    if (b_x_max < a_x_min)
                     {
-                        var collider_b = trajAABB_b[j];
+                        continue;
+                    }
 
-                        float b_x_min = collider_b.aabb.GetMin().x;
-                        float b_x_max = collider_b.aabb.GetMax().x;
+                    if (a_x_max < b_x_min)
+                    {
+                        break;
+                    }
 
-                        if (b_x_max < a_x_min)
+                    Vector3 penetrationDir = Vector3.zero;
+
+                    RBCollision rbc = FindCollision(traj_a, traj_b, collider_a.collider, collider_b.collider);
+                    if (rbc != null)
+                    {
+                        penetrationDir = rbc.ContactNormal;
+                    }
+
+                    var t = Task.Run(() =>
+                    {
+                        bool aabbCollide = collider_a.aabb.OverlapAABB(collider_b.aabb);
+
+                        Vector3 penetration = Vector3.zero;
+
+                        if (aabbCollide)
                         {
-                            continue;
-                        }
+                            bool detailCollide = false;
 
-                        if (a_x_max < b_x_min)
-                        {
-                            break;
-                        }
-
-                        var t = Task.Run(() =>
-                        {
-                            bool aabbCollide = collider_a.aabb.OverlapAABB(collider_b.aabb);
-
-                            (Vector3 penetration, RBCollider collider_a, RBCollider collider_b) penetration = (Vector3.zero, collider_a.collider, collider_b.collider);
-
-                            if (aabbCollide)
+                            if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.OBB)
                             {
-                                bool detailCollide = false;
-
-                                if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.OBB)
-                                {
-                                    //OBB-OBB衝突
-                                    detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), penetrationDir, out Vector3 p);
-                                    penetration.penetration = p;
-                                }
-                                else if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.Sphere)
-                                {
-                                    //Sphere-OBB衝突
-                                    detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcSphere(), out Vector3 p);
-                                    penetration.penetration = p;
-                                }
-                                else if (collider_a.collider.GeometryType == RBGeometryType.Sphere && collider_b.collider.GeometryType == RBGeometryType.OBB)
-                                {
-                                    //Sphere-OBB衝突（逆転）
-                                    detailCollide = RBColliderCollision.DetectCollision(collider_b.collider.CalcOBB(), collider_a.collider.CalcSphere(), out Vector3 p);
-                                    p = -p;
-                                    penetration.penetration = p;
-                                }
-                                else if (collider_a.collider.GeometryType == RBGeometryType.Sphere && collider_b.collider.GeometryType == RBGeometryType.Sphere)
-                                {
-                                    //Sphere-Sphere衝突
-                                    detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcSphere(), collider_b.collider.CalcSphere(), out Vector3 p);
-                                    penetration.penetration = p;
-                                }
-
-                                return penetration;
+                                //OBB-OBB衝突
+                                detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), penetrationDir, out Vector3 p);
+                                penetration = p;
+                            }
+                            else if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.Sphere)
+                            {
+                                //Sphere-OBB衝突
+                                detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcSphere(), out Vector3 p);
+                                penetration = p;
+                            }
+                            else if (collider_a.collider.GeometryType == RBGeometryType.Sphere && collider_b.collider.GeometryType == RBGeometryType.OBB)
+                            {
+                                //Sphere-OBB衝突（逆転）
+                                detailCollide = RBColliderCollision.DetectCollision(collider_b.collider.CalcOBB(), collider_a.collider.CalcSphere(), out Vector3 p);
+                                p = -p;
+                                penetration = p;
+                            }
+                            else if (collider_a.collider.GeometryType == RBGeometryType.Sphere && collider_b.collider.GeometryType == RBGeometryType.Sphere)
+                            {
+                                //Sphere-Sphere衝突
+                                detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcSphere(), collider_b.collider.CalcSphere(), out Vector3 p);
+                                penetration = p;
                             }
 
-                            return penetration;
-                        });
+                            if (rbc == null && penetration != Vector3.zero)
+                            {
+                                rbc = new RBCollision(traj_a, collider_a.collider, traj_b, collider_b.collider, penetration);
+                            }
 
-                        tasks.Add(t);
-                    }
+                            if (rbc != null)
+                            {
+                                rbc.penetration = penetration;
+                            }
+
+                            return rbc;
+                        }
+
+                        return null;
+                    });
+
+                    tasks.Add(t);
                 }
+            }
 
-                await Task.WhenAll(tasks).ConfigureAwait(false);
+            await Task.WhenAll(tasks).ConfigureAwait(false);
 
-                foreach (var t in tasks)
-                {
-                    ret.Add((t.Result.penetration, t.Result.collider_a, t.Result.collider_b));
-                }
+            foreach (var t in tasks)
+            {
+                ret.Add(t.Result);
             }
 
             return ret;

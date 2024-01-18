@@ -100,7 +100,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 ProjectPointOnPlane(Vector3 p, Vector3 planeNormal, Vector3 planeCenter)
         {
-            return planeCenter + Vector3.ProjectOnPlane(p - planeCenter, planeNormal);
+            return planeCenter + Vector3.ProjectOnPlane(p - planeCenter, planeNormal.normalized);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -147,6 +147,19 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 ReverseProject(Vector3 projected, Vector3 prjOnDir, Vector3 revPrjDir)
+        {
+            float div = Vector3.Dot(prjOnDir.normalized, revPrjDir.normalized);
+
+            if (div == 0)
+            {
+                return Vector3.zero;
+            }
+
+            return revPrjDir.normalized * (projected.magnitude / div);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static (Vector3 begin, Vector3 end) ReverseProjectEdgeOnLine((Vector3 begin, Vector3 end) edge, (Vector3 dir, Vector3 center) linePrjOn)
         {
             Vector3 d = edge.end - edge.begin;
@@ -176,16 +189,13 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 ReverseProject(Vector3 projected, Vector3 prjOnDir, Vector3 revPrjDir)
+        public static Vector3 ReverseProjectPointOnPlane(Vector3 projected, Vector3 prjOnNormal, Vector3 revPrjNormal, Vector3 tangentCenter)
         {
-            float div = Vector3.Dot(prjOnDir.normalized, revPrjDir.normalized);
-
-            if (div == 0)
-            {
-                return Vector3.zero;
-            }
-
-            return revPrjDir.normalized * (projected.magnitude / div);
+            Vector3 tangentDir = Vector3.Cross(prjOnNormal, revPrjNormal);
+            Vector3 tp = ProjectPointOnLine(projected, (tangentDir, tangentCenter));
+            Vector3 prjOnDir = projected - tp;
+            Vector3 revPrjDir = Vector3.Cross(revPrjNormal, tangentDir);
+            return tp + ReverseProject(projected - tp, prjOnDir, revPrjDir);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -202,16 +212,16 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 ProjectPointOnLine(Vector3 p, (Vector3 dir, Vector3 center) edge)
+        public static Vector3 ProjectPointOnLine(Vector3 p, (Vector3 dir, Vector3 center) line)
         {
-            return edge.center + Vector3.Project(p - edge.center, edge.dir);
+            return line.center + Vector3.Project(p - line.center, line.dir);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 ProjectPointOnEdge(Vector3 p, (Vector3 begin, Vector3 end) edge)
         {
             Vector3 dN = (edge.end - edge.begin);
-            return edge.begin + (dN.normalized * Mathf.Clamp(Vector3.Dot(dN, p - edge.begin), 0, dN.magnitude));
+            return edge.begin + (dN.normalized * Mathf.Clamp(Vector3.Dot(dN.normalized, p - edge.begin), 0, dN.magnitude));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -221,14 +231,14 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 ProjectPointOnRect(Vector3 point, Vector3[] rectPointsClockwise, Vector3 rectPlaneNormal)
+        public static Vector3 ProjectPointOnRect(Vector3 point, Vector3[] rectPointsClockwise, Vector3 rectPlaneNormal, out bool isInside, out int edgeIndex)
         {
-            rectPlaneNormal = Vector3.Normalize(rectPlaneNormal);
+            rectPlaneNormal.Normalize();
+            edgeIndex = -1;
 
             Vector3 prjP = ProjectPointOnPlane(point, rectPlaneNormal, rectPointsClockwise[0]);
 
-            bool isInside = RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormal), -1, 0.01f) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormal), -1, 0.01f) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormal), -1, 0.01f) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormal), -1, 0.01f);
-            isInside |= RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormal), 1, 0.01f) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormal), 1, 0.01f) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormal), 1, 0.01f) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormal), 1, 0.01f);
+            isInside = IsInsideRectOnSamePlane(prjP, rectPointsClockwise, rectPlaneNormal);
 
             if (isInside)
             {
@@ -244,18 +254,93 @@ namespace RBPhys
                 Vector3[] prjs = new Vector3[4] { prjA, prjB, prjC, prjD };
                 float dMin = -1;
                 Vector3 prjR = Vector3.zero;
+                int count = 0;
                 foreach (Vector3 prj in prjs)
                 {
                     float d = Vector3.Distance(prj, prjP);
                     if (dMin == -1 || d < dMin)
                     {
+                        edgeIndex = count;
                         dMin = d;
                         prjR = prj;
                     }
+
+                    count++;
                 }
 
                 return prjR;
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 ProjectPointOnRect(Vector3 point, Vector3[] rectPointsClockwise, Vector3 rectPlaneNormal)
+        {
+            //エッジ上は外側と判定する
+
+            return ProjectPointOnRect(point, rectPointsClockwise, rectPlaneNormal, out _, out _);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsProjectedInsideRect(Vector3 point, Vector3[] rectPointsClockwise, Vector3 rectPlaneNormal)
+        {
+            //エッジ上は外側と判定する
+
+            bool isInside;
+
+            rectPlaneNormal = Vector3.Normalize(rectPlaneNormal);
+            Vector3 prjP = ProjectPointOnPlane(point, rectPlaneNormal, rectPointsClockwise[0]);
+
+            isInside = RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormal), -1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormal), -1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormal), -1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormal), -1);
+            isInside |= RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormal), 1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormal), 1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormal), 1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormal), 1);
+
+            return isInside;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsInsideRectOnSamePlane(Vector3 point, Vector3[] rectPointsClockwise, Vector3 rectPlaneNormalN)
+        {
+            //エッジ上は外側と判定する
+
+            bool isInside;
+
+            Vector3 prjP = point;
+
+            isInside = RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormalN), -1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormalN), -1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormalN), -1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormalN), -1);
+            isInside |= RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormalN), 1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormalN), 1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormalN), 1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormalN), 1);
+
+            return isInside;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int GetNearestRectEdge(Vector3 point, Vector3[] rectPointsClockwise)
+        {
+            int edgeIndex = -1;
+
+            Vector3 prjP = point;
+
+            Vector3 prjA = ProjectPointOnEdge(prjP, (rectPointsClockwise[0], rectPointsClockwise[1]));
+            Vector3 prjB = ProjectPointOnEdge(prjP, (rectPointsClockwise[1], rectPointsClockwise[2]));
+            Vector3 prjC = ProjectPointOnEdge(prjP, (rectPointsClockwise[2], rectPointsClockwise[3]));
+            Vector3 prjD = ProjectPointOnEdge(prjP, (rectPointsClockwise[3], rectPointsClockwise[0]));
+
+            Vector3[] prjs = new Vector3[4] { prjA, prjB, prjC, prjD };
+            float dMin = -1;
+            Vector3 prjR = Vector3.zero;
+            int count = 0;
+            foreach (Vector3 prj in prjs)
+            {
+                float d = Vector3.Distance(prj, prjP);
+                if (dMin == -1 || d < dMin)
+                {
+                    edgeIndex = count;
+                    dMin = d;
+                    prjR = prj;
+                }
+
+                count++;
+            }
+
+            return edgeIndex;
         }
     }
 }
