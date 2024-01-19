@@ -290,8 +290,8 @@ namespace RBPhys
             rectPlaneNormal = Vector3.Normalize(rectPlaneNormal);
             Vector3 prjP = ProjectPointOnPlane(point, rectPlaneNormal, rectPointsClockwise[0]);
 
-            isInside = RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormal), -1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormal), -1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormal), -1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormal), -1);
-            isInside |= RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormal), 1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormal), 1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormal), 1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormal), 1);
+            isInside = Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormal) == -1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormal) == -1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormal) == -1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormal) == -1;
+            isInside |= Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormal) == 1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormal) == 1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormal) == 1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormal) == 1;
 
             return isInside;
         }
@@ -305,8 +305,8 @@ namespace RBPhys
 
             Vector3 prjP = point;
 
-            isInside = RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormalN), -1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormalN), -1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormalN), -1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormalN), -1);
-            isInside |= RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormalN), 1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormalN), 1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormalN), 1) && RBPhysUtil.IsF32EpsilonEqual(Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormalN), 1);
+            isInside = Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormalN) == -1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormalN) == -1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormalN) == -1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormalN) == -1;
+            isInside |= Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormalN) == 1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormalN) == 1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormalN) == 1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormalN) == 1;
 
             return isInside;
         }
@@ -325,7 +325,6 @@ namespace RBPhys
 
             Vector3[] prjs = new Vector3[4] { prjA, prjB, prjC, prjD };
             float dMin = -1;
-            Vector3 prjR = Vector3.zero;
             int count = 0;
             foreach (Vector3 prj in prjs)
             {
@@ -334,7 +333,6 @@ namespace RBPhys
                 {
                     edgeIndex = count;
                     dMin = d;
-                    prjR = prj;
                 }
 
                 count++;

@@ -6,7 +6,10 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using TMPro;
+using Unity.Android.Types;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Rendering;
 using UnityEngine.UIElements;
 using static RBPhys.RBColliderCollision;
@@ -100,7 +103,10 @@ namespace RBPhys
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                rb.ExpVelocity += new Vector3(0, -9.81f, 0) * dt;
+                if (rb.transform.name.Contains("rb"))
+                {
+                    rb.ExpVelocity += new Vector3(0, -9.81f, 0) * dt;
+                }
             }
 
             //OnClosePhysicsFrame‚Ö
@@ -212,7 +218,6 @@ namespace RBPhys
                         //Debug.Log(angularVelocityAcc_a);
                         //Debug.Log(velocityAcc_b);
                         //Debug.Log(angularVelocityAcc_b);
-                        //Debug.Log((velocityAcc_a, angularVelocityAcc_a, velocityAcc_b, angularVelocityAcc_b));
 
                         if (collision.rigidbody_a != null)
                         {
@@ -256,7 +261,7 @@ namespace RBPhys
                             Vector3 aNearest = p.aNearest;
                             Vector3 bNearest = p.bNearest;
 
-                            rbc.Update(rbc.penetration, -p.pDir, aNearest, bNearest);
+                            rbc.Update(rbc.penetration, aNearest, bNearest);
                             rbc.InitVelocityConstraint(dt);
 
                             if (0 <= d)
@@ -355,11 +360,18 @@ namespace RBPhys
 
                     Vector3 penetrationDir = Vector3.zero;
 
-                    RBCollision rbc = FindCollision(traj_a, traj_b, collider_a.collider, collider_b.collider);
+                    RBCollision rbc = FindCollision(collider_a.collider, collider_b.collider, out bool isInverted);
                     if (rbc != null)
                     {
+                        if (isInverted)
+                        {
+                            rbc.SwapTo(collider_a.collider, collider_b.collider);
+                        }
+
                         penetrationDir = rbc.ContactNormal;
                     }
+
+                    penetrationDir = Vector3.zero;
 
                     var t = Task.Run(() =>
                     {
@@ -427,88 +439,22 @@ namespace RBPhys
             return ret;
         }
 
-        static RBCollision FindCollision(RBTrajectory traj_a, RBTrajectory traj_b, RBCollider col_a, RBCollider col_b)
+        static RBCollision FindCollision(RBCollider col_a, RBCollider col_b, out bool isInverted)
         {
-            if (!traj_a.isStatic && !traj_b.isStatic)
-            {
-                var ab = (traj_a.rigidbody, traj_b.rigidbody);
-                var ba = (traj_b.rigidbody, traj_a.rigidbody);
+            isInverted = false;
 
-                foreach (RBCollision r in _collisions)
+            foreach (RBCollision r in _collisions)
+            {
+                if (r != null) 
                 {
-                    if ((r.rigidbody_a, r.rigidbody_b) == ab || (r.rigidbody_a, r.rigidbody_b) == ba)
+                    if ((r.collider_a, r.collider_b) == (col_a, col_b))
                     {
                         return r;
                     }
-                }
-            }
-            else if (traj_a.isStatic && !traj_b.isStatic)
-            {
-                var ab = (col_a, traj_b.rigidbody);
-                var ba = (traj_b.rigidbody, col_a);
 
-                foreach (RBCollision r in _collisions)
-                {
-                    if ((r.collider_a, r.rigidbody_b) == ab || (r.rigidbody_a, r.collider_b) == ba)
+                    if ((r.collider_a, r.collider_b) == (col_b, col_a))
                     {
-                        return r;
-                    }
-                }
-            }
-            else if (!traj_a.isStatic && traj_b.isStatic)
-            {
-                var ab = (traj_a.rigidbody, col_b);
-                var ba = (col_b, traj_a.rigidbody);
-
-                foreach (RBCollision r in _collisions)
-                {
-                    if ((r.rigidbody_a, r.collider_b) == ab || (r.collider_a, r.rigidbody_b) == ba)
-                    {
-                        return r;
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        static RBCollision FindCollision(RBTrajectory traj_a, RBTrajectory traj_b)
-        {
-            if (!traj_a.isStatic && !traj_b.isStatic)
-            {
-                var ab = (traj_a.rigidbody, traj_b.rigidbody);
-                var ba = (traj_b.rigidbody, traj_a.rigidbody);
-
-                foreach (RBCollision r in _collisions)
-                {
-                    if ((r.rigidbody_a, r.rigidbody_b) == ab || (r.rigidbody_a, r.rigidbody_b) == ba)
-                    {
-                        return r;
-                    }
-                }
-            }
-            else if (traj_a.isStatic && !traj_b.isStatic)
-            {
-                var ab = (traj_a.collider, traj_b.rigidbody);
-                var ba = (traj_b.rigidbody, traj_a.collider);
-
-                foreach (RBCollision r in _collisions)
-                {
-                    if ((r.collider_a, r.rigidbody_b) == ab || (r.rigidbody_a, r.collider_b) == ba)
-                    {
-                        return r;
-                    }
-                }
-            }
-            else if (!traj_a.isStatic && traj_b.isStatic)
-            {
-                var ab = (traj_a.rigidbody, traj_a.collider);
-                var ba = (traj_a.collider, traj_a.rigidbody);
-
-                foreach (RBCollision r in _collisions)
-                {
-                    if ((r.rigidbody_a, r.collider_b) == ab || (r.collider_a, r.rigidbody_b) == ba)
-                    {
+                        isInverted = true;
                         return r;
                     }
                 }
@@ -581,13 +527,81 @@ namespace RBPhys
             ContactNormal = (traj_b.isStatic ? Vector3.zero : traj_b.rigidbody.Velocity) - (traj_a.isStatic ? Vector3.zero : traj_a.rigidbody.Velocity);
         }
 
-        public void Update(Vector3 penetration, Vector3 contactNormal, Vector3 aNearest, Vector3 bNearest)
+        public bool ObjectEquals(RBCollision col)
+        {
+            return ObjectEquals(col, false, out _);
+        }
+
+        public bool ObjectEquals(RBCollision col, bool containsInverted, out bool isInverted)
+        {
+            isInverted = false;
+
+            if (col == null)
+            {
+                return true;
+            }
+
+            if (col != null)
+            {
+                bool b1 = collider_a = col.collider_a;
+                bool b2 = collider_b = col.collider_b;
+                bool b3 = rigidbody_a = col.rigidbody_a;
+                bool b4 = rigidbody_b = col.rigidbody_b;
+
+                bool bRet = (b1 && b2 && b3 && b4);
+
+                if (!containsInverted && !bRet)
+                {
+                    bool bc1 = collider_a = col.collider_b;
+                    bool bc2 = collider_b = col.collider_a;
+                    bool bc3 = rigidbody_a = col.rigidbody_b;
+                    bool bc4 = rigidbody_b = col.rigidbody_a;
+
+                    bool bcRet = (bc1 && bc2 && bc3 && bc4);
+
+                    isInverted = bcRet;
+                    return bcRet;
+                }
+                else
+                {
+                    return bRet;
+                }
+            }
+
+            return false;
+        }
+
+        public void SwapTo(RBCollider col_a, RBCollider col_b)
+        {
+            if ((collider_a, collider_b) == (col_b, col_a))
+            {
+                (collider_a, collider_b) = (col_a, col_b);
+                (rigidbody_a, rigidbody_b) = (rigidbody_b, rigidbody_a);
+                (cg_a, cg_b) = (cg_b, cg_a);
+                (aNearest, bNearest) = (bNearest, aNearest);
+                penetration = -penetration;
+                _contactNormal = -_contactNormal;
+                (rA, rB) = (rB, rA);
+            }
+        }
+
+        public Vector3 CalcRelativeVelocityAtPoints(Vector3 pointOnA, Vector3 pointOnB)
+        {
+            return -Velocity_a - Vector3.Cross(AngularVelocity_a, pointOnA - cg_a) + Velocity_b + Vector3.Cross(AngularVelocity_b, pointOnB - cg_b);
+        }
+
+        public Vector3 CalcRelativeExpVelocityAtPoints(Vector3 pointOnA, Vector3 pointOnB)
+        {
+            return ExpVelocity_a + Vector3.Cross(ExpAngularVelocity_a, pointOnA - cg_a) - ExpVelocity_b - Vector3.Cross(ExpAngularVelocity_b, pointOnB - cg_b);
+        }
+
+        public void Update(Vector3 penetration, Vector3 aNearest, Vector3 bNearest)
         {
             this.aNearest = aNearest;
             this.bNearest = bNearest;
 
             this.penetration = penetration;
-            ContactNormal = contactNormal;
+            _contactNormal = penetration.normalized;
 
             cg_a = rigidbody_a?.CenterOfGravityWorld ?? collider_a.GetColliderCenter();
             cg_b = rigidbody_b?.CenterOfGravityWorld ?? collider_b.GetColliderCenter();
