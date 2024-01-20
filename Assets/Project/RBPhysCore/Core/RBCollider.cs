@@ -96,13 +96,12 @@ namespace RBPhys
 
     public static class RBColliderCollision
     {
+        static Vector3[] _penetrations = new Vector3[15];
+
         //OBB-OBBÕ“Ë”»’è
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool DetectCollision(RBColliderOBB obb_a, RBColliderOBB obb_b, Vector3 penetrationDir, out Vector3 penetration)
+        public static bool DetectCollision(RBColliderOBB obb_a, RBColliderOBB obb_b, out Vector3 penetration)
         {
-            penetrationDir = Vector3.Normalize(penetrationDir);
-
-            Vector3[] penetrations = new Vector3[15];
             penetration = Vector3.zero;
 
             if (obb_a.isValidOBB && obb_b.isValidOBB)
@@ -135,7 +134,7 @@ namespace RBPhys
                             return false;
                         }
 
-                        penetrations[0] = aFwdN * (dp / 2f) * Mathf.Sign(dd);
+                        _penetrations[0] = aFwdN * (dp / 2f) * Mathf.Sign(dd);
                     }
 
                     //•ª—£Ž²‚Q: aRight
@@ -152,7 +151,7 @@ namespace RBPhys
                             return false;
                         }
 
-                        penetrations[1] = aRightN * (dp / 2f) * Mathf.Sign(dd);
+                        _penetrations[1] = aRightN * (dp / 2f) * Mathf.Sign(dd);
                     }
 
                     //•ª—£Ž²‚R: aUp
@@ -169,7 +168,7 @@ namespace RBPhys
                             return false;
                         }
 
-                        penetrations[2] = aUpN * (dp / 2f) * Mathf.Sign(dd);
+                        _penetrations[2] = aUpN * (dp / 2f) * Mathf.Sign(dd);
                     }
 
                     //•ª—£Ž²‚S: bFwd
@@ -186,7 +185,7 @@ namespace RBPhys
                             return false;
                         }
 
-                        penetrations[3] = bFwdN * (dp / 2f) * Mathf.Sign(dd);
+                        _penetrations[3] = bFwdN * (dp / 2f) * Mathf.Sign(dd);
                     }
 
                     //•ª—£Ž²‚T: bRight
@@ -203,7 +202,7 @@ namespace RBPhys
                             return false;
                         }
 
-                        penetrations[4] = bRightN * (dp / 2f) * Mathf.Sign(dd);
+                        _penetrations[4] = bRightN * (dp / 2f) * Mathf.Sign(dd);
                     }
 
                     //•ª—£Ž²‚U: bUp
@@ -220,7 +219,7 @@ namespace RBPhys
                             return false;
                         }
 
-                        penetrations[5] = bUpN * (dp / 2f) * Mathf.Sign(dd);
+                        _penetrations[5] = bUpN * (dp / 2f) * Mathf.Sign(dd);
                     }
 
                     //•ª—£Ž²‚V: aFwd x bFwd
@@ -229,7 +228,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            penetrations[6] = Vector3.negativeInfinity;
+                            _penetrations[6] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -245,7 +244,7 @@ namespace RBPhys
                                 return false;
                             }
 
-                            penetrations[6] = p * (dp / 2f) * Mathf.Sign(dd);
+                            _penetrations[6] = p * (dp / 2f) * Mathf.Sign(dd);
                         }
                     }
 
@@ -255,7 +254,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            penetrations[7] = Vector3.negativeInfinity;
+                            _penetrations[7] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -271,7 +270,7 @@ namespace RBPhys
                                 return false;
                             }
 
-                            penetrations[7] = p * (dp / 2f) * Mathf.Sign(dd);
+                            _penetrations[7] = p * (dp / 2f) * Mathf.Sign(dd);
                         }
                     }
 
@@ -281,7 +280,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            penetrations[8] = Vector3.negativeInfinity;
+                            _penetrations[8] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -297,7 +296,7 @@ namespace RBPhys
                                 return false;
                             }
 
-                            penetrations[8] = p * (dp / 2f) * Mathf.Sign(dd);
+                            _penetrations[8] = p * (dp / 2f) * Mathf.Sign(dd);
                         }
                     }
 
@@ -307,7 +306,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            penetrations[9] = Vector3.negativeInfinity;
+                            _penetrations[9] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -323,7 +322,7 @@ namespace RBPhys
                                 return false;
                             }
 
-                            penetrations[9] = p * (dp / 2f) * Mathf.Sign(dd);
+                            _penetrations[9] = p * (dp / 2f) * Mathf.Sign(dd);
                         }
                     }
 
@@ -333,7 +332,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            penetrations[10] = Vector3.negativeInfinity;
+                            _penetrations[10] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -349,7 +348,7 @@ namespace RBPhys
                                 return false;
                             }
 
-                            penetrations[10] = p * (dp / 2f) * Mathf.Sign(dd);
+                            _penetrations[10] = p * (dp / 2f) * Mathf.Sign(dd);
                         }
                     }
 
@@ -359,7 +358,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            penetrations[11] = Vector3.negativeInfinity;
+                            _penetrations[11] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -375,7 +374,7 @@ namespace RBPhys
                                 return false;
                             }
 
-                            penetrations[11] = p * (dp / 2f) * Mathf.Sign(dd);
+                            _penetrations[11] = p * (dp / 2f) * Mathf.Sign(dd);
                         }
                     }
 
@@ -385,7 +384,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            penetrations[12] = Vector3.negativeInfinity;
+                            _penetrations[12] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -401,7 +400,7 @@ namespace RBPhys
                                 return false;
                             }
 
-                            penetrations[12] = p * (dp / 2f) * Mathf.Sign(dd);
+                            _penetrations[12] = p * (dp / 2f) * Mathf.Sign(dd);
                         }
                     }
 
@@ -411,7 +410,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            penetrations[13] = Vector3.negativeInfinity;
+                            _penetrations[13] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -427,7 +426,7 @@ namespace RBPhys
                                 return false;
                             }
 
-                            penetrations[13] = p * (dp / 2f) * Mathf.Sign(dd);
+                            _penetrations[13] = p * (dp / 2f) * Mathf.Sign(dd);
                         }
                     }
 
@@ -437,7 +436,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            penetrations[14] = Vector3.negativeInfinity;
+                            _penetrations[14] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -453,31 +452,14 @@ namespace RBPhys
                                 return false;
                             }
 
-                            penetrations[14] = p * (dp / 2f) * Mathf.Sign(dd);
+                            _penetrations[14] = p * (dp / 2f) * Mathf.Sign(dd);
                         }
                     }
 
-                    if (penetrations.Any()) 
+                    if (_penetrations.Any()) 
                     {
-                        if (penetrationDir != Vector3.zero)
-                        {
-                            var p = penetrations
-                                .Select(item => item == Vector3.zero ? 0 : Mathf.Abs(item.magnitude * (1f / Vector3.Dot(penetrationDir, item.normalized))))
-                                .Where(item => !float.IsNaN(item) && !float.IsInfinity(item))
-                                .ToArray();
-
-                            if (p.Any())
-                            {
-                                penetration = penetrationDir * Mathf.Max(EPSILON_FLOAT32, p.Min());
-
-                                return true;
-                            }
-                        }
-                        else
-                        {
-                            penetration = penetrations.OrderBy(item => item.sqrMagnitude).ToArray()[0];
-                            return true;
-                        }
+                        penetration = _penetrations.OrderBy(item => item.sqrMagnitude).ToArray()[0];
+                        return true;
                     }
                 }
             }
@@ -671,7 +653,7 @@ namespace RBPhys
                 nearests.Add(t);
             }
 
-            Task.WhenAll(nearests).Wait();
+            await Task.WhenAll(nearests).ConfigureAwait(false);
 
             (float dist, Vector3 aNearest, Vector3 bNearest) nearest = (-1, Vector3.zero, Vector3.zero);
 

@@ -6,8 +6,6 @@ using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using TMPro;
-using Unity.Android.Types;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Rendering;
@@ -99,7 +97,7 @@ namespace RBPhys
                 }
             }
 
-            SolveCollidersAsync(dt); //フレーム跨ぎ防止
+            SolveCollidersAsync(dt).Wait(); //フレーム跨ぎ防止、多分デッドロックしない
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
@@ -124,7 +122,7 @@ namespace RBPhys
         static List<Task<List<RBCollision>>> _detectCollisionTasks = new List<Task<List<RBCollision>>>();
         static List<Task> _calcNearestsTasks = new List<Task>();
 
-        public static void SolveCollidersAsync(float dt)
+        public static async Task SolveCollidersAsync(float dt)
         {
             //衝突検知（ブロードフェーズ）
 
@@ -169,7 +167,7 @@ namespace RBPhys
                     }
                 }
 
-                Task.WhenAll(aabbTasks.Select(item => item.task));
+                await Task.WhenAll(aabbTasks.Select(item => item.task)).ConfigureAwait(false);
 
                 foreach (var t in aabbTasks)
                 {
@@ -197,7 +195,7 @@ namespace RBPhys
                 _detectCollisionTasks.Add(DetectCollisionsAsync(trajPair.Item1, trajPair.Item2));
             }
 
-            Task.WhenAll(_detectCollisionTasks);
+            await Task.WhenAll(_detectCollisionTasks).ConfigureAwait(false);
 
             foreach (var t in _detectCollisionTasks)
             {
@@ -218,7 +216,7 @@ namespace RBPhys
                 _calcNearestsTasks.Add(t);
             }
 
-            Task.WhenAll(_calcNearestsTasks);
+            await Task.WhenAll(_calcNearestsTasks).ConfigureAwait(false);
 
             for (int i = 0; i < COLLIDER_SOLVER_ITERATION; i++)
             {
@@ -246,7 +244,7 @@ namespace RBPhys
                     _solveCollisionTasks.Add(t);
                 }
 
-                Task.WhenAll(_solveCollisionTasks).ConfigureAwait(false);
+                await Task.WhenAll(_solveCollisionTasks).ConfigureAwait(false);
             }
 
             _collisions = _collisionsInFrame.ToArray();
@@ -307,8 +305,6 @@ namespace RBPhys
                         break;
                     }
 
-                    Vector3 penetrationDir = Vector3.zero;
-
                     RBCollision rbc = FindCollision(collider_a.collider, collider_b.collider, out bool isInverted);
                     if (rbc != null)
                     {
@@ -316,11 +312,7 @@ namespace RBPhys
                         {
                             rbc.SwapTo(collider_a.collider, collider_b.collider);
                         }
-
-                        penetrationDir = rbc.ContactNormal;
                     }
-
-                    penetrationDir = Vector3.zero;
 
                     var t = Task.Run(() =>
                     {
@@ -335,7 +327,7 @@ namespace RBPhys
                             if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.OBB)
                             {
                                 //OBB-OBB衝突
-                                detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), penetrationDir, out Vector3 p);
+                                detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), out Vector3 p);
                                 penetration = p;
                             }
                             else if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.Sphere)
