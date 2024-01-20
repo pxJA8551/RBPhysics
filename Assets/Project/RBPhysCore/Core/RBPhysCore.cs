@@ -32,7 +32,7 @@ namespace RBPhys
         static IEnumerable<RBCollision > _collisions = new List<RBCollision>();
         static List<RBCollision> _collisionsInFrame = new List<RBCollision>();
 
-        static List<Task<(bool collide, RBCollision[] cols, Vector3 velAcc_a, Vector3 angVelAcc_a, Vector3 velAcc_b, Vector3 angVelAcc_b)>> _solveCollisionTasks = new List<Task<(bool collide, RBCollision[] cols, Vector3 velAcc_a, Vector3 angVelAcc_a, Vector3 velAcc_b, Vector3 angVelAcc_b)>>();
+        static List<Task> _solveCollisionTasks = new List<Task>();
 
         public static void AddRigidbody(RBRigidbody rb)
         {
@@ -54,7 +54,7 @@ namespace RBPhys
             _colliders.Remove(c);
         }
 
-        public static void OpenPhysicsFrameWindow(float dt)
+        public static async void OpenPhysicsFrameWindow(float dt)
         {
             foreach (RBRigidbody rb in _rigidbodies)
             {
@@ -99,14 +99,11 @@ namespace RBPhys
                 }
             }
 
-            SolveColliders(dt);
+            SolveCollidersAsync(dt); //フレーム跨ぎ防止
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                if (rb.transform.name.Contains("rb"))
-                {
-                    rb.ExpVelocity += new Vector3(0, -9.81f, 0) * dt;
-                }
+                rb.ExpVelocity += new Vector3(0, -9.81f, 0) * dt;
             }
 
             //OnClosePhysicsFrameへ
@@ -124,11 +121,14 @@ namespace RBPhys
             }
         }
 
-        public static async void SolveColliders(float dt)
+        static List<Task<List<RBCollision>>> _detectCollisionTasks = new List<Task<List<RBCollision>>>();
+        static List<Task> _calcNearestsTasks = new List<Task>();
+
+        public static void SolveCollidersAsync(float dt)
         {
             //衝突検知（ブロードフェーズ）
 
-            List<(RBTrajectory, RBTrajectory)> collideInNextFrame = new List<(RBTrajectory, RBTrajectory)>();
+            List<(RBTrajectory, RBTrajectory)> collidingTrajs = new List<(RBTrajectory, RBTrajectory)>();
 
             {
                 //AABBのx最小値で昇順ソート
@@ -169,20 +169,20 @@ namespace RBPhys
                     }
                 }
 
-                Task.WhenAll(aabbTasks.Select(item => item.task)); //同期処理
+                Task.WhenAll(aabbTasks.Select(item => item.task));
 
                 foreach (var t in aabbTasks)
                 {
-                    collideInNextFrame.Add((t.traj_a, t.traj_b));
+                    collidingTrajs.Add((t.traj_a, t.traj_b));
                 }
 
-                for (int i = 0; i < collideInNextFrame.Count; i++)
+                for (int i = 0; i < collidingTrajs.Count; i++)
                 {
-                    (RBTrajectory, RBTrajectory) trajPair = collideInNextFrame[i];
+                    (RBTrajectory, RBTrajectory) trajPair = collidingTrajs[i];
 
                     if (!trajPair.Item1.trajectoryAABB.OverlapAABB(trajPair.Item2.trajectoryAABB))
                     {
-                        collideInNextFrame.RemoveAt(i);
+                        collidingTrajs.RemoveAt(i);
                         i--;
                     }
                 }
@@ -190,122 +190,71 @@ namespace RBPhys
 
             //衝突検知（ナローフェーズ）と解消
 
+            _detectCollisionTasks.Clear();
+
+            foreach (var trajPair in collidingTrajs)
+            {
+                _detectCollisionTasks.Add(DetectCollisionsAsync(trajPair.Item1, trajPair.Item2));
+            }
+
+            Task.WhenAll(_detectCollisionTasks);
+
+            foreach (var t in _detectCollisionTasks)
+            {
+                _collisionsInFrame.AddRange(t.Result);
+            }
+            
+            _calcNearestsTasks.Clear();
+
+            foreach (RBCollision rbc in _collisionsInFrame)
+            {
+                var t = Task.Run(() =>
+                {
+                    GetNearest(rbc, out Vector3 aNearest, out Vector3 bNearest);
+                    rbc.Update(rbc.penetration, aNearest, bNearest);
+                    rbc.InitVelocityConstraint(dt);
+                });
+
+                _calcNearestsTasks.Add(t);
+            }
+
+            Task.WhenAll(_calcNearestsTasks);
+
             for (int i = 0; i < COLLIDER_SOLVER_ITERATION; i++)
             {
                 _solveCollisionTasks.Clear();
 
-                foreach (var trajPair in collideInNextFrame)
+                foreach (var col in _collisionsInFrame)
                 {
-                    //２オブジェクト間の侵入を解消（非同期処理）
-                    _solveCollisionTasks.Add(SolveCollisions(trajPair.Item1, trajPair.Item2, dt));
-                }
-
-                Task.WhenAll(_solveCollisionTasks); // 同期処理
-
-                foreach (var t in _solveCollisionTasks)
-                {
-                    var r = t.Result;
-
-                    if (r.collide & r.cols.Any())
+                    var t = Task.Run(() =>
                     {
-                        RBCollision collision = r.cols[0];
-                        Vector3 velocityAcc_a = r.velAcc_a;
-                        Vector3 angularVelocityAcc_a = r.angVelAcc_a;
-                        Vector3 velocityAcc_b = r.velAcc_b;
-                        Vector3 angularVelocityAcc_b = r.angVelAcc_b;
+                        (Vector3 velAdd_a, Vector3 angVel_add_a, Vector3 velAdd_b, Vector3 angVel_add_b) = SolveCollision(col, dt);
 
-                        //Debug.Log(velocityAcc_a);
-                        //Debug.Log(angularVelocityAcc_a);
-                        //Debug.Log(velocityAcc_b);
-                        //Debug.Log(angularVelocityAcc_b);
-
-                        if (collision.rigidbody_a != null)
+                        if (col.rigidbody_a != null)
                         {
-                            collision.rigidbody_a.ExpVelocity += velocityAcc_a;
-                            collision.rigidbody_a.ExpAngularVelocity += angularVelocityAcc_a;
+                            col.rigidbody_a.ExpVelocity += velAdd_a;
+                            col.rigidbody_a.ExpAngularVelocity += angVel_add_a;
                         }
 
-                        if (collision.rigidbody_b != null)
+                        if (col.rigidbody_b != null)
                         {
-                            collision.rigidbody_b.ExpVelocity += velocityAcc_b;
-                            collision.rigidbody_b.ExpAngularVelocity += angularVelocityAcc_b;
+                            col.rigidbody_b.ExpVelocity += velAdd_b;
+                            col.rigidbody_b.ExpAngularVelocity += angVel_add_b;
                         }
-
-                        _collisionsInFrame.AddRange(r.cols);
-                    }
-                }
-                _collisions = _collisionsInFrame.ToArray();
-                _collisionsInFrame.Clear();
-            }
-        }
-
-        static async Task<(bool collide, RBCollision[] cols, Vector3 vel_a, Vector3 angVel_a, Vector3 vel_b, Vector3 angVel_b)> SolveCollisions(RBTrajectory traj_a, RBTrajectory traj_b, float dt)
-        {
-            List<RBCollision> collisions;
-
-            collisions = await DetectCollisions(traj_a, traj_b).ConfigureAwait(false);
-
-            List<Task<(bool collide, RBCollision col, Vector3 vel_a, Vector3 angVel_a, Vector3 vel_b, Vector3 angVel_b)>> solveCollisionTasks = new List<Task<(bool collide, RBCollision col, Vector3 vel_a, Vector3 angVel_a, Vector3 vel_b, Vector3 angVel_b)>>();
-
-            foreach (var rbc in collisions)
-            {
-                if (rbc != null)
-                {
-                    var task = Task.Run(() =>
-                    {
-                        if (rbc.penetration != Vector3.zero)
-                        {
-                            var p = GetNearestDistAsync(rbc.collider_a, rbc.collider_b, rbc.cg_a, rbc.cg_b, rbc.penetration).Result;
-
-                            float d = p.dist;
-                            Vector3 aNearest = p.aNearest;
-                            Vector3 bNearest = p.bNearest;
-
-                            rbc.Update(rbc.penetration, aNearest, bNearest);
-                            rbc.InitVelocityConstraint(dt);
-
-                            if (0 <= d)
-                            {
-                                var v = SolveCollision(rbc, dt);
-                                return (true, rbc, v.velAdd_a, v.angVelAdd_a, v.velAdd_b, v.angVelAdd_b);
-                            }
-                        }
-
-                        return (false, null, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
                     });
 
-                    solveCollisionTasks.Add(task);
+                    _solveCollisionTasks.Add(t);
                 }
+
+                Task.WhenAll(_solveCollisionTasks).ConfigureAwait(false);
             }
 
-            await Task.WhenAll(solveCollisionTasks).ConfigureAwait(false);
-
-            List<RBCollision> colsNew = new List<RBCollision>();
-            Vector3 vAdd_a = Vector3.zero;
-            Vector3 avAdd_a = Vector3.zero;
-            Vector3 vAdd_b = Vector3.zero;
-            Vector3 avAdd_b = Vector3.zero;
-
-            foreach (var t in solveCollisionTasks)
-            {
-                var p = t.Result;
-                if (p.collide)
-                {
-                    colsNew.Add(p.col);
-                    vAdd_a += p.vel_a;
-                    avAdd_a += p.angVel_a;
-                    vAdd_b += p.vel_b;
-                    avAdd_b += p.angVel_b;
-                }
-            }
-
-            return (colsNew.Any(), colsNew.ToArray(), vAdd_a, avAdd_a, vAdd_b, avAdd_b);
+            _collisions = _collisionsInFrame.ToArray();
+            _collisionsInFrame.Clear();
         }
 
-        static async Task<List<RBCollision>> DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b)
+        static async Task<List<RBCollision>> DetectCollisionsAsync(RBTrajectory traj_a, RBTrajectory traj_b)
         {
-            List<RBCollision> ret = new List<RBCollision>();
-
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_b;
 
@@ -429,14 +378,19 @@ namespace RBPhys
                 }
             }
 
-            await Task.WhenAll(tasks).ConfigureAwait(false);
+            Task.WhenAll(tasks);
+
+            List<RBCollision> cols = new List<RBCollision>();
 
             foreach (var t in tasks)
             {
-                ret.Add(t.Result);
+                if (t.Result != null)
+                {
+                    cols.Add(t.Result);
+                }
             }
 
-            return ret;
+            return cols;
         }
 
         static RBCollision FindCollision(RBCollider col_a, RBCollider col_b, out bool isInverted)
