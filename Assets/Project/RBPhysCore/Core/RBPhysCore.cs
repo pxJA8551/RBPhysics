@@ -97,7 +97,7 @@ namespace RBPhys
                 }
             }
 
-            SolveCollidersAsync(dt).Wait(); //フレーム跨ぎ防止、多分デッドロックしない
+            SolveCollidersAsync(dt); //フレーム跨ぎ防止
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
@@ -122,7 +122,7 @@ namespace RBPhys
         static List<Task<List<RBCollision>>> _detectCollisionTasks = new List<Task<List<RBCollision>>>();
         static List<Task> _calcNearestsTasks = new List<Task>();
 
-        public static async Task SolveCollidersAsync(float dt)
+        public static void SolveCollidersAsync(float dt)
         {
             //衝突検知（ブロードフェーズ）
 
@@ -167,7 +167,7 @@ namespace RBPhys
                     }
                 }
 
-                await Task.WhenAll(aabbTasks.Select(item => item.task)).ConfigureAwait(false);
+                Task.WhenAll(aabbTasks.Select(item => item.task)).Wait();
 
                 foreach (var t in aabbTasks)
                 {
@@ -195,7 +195,7 @@ namespace RBPhys
                 _detectCollisionTasks.Add(DetectCollisionsAsync(trajPair.Item1, trajPair.Item2));
             }
 
-            await Task.WhenAll(_detectCollisionTasks).ConfigureAwait(false);
+            Task.WhenAll(_detectCollisionTasks).Wait();
 
             foreach (var t in _detectCollisionTasks)
             {
@@ -216,7 +216,7 @@ namespace RBPhys
                 _calcNearestsTasks.Add(t);
             }
 
-            await Task.WhenAll(_calcNearestsTasks).ConfigureAwait(false);
+            Task.WhenAll(_calcNearestsTasks).Wait();
 
             for (int i = 0; i < COLLIDER_SOLVER_ITERATION; i++)
             {
@@ -244,7 +244,7 @@ namespace RBPhys
                     _solveCollisionTasks.Add(t);
                 }
 
-                await Task.WhenAll(_solveCollisionTasks).ConfigureAwait(false);
+                Task.WhenAll(_solveCollisionTasks).Wait();
             }
 
             _collisions = _collisionsInFrame.ToArray();
@@ -370,7 +370,7 @@ namespace RBPhys
                 }
             }
 
-            Task.WhenAll(tasks);
+            Task.WhenAll(tasks).Wait();
 
             List<RBCollision> cols = new List<RBCollision>();
 

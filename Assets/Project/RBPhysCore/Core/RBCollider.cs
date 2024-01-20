@@ -653,7 +653,7 @@ namespace RBPhys
                 nearests.Add(t);
             }
 
-            await Task.WhenAll(nearests).ConfigureAwait(false);
+            Task.WhenAll(nearests).Wait();
 
             (float dist, Vector3 aNearest, Vector3 bNearest) nearest = (-1, Vector3.zero, Vector3.zero);
 
