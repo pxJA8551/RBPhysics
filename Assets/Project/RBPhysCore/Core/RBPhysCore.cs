@@ -99,7 +99,7 @@ namespace RBPhys
                 }
             }
 
-            SolveCollidersAsync(dt); //フレーム跨ぎ防止
+            SolveCollidersAsync(dt).Wait(); //フレーム跨ぎ防止、多分デッドロックしない
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
@@ -124,7 +124,7 @@ namespace RBPhys
         static List<Task<List<RBCollision>>> _detectCollisionTasks = new List<Task<List<RBCollision>>>();
         static List<Task> _calcNearestsTasks = new List<Task>();
 
-        public static void SolveCollidersAsync(float dt)
+        public static async Task SolveCollidersAsync(float dt)
         {
             //衝突検知（ブロードフェーズ）
 
@@ -169,7 +169,7 @@ namespace RBPhys
                     }
                 }
 
-                Task.WhenAll(aabbTasks.Select(item => item.task));
+                await Task.WhenAll(aabbTasks.Select(item => item.task)).ConfigureAwait(false);
 
                 foreach (var t in aabbTasks)
                 {
@@ -197,7 +197,7 @@ namespace RBPhys
                 _detectCollisionTasks.Add(DetectCollisionsAsync(trajPair.Item1, trajPair.Item2));
             }
 
-            Task.WhenAll(_detectCollisionTasks);
+            await Task.WhenAll(_detectCollisionTasks).ConfigureAwait(false);
 
             foreach (var t in _detectCollisionTasks)
             {
@@ -218,7 +218,7 @@ namespace RBPhys
                 _calcNearestsTasks.Add(t);
             }
 
-            Task.WhenAll(_calcNearestsTasks);
+            await Task.WhenAll(_calcNearestsTasks).ConfigureAwait(false);
 
             for (int i = 0; i < COLLIDER_SOLVER_ITERATION; i++)
             {
@@ -246,7 +246,7 @@ namespace RBPhys
                     _solveCollisionTasks.Add(t);
                 }
 
-                Task.WhenAll(_solveCollisionTasks).ConfigureAwait(false);
+                await Task.WhenAll(_solveCollisionTasks).ConfigureAwait(false);
             }
 
             _collisions = _collisionsInFrame.ToArray();
