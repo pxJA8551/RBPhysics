@@ -5,7 +5,9 @@ using System.Drawing;
 using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
+using Unity.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Rendering;
@@ -119,7 +121,7 @@ namespace RBPhys
             }
         }
 
-        static List<Task<List<RBCollision>>> _detectCollisionTasks = new List<Task<List<RBCollision>>>();
+        static List<Task> _detectCollisionTasks = new List<Task>();
         static List<Task> _calcNearestsTasks = new List<Task>();
 
         public static void SolveCollidersAsync(float dt)
@@ -192,31 +194,15 @@ namespace RBPhys
 
             foreach (var trajPair in collidingTrajs)
             {
-                _detectCollisionTasks.Add(DetectCollisionsAsync(trajPair.Item1, trajPair.Item2));
+                _detectCollisionTasks.Add(DetectCollisions(trajPair.Item1, trajPair.Item2, _collisionsInFrame));
             }
 
             Task.WhenAll(_detectCollisionTasks).Wait();
-
-            foreach (var t in _detectCollisionTasks)
-            {
-                _collisionsInFrame.AddRange(t.Result);
-            }
             
-            _calcNearestsTasks.Clear();
-
-            foreach (RBCollision rbc in _collisionsInFrame)
+            foreach (var col in _collisionsInFrame)
             {
-                var t = Task.Run(() =>
-                {
-                    GetNearest(rbc, out Vector3 aNearest, out Vector3 bNearest);
-                    rbc.Update(rbc.penetration, aNearest, bNearest);
-                    rbc.InitVelocityConstraint(dt);
-                });
-
-                _calcNearestsTasks.Add(t);
+                col.InitVelocityConstraint(dt);
             }
-
-            Task.WhenAll(_calcNearestsTasks).Wait();
 
             for (int i = 0; i < COLLIDER_SOLVER_ITERATION; i++)
             {
@@ -251,7 +237,7 @@ namespace RBPhys
             _collisionsInFrame.Clear();
         }
 
-        static async Task<List<RBCollision>> DetectCollisionsAsync(RBTrajectory traj_a, RBTrajectory traj_b)
+        static async Task DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b, List<RBCollision> refList)
         {
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_b;
@@ -314,6 +300,8 @@ namespace RBPhys
                         }
                     }
 
+                    Vector3 cg = traj_a.isStatic ? traj_b.isStatic ? Vector3.zero : traj_b.rigidbody.CenterOfGravityWorld : traj_a.rigidbody.CenterOfGravityWorld;
+
                     var t = Task.Run(() =>
                     {
                         bool aabbCollide = collider_a.aabb.OverlapAABB(collider_b.aabb);
@@ -323,11 +311,13 @@ namespace RBPhys
                         if (aabbCollide)
                         {
                             bool detailCollide = false;
+                            Vector3 aNearest = Vector3.zero;
+                            Vector3 bNearest = Vector3.zero;
 
                             if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.OBB)
                             {
                                 //OBB-OBBè’ìÀ
-                                detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), out Vector3 p);
+                                detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), cg, out Vector3 p, out aNearest, out bNearest);
                                 penetration = p;
                             }
                             else if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.Sphere)
@@ -350,14 +340,14 @@ namespace RBPhys
                                 penetration = p;
                             }
 
-                            if (rbc == null && penetration != Vector3.zero)
+                            if (rbc == null && penetration != Vector3.zero && detailCollide)
                             {
                                 rbc = new RBCollision(traj_a, collider_a.collider, traj_b, collider_b.collider, penetration);
                             }
 
                             if (rbc != null)
                             {
-                                rbc.penetration = penetration;
+                                rbc.Update(penetration, aNearest, bNearest);
                             }
 
                             return rbc;
@@ -372,17 +362,13 @@ namespace RBPhys
 
             Task.WhenAll(tasks).Wait();
 
-            List<RBCollision> cols = new List<RBCollision>();
-
             foreach (var t in tasks)
             {
                 if (t.Result != null)
                 {
-                    cols.Add(t.Result);
+                    refList.Add(t.Result);
                 }
             }
-
-            return cols;
         }
 
         static RBCollision FindCollision(RBCollider col_a, RBCollider col_b, out bool isInverted)
@@ -793,6 +779,7 @@ namespace RBPhys
         public Quaternion rot;
         public Vector3 size;
         public bool isValidOBB;
+        public Vector3[] verts;
 
         public Vector3 Center { get { return pos + rot * size / 2f; } }
 
@@ -801,16 +788,216 @@ namespace RBPhys
             this.pos = pos;
             this.rot = rot;
             this.size = size;
+            verts = new Vector3[0];
             isValidOBB = true;
+
+            verts = GetVertices();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public float GetAxisSize(Vector3 axis)
+        public float GetAxisSize(Vector3 axisN)
         {
-            float fwd = Mathf.Abs(Vector3.Dot(rot * new Vector3(0, 0, size.z), axis));
-            float right = Mathf.Abs(Vector3.Dot(rot * new Vector3(size.x, 0, 0), axis));
-            float up = Mathf.Abs(Vector3.Dot(rot * new Vector3(0, size.y, 0), axis));
+            float fwd = Mathf.Abs(Vector3.Dot(rot * new Vector3(0, 0, size.z), axisN));
+            float right = Mathf.Abs(Vector3.Dot(rot * new Vector3(size.x, 0, 0), axisN));
+            float up = Mathf.Abs(Vector3.Dot(rot * new Vector3(0, size.y, 0), axisN));
             return fwd + right + up;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3 GetAxisOffset(Vector3 axisN, out int parallelAxisMask)
+        {
+            parallelAxisMask = 0;
+
+            Vector3 aFwd = rot * new Vector3(0, 0, size.z);
+            Vector3 aRight = rot * new Vector3(size.x, 0, 0);
+            Vector3 aUp = rot * new Vector3(0, size.y, 0);
+
+            float dotFwd = Vector3.Dot(aFwd, axisN);
+            float dotRight = Vector3.Dot(aRight, axisN);
+            float dotUp = Vector3.Dot(aUp, axisN);
+
+            Vector3 cFwd = Vector3.Cross(aFwd, axisN);
+            Vector3 cRight = Vector3.Cross(aRight, axisN);
+            Vector3 cUp = Vector3.Cross(aUp, axisN);
+
+            Vector3 p = (aFwd * RBPhysUtil.F32Sign101(dotFwd) + aRight * RBPhysUtil.F32Sign101(dotRight) + aUp * RBPhysUtil.F32Sign101(dotUp)) / 2;
+
+            if (cFwd == Vector3.zero)
+            {
+                if (dotFwd > 0)
+                {
+                    parallelAxisMask = 1 << 4; // z-positive axis
+                }
+                else
+                {
+                    parallelAxisMask = 1 << 5; // z-negative axis
+                }
+
+                return p;
+            }
+
+            if (cRight == Vector3.zero)
+            {
+                if (dotRight > 0)
+                {
+                    parallelAxisMask = 1 << 0; // x-positive axis
+                }
+                else
+                {
+                    parallelAxisMask = 1 << 1; // x-negative axis
+                }
+
+                return p;
+            }
+
+            if (cUp == Vector3.zero)
+            {
+                if (dotUp > 0)
+                {
+                    parallelAxisMask = 1 << 2; // y-positive axis
+                }
+                else
+                {
+                    parallelAxisMask = 1 << 3; // y-negative axis
+                }
+
+                return p;
+            }
+
+            if (Vector3.Cross(cFwd, cRight) == Vector3.zero)
+            {
+                if (dotFwd > 0)
+                {
+                    parallelAxisMask += 1 << 4; // z-positive axis
+                }
+                else
+                {
+                    parallelAxisMask += 1 << 5; // z-negative axis
+                }
+
+                if (dotRight > 0)
+                {
+                    parallelAxisMask += 1 << 0; // x-positive axis
+                }
+                else
+                {
+                    parallelAxisMask += 1 << 1; // x-negative axis
+                }
+
+                return p;
+            }
+
+            if (Vector3.Cross(cRight, cUp) == Vector3.zero)
+            {
+                if (dotRight > 0)
+                {
+                    parallelAxisMask += 1 << 0; // x-positive axis
+                }
+                else
+                {
+                    parallelAxisMask += 1 << 1; // x-negative axis
+                }
+
+                if (dotUp > 0)
+                {
+                    parallelAxisMask += 1 << 2; // y-positive axis
+                }
+                else
+                {
+                    parallelAxisMask += 1 << 3; // y-negative axis
+                }
+
+                return p;
+            }
+
+            if (Vector3.Cross(cUp, cFwd) == Vector3.zero)
+            {
+                if (dotUp > 0)
+                {
+                    parallelAxisMask += 1 << 2; // y-positive axis
+                }
+                else
+                {
+                    parallelAxisMask += 1 << 3; // y-negative axis
+                }
+
+                if (dotFwd > 0)
+                {
+                    parallelAxisMask += 1 << 4; // z-positive axis
+                }
+                else
+                {
+                    parallelAxisMask += 1 << 5; // z-negative axis
+                }
+
+                return p;
+            }
+
+            return p;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3 GetDirectional(Vector3 dirN, out int axisInfo)
+        {
+            return Center + GetAxisOffset(dirN, out axisInfo);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public (Vector3 begin, Vector3 end) GetDirectionalEdge(int axisInfo)
+        {
+            int axis_a = -1;
+            for (int i = 0; i < 6; i++)
+            {
+                int sel = 1 << i;
+                if ((axisInfo & (sel)) == sel)
+                {
+                    if (axis_a == -1)
+                    {
+                        axis_a = i;
+                    }
+                    else
+                    {
+                        (Vector3 begin, Vector3 end) edge = (axis_a, i) switch
+                        {
+                            (0, 2) => (verts[3], verts[7]),
+                            (0, 3) => (verts[1], verts[5]),
+                            (0, 4) => (verts[5], verts[7]),
+                            (0, 5) => (verts[1], verts[3]),
+
+                            (1, 2) => (verts[2], verts[6]),
+                            (1, 3) => (verts[0], verts[4]),
+                            (1, 4) => (verts[4], verts[6]),
+                            (1, 5) => (verts[0], verts[2]),
+
+                            (2, 4) => (verts[6], verts[7]),
+                            (2, 5) => (verts[2], verts[3]),
+
+                            (3, 4) => (verts[4], verts[5]),
+                            (3, 5) => (verts[0], verts[1]),
+                            _ => (Vector3.zero, Vector3.zero)
+                        };
+
+                        return edge;
+                    }
+                }
+            }
+
+            return (Vector3.zero, Vector3.zero);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public (Vector3[] vertsCW, Vector3 normal) GetDirectionalRect(int axisInfo)
+        {
+            return axisInfo switch
+            {
+                1 << 0 => (new Vector3[4] { verts[1], verts[3], verts[7], verts[5] }, GetAxisRight()),
+                1 << 1 => (new Vector3[4] { verts[4], verts[6], verts[2], verts[0] }, -GetAxisRight()),
+                1 << 2 => (new Vector3[4] { verts[2], verts[6], verts[7], verts[3] }, GetAxisUp()),
+                1 << 3 => (new Vector3[4] { verts[1], verts[5], verts[4], verts[0] }, -GetAxisUp()),
+                1 << 4 => (new Vector3[4] { verts[5], verts[7], verts[6], verts[4] }, GetAxisForward()),
+                1 << 5 => (new Vector3[4] { verts[0], verts[2], verts[3], verts[1] }, -GetAxisForward()),
+                _ => (new Vector3[4], Vector3.zero)
+            };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -844,6 +1031,12 @@ namespace RBPhys
             Vector3 XYZ = pos + rot * new Vector3(size.x, size.y, size.z);
 
             return new Vector3[] { xyz, Xyz, xYz, XYz, xyZ, XyZ, xYZ, XYZ };
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3 GetVertex(int axisMask)
+        {
+            return Vector3.zero;
         }
     }
 

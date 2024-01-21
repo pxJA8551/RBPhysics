@@ -303,7 +303,7 @@ namespace RBPhys
                     float t = 1 / (absw + Mathf.Sqrt(w * w + 1));
                     float h = 1 / Mathf.Sqrt(t * t + 1);
 
-                    r = IndexedRotation(a, Mathf.Sqrt((1 - h) / 2f) * Mathf.Sign(w), Mathf.Sqrt((1 + h) / 2f));
+                    r = IndexedRotation(a, Mathf.Sqrt((1 - h) / 2f) * RBPhysUtil.F32Sign11(w), Mathf.Sqrt((1 + h) / 2f));
                 }
 
                 q = (q * r).normalized;

@@ -65,9 +65,27 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsInt32Pow2(int x)
+        {
+            return x != 0 && (x & (x - 1)) == 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsV3EpsilonEqual(Vector3 a, Vector3 b, float epsilon = EPSILON_FLOAT32)
         {
             return IsF32EpsilonEqual(a.x, b.x, epsilon) && IsF32EpsilonEqual(a.y, b.y, epsilon) && IsF32EpsilonEqual(a.z, b.z, epsilon);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float F32Sign101(float x)
+        {
+            return x > 0 ? 1 : x == 0 ? 0 : -1;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float F32Sign11(float x)
+        {
+            return x > 0 ? 1 : -1;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -110,7 +128,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CalcNearest((Vector3 dir, Vector3 center) line_a, (Vector3 dir, Vector3 center) line_b, out Vector3 aNearest, out Vector3 bNearest)
+        public static void CalcNearestLine((Vector3 dir, Vector3 center) line_a, (Vector3 dir, Vector3 center) line_b, out Vector3 aNearest, out Vector3 bNearest)
         {
             Vector3 aDirN = line_a.dir.normalized;
             Vector3 bDirN = line_b.dir.normalized;
@@ -131,10 +149,28 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 CalcNearest((Vector3 dir, Vector3 center) line_a, (Vector3 dir, Vector3 center) line_b)
+        public static Vector3 CalcNearestLine((Vector3 dir, Vector3 center) line_a, (Vector3 dir, Vector3 center) line_b)
         {
-            CalcNearest(line_a, line_b, out Vector3 aNearest, out Vector3 bNearest);
+            CalcNearestLine(line_a, line_b, out Vector3 aNearest, out Vector3 bNearest);
             return aNearest;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void CalcNearestEdgeLine((Vector3 begin, Vector3 end) edge_a, (Vector3 begin, Vector3 end) edge_b, out Vector3 aNearest, out Vector3 bNearest)
+        {
+            Vector3 aDirN = (edge_a.end - edge_a.begin).normalized;
+            Vector3 bDirN = (edge_b.end - edge_b.begin).normalized;
+
+            float dotAb = Vector3.Dot(aDirN, bDirN);
+            float div = 1 - dotAb * dotAb;
+
+            Vector3 aToB = edge_b.begin - edge_a.begin;
+
+            float r1 = (Vector3.Dot(aToB, aDirN) - dotAb * Vector3.Dot(aToB, bDirN)) / div;
+            float r2 = (dotAb * Vector3.Dot(aToB, aDirN) - Vector3.Dot(aToB, bDirN)) / div;
+
+            aNearest = edge_a.begin + r1 * aDirN;
+            bNearest = edge_a.begin + r2 * bDirN;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -172,10 +208,10 @@ namespace RBPhys
 
             (Vector3 dir, Vector3 center) edgeLined = (d, edge.begin);
 
-            Vector3 contact = CalcNearest(edgeLined, linePrjOn);
+            Vector3 contact = CalcNearestLine(edgeLined, linePrjOn);
             Vector3 r = edge.begin - contact;
 
-            float div = d.magnitude * Mathf.Sign(Vector3.Dot(d, r));
+            float div = d.magnitude * F32Sign101(Vector3.Dot(d, r));
 
             if (div == 0)
             {
