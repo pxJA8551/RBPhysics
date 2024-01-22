@@ -24,7 +24,7 @@ namespace RBPhys
 
         public float beta = 0.5f;
         public float restitution = 0.5f; //îΩî≠åWêî
-        public float friction = 0.5f; //ñÄéCåWêî
+        public float friction = 0.2f; //ñÄéCåWêî
 
         void Awake()
         {
@@ -96,7 +96,7 @@ namespace RBPhys
 
     public static class RBColliderCollision
     {
-        internal const float V3_PARALLEL_DOT_EPSILON = 0.0000000001f;
+        internal const float V3_PARALLEL_DOT_EPSILON = 0.00000001f;
 
         static Vector3[] _penetrations = new Vector3[15];
 
@@ -493,21 +493,18 @@ namespace RBPhys
                             if (point_a && point_b)
                             {
                                 GetOBBNearest(dpA, dpB, out aNearest, out bNearest);
-                                Debug.Log("p-p");
                                 return true;
                             }
 
                             if (point_a && edge_b)
                             {
                                 GetOBBNearest(dpA, obb_b.GetDirectionalEdge(axisInfo_b), out aNearest, out bNearest);
-                                Debug.Log("p-e");
                                 return true;
                             }
 
                             if (point_a && face_b)
                             {
                                 GetOBBNearest(dpA, obb_b.GetDirectionalRect(axisInfo_b), out aNearest, out bNearest);
-                                Debug.Log("p-f");
                                 return true;
                             }
 
