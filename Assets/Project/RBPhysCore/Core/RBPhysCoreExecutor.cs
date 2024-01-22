@@ -7,9 +7,16 @@ namespace RBPhys
 {
     public class RBPhysCoreExecutor : MonoBehaviour
     {
+        [SerializeField] bool _disableUnityPhysics = true;
+
         void FixedUpdate()
         {
             StartCoroutine(PhysicsFrame(Time.fixedDeltaTime));
+
+            if (Physics.autoSimulation != _disableUnityPhysics) 
+            {
+                Physics.autoSimulation = _disableUnityPhysics;
+            }
         }
 
         IEnumerator PhysicsFrame(float dt)
