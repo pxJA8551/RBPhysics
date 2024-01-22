@@ -1,11 +1,13 @@
 {
     "name": "RBPhysics",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:fd6a64c3f6881e04aa84d7f507a64a3c"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": false,
+    "overrideReferences": true,
     "precompiledReferences": [],
     "autoReferenced": false,
     "defineConstraints": [],

@@ -812,9 +812,9 @@ namespace RBPhys
             Vector3 aRight = rot * new Vector3(size.x, 0, 0);
             Vector3 aUp = rot * new Vector3(0, size.y, 0);
 
-            float dotFwd = Vector3.Dot(aFwd, axisN);
-            float dotRight = Vector3.Dot(aRight, axisN);
-            float dotUp = Vector3.Dot(aUp, axisN);
+            float dotFwd = Vector3.Dot(aFwd.normalized, axisN);
+            float dotRight = Vector3.Dot(aRight.normalized, axisN);
+            float dotUp = Vector3.Dot(aUp.normalized, axisN);
 
             Vector3 p = (aFwd * RBPhysUtil.F32Sign101(dotFwd) + aRight * RBPhysUtil.F32Sign101(dotRight) + aUp * RBPhysUtil.F32Sign101(dotUp)) / 2;
 
