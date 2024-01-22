@@ -22,9 +22,9 @@ namespace RBPhys
         public Quaternion GameObjectRot { get; private set; }
         public Vector3 GameObjectLossyScale { get; private set; }
 
-        public float beta = 0.5f;
+        public float beta = 0.7f;
         public float restitution = 0.5f; //”½”­ŒW”
-        public float friction = 0.2f; //–€CŒW”
+        public float friction = 0.7f; //–€CŒW”
 
         void Awake()
         {
@@ -96,8 +96,7 @@ namespace RBPhys
 
     public static class RBColliderCollision
     {
-        internal const float V3_PARALLEL_DOT_EPSILON = 0.00000001f;
-
+        internal const float V3_PARALLEL_DOT_EPSILON = 0.000001f;
 
         //OBB-OBBÕ“Ë”»’è
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

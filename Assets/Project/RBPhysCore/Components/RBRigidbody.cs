@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using static RBPhys.RBPhysUtil;
 
@@ -8,7 +9,8 @@ namespace RBPhys
 {
     public class RBRigidbody : MonoBehaviour
     {
-        const int DIAGONALIZE_MAX_ITERATION = 24;
+        const float SLEEP_VEL_MAX_SQRT = 0.01f * 0.01f;
+        const float SLEEP_ANGVEL_MAX_SQRT = 0.1f * 0.1f;
 
         public float mass;
         [HideInInspector] public Vector3 inertiaTensor;
@@ -39,6 +41,8 @@ namespace RBPhys
 
         public float InverseMass { get { return 1 / mass; } }
 
+        public bool isSleeping = false;
+
         public Vector3 InverseInertiaWs
         {
             get
@@ -55,6 +59,7 @@ namespace RBPhys
             FindColliders();
             UpdateTransform();
             RecalculateInertiaTensor();
+            isSleeping = false;
         }
 
         void OnDestroy()
@@ -116,6 +121,17 @@ namespace RBPhys
             transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
 
             UpdateTransform();
+
+            if (IsUnderSleepLevel())
+            {
+                PhysSleep();
+                _expVelocity = Vector3.zero;
+                _expAngularVelocity = Vector3.zero;
+            }
+            else
+            {
+                PhysAwake();
+            }
         }
 
         public void UpdateTransform()
@@ -130,6 +146,28 @@ namespace RBPhys
 
             inertiaTensor = rb.inertiaTensor;
             inertiaTensorRotation = rb.inertiaTensorRotation;
+        }
+
+        public bool IsUnderSleepLevel()
+        {
+            return _velocity.sqrMagnitude < SLEEP_VEL_MAX_SQRT && _angularVelocity.sqrMagnitude < SLEEP_ANGVEL_MAX_SQRT;
+        }
+
+        public bool IsExpUnderSleepLevel()
+        {
+            return _expVelocity.sqrMagnitude < SLEEP_VEL_MAX_SQRT && _expAngularVelocity.sqrMagnitude < SLEEP_ANGVEL_MAX_SQRT;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void PhysAwake()
+        {
+            isSleeping = false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void PhysSleep()
+        {
+            isSleeping = true;
         }
 
         public void RecalculateInertiaTensor()

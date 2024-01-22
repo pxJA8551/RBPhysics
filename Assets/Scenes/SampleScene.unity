@@ -275,6 +275,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &95750203
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -351,7 +352,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 95750201}
   m_LocalRotation: {x: -0.3655837, y: -0.6756393, z: -0.546264, w: 0.3338499}
-  m_LocalPosition: {x: -0.20000005, y: 3.77, z: 0.9}
+  m_LocalPosition: {x: -0.20000005, y: 3.42, z: 0.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -394,6 +395,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &178884386
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -513,6 +515,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &280504258
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -632,6 +635,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &349912730
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -751,6 +755,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &377239184
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -870,6 +875,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1055142032}
+  isSleeping: 0
 --- !u!114 &475067052
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -989,6 +995,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &699552866
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1202,6 +1209,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &737648533
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1321,6 +1329,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &739372083
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1397,7 +1406,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 739372081}
   m_LocalRotation: {x: -0.30683675, y: 0.6087679, z: -0.5572149, w: -0.47409314}
-  m_LocalPosition: {x: -2.15, y: 3.77, z: 0.9}
+  m_LocalPosition: {x: -2.15, y: 3.42, z: 0.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1523,6 +1532,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &802641786
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1756,6 +1766,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &858234698
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1832,7 +1843,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 858234696}
   m_LocalRotation: {x: 0.014899053, y: 0.86921895, z: -0.1726535, w: -0.46306288}
-  m_LocalPosition: {x: -4.1000004, y: 3.77, z: 0.39999998}
+  m_LocalPosition: {x: -4.1000004, y: 3.42, z: 0.39999998}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1875,6 +1886,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &875020177
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2161,6 +2173,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!1 &1055142031
 GameObject:
   m_ObjectHideFlags: 0
@@ -2311,6 +2324,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1055142032}
+  isSleeping: 0
 --- !u!114 &1115822495
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2430,6 +2444,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &1139262480
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2549,6 +2564,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &1377545556
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2751,6 +2767,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &1454192596
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2970,6 +2987,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1055142032}
+  isSleeping: 0
 --- !u!114 &1630791542
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3089,6 +3107,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &1636217916
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3291,6 +3310,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!1 &1665660795
 GameObject:
   m_ObjectHideFlags: 0
@@ -3327,6 +3347,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &1665660797
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3403,7 +3424,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1665660795}
   m_LocalRotation: {x: 0.07671183, y: -0.69493437, z: -0.70699203, w: -0.10650721}
-  m_LocalPosition: {x: 1.75, y: 3.77, z: 0.9}
+  m_LocalPosition: {x: 1.75, y: 3.42, z: 0.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3446,6 +3467,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &1813379462
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3522,7 +3544,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1813379460}
   m_LocalRotation: {x: 0.18435282, y: -0.7815507, z: 0.33177438, w: 0.4950943}
-  m_LocalPosition: {x: 3.7, y: 3.77, z: 0.9}
+  m_LocalPosition: {x: 3.7, y: 3.42, z: 0.9}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3565,6 +3587,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &1833545719
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3728,6 +3751,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &1958638633
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3847,6 +3871,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &2091314355
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3966,6 +3991,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   rb: {fileID: 1572465456}
+  isSleeping: 0
 --- !u!114 &2094631962
 MonoBehaviour:
   m_ObjectHideFlags: 0

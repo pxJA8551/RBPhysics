@@ -1,25 +1,23 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Globalization;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
-using Unity.Collections;
+using UnityEditorInternal;
 using UnityEngine;
-using UnityEngine.AI;
-using UnityEngine.Rendering;
-using UnityEngine.UIElements;
+using UnityEngine.Profiling;
 using static RBPhys.RBColliderCollision;
 
 namespace RBPhys
 {
     public static class RBPhysCore
     {
-        public const int COLLIDER_SOLVER_ITERATION = 15;
+        public const int COLLIDER_SOLVER_MAX_ITERATION = 15;
         public const int DEFAULT_SOLVER_ITERATION = 6;
+
+        public const float SOLVER_ABORT_VELADD_SQRT = 0.005f * 0.005f;
+        public const float SOLVER_ABORT_ANGVELADD_SQRT = 0.1f * 0.1f;
 
         static List<RBRigidbody> _rigidbodies = new List<RBRigidbody>();
         static List<RBCollider> _colliders = new List<RBCollider>();
@@ -31,6 +29,9 @@ namespace RBPhys
 
         static IEnumerable<RBCollision > _collisions = new List<RBCollision>();
         static List<RBCollision> _collisionsInFrame = new List<RBCollision>();
+
+        static List<RBCollision> _collisionsInSolver = new List<RBCollision>();
+        static List<RBCollision> _collisionsRemoveFromSolver = new List<RBCollision>();
 
         static List<Task> _solveCollisionTasks = new List<Task>();
 
@@ -99,7 +100,7 @@ namespace RBPhys
                 }
             }
 
-            SolveCollidersAsync(dt); //フレーム跨ぎ防止
+            SolveColliders(dt);
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
@@ -122,14 +123,14 @@ namespace RBPhys
         }
 
         static List<Task<List<RBCollision>>> _detectCollisionTasks = new List<Task<List<RBCollision>>>();
-        static List<Task> _calcNearestsTasks = new List<Task>();
 
-        public static async Task SolveCollidersAsync(float dt)
+        public static void SolveColliders(float dt)
         {
             //衝突検知（ブロードフェーズ）
 
             List<(RBTrajectory, RBTrajectory)> collidingTrajs = new List<(RBTrajectory, RBTrajectory)>();
 
+            Profiler.BeginSample(name: "Physics-CollisionResolution-Sort");
             {
                 //AABBのx最小値で昇順ソート
                 _trajectories_orderByXMin = _activeTrajectories.Concat(_staticTrajectories).ToArray();
@@ -150,7 +151,7 @@ namespace RBPhys
                         {
                             RBTrajectory targetTraj = _trajectories_orderByXMin[j];
 
-                            if (!activeTraj.isStatic || !targetTraj.isStatic)
+                            if (!activeTraj.isStaticOrSleeping || !targetTraj.isStaticOrSleeping)
                             {
                                 if (targetTraj.isValidTrajectory)
                                 {
@@ -170,7 +171,9 @@ namespace RBPhys
                 }
 
                 Task.WhenAll(aabbTasks.Select(item => item.task)).Wait();
+                Profiler.EndSample();
 
+                Profiler.BeginSample(name: "Physics-CollisionResolution-AABBTest");
                 foreach (var t in aabbTasks)
                 {
                     collidingTrajs.Add((t.traj_a, t.traj_b));
@@ -186,9 +189,12 @@ namespace RBPhys
                         i--;
                     }
                 }
+                Profiler.EndSample();
             }
 
             //衝突検知（ナローフェーズ）と解消
+
+            Profiler.BeginSample(name: "Physics-CollisionResolution-DetailTest");
 
             _detectCollisionTasks.Clear();
 
@@ -198,7 +204,6 @@ namespace RBPhys
             }
 
             Task.WhenAll(_detectCollisionTasks).Wait();
-
 
             foreach (var t in _detectCollisionTasks)
             {
@@ -210,11 +215,21 @@ namespace RBPhys
                 col.InitVelocityConstraint(dt);
             }
 
-            for (int i = 0; i < COLLIDER_SOLVER_ITERATION; i++)
+            Profiler.EndSample();
+
+            _collisionsInSolver.Clear();
+            _collisionsInSolver.AddRange(_collisionsInFrame);
+
+            Profiler.BeginSample(name: "Physics-CollisionResolution-SolveCollisions");
+
+            for (int i = 0; i < COLLIDER_SOLVER_MAX_ITERATION; i++)
             {
+                Profiler.BeginSample(name: String.Format("SolveCollisions({0}/{1})", i, COLLIDER_SOLVER_MAX_ITERATION));
+
                 _solveCollisionTasks.Clear();
 
-                foreach (var col in _collisionsInFrame)
+                _collisionsRemoveFromSolver.Clear();
+                foreach (var col in _collisionsInSolver)
                 {
                     var t = Task.Run(() =>
                     {
@@ -231,19 +246,30 @@ namespace RBPhys
                             col.rigidbody_b.ExpVelocity += velAdd_b;
                             col.rigidbody_b.ExpAngularVelocity += angVel_add_b;
                         }
+
+                        if (velAdd_a.sqrMagnitude < SOLVER_ABORT_VELADD_SQRT && angVel_add_a.sqrMagnitude < SOLVER_ABORT_ANGVELADD_SQRT && velAdd_b.sqrMagnitude < SOLVER_ABORT_VELADD_SQRT && angVel_add_b.sqrMagnitude < SOLVER_ABORT_ANGVELADD_SQRT)
+                        {
+                            _collisionsRemoveFromSolver.Add(col);
+                        }
                     });
 
                     _solveCollisionTasks.Add(t);
                 }
 
                 Task.WhenAll(_solveCollisionTasks).Wait();
+
+                _collisionsInSolver = _collisionsInSolver.Except(_collisionsRemoveFromSolver).ToList();
+
+                Profiler.EndSample();
             }
+
+            Profiler.EndSample();
 
             _collisions = _collisionsInFrame.ToArray();
             _collisionsInFrame.Clear();
         }
 
-        static async Task<List<RBCollision>> DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b)
+        static List<RBCollision> DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b)
         {
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_b;
@@ -407,7 +433,7 @@ namespace RBPhys
 
         static (Vector3 velAdd_a, Vector3 angVelAdd_a, Vector3 velAdd_b, Vector3 angVelAdd_b) SolveCollision(RBCollision col, float dt)
         {
-            col.SolveVelocityConstraints(dt, out Vector3 velocityAdd_a, out Vector3 angularVelocityAdd_a, out Vector3 velocityAdd_b, out Vector3 angularVelocityAdd_b);
+            col.SolveVelocityConstraints(out Vector3 velocityAdd_a, out Vector3 angularVelocityAdd_a, out Vector3 velocityAdd_b, out Vector3 angularVelocityAdd_b);
             return (velocityAdd_a, angularVelocityAdd_a, velocityAdd_b, angularVelocityAdd_b);
         }
 
@@ -435,9 +461,9 @@ namespace RBPhys
         public Vector3 rA;
         public Vector3 rB;
 
-        Jacobian _jN; //Normal
-        Jacobian _jT; //Tangent
-        Jacobian _jB; //Bi-Tangent
+        Jacobian _jN = new Jacobian(Jacobian.Type.Normal); //Normal
+        Jacobian _jT = new Jacobian(Jacobian.Type.Tangent); //Tangent
+        Jacobian _jB = new Jacobian(Jacobian.Type.Tangent); //Bi-Tangent
 
         public Vector3 Velocity_a { get { return rigidbody_a?.Velocity ?? Vector3.zero; } }
         public Vector3 AngularVelocity_a { get { return rigidbody_a?.AngularVelocity ?? Vector3.zero; } }
@@ -452,6 +478,9 @@ namespace RBPhys
         public Vector3 ExpAngularVelocity_b { get { return rigidbody_b?.ExpAngularVelocity ?? Vector3.zero; } }
         public float InverseMass_b { get { return rigidbody_b?.InverseMass ?? 0; } }
         public Vector3 InverseInertiaWs_b { get { return rigidbody_b?.InverseInertiaWs ?? Vector3.zero; } }
+
+        public bool IsSleeping_a { get { return rigidbody_a?.isSleeping ?? true; } }
+        public bool IsSleeping_b { get { return rigidbody_b?.isSleeping ?? true; } }
 
         Vector3 _contactNormal;
 
@@ -554,10 +583,6 @@ namespace RBPhys
 
         public void InitVelocityConstraint(float dt)
         {
-            _jN = new Jacobian(Jacobian.Type.Normal);
-            _jT = new Jacobian(Jacobian.Type.Tangent);
-            _jB = new Jacobian(Jacobian.Type.Tangent);
-
             Vector3 contactNormal = ContactNormal;
             Vector3 tangent = Vector3.zero;
             Vector3 bitangent = Vector3.zero;
@@ -569,17 +594,19 @@ namespace RBPhys
             _jB.Init(this, bitangent, dt);
         }
 
-        public void SolveVelocityConstraints(float dt, out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b)
+        public void SolveVelocityConstraints(out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b)
         {
             vAdd_a = Vector3.zero;
             avAdd_a = Vector3.zero;
             vAdd_b = Vector3.zero;
             avAdd_b = Vector3.zero;
 
-            _jN.Resolve(this, dt, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
-            _jT.Resolve(this, dt, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
-            _jB.Resolve(this, dt, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
+            _jN.Resolve(this, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
+            _jT.Resolve(this, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
+            _jB.Resolve(this, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
         }
+
+        const float COLLISION_ERROR_SLOP = 0.0001f;
 
         struct Jacobian
         {
@@ -616,12 +643,12 @@ namespace RBPhys
 
             public void Init(RBCollision col, Vector3 dir, float dt)
             {
-                Vector3 pDirN = dir;
+                Vector3 dirN = dir;
 
-                _va = pDirN;
-                _wa = Vector3.Cross(col.rA, pDirN);
-                _vb = -pDirN;
-                _wb = Vector3.Cross(col.rB, -pDirN);
+                _va = dirN;
+                _wa = Vector3.Cross(col.rA, dirN);
+                _vb = -dirN;
+                _wb = Vector3.Cross(col.rB, -dirN);
 
                 _bias = 0;
 
@@ -635,8 +662,8 @@ namespace RBPhys
                     relVel -= col.ExpVelocity_b;
                     relVel -= Vector3.Cross(col.ExpAngularVelocity_b, col.rB);
 
-                    float closingVelocity = Vector3.Dot(relVel, pDirN);
-                    _bias = -(beta / dt) * col.penetration.magnitude + restitution * closingVelocity;
+                    float closingVelocity = Vector3.Dot(relVel, dirN);
+                    _bias = -(beta / dt) * Mathf.Max(0, col.penetration.magnitude - COLLISION_ERROR_SLOP) + restitution * closingVelocity;
                 }
 
                 float k = 0;
@@ -649,7 +676,7 @@ namespace RBPhys
                 _totalLambda = 0;
             }
 
-            public void Resolve(RBCollision col, float dt, ref Vector3 vAdd_a, ref Vector3 avAdd_a, ref Vector3 vAdd_b, ref Vector3 avAdd_b)
+            public void Resolve(RBCollision col, ref Vector3 vAdd_a, ref Vector3 avAdd_a, ref Vector3 vAdd_b, ref Vector3 avAdd_b)
             {
                 float jv = 0;
                 jv += Vector3.Dot(_va, col.ExpVelocity_a + vAdd_a);
@@ -1083,6 +1110,8 @@ namespace RBPhys
 
         public readonly RBCollider[] colliders;
 
+        public bool isStaticOrSleeping { get { return rigidbody?.isSleeping ?? true || isStatic; } }
+
         public RBTrajectory(RBRigidbody rigidbody)
         {
             RBColliderAABB aabb = new RBColliderAABB();
@@ -1113,6 +1142,14 @@ namespace RBPhys
             isValidTrajectory = true;
 
             colliders = new RBCollider[] { collider };
+        }
+
+        public void TryPhysAwake()
+        {
+            if (rigidbody != null)
+            {
+                rigidbody.PhysAwake();
+            }
         }
     }
 }
