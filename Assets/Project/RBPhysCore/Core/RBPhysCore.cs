@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using UnityEditorInternal;
 using UnityEngine;
 using UnityEngine.Profiling;
 using static RBPhys.RBColliderCollision;
+using System.Threading;
 
 namespace RBPhys
 {
@@ -16,8 +16,8 @@ namespace RBPhys
         public const int COLLIDER_SOLVER_MAX_ITERATION = 15;
         public const int DEFAULT_SOLVER_ITERATION = 6;
 
-        public const float SOLVER_ABORT_VELADD_SQRT = 0.005f * 0.005f;
-        public const float SOLVER_ABORT_ANGVELADD_SQRT = 0.1f * 0.1f;
+        public const float SOLVER_ABORT_VELADD_SQRT = 0.003f * 0.003f;
+        public const float SOLVER_ABORT_ANGVELADD_SQRT = 0.05f * 0.05f;
 
         static List<RBRigidbody> _rigidbodies = new List<RBRigidbody>();
         static List<RBCollider> _colliders = new List<RBCollider>();
@@ -27,7 +27,7 @@ namespace RBPhys
 
         static RBTrajectory[] _trajectories_orderByXMin = new RBTrajectory[0];
 
-        static IEnumerable<RBCollision > _collisions = new List<RBCollision>();
+        static List<RBCollision > _collisions = new List<RBCollision>();
         static List<RBCollision> _collisionsInFrame = new List<RBCollision>();
 
         static List<RBCollision> _collisionsInSolver = new List<RBCollision>();
@@ -124,6 +124,8 @@ namespace RBPhys
 
         static List<Task<List<RBCollision>>> _detectCollisionTasks = new List<Task<List<RBCollision>>>();
 
+        static SemaphoreSlim _solverRemoveSemaphore = new SemaphoreSlim(1, 1);
+
         public static void SolveColliders(float dt)
         {
             //衝突検知（ブロードフェーズ）
@@ -173,7 +175,7 @@ namespace RBPhys
                 Task.WhenAll(aabbTasks.Select(item => item.task)).Wait();
                 Profiler.EndSample();
 
-                Profiler.BeginSample(name: "Physics-CollisionResolution-AABBTest");
+                Profiler.BeginSample(name: "Physics-CollisionResolution-TrajectoryAABBTest");
                 foreach (var t in aabbTasks)
                 {
                     collidingTrajs.Add((t.traj_a, t.traj_b));
@@ -249,7 +251,9 @@ namespace RBPhys
 
                         if (velAdd_a.sqrMagnitude < SOLVER_ABORT_VELADD_SQRT && angVel_add_a.sqrMagnitude < SOLVER_ABORT_ANGVELADD_SQRT && velAdd_b.sqrMagnitude < SOLVER_ABORT_VELADD_SQRT && angVel_add_b.sqrMagnitude < SOLVER_ABORT_ANGVELADD_SQRT)
                         {
+                            _solverRemoveSemaphore.Wait();
                             _collisionsRemoveFromSolver.Add(col);
+                            _solverRemoveSemaphore.Release();
                         }
                     });
 
@@ -265,9 +269,12 @@ namespace RBPhys
 
             Profiler.EndSample();
 
-            _collisions = _collisionsInFrame.ToArray();
+            _collisions.Clear();
+            _collisions.AddRange(_collisionsInFrame);
             _collisionsInFrame.Clear();
         }
+
+        static SemaphoreSlim _rbcEditSemaphore = new SemaphoreSlim(1, 1);
 
         static List<RBCollision> DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b)
         {
@@ -296,7 +303,7 @@ namespace RBPhys
             trajAABB_a = trajAABB_a.OrderBy(item => item.aabb.GetMin().x).ToArray();
             trajAABB_b = trajAABB_b.OrderBy(item => item.aabb.GetMin().x).ToArray();
 
-            List<Task<RBCollision>> tasks = new List<Task<RBCollision>>();
+            List<(RBCollision rbc, Task<(bool detailCollide, Vector3 aNearest, Vector3 bNearest, Vector3 penetration, RBCollision newRbc)> task)> tasks = new List<(RBCollision, Task<(bool detailCollide, Vector3 aNearest, Vector3 bNearest, Vector3 penetration, RBCollision newRbc)>)>();
 
             //コライダ毎に接触を判定
             for (int i = 0; i < trajAABB_a.Length; i++)
@@ -323,25 +330,27 @@ namespace RBPhys
                         break;
                     }
 
-                    RBCollision rbc = FindCollision(collider_a.collider, collider_b.collider, out bool isInverted);
+                    RBCollision rbc = FindCollision(collider_a.collider, collider_b.collider, out bool isInverted); //READONLY IN ASYNC COLLISION-DETECTION TASK BELOW (OR USE SEMAPHORE)
                     if (rbc != null)
                     {
                         if (isInverted)
                         {
+                            _rbcEditSemaphore.Wait();
                             rbc.SwapTo(collider_a.collider, collider_b.collider);
+                            _rbcEditSemaphore.Release();
                         }
                     }
 
                     Vector3 cg = traj_a.isStatic ? traj_b.isStatic ? Vector3.zero : traj_b.rigidbody.CenterOfGravityWorld : traj_a.rigidbody.CenterOfGravityWorld;
 
-                    var t = Task.Run(() =>
+                    bool aabbCollide = collider_a.aabb.OverlapAABB(collider_b.aabb);
+
+                    if (aabbCollide)
                     {
-                        bool aabbCollide = collider_a.aabb.OverlapAABB(collider_b.aabb);
-
-                        Vector3 penetration = Vector3.zero;
-
-                        if (aabbCollide)
+                        var t = Task.Run(() =>
                         {
+                            Vector3 penetration = Vector3.zero;
+
                             bool detailCollide = false;
                             Vector3 aNearest = Vector3.zero;
                             Vector3 bNearest = Vector3.zero;
@@ -372,35 +381,39 @@ namespace RBPhys
                                 penetration = p;
                             }
 
-                            if (rbc == null && penetration != Vector3.zero && detailCollide)
+                            if (rbc == null)
                             {
-                                rbc = new RBCollision(traj_a, collider_a.collider, traj_b, collider_b.collider, penetration);
+                                return (detailCollide, aNearest, bNearest, penetration, new RBCollision(traj_a, collider_a.collider, traj_b, collider_b.collider, penetration));
                             }
 
-                            if (rbc != null)
-                            {
-                                rbc.Update(penetration, aNearest, bNearest);
-                            }
+                            return (detailCollide, aNearest, bNearest, penetration, null);
+                        });
 
-                            return rbc;
-                        }
-
-                        return null;
-                    });
-
-                    tasks.Add(t);
+                        tasks.Add((rbc, t));
+                    }
                 }
             }
 
-            Task.WhenAll(tasks).Wait();
+            Task.WhenAll(tasks.Select(item => item.task)).Wait();
 
             List<RBCollision> cols = new List<RBCollision>();
 
-            foreach (var t in tasks)
+            foreach (var rp in tasks)
             {
-                if (t.Result != null)
+                var r = rp.task.Result;
+                var rbc = rp.rbc;
+
+                if (r.newRbc != null)
                 {
-                    cols.Add(t.Result);
+                    rbc = r.newRbc;
+                }
+
+                if (r.detailCollide && rbc != null)
+                {
+                    _rbcEditSemaphore.Wait();
+                    rbc.Update(r.penetration, r.aNearest, r.bNearest);
+                    _rbcEditSemaphore.Release();
+                    cols.Add(rbc);
                 }
             }
 
@@ -411,7 +424,7 @@ namespace RBPhys
         {
             isInverted = false;
 
-            foreach (RBCollision r in _collisions)
+            foreach (RBCollision r in _collisions.ToList())
             {
                 if (r != null) 
                 {

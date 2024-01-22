@@ -22,9 +22,9 @@ namespace RBPhys
         public Quaternion GameObjectRot { get; private set; }
         public Vector3 GameObjectLossyScale { get; private set; }
 
-        public float beta = 0.7f;
+        [HideInInspector] public float beta = 0.7f;
         public float restitution = 0.5f; //”½”­ŒW”
-        public float friction = 0.7f; //–€CŒW”
+        public float friction = 0.5f; //–€CŒW”
 
         void Awake()
         {
@@ -457,95 +457,90 @@ namespace RBPhys
                         }
                     }
 
-                    if (penetrations.Any()) 
+                    float pMinSqrt = -1;
+                    int index = -1;
+
+                    for (int i = 0; i < penetrations.Length; i++)
                     {
-                        float pMinSqrt = -1;
-                        int index = -1;
-
-                        for (int i = 0; i < penetrations.Length; i++)
+                        float f = penetrations[i].sqrMagnitude;
+                        if (pMinSqrt == -1 || f < pMinSqrt)
                         {
-                            float f = penetrations[i].sqrMagnitude;
-                            if (pMinSqrt == -1 || f < pMinSqrt)
-                            {
-                                pMinSqrt = f;
-                                index = i;
-                            }
+                            pMinSqrt = f;
+                            index = i;
+                        }
+                    }
+
+                    if (index != -1)
+                    {
+                        penetration = penetrations[index];
+
+                        Vector3 pDirN = penetration.normalized;
+
+                        Vector3 dpA = obb_a.GetDirectional(-pDirN, out int axisInfo_a);
+                        Vector3 dpB = obb_b.GetDirectional(pDirN, out int axisInfo_b);
+
+                        bool point_a = axisInfo_a == 0;
+                        bool point_b = axisInfo_b == 0;
+
+                        bool face_a = IsInt32Pow2(axisInfo_a);
+                        bool face_b = IsInt32Pow2(axisInfo_b);
+
+                        bool edge_a = !point_a && !face_a;
+                        bool edge_b = !point_b && !face_b;
+
+                        if (point_a && point_b)
+                        {
+                            GetOBBNearest(dpA, dpB, out aNearest, out bNearest);
+                            return true;
                         }
 
-                        if (index != -1)
+                        if (point_a && edge_b)
                         {
-                            penetration = penetrations[index];
-
-                            Vector3 pDirN = penetration.normalized;
-
-                            Vector3 dpA = obb_a.GetDirectional(-pDirN, out int axisInfo_a);
-                            Vector3 dpB = obb_b.GetDirectional(pDirN, out int axisInfo_b);
-
-                            bool point_a = axisInfo_a == 0;
-                            bool point_b = axisInfo_b == 0;
-
-                            bool face_a = IsInt32Pow2(axisInfo_a);
-                            bool face_b = IsInt32Pow2(axisInfo_b);
-
-                            bool edge_a = !point_a && !face_a;
-                            bool edge_b = !point_b && !face_b;
-
-                            if (point_a && point_b)
-                            {
-                                GetOBBNearest(dpA, dpB, out aNearest, out bNearest);
-                                return true;
-                            }
-
-                            if (point_a && edge_b)
-                            {
-                                GetOBBNearest(dpA, obb_b.GetDirectionalEdge(axisInfo_b), out aNearest, out bNearest);
-                                return true;
-                            }
-
-                            if (point_a && face_b)
-                            {
-                                GetOBBNearest(dpA, obb_b.GetDirectionalRect(axisInfo_b), out aNearest, out bNearest);
-                                return true;
-                            }
-
-                            if (edge_a && point_b)
-                            {
-                                GetOBBNearest(dpB, obb_a.GetDirectionalEdge(axisInfo_a), out bNearest, out aNearest);
-                                return true;
-                            }
-
-                            if (edge_a && edge_b)
-                            {
-                                GetOBBNearest(obb_a.GetDirectionalEdge(axisInfo_a), obb_b.GetDirectionalEdge(axisInfo_b), cg, out aNearest, out bNearest);
-                                return true;
-                            }
-
-                            if (edge_a && face_b)
-                            {
-                                GetOBBNearest(obb_a.GetDirectionalEdge(axisInfo_a), obb_b.GetDirectionalRect(axisInfo_b), cg, out aNearest, out bNearest);
-                                return true;
-                            }
-
-                            if (face_a && point_b)
-                            {
-                                GetOBBNearest(dpB, obb_a.GetDirectionalRect(axisInfo_a), out bNearest, out aNearest);
-                                return true;
-                            }
-
-                            if (face_a && edge_b)
-                            {
-                                GetOBBNearest(obb_b.GetDirectionalEdge(axisInfo_b), obb_a.GetDirectionalRect(axisInfo_a), cg, out bNearest, out aNearest);
-                                return true;
-                            }
-
-                            if (face_a && face_b)
-                            {
-                                GetOBBNearest(obb_a.GetDirectionalRect(axisInfo_a), obb_b.GetDirectionalRect(axisInfo_b), cg, out aNearest, out bNearest);
-                                return true;
-                            }
+                            GetOBBNearest(dpA, obb_b.GetDirectionalEdge(axisInfo_b), out aNearest, out bNearest);
+                            return true;
                         }
 
-                        return true;
+                        if (point_a && face_b)
+                        {
+                            GetOBBNearest(dpA, obb_b.GetDirectionalRect(axisInfo_b), out aNearest, out bNearest);
+                            return true;
+                        }
+
+                        if (edge_a && point_b)
+                        {
+                            GetOBBNearest(dpB, obb_a.GetDirectionalEdge(axisInfo_a), out bNearest, out aNearest);
+                            return true;
+                        }
+
+                        if (edge_a && edge_b)
+                        {
+                            GetOBBNearest(obb_a.GetDirectionalEdge(axisInfo_a), obb_b.GetDirectionalEdge(axisInfo_b), cg, out aNearest, out bNearest);
+                            return true;
+                        }
+
+                        if (edge_a && face_b)
+                        {
+                            GetOBBNearest(obb_a.GetDirectionalEdge(axisInfo_a), obb_b.GetDirectionalRect(axisInfo_b), cg, out aNearest, out bNearest);
+                            return true;
+                        }
+
+                        if (face_a && point_b)
+                        {
+                            GetOBBNearest(dpB, obb_a.GetDirectionalRect(axisInfo_a), out bNearest, out aNearest);
+                            return true;
+                        }
+
+                        if (face_a && edge_b)
+                        {
+                            GetOBBNearest(obb_b.GetDirectionalEdge(axisInfo_b), obb_a.GetDirectionalRect(axisInfo_a), cg, out bNearest, out aNearest);
+                            return true;
+                        }
+
+                        if (face_a && face_b)
+                        {
+                            GetOBBNearest(obb_a.GetDirectionalRect(axisInfo_a), obb_b.GetDirectionalRect(axisInfo_b), cg, out aNearest, out bNearest);
+                            return true;
+                        }
                     }
                 }
             }
