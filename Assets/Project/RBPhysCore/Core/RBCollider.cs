@@ -98,12 +98,13 @@ namespace RBPhys
     {
         internal const float V3_PARALLEL_DOT_EPSILON = 0.00000001f;
 
-        static Vector3[] _penetrations = new Vector3[15];
 
         //OBB-OBBè’ìÀîªíË
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool DetectCollision(RBColliderOBB obb_a, RBColliderOBB obb_b, Vector3 cg, out Vector3 penetration, out Vector3 aNearest, out Vector3 bNearest)
         {
+            Vector3[] penetrations = new Vector3[15];
+
             penetration = Vector3.zero;
             aNearest = Vector3.zero;
             bNearest = Vector3.zero;
@@ -135,7 +136,7 @@ namespace RBPhys
                             return false;
                         }
 
-                        _penetrations[0] = aFwdN * (dp / 2f) * F32Sign11(dd);
+                        penetrations[0] = aFwdN * (dp / 2f) * F32Sign11(dd);
                     }
 
                     //ï™ó£é≤ÇQ: aRight
@@ -152,7 +153,7 @@ namespace RBPhys
                             return false;
                         }
 
-                        _penetrations[1] = aRightN * (dp / 2f) * F32Sign11(dd);
+                        penetrations[1] = aRightN * (dp / 2f) * F32Sign11(dd);
                     }
 
                     //ï™ó£é≤ÇR: aUp
@@ -169,7 +170,7 @@ namespace RBPhys
                             return false;
                         }
 
-                        _penetrations[2] = aUpN * (dp / 2f) * F32Sign11(dd);
+                        penetrations[2] = aUpN * (dp / 2f) * F32Sign11(dd);
                     }
 
                     //ï™ó£é≤ÇS: bFwd
@@ -186,7 +187,7 @@ namespace RBPhys
                             return false;
                         }
 
-                        _penetrations[3] = bFwdN * (dp / 2f) * F32Sign11(dd);
+                        penetrations[3] = bFwdN * (dp / 2f) * F32Sign11(dd);
                     }
 
                     //ï™ó£é≤ÇT: bRight
@@ -203,7 +204,7 @@ namespace RBPhys
                             return false;
                         }
 
-                        _penetrations[4] = bRightN * (dp / 2f) * F32Sign11(dd);
+                        penetrations[4] = bRightN * (dp / 2f) * F32Sign11(dd);
                     }
 
                     //ï™ó£é≤ÇU: bUp
@@ -220,7 +221,7 @@ namespace RBPhys
                             return false;
                         }
 
-                        _penetrations[5] = bUpN * (dp / 2f) * F32Sign11(dd);
+                        penetrations[5] = bUpN * (dp / 2f) * F32Sign11(dd);
                     }
 
                     //ï™ó£é≤ÇV: aFwd x bFwd
@@ -229,7 +230,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            _penetrations[6] = Vector3.negativeInfinity;
+                            penetrations[6] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -245,7 +246,7 @@ namespace RBPhys
                                 return false;
                             }
 
-                            _penetrations[6] = p * (dp / 2f) * F32Sign11(dd);
+                            penetrations[6] = p * (dp / 2f) * F32Sign11(dd);
                         }
                     }
 
@@ -255,7 +256,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            _penetrations[7] = Vector3.negativeInfinity;
+                            penetrations[7] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -271,7 +272,7 @@ namespace RBPhys
                                 return false;
                             }
 
-                            _penetrations[7] = p * (dp / 2f) * F32Sign11(dd);
+                            penetrations[7] = p * (dp / 2f) * F32Sign11(dd);
                         }
                     }
 
@@ -281,7 +282,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            _penetrations[8] = Vector3.negativeInfinity;
+                            penetrations[8] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -297,7 +298,7 @@ namespace RBPhys
                                 return false;
                             }
 
-                            _penetrations[8] = p * (dp / 2f) * F32Sign11(dd);
+                            penetrations[8] = p * (dp / 2f) * F32Sign11(dd);
                         }
                     }
 
@@ -307,7 +308,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            _penetrations[9] = Vector3.negativeInfinity;
+                            penetrations[9] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -323,7 +324,7 @@ namespace RBPhys
                                 return false;
                             }
 
-                            _penetrations[9] = p * (dp / 2f) * F32Sign11(dd);
+                            penetrations[9] = p * (dp / 2f) * F32Sign11(dd);
                         }
                     }
 
@@ -333,7 +334,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            _penetrations[10] = Vector3.negativeInfinity;
+                            penetrations[10] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -349,7 +350,7 @@ namespace RBPhys
                                 return false;
                             }
 
-                            _penetrations[10] = p * (dp / 2f) * F32Sign11(dd);
+                            penetrations[10] = p * (dp / 2f) * F32Sign11(dd);
                         }
                     }
 
@@ -359,7 +360,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            _penetrations[11] = Vector3.negativeInfinity;
+                            penetrations[11] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -375,7 +376,7 @@ namespace RBPhys
                                 return false;
                             }
 
-                            _penetrations[11] = p * (dp / 2f) * F32Sign11(dd);
+                            penetrations[11] = p * (dp / 2f) * F32Sign11(dd);
                         }
                     }
 
@@ -385,7 +386,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            _penetrations[12] = Vector3.negativeInfinity;
+                            penetrations[12] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -401,7 +402,7 @@ namespace RBPhys
                                 return false;
                             }
 
-                            _penetrations[12] = p * (dp / 2f) * F32Sign11(dd);
+                            penetrations[12] = p * (dp / 2f) * F32Sign11(dd);
                         }
                     }
 
@@ -411,7 +412,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            _penetrations[13] = Vector3.negativeInfinity;
+                            penetrations[13] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -427,7 +428,7 @@ namespace RBPhys
                                 return false;
                             }
 
-                            _penetrations[13] = p * (dp / 2f) * F32Sign11(dd);
+                            penetrations[13] = p * (dp / 2f) * F32Sign11(dd);
                         }
                     }
 
@@ -437,7 +438,7 @@ namespace RBPhys
 
                         if (p == Vector3.zero)
                         {
-                            _penetrations[14] = Vector3.negativeInfinity;
+                            penetrations[14] = Vector3.negativeInfinity;
                         }
                         else
                         {
@@ -453,18 +454,18 @@ namespace RBPhys
                                 return false;
                             }
 
-                            _penetrations[14] = p * (dp / 2f) * F32Sign11(dd);
+                            penetrations[14] = p * (dp / 2f) * F32Sign11(dd);
                         }
                     }
 
-                    if (_penetrations.Any()) 
+                    if (penetrations.Any()) 
                     {
                         float pMinSqrt = -1;
                         int index = -1;
 
-                        for (int i = 0; i < _penetrations.Length; i++)
+                        for (int i = 0; i < penetrations.Length; i++)
                         {
-                            float f = _penetrations[i].sqrMagnitude;
+                            float f = penetrations[i].sqrMagnitude;
                             if (pMinSqrt == -1 || f < pMinSqrt)
                             {
                                 pMinSqrt = f;
@@ -474,7 +475,7 @@ namespace RBPhys
 
                         if (index != -1)
                         {
-                            penetration = _penetrations[index];
+                            penetration = penetrations[index];
 
                             Vector3 pDirN = penetration.normalized;
 

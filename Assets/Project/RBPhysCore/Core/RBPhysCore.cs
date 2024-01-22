@@ -121,10 +121,10 @@ namespace RBPhys
             }
         }
 
-        static List<Task> _detectCollisionTasks = new List<Task>();
+        static List<Task<List<RBCollision>>> _detectCollisionTasks = new List<Task<List<RBCollision>>>();
         static List<Task> _calcNearestsTasks = new List<Task>();
 
-        public static void SolveCollidersAsync(float dt)
+        public static async Task SolveCollidersAsync(float dt)
         {
             //衝突検知（ブロードフェーズ）
 
@@ -194,11 +194,17 @@ namespace RBPhys
 
             foreach (var trajPair in collidingTrajs)
             {
-                _detectCollisionTasks.Add(DetectCollisions(trajPair.Item1, trajPair.Item2, _collisionsInFrame));
+                _detectCollisionTasks.Add(Task.Run(() => DetectCollisions(trajPair.Item1, trajPair.Item2)));
             }
 
             Task.WhenAll(_detectCollisionTasks).Wait();
-            
+
+
+            foreach (var t in _detectCollisionTasks)
+            {
+                _collisionsInFrame.AddRange(t.Result);
+            }
+
             foreach (var col in _collisionsInFrame)
             {
                 col.InitVelocityConstraint(dt);
@@ -237,7 +243,7 @@ namespace RBPhys
             _collisionsInFrame.Clear();
         }
 
-        static async Task DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b, List<RBCollision> refList)
+        static async Task<List<RBCollision>> DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b)
         {
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_b;
@@ -362,13 +368,17 @@ namespace RBPhys
 
             Task.WhenAll(tasks).Wait();
 
+            List<RBCollision> cols = new List<RBCollision>();
+
             foreach (var t in tasks)
             {
                 if (t.Result != null)
                 {
-                    refList.Add(t.Result);
+                    cols.Add(t.Result);
                 }
             }
+
+            return cols;
         }
 
         static RBCollision FindCollision(RBCollider col_a, RBCollider col_b, out bool isInverted)
