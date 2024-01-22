@@ -59,21 +59,39 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsV3EpsilonEqual(Vector3 a, Vector3 b, float epsilon = EPSILON_FLOAT32)
+        {
+            return IsF32EpsilonEqual(a.x, b.x, epsilon) && IsF32EpsilonEqual(a.y, b.y, epsilon) && IsF32EpsilonEqual(a.z, b.z, epsilon);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsV3DotEpsilonEqual(Vector3 a, Vector3 b, float dotEqualTo, float epsilon = EPSILON_FLOAT32)
+        {
+            return IsF32EpsilonEqual(Vector3.Dot(a, b), dotEqualTo, epsilon);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsV3AbsDotEpsilonEqual(Vector3 a, Vector3 b, float dotAbsEqualTo, float epsilon = EPSILON_FLOAT32)
+        {
+            return IsF32AbsEpsilonEqual(Vector3.Dot(a, b), dotAbsEqualTo, epsilon);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsF32EpsilonEqual(float a, float b, float epsilon = EPSILON_FLOAT32)
         {
             return Mathf.Abs(a - b) <= epsilon;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsInt32Pow2(int x)
+        public static bool IsF32AbsEpsilonEqual(float value, float valueAbsEqualTo, float epsilon = EPSILON_FLOAT32)
         {
-            return x != 0 && (x & (x - 1)) == 0;
+            return Mathf.Abs(Mathf.Abs(value) - valueAbsEqualTo) <= epsilon;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsV3EpsilonEqual(Vector3 a, Vector3 b, float epsilon = EPSILON_FLOAT32)
+        public static bool IsInt32Pow2(int x)
         {
-            return IsF32EpsilonEqual(a.x, b.x, epsilon) && IsF32EpsilonEqual(a.y, b.y, epsilon) && IsF32EpsilonEqual(a.z, b.z, epsilon);
+            return x != 0 && (x & (x - 1)) == 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -269,7 +287,6 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 ProjectPointOnRect(Vector3 point, Vector3[] rectPointsClockwise, Vector3 rectPlaneNormal, out bool isInside, out int edgeIndex)
         {
-            rectPlaneNormal.Normalize();
             edgeIndex = -1;
 
             Vector3 prjP = ProjectPointOnPlane(point, rectPlaneNormal, rectPointsClockwise[0]);
@@ -321,30 +338,46 @@ namespace RBPhys
         {
             //エッジ上は外側と判定する
 
-            bool isInside;
-
-            rectPlaneNormal = Vector3.Normalize(rectPlaneNormal);
             Vector3 prjP = ProjectPointOnPlane(point, rectPlaneNormal, rectPointsClockwise[0]);
 
-            isInside = Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormal) == -1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormal) == -1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormal) == -1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormal) == -1;
-            isInside |= Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormal) == 1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormal) == 1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormal) == 1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormal) == 1;
+            float d01 = Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]), rectPlaneNormal);
 
-            return isInside;
+            if (d01 > 0)
+            {
+                return Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]), rectPlaneNormal) > 0 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]), rectPlaneNormal) > 0 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]), rectPlaneNormal) > 0;
+            }
+            else if (d01 < 0)
+            {
+                return Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]), rectPlaneNormal) < 0 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]), rectPlaneNormal) < 0 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]), rectPlaneNormal) < 0; ;
+            }
+            else
+            {
+                //エッジ上
+                return false;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsInsideRectOnSamePlane(Vector3 point, Vector3[] rectPointsClockwise, Vector3 rectPlaneNormalN)
+        public static bool IsInsideRectOnSamePlane(Vector3 point, Vector3[] rectPointsClockwise, Vector3 rectPlaneNormal)
         {
             //エッジ上は外側と判定する
 
-            bool isInside;
-
             Vector3 prjP = point;
+            float d01 = Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]), rectPlaneNormal);
 
-            isInside = Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormalN) == -1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormalN) == -1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormalN) == -1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormalN) == -1;
-            isInside |= Vector3.Dot(Vector3.Cross(rectPointsClockwise[0] - prjP, prjP - rectPointsClockwise[1]).normalized, rectPlaneNormalN) == 1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]).normalized, rectPlaneNormalN) == 1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]).normalized, rectPlaneNormalN) == 1 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]).normalized, rectPlaneNormalN) == 1;
-
-            return isInside;
+            if (d01 > 0)
+            {
+                return Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]), rectPlaneNormal) > 0 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]), rectPlaneNormal) > 0 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]), rectPlaneNormal) > 0;
+            }
+            else if (d01 < 0)
+            {
+                return Vector3.Dot(Vector3.Cross(rectPointsClockwise[1] - prjP, prjP - rectPointsClockwise[2]), rectPlaneNormal) < 0 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[2] - prjP, prjP - rectPointsClockwise[3]), rectPlaneNormal) < 0 && Vector3.Dot(Vector3.Cross(rectPointsClockwise[3] - prjP, prjP - rectPointsClockwise[0]), rectPlaneNormal) < 0; ;
+            }
+            else
+            {
+                //エッジ上
+                return false;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

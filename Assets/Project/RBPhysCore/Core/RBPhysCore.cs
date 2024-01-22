@@ -18,7 +18,7 @@ namespace RBPhys
 {
     public static class RBPhysCore
     {
-        public const int COLLIDER_SOLVER_ITERATION = 6;
+        public const int COLLIDER_SOLVER_ITERATION = 15;
         public const int DEFAULT_SOLVER_ITERATION = 6;
 
         static List<RBRigidbody> _rigidbodies = new List<RBRigidbody>();
@@ -54,7 +54,7 @@ namespace RBPhys
             _colliders.Remove(c);
         }
 
-        public static async void OpenPhysicsFrameWindow(float dt)
+        public static void OpenPhysicsFrameWindow(float dt)
         {
             foreach (RBRigidbody rb in _rigidbodies)
             {
@@ -816,13 +816,9 @@ namespace RBPhys
             float dotRight = Vector3.Dot(aRight, axisN);
             float dotUp = Vector3.Dot(aUp, axisN);
 
-            Vector3 cFwd = Vector3.Cross(aFwd, axisN);
-            Vector3 cRight = Vector3.Cross(aRight, axisN);
-            Vector3 cUp = Vector3.Cross(aUp, axisN);
-
             Vector3 p = (aFwd * RBPhysUtil.F32Sign101(dotFwd) + aRight * RBPhysUtil.F32Sign101(dotRight) + aUp * RBPhysUtil.F32Sign101(dotUp)) / 2;
 
-            if (cFwd == Vector3.zero)
+            if (RBPhysUtil.IsF32AbsEpsilonEqual(dotFwd, 1, V3_PARALLEL_DOT_EPSILON))
             {
                 if (dotFwd > 0)
                 {
@@ -836,7 +832,7 @@ namespace RBPhys
                 return p;
             }
 
-            if (cRight == Vector3.zero)
+            if (RBPhysUtil.IsF32AbsEpsilonEqual(dotRight, 1, V3_PARALLEL_DOT_EPSILON))
             {
                 if (dotRight > 0)
                 {
@@ -850,7 +846,7 @@ namespace RBPhys
                 return p;
             }
 
-            if (cUp == Vector3.zero)
+            if (RBPhysUtil.IsF32AbsEpsilonEqual(dotUp, 1, V3_PARALLEL_DOT_EPSILON))
             {
                 if (dotUp > 0)
                 {
@@ -864,7 +860,11 @@ namespace RBPhys
                 return p;
             }
 
-            if (Vector3.Cross(cFwd, cRight) == Vector3.zero)
+            Vector3 cFwd = Vector3.Cross(aFwd, axisN);
+            Vector3 cRight = Vector3.Cross(aRight, axisN);
+            Vector3 cUp = Vector3.Cross(aUp, axisN);
+
+            if (RBPhysUtil.IsV3AbsDotEpsilonEqual(cFwd, cRight, 1, V3_PARALLEL_DOT_EPSILON))
             {
                 if (dotFwd > 0)
                 {
@@ -887,7 +887,7 @@ namespace RBPhys
                 return p;
             }
 
-            if (Vector3.Cross(cRight, cUp) == Vector3.zero)
+            if (RBPhysUtil.IsV3AbsDotEpsilonEqual(cRight, cUp, 1, V3_PARALLEL_DOT_EPSILON))
             {
                 if (dotRight > 0)
                 {
@@ -910,7 +910,7 @@ namespace RBPhys
                 return p;
             }
 
-            if (Vector3.Cross(cUp, cFwd) == Vector3.zero)
+            if (RBPhysUtil.IsV3AbsDotEpsilonEqual(cUp, cFwd, 1, V3_PARALLEL_DOT_EPSILON))
             {
                 if (dotUp > 0)
                 {
