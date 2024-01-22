@@ -493,18 +493,21 @@ namespace RBPhys
                             if (point_a && point_b)
                             {
                                 GetOBBNearest(dpA, dpB, out aNearest, out bNearest);
+                                Debug.Log("p-p");
                                 return true;
                             }
 
                             if (point_a && edge_b)
                             {
                                 GetOBBNearest(dpA, obb_b.GetDirectionalEdge(axisInfo_b), out aNearest, out bNearest);
+                                Debug.Log("p-e");
                                 return true;
                             }
 
                             if (point_a && face_b)
                             {
                                 GetOBBNearest(dpA, obb_b.GetDirectionalRect(axisInfo_b), out aNearest, out bNearest);
+                                Debug.Log("p-f");
                                 return true;
                             }
 
