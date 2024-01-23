@@ -13,9 +13,9 @@ namespace RBPhys
         {
             StartCoroutine(PhysicsFrame(Time.fixedDeltaTime));
 
-            if (Physics.autoSimulation != _disableUnityPhysics) 
+            if (Physics.autoSimulation != !_disableUnityPhysics) 
             {
-                Physics.autoSimulation = _disableUnityPhysics;
+                Physics.autoSimulation = !_disableUnityPhysics;
             }
         }
 

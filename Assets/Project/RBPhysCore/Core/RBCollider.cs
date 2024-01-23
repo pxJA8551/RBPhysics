@@ -470,7 +470,7 @@ namespace RBPhys
                         }
                     }
 
-                    if (index != -1)
+                    if (index != -1 && false)
                     {
                         penetration = penetrations[index];
 
