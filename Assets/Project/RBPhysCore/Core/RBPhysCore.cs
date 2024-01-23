@@ -104,7 +104,7 @@ namespace RBPhys
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                rb.ExpVelocity += new Vector3(0, -9.81f, 0) * dt;
+                //rb.ExpVelocity += new Vector3(0, -9.81f, 0) * dt;
             }
 
             //OnClosePhysicsFrameへ
@@ -118,7 +118,7 @@ namespace RBPhys
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                rb.ApplyTransform(dt);
+                //rb.ApplyTransform(dt);
             }
         }
 
@@ -139,8 +139,6 @@ namespace RBPhys
                 //AABBのx最小値で昇順ソート
                 _trajectories_orderByXMin = _activeTrajectories.Concat(_staticTrajectories).ToArray();
                 _trajectories_orderByXMin = _trajectories_orderByXMin.OrderBy(item => item.trajectoryAABB.GetMin().x).ToArray();
-
-                List<(Task<bool> task, RBTrajectory traj_a, RBTrajectory traj_b)> aabbTasks = new List<(Task<bool> task, RBTrajectory traj_a, RBTrajectory traj_b)>();
 
                 for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
                 {
@@ -167,21 +165,19 @@ namespace RBPhys
                                         break;
                                     }
 
-                                    aabbTasks.Add((Task.Run(() => RBPhysUtil.RangeOverlap(x_min, x_max, x_min_target, x_max_target)), activeTraj, targetTraj));
+                                    if(RBPhysUtil.RangeOverlap(x_min, x_max, x_min_target, x_max_target))
+                                    {
+                                        collidingTrajs.Add((activeTraj, targetTraj));
+                                    }
                                 }
                             }
                         }
                     }
                 }
 
-                Task.WhenAll(aabbTasks.Select(item => item.task)).Wait();
                 Profiler.EndSample();
 
                 Profiler.BeginSample(name: "Physics-CollisionResolution-TrajectoryAABBTest");
-                foreach (var t in aabbTasks)
-                {
-                    collidingTrajs.Add((t.traj_a, t.traj_b));
-                }
 
                 for (int i = 0; i < collidingTrajs.Count; i++)
                 {
@@ -193,6 +189,7 @@ namespace RBPhys
                         i--;
                     }
                 }
+
                 Profiler.EndSample();
             }
 
@@ -200,18 +197,9 @@ namespace RBPhys
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-DetailTest");
 
-            _detectCollisionTasks.Clear();
-
             foreach (var trajPair in collidingTrajs)
             {
-                _detectCollisionTasks.Add(Task.Run(() => DetectCollisions(trajPair.Item1, trajPair.Item2)));
-            }
-
-            Task.WhenAll(_detectCollisionTasks).Wait();
-
-            foreach (var t in _detectCollisionTasks)
-            {
-                _collisionsInFrame.AddRange(t.Result);
+                DetectCollisions(trajPair.Item1, trajPair.Item2);
             }
 
             foreach (var col in _collisionsInFrame)
@@ -226,52 +214,52 @@ namespace RBPhys
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-SolveCollisions");
 
-            for (int i = 0; i < COLLIDER_SOLVER_MAX_ITERATION; i++)
-            {
-                Profiler.BeginSample(name: String.Format("SolveCollisions({0}/{1})", i, COLLIDER_SOLVER_MAX_ITERATION));
+            //for (int i = 0; i < COLLIDER_SOLVER_MAX_ITERATION; i++)
+            //{
+            //    Profiler.BeginSample(name: String.Format("SolveCollisions({0}/{1})", i, COLLIDER_SOLVER_MAX_ITERATION));
 
-                _solveCollisionTasks.Clear();
+            //    _solveCollisionTasks.Clear();
 
-                _collisionsRemoveFromSolver.Clear();
-                foreach (var col in _collisionsInSolver)
-                {
-                    var t = Task.Run(() =>
-                    {
-                        (Vector3 velAdd_a, Vector3 angVel_add_a, Vector3 velAdd_b, Vector3 angVel_add_b) = SolveCollision(col, dt);
+            //    _collisionsRemoveFromSolver.Clear();
+            //    foreach (var col in _collisionsInSolver)
+            //    {
+            //        var t = Task.Run(() =>
+            //        {
+            //            (Vector3 velAdd_a, Vector3 angVel_add_a, Vector3 velAdd_b, Vector3 angVel_add_b) = SolveCollision(col, dt);
 
-                        if (col.rigidbody_a != null)
-                        {
-                            _solverVelocityChgSemaphore.Wait();
-                            col.rigidbody_a.ExpVelocity += velAdd_a;
-                            col.rigidbody_a.ExpAngularVelocity += angVel_add_a;
-                            _solverVelocityChgSemaphore.Release();
-                        }
+            //            if (col.rigidbody_a != null)
+            //            {
+            //                _solverVelocityChgSemaphore.Wait();
+            //                col.rigidbody_a.ExpVelocity += velAdd_a;
+            //                col.rigidbody_a.ExpAngularVelocity += angVel_add_a;
+            //                _solverVelocityChgSemaphore.Release();
+            //            }
 
-                        if (col.rigidbody_b != null)
-                        {
-                            _solverVelocityChgSemaphore.Wait();
-                            col.rigidbody_b.ExpVelocity += velAdd_b;
-                            col.rigidbody_b.ExpAngularVelocity += angVel_add_b;
-                            _solverVelocityChgSemaphore.Release();
-                        }
+            //            if (col.rigidbody_b != null)
+            //            {
+            //                _solverVelocityChgSemaphore.Wait();
+            //                col.rigidbody_b.ExpVelocity += velAdd_b;
+            //                col.rigidbody_b.ExpAngularVelocity += angVel_add_b;
+            //                _solverVelocityChgSemaphore.Release();
+            //            }
 
-                        if (velAdd_a.sqrMagnitude < SOLVER_ABORT_VELADD_SQRT && angVel_add_a.sqrMagnitude < SOLVER_ABORT_ANGVELADD_SQRT && velAdd_b.sqrMagnitude < SOLVER_ABORT_VELADD_SQRT && angVel_add_b.sqrMagnitude < SOLVER_ABORT_ANGVELADD_SQRT)
-                        {
-                            _solverRemoveSemaphore.Wait();
-                            _collisionsRemoveFromSolver.Add(col);
-                            _solverRemoveSemaphore.Release();
-                        }
-                    });
+            //            if (velAdd_a.sqrMagnitude < SOLVER_ABORT_VELADD_SQRT && angVel_add_a.sqrMagnitude < SOLVER_ABORT_ANGVELADD_SQRT && velAdd_b.sqrMagnitude < SOLVER_ABORT_VELADD_SQRT && angVel_add_b.sqrMagnitude < SOLVER_ABORT_ANGVELADD_SQRT)
+            //            {
+            //                _solverRemoveSemaphore.Wait();
+            //                _collisionsRemoveFromSolver.Add(col);
+            //                _solverRemoveSemaphore.Release();
+            //            }
+            //        });
 
-                    _solveCollisionTasks.Add(t);
-                }
+            //        _solveCollisionTasks.Add(t);
+            //    }
 
-                Task.WhenAll(_solveCollisionTasks).Wait();
+            //    Task.WhenAll(_solveCollisionTasks).Wait();
 
-                _collisionsInSolver = _collisionsInSolver.Except(_collisionsRemoveFromSolver).ToList();
+            //    _collisionsInSolver = _collisionsInSolver.Except(_collisionsRemoveFromSolver).ToList();
 
-                Profiler.EndSample();
-            }
+            //    Profiler.EndSample();
+            //}
 
             Profiler.EndSample();
 
@@ -336,7 +324,7 @@ namespace RBPhys
                         break;
                     }
 
-                    RBCollision rbc = FindCollision(collider_a.collider, collider_b.collider, out bool isInverted); //READONLY IN ASYNC COLLISION-DETECTION TASK BELOW (OR USE SEMAPHORE)
+                    RBCollision rbc = FindCollision(collider_a.collider, collider_b.collider, out bool isInverted);
                     if (rbc != null)
                     {
                         if (isInverted)
@@ -837,7 +825,11 @@ namespace RBPhys
         public bool isValidOBB;
         public Vector3[] verts;
 
-        public Vector3 Center { get { return pos + rot * size / 2f; } }
+        public Vector3 _center;
+        public RBMatrix3x3 _rotMatrix;
+
+        public Vector3 Center { get { return _center; } }
+        public RBMatrix3x3 RotMatrix { get { return _rotMatrix; } }
 
         public RBColliderOBB(Vector3 pos, Quaternion rot, Vector3 size)
         {
@@ -846,6 +838,8 @@ namespace RBPhys
             this.size = size;
             verts = new Vector3[0];
             isValidOBB = true;
+            _center = pos + rot * size / 2f;
+            _rotMatrix = new RBMatrix3x3(rot);
 
             verts = GetVertices();
         }

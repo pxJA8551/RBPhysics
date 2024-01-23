@@ -1,0 +1,391 @@
+#include "ColliderUtil_HLSL.cginc"
+#include "VectorUtil_HLSL.cginc"
+
+#pragma kernel HWA_DetectCollision
+
+int dc_threads_w;
+
+StructuredBuffer<float3> dc_obb_centers;
+StructuredBuffer<float3x3> dc_obb_rotations;
+StructuredBuffer<float3> dc_obb_sizes;
+StructuredBuffer<float3> dc_pair_cgs;
+
+RWStructuredBuffer<float3> dc_Penetrations;
+RWStructuredBuffer<float3> dc_Contacts;
+
+[numthreads(32,32,1)]
+void HWA_DetectCollision (uint3 id : SV_DispatchThreadID)
+{
+    int pairId = floor(id.x + id.y * dc_threads_w / 2);
+    
+    int obb_id_a = pairId * 2;
+    int obb_id_b = pairId * 2 + 1;
+    
+    float3 d = dc_obb_centers[obb_id_b] - dc_obb_centers[obb_id_a];
+    
+    float3 size_a = dc_obb_sizes[obb_id_a];
+    float3 size_b = dc_obb_sizes[obb_id_b];
+    
+    float3x3 rotA = dc_obb_rotations[obb_id_a];
+    float3x3 rotB = dc_obb_rotations[obb_id_b];
+    
+    float3 aFwd = mul(rotA, float3(0, 0, size_a.z));
+    float3 aRight = mul(rotA, float3(size_a.x, 0, 0));
+    float3 aUp = mul(rotA, float3(0, size_a.y, 0));
+    
+    float3 bFwd = mul(rotB, float3(0, 0, size_b.z));
+    float3 bRight = mul(rotB, float3(size_b.x, 0, 0));
+    float3 bUp = mul(rotB, float3(0, size_b.y, 0));
+    
+    float3 aFwdN = normalize(aFwd);
+    float3 aRightN = normalize(aRight);
+    float3 aUpN = normalize(aUp);
+    
+    float3 bFwdN = normalize(bFwd);
+    float3 bRightN = normalize(bRight);
+    float3 bUpN = normalize(bUp);
+    
+    float3 penetration;
+    float3 pA;
+    float3 pB;
+    
+    // Separating Axis 1: aFwd
+    {
+        float dd = dot(d, aFwdN);
+        float prjL = abs(dd);
+        float rA = abs(size_a.z);
+        float rB = GetOBBAxisSize(bFwd, bRight, bUp, aFwdN);
+        
+        float dp = prjL * 2 - (rA + rB);
+        
+        if (dp > 0)
+        {
+            dc_Penetrations[pairId] = float3(0, 0, 0);
+            return;
+        }
+        
+        float3 p = aFwdN * (dp / 2.) * Sign11(dd);
+        penetration = p;
+    }
+
+    // Separating Axis 2: aRight
+    {
+        float dd = dot(d, aRightN);
+        float prjL = abs(dd);
+        float rA = abs(size_a.x);
+        float rB = GetOBBAxisSize(bFwd, bRight, bUp, aRightN);
+        
+        float dp = prjL * 2 - (rA + rB);
+        
+        if (dp > 0)
+        {
+            dc_Penetrations[pairId] = float3(0, 0, 0);
+            return;
+        }
+        
+        float3 p = aRightN * (dp / 2.) * Sign11(dd);
+        penetration = length(p) < length(penetration) ? p : penetration;
+    }
+
+    // Separating Axis 3: aUp
+    {
+        float dd = dot(d, aUpN);
+        float prjL = abs(dd);
+        float rA = abs(size_a.y);
+        float rB = GetOBBAxisSize(bFwd, bRight, bUp, aUpN);
+        
+        float dp = prjL * 2 - (rA + rB);
+        
+        if (dp > 0)
+        {
+            dc_Penetrations[pairId] = float3(0, 0, 0);
+            return;
+        }
+        
+        float3 p = aUpN * (dp / 2.) * Sign11(dd);
+        penetration = length(p) < length(penetration) ? p : penetration;
+    }
+
+    // Separating Axis 4: bFwd
+    {
+        float dd = dot(d, bFwdN);
+        float prjL = abs(dd);
+        float rA = GetOBBAxisSize(aFwd, aRight, aUp, bFwdN);
+        float rB = abs(size_b.z);
+        
+        float dp = prjL * 2 - (rA + rB);
+        if (dp > 0)
+        {
+            dc_Penetrations[pairId] = float3(0, 0, 0);
+            return;
+        }
+        
+        float3 p = bFwdN * (dp / 2.) * Sign11(dd);
+        penetration = length(p) < length(penetration) ? p : penetration;
+    }
+
+    // Separating Axis 5: bRight
+    {
+        float dd = dot(d, bRight);
+        float prjL = abs(dd);
+        float rA = GetOBBAxisSize(aFwd, aRight, aUp, bRightN);
+        float rB = abs(size_b.x);
+        
+        float dp = prjL * 2 - (rA + rB);
+        
+        if (dp > 0)
+        {
+            dc_Penetrations[pairId] = float3(0, 0, 0);
+            return;
+        }
+        
+        float3 p = bRightN * (dp / 2.) * Sign11(dd);
+        penetration = length(p) < length(penetration) ? p : penetration;
+    }
+
+    // Separating Axis 6: bUpN
+    {
+        float dd = dot(d, bUpN);
+        float prjL = abs(dd);
+        float rA = GetOBBAxisSize(aFwd, aRight, aUp, bUpN);
+        float rB = abs(size_b.y);
+        
+        float dp = prjL * 2 - (rA + rB);
+        
+        if (dp > 0)
+        {
+            penetration = float3(0, 0, 0);
+            return;
+        }
+        
+        float3 p = bRightN * (dp / 2.) * Sign11(dd);
+        penetration = length(p) < length(penetration) ? p : penetration;
+    }
+
+    // Separating Axis 7: aFwd x bFwd
+    {
+        float c = normalize(cross(aFwdN, bFwdN));
+        
+        if (all(c != 0))
+        {
+            float dd = dot(d, c);
+            float prjL = abs(dd);
+            float rA = GetOBBAxisSize(aFwd, aRight, aUp, c);
+            float rB = GetOBBAxisSize(bFwd, bRight, bUp, c);
+        
+            float dp = prjL * 2 - (rA + rB);
+        
+            if (dp > 0)
+            {
+                dc_Penetrations[pairId] = float3(0, 0, 0);
+                return;
+            }
+        
+            float3 p = c * (dp / 2.) * Sign11(dd);
+            penetration = length(p) < length(penetration) ? p : penetration;
+        }
+    }
+
+    // Separating Axis 8: aFwd x bRight
+    {
+        float c = normalize(cross(aFwdN, bRightN));
+        
+        if (all(c != 0))
+        {
+            float dd = dot(d, c);
+            float prjL = abs(dd);
+            float rA = GetOBBAxisSize(aFwd, aRight, aUp, c);
+            float rB = GetOBBAxisSize(bFwd, bRight, bUp, c);
+        
+            float dp = prjL * 2 - (rA + rB);
+        
+            if (dp > 0)
+            {
+                dc_Penetrations[pairId] = float3(0, 0, 0);
+                return;
+            }
+        
+            float3 p = c * (dp / 2.) * Sign11(dd);
+            penetration = length(p) < length(penetration) ? p : penetration;
+        }
+    }
+
+    // Separating Axis 9: aFwd x bUp
+    {
+        float c = normalize(cross(aFwdN, bUpN));
+        
+        if (all(c != 0))
+        {
+            float dd = dot(d, c);
+            float prjL = abs(dd);
+            float rA = GetOBBAxisSize(aFwd, aRight, aUp, c);
+            float rB = GetOBBAxisSize(bFwd, bRight, bUp, c);
+        
+            float dp = prjL * 2 - (rA + rB);
+        
+            if (dp > 0)
+            {
+                dc_Penetrations[pairId] = float3(0, 0, 0);
+                return;
+            }
+        
+            float3 p = c * (dp / 2.) * Sign11(dd);
+            penetration = length(p) < length(penetration) ? p : penetration;
+        }
+    }
+
+    // Separating Axis 10: aRight x bFwd
+    {
+        float c = normalize(cross(aRightN, bFwdN));
+        
+        if (all(c != 0))
+        {
+            float dd = dot(d, c);
+            float prjL = abs(dd);
+            float rA = GetOBBAxisSize(aFwd, aRight, aUp, c);
+            float rB = GetOBBAxisSize(bFwd, bRight, bUp, c);
+        
+            float dp = prjL * 2 - (rA + rB);
+        
+            if (dp > 0)
+            {
+                dc_Penetrations[pairId] = float3(0, 0, 0);
+                return;
+            }
+        
+            float3 p = c * (dp / 2.) * Sign11(dd);
+            penetration = length(p) < length(penetration) ? p : penetration;
+        }
+    }
+
+    // Separating Axis 11: aRightN x bRight
+    {
+        float c = normalize(cross(aRightN, bRightN));
+        
+        if (all(c != 0))
+        {
+            float dd = dot(d, c);
+            float prjL = abs(dd);
+            float rA = GetOBBAxisSize(aFwd, aRight, aUp, c);
+            float rB = GetOBBAxisSize(bFwd, bRight, bUp, c);
+        
+            float dp = prjL * 2 - (rA + rB);
+        
+            if (dp > 0)
+            {
+                dc_Penetrations[pairId] = float3(0, 0, 0);
+                return;
+            }
+        
+            float3 p = c * (dp / 2.) * Sign11(dd);
+            penetration = length(p) < length(penetration) ? p : penetration;
+        }
+    }
+
+    // Separating Axis 12: aRightN x bUp
+    {
+        float c = normalize(cross(aRightN, bUpN));
+        
+        if (all(c != 0))
+        {
+            float dd = dot(d, c);
+            float prjL = abs(dd);
+            float rA = GetOBBAxisSize(aFwd, aRight, aUp, c);
+            float rB = GetOBBAxisSize(bFwd, bRight, bUp, c);
+        
+            float dp = prjL * 2 - (rA + rB);
+        
+            if (dp > 0)
+            {
+                dc_Penetrations[pairId] = float3(0, 0, 0);
+                return;
+            }
+        
+            float3 p = c * (dp / 2.) * Sign11(dd);
+            penetration = length(p) < length(penetration) ? p : penetration;
+        }
+    }
+
+    // Separating Axis 13: aUpN x bFwd
+    {
+        float c = normalize(cross(aUpN, bFwdN));
+        
+        if (all(c != 0))
+        {
+            float dd = dot(d, c);
+            float prjL = abs(dd);
+            float rA = GetOBBAxisSize(aFwd, aRight, aUp, c);
+            float rB = GetOBBAxisSize(bFwd, bRight, bUp, c);
+        
+            float dp = prjL * 2 - (rA + rB);
+        
+            if (dp > 0)
+            {
+                dc_Penetrations[pairId] = float3(0, 0, 0);
+                return;
+            }
+        
+            float3 p = c * (dp / 2.) * Sign11(dd);
+            penetration = length(p) < length(penetration) ? p : penetration;
+        }
+    }
+
+    // Separating Axis 14: aUpN x bRight
+    {
+        float c = normalize(cross(aUpN, bRightN));
+        
+        if (all(c != 0))
+        {
+            float dd = dot(d, c);
+            float prjL = abs(dd);
+            float rA = GetOBBAxisSize(aFwd, aRight, aUp, c);
+            float rB = GetOBBAxisSize(bFwd, bRight, bUp, c);
+        
+            float dp = prjL * 2 - (rA + rB);
+        
+            if (dp > 0)
+            {
+                dc_Penetrations[pairId] = float3(0, 0, 0);
+                return;
+            }
+        
+            float3 p = c * (dp / 2.) * Sign11(dd);
+            penetration = length(p) < length(penetration) ? p : penetration;
+        }
+    }
+
+    // Separating Axis 15: aUpN x bUp
+    {
+        float c = normalize(cross(aUpN, bUpN));
+        
+        if (all(c != 0))
+        {
+            float dd = dot(d, c);
+            float prjL = abs(dd);
+            float rA = GetOBBAxisSize(aFwd, aRight, aUp, c);
+            float rB = GetOBBAxisSize(bFwd, bRight, bUp, c);
+        
+            float dp = prjL * 2 - (rA + rB);
+        
+            if (dp > 0)
+            {
+                dc_Penetrations[pairId] = float3(0, 0, 0);
+                return;
+            }
+        
+            float3 p = c * (dp / 2.) * Sign11(dd);
+            penetration = length(p) < length(penetration) ? p : penetration;
+        }
+    }
+    
+    // OBB-A & OBB-B Penetrating
+    {
+        dc_Penetrations[pairId] = penetration;
+        float3 pDirN = normalize(penetration);
+        
+        float aDp = GetOBBAxisOffset(aFwd, aRight, aUp, pDirN);
+        float bDp = GetOBBAxisOffset(bFwd, bRight, bUp, pDirN);
+        
+
+    }
+}
