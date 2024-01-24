@@ -72,9 +72,9 @@ namespace RBPhys
 
             _colliders.ForEach(item => item.UpdateTransform());
 
-            // ====== 物理フレームウインドウ ここから ======
+            // ====== �����t���[���E�C���h�E �������� ======
 
-            //動的・静的軌道計算
+            //���I�E�ÓI�O���v�Z
 
             if (_activeTrajectories.Length != _rigidbodies.Count)
             {
@@ -110,14 +110,14 @@ namespace RBPhys
                 //rb.ExpVelocity += new Vector3(0, -9.81f, 0) * dt;
             }
 
-            //OnClosePhysicsFrameへ
+            //OnClosePhysicsFrame��
         }
 
         public static void ClosePhysicsFrameWindow(float dt)
         {
-            //FixedUpdate終了時に実行
+            //FixedUpdate�I�����Ɏ��s
 
-            // ====== 物理フレームウインドウ ここまで ======
+            // ====== �����t���[���E�C���h�E �����܂� ======
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
@@ -135,13 +135,13 @@ namespace RBPhys
 
         public static void SolveColliders(float dt)
         {
-            //衝突検知（ブロードフェーズ）
+            //�Փˌ��m�i�u���[�h�t�F�[�Y�j
 
             List<(RBTrajectory, RBTrajectory)> collidingTrajs = new List<(RBTrajectory, RBTrajectory)>();
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-Sort");
             {
-                //AABBのx最小値で昇順ソート
+                //AABB��x�ŏ��l�ŏ����\�[�g
                 _trajectories_orderByXMin = _activeTrajectories.Concat(_staticTrajectories).ToArray();
                 _trajectories_orderByXMin = _trajectories_orderByXMin.OrderBy(item => item.trajectoryAABB.GetMin().x).ToArray();
 
@@ -198,7 +198,7 @@ namespace RBPhys
                 Profiler.EndSample();
             }
 
-            //衝突検知（ナローフェーズ）と解消
+            //�Փˌ��m�i�i���[�t�F�[�Y�j�Ɖ��
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-DetailTest");
 
@@ -318,11 +318,11 @@ namespace RBPhys
                 trajAABB_b = traj_b.rigidbody.GetColliders().Select(item => (item, item.CalcAABB())).ToArray();
             }
 
-            //AABBのx最小値でコライダを昇順ソート
+            //AABB��x�ŏ��l�ŃR���C�_������\�[�g
             trajAABB_a = trajAABB_a.OrderBy(item => item.aabb.GetMin().x).ToArray();
             trajAABB_b = trajAABB_b.OrderBy(item => item.aabb.GetMin().x).ToArray();
 
-            //コライダ毎に接触を判定
+            //�R���C�_���ɐڐG�𔻒�
             for (int i = 0; i < trajAABB_a.Length; i++)
             {
                 var collider_a = trajAABB_a[i];
@@ -374,26 +374,26 @@ namespace RBPhys
                         {
                             obb_obb_cols.Add((collider_a.collider, collider_b.collider));
 
-                            //OBB-OBB衝突
+                            //OBB-OBB�Փ�
                             detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), cg, out Vector3 p, out aNearest, out bNearest);
                             penetration = p;
                         }
                         else if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.Sphere)
                         {
-                            //Sphere-OBB衝突
+                            //Sphere-OBB�Փ�
                             detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcSphere(), out Vector3 p);
                             penetration = p;
                         }
                         else if (collider_a.collider.GeometryType == RBGeometryType.Sphere && collider_b.collider.GeometryType == RBGeometryType.OBB)
                         {
-                            //Sphere-OBB衝突（逆転）
+                            //Sphere-OBB�Փˁi�t�]�j
                             detailCollide = RBColliderCollision.DetectCollision(collider_b.collider.CalcOBB(), collider_a.collider.CalcSphere(), out Vector3 p);
                             p = -p;
                             penetration = p;
                         }
                         else if (collider_a.collider.GeometryType == RBGeometryType.Sphere && collider_b.collider.GeometryType == RBGeometryType.Sphere)
                         {
-                            //Sphere-Sphere衝突
+                            //Sphere-Sphere�Փ�
                             detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcSphere(), collider_b.collider.CalcSphere(), out Vector3 p);
                             penetration = p;
                         }

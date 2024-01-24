@@ -1,3 +1,4 @@
+#include "MathUtil_HLSL.cginc"
 #include "ColliderUtil_HLSL.cginc"
 #include "VectorUtil_HLSL.cginc"
 
@@ -8,6 +9,7 @@ int dc_threads_w;
 StructuredBuffer<float3> dc_obb_centers;
 StructuredBuffer<float3x3> dc_obb_rotations;
 StructuredBuffer<float3> dc_obb_sizes;
+StructuredBuffer<float3> dc_pair_cgs;
 
 RWStructuredBuffer<float3> dc_Penetrations;
 RWStructuredBuffer<float3> dc_Contacts;
@@ -19,7 +21,7 @@ void HWA_DetectCollision (uint3 id : SV_DispatchThreadID)
     
     int obb_id_a = pairId * 2;
     int obb_id_b = pairId * 2 + 1;
-   
+    
     float3 center_a = dc_obb_centers[obb_id_a];
     float3 center_b = dc_obb_centers[obb_id_b];
     
