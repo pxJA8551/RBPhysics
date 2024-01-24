@@ -8,7 +8,6 @@ int dc_threads_w;
 StructuredBuffer<float3> dc_obb_centers;
 StructuredBuffer<float3x3> dc_obb_rotations;
 StructuredBuffer<float3> dc_obb_sizes;
-StructuredBuffer<float3> dc_pair_cgs;
 
 RWStructuredBuffer<float3> dc_Penetrations;
 RWStructuredBuffer<float3> dc_Contacts;
@@ -20,14 +19,17 @@ void HWA_DetectCollision (uint3 id : SV_DispatchThreadID)
     
     int obb_id_a = pairId * 2;
     int obb_id_b = pairId * 2 + 1;
-    
-    float3 d = dc_obb_centers[obb_id_b] - dc_obb_centers[obb_id_a];
+   
+    float3 center_a = dc_obb_centers[obb_id_a];
+    float3 center_b = dc_obb_centers[obb_id_b];
     
     float3 size_a = dc_obb_sizes[obb_id_a];
     float3 size_b = dc_obb_sizes[obb_id_b];
     
     float3x3 rotA = dc_obb_rotations[obb_id_a];
     float3x3 rotB = dc_obb_rotations[obb_id_b];
+    
+    float3 d = center_b - center_a;
     
     float3 aFwd = mul(rotA, float3(0, 0, size_a.z));
     float3 aRight = mul(rotA, float3(size_a.x, 0, 0));
@@ -45,9 +47,9 @@ void HWA_DetectCollision (uint3 id : SV_DispatchThreadID)
     float3 bRightN = normalize(bRight);
     float3 bUpN = normalize(bUp);
     
-    float3 penetration;
-    float3 pA;
-    float3 pB;
+    float3 penetration = 0;
+    float3 pA = 0;
+    float3 pB = 0;
     
     // Separating Axis 1: aFwd
     {
@@ -164,7 +166,7 @@ void HWA_DetectCollision (uint3 id : SV_DispatchThreadID)
 
     // Separating Axis 7: aFwd x bFwd
     {
-        float c = normalize(cross(aFwdN, bFwdN));
+        float3 c = normalize(cross(aFwdN, bFwdN));
         
         if (all(c != 0))
         {
@@ -188,7 +190,7 @@ void HWA_DetectCollision (uint3 id : SV_DispatchThreadID)
 
     // Separating Axis 8: aFwd x bRight
     {
-        float c = normalize(cross(aFwdN, bRightN));
+        float3 c = normalize(cross(aFwdN, bRightN));
         
         if (all(c != 0))
         {
@@ -212,7 +214,7 @@ void HWA_DetectCollision (uint3 id : SV_DispatchThreadID)
 
     // Separating Axis 9: aFwd x bUp
     {
-        float c = normalize(cross(aFwdN, bUpN));
+        float3 c = normalize(cross(aFwdN, bUpN));
         
         if (all(c != 0))
         {
@@ -236,7 +238,7 @@ void HWA_DetectCollision (uint3 id : SV_DispatchThreadID)
 
     // Separating Axis 10: aRight x bFwd
     {
-        float c = normalize(cross(aRightN, bFwdN));
+        float3 c = normalize(cross(aRightN, bFwdN));
         
         if (all(c != 0))
         {
@@ -260,7 +262,7 @@ void HWA_DetectCollision (uint3 id : SV_DispatchThreadID)
 
     // Separating Axis 11: aRightN x bRight
     {
-        float c = normalize(cross(aRightN, bRightN));
+        float3 c = normalize(cross(aRightN, bRightN));
         
         if (all(c != 0))
         {
@@ -284,7 +286,7 @@ void HWA_DetectCollision (uint3 id : SV_DispatchThreadID)
 
     // Separating Axis 12: aRightN x bUp
     {
-        float c = normalize(cross(aRightN, bUpN));
+        float3 c = normalize(cross(aRightN, bUpN));
         
         if (all(c != 0))
         {
@@ -308,7 +310,7 @@ void HWA_DetectCollision (uint3 id : SV_DispatchThreadID)
 
     // Separating Axis 13: aUpN x bFwd
     {
-        float c = normalize(cross(aUpN, bFwdN));
+        float3 c = normalize(cross(aUpN, bFwdN));
         
         if (all(c != 0))
         {
@@ -332,7 +334,7 @@ void HWA_DetectCollision (uint3 id : SV_DispatchThreadID)
 
     // Separating Axis 14: aUpN x bRight
     {
-        float c = normalize(cross(aUpN, bRightN));
+        float3 c = normalize(cross(aUpN, bRightN));
         
         if (all(c != 0))
         {
@@ -356,7 +358,7 @@ void HWA_DetectCollision (uint3 id : SV_DispatchThreadID)
 
     // Separating Axis 15: aUpN x bUp
     {
-        float c = normalize(cross(aUpN, bUpN));
+        float3 c = normalize(cross(aUpN, bUpN));
         
         if (all(c != 0))
         {
@@ -383,9 +385,178 @@ void HWA_DetectCollision (uint3 id : SV_DispatchThreadID)
         dc_Penetrations[pairId] = penetration;
         float3 pDirN = normalize(penetration);
         
-        float aDp = GetOBBAxisOffset(aFwd, aRight, aUp, pDirN);
-        float bDp = GetOBBAxisOffset(bFwd, bRight, bUp, pDirN);
+        float dAFwd = Sign101(dot(aFwd, pDirN));
+        float dARight = Sign101(dot(aRight, pDirN));
+        float dAUp = Sign101(dot(aUp, pDirN));
+        int aPd = dAFwd == 0 ? 1 : 0 + dARight == 0 ? 1 : 0 + dAUp == 0 ? 1 : 0;
         
-
+        float dBFwd = Sign101(dot(bFwd, pDirN));
+        float dBRight = Sign101(dot(bRight, pDirN));
+        float dBUp = Sign101(dot(bUp, pDirN));
+        int bPd = dBFwd == 0 ? 1 : 0 + dBRight == 0 ? 1 : 0 + dBUp == 0 ? 1 : 0;
+        
+        float3 ofAFwd = aFwd * dAFwd / 2;
+        float3 ofARight = aRight * dARight / 2;
+        float3 ofAUp = aUp * dAUp / 2;
+        
+        float3 ofBFwd = bFwd * dBFwd / 2;
+        float3 ofBRight = bRight * dBRight / 2;
+        float3 ofBUp = bUp * dBUp / 2;
+        
+        float3 aDp = center_a + (ofAFwd + ofARight + ofAUp);
+        float3 bDp = center_b + (ofBFwd + ofBRight + ofBUp);
+        
+        float3 contacts[16] = { float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0) };
+        
+        float3 fA1 = 0;
+        fA1 += fA1 == 0 ? aFwd * dAFwd == 0 ? 1 : 0 : 0;
+        fA1 += fA1 == 0 ? aRight * dARight == 0 ? 1 : 0 : 0;
+        fA1 += fA1 == 0 ? aUp * dAUp == 0 ? 1 : 0 : 0;
+        
+        float3 fA2 = 0;
+        fA2 += fA2 == 0 ? aUp * dAUp == 0 ? 1 : 0 : 0;
+        fA2 += fA2 == 0 ? aRight * dARight == 0 ? 1 : 0 : 0;
+        fA2 += fA2 == 0 ? aFwd * dAFwd == 0 ? 1 : 0 : 0;
+        
+        float3 fB1 = 0;
+        fB1 += fB1 == 0 ? bFwd * dBFwd == 0 ? 1 : 0 : 0;
+        fB1 += fB1 == 0 ? bRight * dBRight == 0 ? 1 : 0 : 0;
+        fB1 += fB1 == 0 ? bUp * dBUp == 0 ? 1 : 0 : 0;
+        
+        float3 fB2 = 0;
+        fB2 += fB2 == 0 ? bUp * dBUp == 0 ? 1 : 0 : 0;
+        fB2 += fB2 == 0 ? bRight * dBRight == 0 ? 1 : 0 : 0;
+        fB2 += fB2 == 0 ? bFwd * dBFwd == 0 ? 1 : 0 : 0;
+        
+        if (aPd == 0 || bPd == 0)
+        {
+            if (aPd == 1)
+            {
+                aDp = ProjectPointToLine(bDp, aDp + (fA1 + fA2), aDp - (fA1 + fA2));
+            }
+            else if (aPd == 2)
+            {
+                aPd = ProjectPointToPlane(bDp, aDp, aDp);
+            }
+            else if (bPd == 1)
+            {
+                bDp = ProjectPointToLine(aDp, bDp + (fB1 + fB2), bDp - (fB1 + fB2));
+            }
+            else if (bPd == 2)
+            {
+                bDp = ProjectPointToPlane(aDp, bDp, bDp);
+            }
+            
+            dc_Contacts[obb_id_a] = aDp;
+            dc_Contacts[obb_id_b] = bDp;
+            return;
+        }
+        else if (aPd == 1 && bPd == 1)
+        {
+            CalcNearest(aDp + (fA1 + fA2), aDp - (fA1 + fA2), bDp + (fB1 + fB2), bDp - (fB1 + fB2), aDp, bDp);
+            
+            dc_Contacts[obb_id_a] = aDp;
+            dc_Contacts[obb_id_b] = bDp;
+            return;
+        }
+        else
+        {
+            [unroll(4)]
+            for (int i = 0; i < aPd * 2; i++)
+            {
+                if (aPd == 1)
+                {
+                    contacts[i] = aDp + ((fA1 + fA2) * (i % 2) == 0 ? 1 : -1);
+                }
+                else if (aPd == 2)
+                {
+                    contacts[i] = aDp + (fA1 * ((i + i / 2) % 2) == 0 ? 1 : -1) + (fA2 * (i / 2) == 0 ? 1 : -1);
+                }
+            }
+           
+            [unroll(4)]
+            for (int j = 0; j < bPd * 2; j++)
+            {
+                if (bPd == 1)
+                {
+                    contacts[4 + j] = bDp + ((fB1 + fB2) * (j % 2) == 0 ? 1 : -1);
+                }
+                else if (bPd == 2)
+                {
+                    contacts[4 + j] = bDp + (fB1 * ((j + j / 2) % 2) == 0 ? 1 : -1) + (fB2 * (j / 2) == 0 ? 1 : -1);
+                }
+            }
+            
+            float3 te_a_begin = aDp + (fA1 + fA2);
+            float3 te_a_end = aDp - (fA1 + fA2);
+            float3 te_b_begin = bDp + (fB1 + fB2);
+            float3 te_b_end = bDp - (fB1 + fB2);
+            
+            if (aPd == 1)
+            {
+                float3 te_begin = aDp + (fA1 + fA2);
+                float3 te_end = aDp - (fA1 + fA2);
+                ProjectLineToLineD(te_begin, te_end, contacts[4], contacts[5]);
+                ProjectLineToLineD(te_begin, te_end, contacts[5], contacts[6]);
+                
+                aDp = (te_begin + te_end) / 2.;
+                bDp = ProjectPointToPlane(aDp, bDp, bDp);
+                
+                dc_Contacts[obb_id_a] = aDp;
+                dc_Contacts[obb_id_b] = bDp;
+                return;
+            }
+            else if (bPd == 1)
+            {
+                float3 te_begin = bDp + (fB1 + fB2);
+                float3 te_end = bDp - (fB1 + fB2);
+                ProjectLineToLineD(te_begin, te_end, contacts[0], contacts[1]);
+                ProjectLineToLineD(te_begin, te_end, contacts[1], contacts[2]);
+                
+                bDp = (te_begin + te_end) / 2.;
+                aDp = ProjectPointToPlane(bDp, aDp, aDp);
+                
+                dc_Contacts[obb_id_a] = aDp;
+                dc_Contacts[obb_id_b] = bDp;
+                return;
+            }
+            else
+            {
+                [unroll(4)]
+                for (int ie = 0; ie < aPd * 2; ie++)
+                {
+                    [unroll(4)]
+                    for (int je = 0; je < bPd * 2; je++)
+                    {
+                        contacts[8 + ie * 4 + je] = CalcNearest(contacts[ie], contacts[(ie + 1) % 4], contacts[4 + je], contacts[4 + (je + 1) % 4]);
+                    }
+                }
+                
+                float3 sum = 0;
+                int count = 0;
+                
+                [unroll(16)]
+                for (int i = 0; i < 16; i++)
+                {
+                    float3 c = contacts[i];
+                    
+                    if (any(c != 0) && IsInRect(c, contacts[0], contacts[1], contacts[2], contacts[3], (ofAFwd + ofARight + ofAUp)) && IsInRect(c, contacts[4], contacts[5], contacts[6], contacts[7], (ofBFwd + ofBRight + ofBUp)))
+                    {
+                        sum += c;
+                        count++;
+                    }
+                }
+                
+                aDp = sum / count;
+                bDp = ProjectPointToPlane(aDp, bDp, bDp);
+                
+                dc_Contacts[obb_id_a] = aDp;
+                dc_Contacts[obb_id_b] = bDp;
+                return;
+            }
+        }
+        
+        dc_Contacts[obb_id_a] = 0;
+        dc_Contacts[obb_id_b] = 0;
     }
 }

@@ -27,5 +27,10 @@ namespace RBPhys
 
             RBPhysCore.ClosePhysicsFrameWindow(dt);
         }
+
+        private void OnDestroy()
+        {
+            RBPhysCore.Dispose();
+        }
     }
 }

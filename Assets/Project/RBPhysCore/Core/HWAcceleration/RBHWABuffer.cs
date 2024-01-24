@@ -33,7 +33,7 @@ public class RBHWABuffer<T> : IDisposable
         _graphicsBuffer.SetData(data);
     }
 
-    public void GetData(ref T[] data)
+    public void GetData(T[] data)
     {
         _graphicsBuffer.GetData(data);
     }
