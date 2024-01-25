@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
@@ -8,6 +9,8 @@ public class RBHWABuffer<T> : IDisposable
 {
     GraphicsBuffer _graphicsBuffer;
     int _count;
+
+    int _stride;
 
     public int Count { get { return _count; } }
 
@@ -20,7 +23,8 @@ public class RBHWABuffer<T> : IDisposable
     public RBHWABuffer(int count)
     {
         _count = count;
-        _graphicsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, count, Marshal.SizeOf(typeof(T)));
+        _stride = Marshal.SizeOf(typeof(T));
+        _graphicsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, count, _stride);
     }
 
     public GraphicsBuffer GetGraphicsBuffer()

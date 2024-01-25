@@ -8,7 +8,6 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using static RBPhys.RBColliderCollision;
 using System.Threading;
-using Unity.Android.Types;
 
 namespace RBPhys
 {
@@ -36,7 +35,7 @@ namespace RBPhys
 
         static List<Task> _solveCollisionTasks = new List<Task>();
 
-        static HWAccelerations.DetailCollisions.HWA_DetailCollisionOBBOBB _hwa_obb_obb_detail = new HWAccelerations.DetailCollisions.HWA_DetailCollisionOBBOBB(15);
+        static HWAcceleration.DetailCollision.HWA_DetailCollisionOBBOBB _hwa_obb_obb_detail = new HWAcceleration.DetailCollision.HWA_DetailCollisionOBBOBB(15);
 
         public static void AddRigidbody(RBRigidbody rb)
         {
@@ -72,10 +71,6 @@ namespace RBPhys
 
             _colliders.ForEach(item => item.UpdateTransform());
 
-            // ====== �����t���[���E�C���h�E �������� ======
-
-            //���I�E�ÓI�O���v�Z
-
             if (_activeTrajectories.Length != _rigidbodies.Count)
             {
                 _activeTrajectories = new RBTrajectory[_rigidbodies.Count];
@@ -107,7 +102,7 @@ namespace RBPhys
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                //rb.ExpVelocity += new Vector3(0, -9.81f, 0) * dt;
+                rb.ExpVelocity += new Vector3(0, -9.81f, 0) * dt;
             }
 
             //OnClosePhysicsFrame��
@@ -121,14 +116,14 @@ namespace RBPhys
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                //rb.ApplyTransform(dt);
+                rb.ApplyTransform(dt);
             }
         }
 
         static List<(RBCollider, RBCollider)> _obb_obb_cols = new List<(RBCollider, RBCollider)>();
         static List<(Vector3 p, Vector3 pA, Vector3 pB)> _obb_obb_cols_res = new List<(Vector3 p, Vector3 pA, Vector3 pB)>();
 
-        static List<Task<List<RBCollision>>> _detectCollisionTasks = new List<Task<List<RBCollision>>>();
+        static List<Task<RBCollision>> _detectCollisionTasks = new List<Task<RBCollision>>();
         static SemaphoreSlim _solverRemoveSemaphore = new SemaphoreSlim(1, 1);
 
         static SemaphoreSlim _solverVelocityChgSemaphore = new SemaphoreSlim(1, 1);
@@ -208,83 +203,83 @@ namespace RBPhys
                 DetectCollisions(trajPair.Item1, trajPair.Item2, ref _obb_obb_cols);
             }
 
-            _hwa_obb_obb_detail.CalcDetailCollision(_obb_obb_cols, ref _obb_obb_cols_res);
+            _hwa_obb_obb_detail.HWA_ComputeDetailCollision(_obb_obb_cols, ref _obb_obb_cols_res);
+
+            Profiler.EndSample();
+
+            Profiler.BeginSample(name: "Physics-CollisionResolution-SolveCollisions");
 
             for (int i = 0; i < _obb_obb_cols.Count; i++)
             {
-                var rbc = FindCollision(_obb_obb_cols[i].Item1, _obb_obb_cols[i].Item2, out bool isInverted);
-
-                if (isInverted)
+                if (_obb_obb_cols_res[i].p != Vector3.zero)
                 {
-                    rbc.SwapTo(_obb_obb_cols[i].Item1, _obb_obb_cols[i].Item2);
+                    var rbc = FindCollision(_obb_obb_cols[i].Item1, _obb_obb_cols[i].Item2, out bool isInverted);
+
+                    if (isInverted)
+                    {
+                        rbc.SwapTo(_obb_obb_cols[i].Item1, _obb_obb_cols[i].Item2);
+                    }
+
+                    if (rbc == null)
+                    {
+                        rbc = new RBCollision(_obb_obb_cols[i].Item1, _obb_obb_cols[i].Item2, _obb_obb_cols_res[i].p);
+                    }
+
+                    rbc.Update(_obb_obb_cols_res[i].p, _obb_obb_cols_res[i].pA, _obb_obb_cols_res[i].pB);
+                    rbc.InitVelocityConstraint(dt);
+                    _collisionsInFrame.Add(rbc);
                 }
-
-                if (rbc == null)
-                {
-                    rbc = new RBCollision(_obb_obb_cols[i].Item1, _obb_obb_cols[i].Item2, _obb_obb_cols_res[i].p);
-                }
-
-                rbc.Update(_obb_obb_cols_res[i].p, _obb_obb_cols_res[i].pA, _obb_obb_cols_res[i].pB);
             }
-
-            foreach (var col in _collisionsInFrame)
-            {
-                col.InitVelocityConstraint(dt);
-            }
-
-            Profiler.EndSample();
 
             _collisionsInSolver.Clear();
             _collisionsInSolver.AddRange(_collisionsInFrame);
 
-            Profiler.BeginSample(name: "Physics-CollisionResolution-SolveCollisions");
+            for (int i = 0; i < COLLIDER_SOLVER_MAX_ITERATION; i++)
+            {
+                Profiler.BeginSample(name: String.Format("SolveCollisions({0}/{1})", i, COLLIDER_SOLVER_MAX_ITERATION));
 
-            //for (int i = 0; i < COLLIDER_SOLVER_MAX_ITERATION; i++)
-            //{
-            //    Profiler.BeginSample(name: String.Format("SolveCollisions({0}/{1})", i, COLLIDER_SOLVER_MAX_ITERATION));
+                _solveCollisionTasks.Clear();
 
-            //    _solveCollisionTasks.Clear();
+                _collisionsRemoveFromSolver.Clear();
+                foreach (var col in _collisionsInSolver)
+                {
+                    var t = Task.Run(() =>
+                    {
+                        (Vector3 velAdd_a, Vector3 angVel_add_a, Vector3 velAdd_b, Vector3 angVel_add_b) = SolveCollision(col, dt);
 
-            //    _collisionsRemoveFromSolver.Clear();
-            //    foreach (var col in _collisionsInSolver)
-            //    {
-            //        var t = Task.Run(() =>
-            //        {
-            //            (Vector3 velAdd_a, Vector3 angVel_add_a, Vector3 velAdd_b, Vector3 angVel_add_b) = SolveCollision(col, dt);
+                        if (col.rigidbody_a != null)
+                        {
+                            _solverVelocityChgSemaphore.Wait();
+                            col.rigidbody_a.ExpVelocity += velAdd_a;
+                            col.rigidbody_a.ExpAngularVelocity += angVel_add_a;
+                            _solverVelocityChgSemaphore.Release();
+                        }
 
-            //            if (col.rigidbody_a != null)
-            //            {
-            //                _solverVelocityChgSemaphore.Wait();
-            //                col.rigidbody_a.ExpVelocity += velAdd_a;
-            //                col.rigidbody_a.ExpAngularVelocity += angVel_add_a;
-            //                _solverVelocityChgSemaphore.Release();
-            //            }
+                        if (col.rigidbody_b != null)
+                        {
+                            _solverVelocityChgSemaphore.Wait();
+                            col.rigidbody_b.ExpVelocity += velAdd_b;
+                            col.rigidbody_b.ExpAngularVelocity += angVel_add_b;
+                            _solverVelocityChgSemaphore.Release();
+                        }
 
-            //            if (col.rigidbody_b != null)
-            //            {
-            //                _solverVelocityChgSemaphore.Wait();
-            //                col.rigidbody_b.ExpVelocity += velAdd_b;
-            //                col.rigidbody_b.ExpAngularVelocity += angVel_add_b;
-            //                _solverVelocityChgSemaphore.Release();
-            //            }
+                        if (velAdd_a.sqrMagnitude < SOLVER_ABORT_VELADD_SQRT && angVel_add_a.sqrMagnitude < SOLVER_ABORT_ANGVELADD_SQRT && velAdd_b.sqrMagnitude < SOLVER_ABORT_VELADD_SQRT && angVel_add_b.sqrMagnitude < SOLVER_ABORT_ANGVELADD_SQRT)
+                        {
+                            _solverRemoveSemaphore.Wait();
+                            _collisionsRemoveFromSolver.Add(col);
+                            _solverRemoveSemaphore.Release();
+                        }
+                    });
 
-            //            if (velAdd_a.sqrMagnitude < SOLVER_ABORT_VELADD_SQRT && angVel_add_a.sqrMagnitude < SOLVER_ABORT_ANGVELADD_SQRT && velAdd_b.sqrMagnitude < SOLVER_ABORT_VELADD_SQRT && angVel_add_b.sqrMagnitude < SOLVER_ABORT_ANGVELADD_SQRT)
-            //            {
-            //                _solverRemoveSemaphore.Wait();
-            //                _collisionsRemoveFromSolver.Add(col);
-            //                _solverRemoveSemaphore.Release();
-            //            }
-            //        });
+                    _solveCollisionTasks.Add(t);
+                }
 
-            //        _solveCollisionTasks.Add(t);
-            //    }
+                Task.WhenAll(_solveCollisionTasks).Wait();
 
-            //    Task.WhenAll(_solveCollisionTasks).Wait();
+                _collisionsInSolver = _collisionsInSolver.Except(_collisionsRemoveFromSolver).ToList();
 
-            //    _collisionsInSolver = _collisionsInSolver.Except(_collisionsRemoveFromSolver).ToList();
-
-            //    Profiler.EndSample();
-            //}
+                Profiler.EndSample();
+            }
 
             Profiler.EndSample();
 
@@ -375,8 +370,8 @@ namespace RBPhys
                             obb_obb_cols.Add((collider_a.collider, collider_b.collider));
 
                             //OBB-OBB�Փ�
-                            detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), cg, out Vector3 p, out aNearest, out bNearest);
-                            penetration = p;
+                            //detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), cg, out Vector3 p, out aNearest, out bNearest);
+                            //penetration = p;
                         }
                         else if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.Sphere)
                         {

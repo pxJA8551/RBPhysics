@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Runtime.InteropServices;
+using System.Linq;
 
-namespace RBPhys.HWAccelerations
+namespace RBPhys.HWAcceleration
 {
-    public static partial class DetailCollisions
+    public static partial class DetailCollision
     {
         public class HWA_DetailCollisionOBBOBB : IDisposable
         {
@@ -45,15 +46,12 @@ namespace RBPhys.HWAccelerations
                 bool succeeded = LoadCS();
                 if (!succeeded)
                 {
-                    Debug.LogWarning("Failed to load HWA resources.");
+                    Debug.LogWarning("Loading HWA resources failed.");
                 }
 
                 AllocateBuffers(minBufferObbPairCount);
                 ResizeArrays(minBufferObbPairCount);
                 _minBufferObbPairCount = minBufferObbPairCount;
-
-                Debug.Log(Marshal.SizeOf(typeof(Vector3)));
-                Debug.Log(Marshal.SizeOf(typeof(RBMatrix3x3)));
             }
 
             bool LoadCS()
@@ -76,6 +74,7 @@ namespace RBPhys.HWAccelerations
             {
                 if (_bufferObbPairCount != obbPairCount)
                 {
+                    TryDisposeBuffers();
                     AllocateBuffers(obbPairCount);
                 }
             }
@@ -103,18 +102,18 @@ namespace RBPhys.HWAccelerations
                 _obb_rotations?.Dispose();
                 _obb_sizes?.Dispose();
                 _pair_cgs?.Dispose();
+                _ret_obb_penetrations?.Dispose();
+                _ret_obb_contacts?.Dispose();
             }
 
             void ResizeBuffers(int obbPairCount)
             {
                 if (obbPairCount > _bufferObbPairCount)
                 {
-                    TryDisposeBuffers();
                     TryAllocateBuffers(obbPairCount);
                 }
                 else
                 {
-                    TryDisposeBuffers();
                     TryAllocateBuffers(Mathf.Max(obbPairCount, _minBufferObbPairCount));
                 }
             }
@@ -137,22 +136,25 @@ namespace RBPhys.HWAccelerations
                 _arrayObbPairCount = obbPairCount;
             }
 
-            public void CalcDetailCollision(List<(RBCollider obb_a, RBCollider obb_b)> cols, ref List<(Vector3 penetration, Vector3 nearestA, Vector3 nearestB)> pList)
+            public void HWA_ComputeDetailCollision(List<(RBCollider obb_a, RBCollider obb_b)> cols, ref List<(Vector3 penetration, Vector3 nearestA, Vector3 nearestB)> pList)
             {
                 int obbCount = cols.Count;
 
-                ResizeBuffers(obbCount);
-                TryResizeArrays(_bufferObbPairCount);
-
-                SetBufferDatas(cols);
-                DetailCollision();
-                GetBufferDatas();
-
-                pList.Clear();
-
-                for (int i = 0; i < _arrayObbPairCount; i++)
+                if (obbCount > 0)
                 {
-                    pList.Add((_ret_obb_penetrations_array[i], _ret_obb_penetrations_array[i * 2], _ret_obb_penetrations_array[i * 2 + 1]));
+                    ResizeBuffers(obbCount);
+                    TryResizeArrays(_bufferObbPairCount);
+
+                    SetBufferDatas(cols);
+                    DetailCollision();
+                    GetBufferDatas();
+
+                    pList.Clear();
+
+                    for (int i = 0; i < obbCount; i++)
+                    {
+                        pList.Add((_ret_obb_penetrations_array[i], _ret_obb_contacts_array[i * 2], _ret_obb_contacts_array[i * 2 + 1]));
+                    }
                 }
             }
 
@@ -170,15 +172,15 @@ namespace RBPhys.HWAccelerations
 
                     _obb_centers_array[id_a] = obb_a.Center;
                     _obb_centers_array[id_b] = obb_b.Center;
-                    _obb_rotations_array[id_a] = obb_a.RotMatrix;
-                    _obb_rotations_array[id_b] = obb_b.RotMatrix;
+                    _obb_rotations_array[id_a] = obb_a.RotMatrix.Transposed();
+                    _obb_rotations_array[id_b] = obb_b.RotMatrix.Transposed();
                     _obb_sizes_array[id_a] = obb_a.size;
                     _obb_sizes_array[id_b] = obb_b.size;
                 }
 
-                _obb_centers.SetData(_obb_centers_array);
-                _obb_rotations.SetData(_obb_rotations_array);
                 _obb_sizes.SetData(_obb_sizes_array);
+                _obb_rotations.SetData(_obb_rotations_array);
+                _obb_centers.SetData(_obb_centers_array);
             }
 
             void GetBufferDatas()
@@ -193,7 +195,7 @@ namespace RBPhys.HWAccelerations
 
                 int pairCount = _bufferObbPairCount;
                 int threadGroupsX = Mathf.CeilToInt(pairCount / 1024f);
-                int threadGroupsY = Mathf.FloorToInt(pairCount / 1024f);
+                int threadGroupsY = Mathf.Max(Mathf.FloorToInt(pairCount / 1024f), 1);
                 int threads_w = threadGroupsX * 32;
 
                 int kernelIndex = _kernelIndex_hwa_detectCollision;
