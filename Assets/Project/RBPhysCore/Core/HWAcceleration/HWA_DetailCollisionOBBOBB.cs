@@ -2,8 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-using System.Runtime.InteropServices;
-using System.Linq;
+using System.Threading.Tasks;
 
 namespace RBPhys.HWAcceleration
 {
@@ -18,7 +17,6 @@ namespace RBPhys.HWAcceleration
             static int _nameId_obb_centers;
             static int _nameId_obb_rotations;
             static int _nameId_obb_sizes;
-            static int _nameId_pair_cgs;
             static int _nameId_threads_w;
             static int _nameId_ret_obb_penetrations;
             static int _nameId_ret_obb_contacts;
@@ -26,7 +24,6 @@ namespace RBPhys.HWAcceleration
             RBHWABuffer<Vector3> _obb_centers;
             RBHWABuffer<RBMatrix3x3> _obb_rotations;
             RBHWABuffer<Vector3> _obb_sizes;
-            RBHWABuffer<Vector3> _pair_cgs;
             RBHWABuffer<Vector3> _ret_obb_penetrations;
             RBHWABuffer<Vector3> _ret_obb_contacts;
             int _bufferObbPairCount;
@@ -34,7 +31,6 @@ namespace RBPhys.HWAcceleration
             Vector3[] _obb_centers_array;
             RBMatrix3x3[] _obb_rotations_array;
             Vector3[] _obb_sizes_array;
-            Vector3[] _pair_cgs_array;
             Vector3[] _ret_obb_penetrations_array;
             Vector3[] _ret_obb_contacts_array;
             int _arrayObbPairCount;
@@ -46,7 +42,7 @@ namespace RBPhys.HWAcceleration
                 bool succeeded = LoadCS();
                 if (!succeeded)
                 {
-                    Debug.LogWarning("Loading HWA resources failed.");
+                    Debug.LogWarning("Loading HWA Resources failed.");
                 }
 
                 AllocateBuffers(minBufferObbPairCount);
@@ -62,12 +58,16 @@ namespace RBPhys.HWAcceleration
                 _nameId_obb_centers = Shader.PropertyToID("dc_obb_centers");
                 _nameId_obb_rotations = Shader.PropertyToID("dc_obb_rotations");
                 _nameId_obb_sizes = Shader.PropertyToID("dc_obb_sizes");
-                _nameId_pair_cgs = Shader.PropertyToID("dc_pair_cgs");
                 _nameId_threads_w = Shader.PropertyToID("dc_threads_w");
                 _nameId_ret_obb_penetrations = Shader.PropertyToID("dc_Penetrations");
                 _nameId_ret_obb_contacts = Shader.PropertyToID("dc_Contacts");
 
                 return _computeShader != null;
+            }
+
+            public void SetMinOBBPairCount(int nmiBufferObbPairCount)
+            {
+                _minBufferObbPairCount = nmiBufferObbPairCount;
             }
 
             void TryAllocateBuffers(int obbPairCount)
@@ -79,17 +79,11 @@ namespace RBPhys.HWAcceleration
                 }
             }
 
-            public void SetMinOBBPairCount(int targetBufferObbPairCount)
-            {
-                _minBufferObbPairCount = targetBufferObbPairCount;
-            }
-
             void AllocateBuffers(int obbPairCount)
             {
                 _obb_centers = new RBHWABuffer<Vector3>(obbPairCount * 2);
                 _obb_rotations = new RBHWABuffer<RBMatrix3x3>(obbPairCount * 2);
                 _obb_sizes = new RBHWABuffer<Vector3>(obbPairCount * 2);
-                _pair_cgs = new RBHWABuffer<Vector3>(obbPairCount);
                 _ret_obb_penetrations = new RBHWABuffer<Vector3>(obbPairCount);
                 _ret_obb_contacts = new RBHWABuffer<Vector3>(obbPairCount * 2);
 
@@ -101,7 +95,6 @@ namespace RBPhys.HWAcceleration
                 _obb_centers?.Dispose();
                 _obb_rotations?.Dispose();
                 _obb_sizes?.Dispose();
-                _pair_cgs?.Dispose();
                 _ret_obb_penetrations?.Dispose();
                 _ret_obb_contacts?.Dispose();
             }
@@ -162,20 +155,24 @@ namespace RBPhys.HWAcceleration
             {
                 for (int i = 0; i < cols.Count; i++)
                 {
-                    var pair = cols[i];
+                    var t = Task.Run(() =>
+                    {
+                        var pair = cols[i];
 
-                    int id_a = i * 2;
-                    int id_b = i * 2 + 1;
+                        int id_a = i * 2;
+                        int id_b = i * 2 + 1;
 
-                    var obb_a = pair.obb_a.CalcOBB();
-                    var obb_b = pair.obb_b.CalcOBB();
+                        var obb_a = pair.obb_a.CalcOBB();
+                        var obb_b = pair.obb_b.CalcOBB();
 
-                    _obb_centers_array[id_a] = obb_a.Center;
-                    _obb_centers_array[id_b] = obb_b.Center;
-                    _obb_rotations_array[id_a] = obb_a.RotMatrix.Transposed();
-                    _obb_rotations_array[id_b] = obb_b.RotMatrix.Transposed();
-                    _obb_sizes_array[id_a] = obb_a.size;
-                    _obb_sizes_array[id_b] = obb_b.size;
+                        _obb_centers_array[id_a] = obb_a.Center;
+                        _obb_centers_array[id_b] = obb_b.Center;
+                        _obb_rotations_array[id_a] = obb_a.RotMatrix.Transposed();
+                        _obb_rotations_array[id_b] = obb_b.RotMatrix.Transposed();
+                        _obb_sizes_array[id_a] = obb_a.size;
+                        _obb_sizes_array[id_b] = obb_b.size;
+                    });
+                    t.Wait();
                 }
 
                 _obb_sizes.SetData(_obb_sizes_array);
@@ -203,7 +200,6 @@ namespace RBPhys.HWAcceleration
                 c.SetBuffer(kernelIndex, _nameId_obb_centers, _obb_centers.GetGraphicsBuffer());
                 c.SetBuffer(kernelIndex, _nameId_obb_rotations, _obb_rotations.GetGraphicsBuffer());
                 c.SetBuffer(kernelIndex, _nameId_obb_sizes, _obb_sizes.GetGraphicsBuffer());
-                c.SetBuffer(kernelIndex, _nameId_pair_cgs, _pair_cgs.GetGraphicsBuffer());
                 c.SetBuffer(kernelIndex, _nameId_ret_obb_penetrations, _ret_obb_penetrations.GetGraphicsBuffer());
                 c.SetBuffer(kernelIndex, _nameId_ret_obb_contacts, _ret_obb_contacts.GetGraphicsBuffer());
 

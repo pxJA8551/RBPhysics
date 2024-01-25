@@ -1,3 +1,5 @@
+#define COLLISION_SOLVER_HW_ACCELERATION
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,17 +8,17 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Profiling;
-using static RBPhys.RBColliderCollision;
 using System.Threading;
+using System.Runtime.InteropServices;
 
 namespace RBPhys
 {
     public static class RBPhysCore
     {
-        public const int COLLIDER_SOLVER_MAX_ITERATION = 15;
+        public const int COLLISION_SOLVER_MAX_ITERATION = 15;
         public const int DEFAULT_SOLVER_ITERATION = 6;
 
-        public const float SOLVER_ABORT_VELADD_SQRT = 0.003f * 0.003f;
+        public const float SOLVER_ABORT_VELADD_SQRT = 0.01f * 0.01f;
         public const float SOLVER_ABORT_ANGVELADD_SQRT = 0.05f * 0.05f;
 
         static List<RBRigidbody> _rigidbodies = new List<RBRigidbody>();
@@ -36,6 +38,10 @@ namespace RBPhys
         static List<Task> _solveCollisionTasks = new List<Task>();
 
         static HWAcceleration.DetailCollision.HWA_DetailCollisionOBBOBB _hwa_obb_obb_detail = new HWAcceleration.DetailCollision.HWA_DetailCollisionOBBOBB(15);
+
+#if COLLISION_SOLVER_HW_ACCELERATION
+        static HWAcceleration.HWA_SolveCollision _hwa_solveCollision = new HWAcceleration.HWA_SolveCollision(15);
+#endif
 
         public static void AddRigidbody(RBRigidbody rb)
         {
@@ -234,11 +240,14 @@ namespace RBPhys
             _collisionsInSolver.Clear();
             _collisionsInSolver.AddRange(_collisionsInFrame);
 
-            for (int i = 0; i < COLLIDER_SOLVER_MAX_ITERATION; i++)
+#if COLLISION_SOLVER_HW_ACCELERATION
+            _hwa_solveCollision.HWA_ComputeSolveCollision(_collisionsInSolver);
+#else
+            for (int i = 0; i < COLLISION_SOLVER_MAX_ITERATION; i++)
             {
-                Profiler.BeginSample(name: String.Format("SolveCollisions({0}/{1})", i, COLLIDER_SOLVER_MAX_ITERATION));
-
                 _solveCollisionTasks.Clear();
+
+                Profiler.BeginSample(name: String.Format("SolveCollisions({0}/{1})", i, COLLISION_SOLVER_MAX_ITERATION));
 
                 _collisionsRemoveFromSolver.Clear();
                 foreach (var col in _collisionsInSolver)
@@ -280,6 +289,7 @@ namespace RBPhys
 
                 Profiler.EndSample();
             }
+#endif
 
             Profiler.EndSample();
 
@@ -359,38 +369,22 @@ namespace RBPhys
 
                     if (aabbCollide)
                     {
-                        Vector3 penetration = Vector3.zero;
-
-                        bool detailCollide = false;
-                        Vector3 aNearest = Vector3.zero;
-                        Vector3 bNearest = Vector3.zero;
-
                         if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.OBB)
                         {
+                            //OBB-OBB衝突
                             obb_obb_cols.Add((collider_a.collider, collider_b.collider));
-
-                            //OBB-OBB�Փ�
-                            //detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcOBB(), cg, out Vector3 p, out aNearest, out bNearest);
-                            //penetration = p;
                         }
                         else if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.Sphere)
                         {
-                            //Sphere-OBB�Փ�
-                            detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcOBB(), collider_b.collider.CalcSphere(), out Vector3 p);
-                            penetration = p;
+                            //Sphere-OBB衝突
                         }
                         else if (collider_a.collider.GeometryType == RBGeometryType.Sphere && collider_b.collider.GeometryType == RBGeometryType.OBB)
                         {
-                            //Sphere-OBB�Փˁi�t�]�j
-                            detailCollide = RBColliderCollision.DetectCollision(collider_b.collider.CalcOBB(), collider_a.collider.CalcSphere(), out Vector3 p);
-                            p = -p;
-                            penetration = p;
+                            //Sphere-OBB衝突（逆転）
                         }
                         else if (collider_a.collider.GeometryType == RBGeometryType.Sphere && collider_b.collider.GeometryType == RBGeometryType.Sphere)
                         {
-                            //Sphere-Sphere�Փ�
-                            detailCollide = RBColliderCollision.DetectCollision(collider_a.collider.CalcSphere(), collider_b.collider.CalcSphere(), out Vector3 p);
-                            penetration = p;
+                            //Sphere-Sphere衝突
                         }
                     }
                 }
@@ -421,11 +415,13 @@ namespace RBPhys
             return null;
         }
 
+#if !COLLISION_SOLVER_HW_ACCELERATION
         static (Vector3 velAdd_a, Vector3 angVelAdd_a, Vector3 velAdd_b, Vector3 angVelAdd_b) SolveCollision(RBCollision col, float dt)
         {
             col.SolveVelocityConstraints(out Vector3 velocityAdd_a, out Vector3 angularVelocityAdd_a, out Vector3 velocityAdd_b, out Vector3 angularVelocityAdd_b);
             return (velocityAdd_a, angularVelocityAdd_a, velocityAdd_b, angularVelocityAdd_b);
         }
+#endif
 
         static void VerifyVelocity(RBRigidbody rb, bool enableStaticCollision = false)
         {
@@ -456,9 +452,13 @@ namespace RBPhys
         public Vector3 rA;
         public Vector3 rB;
 
+#if COLLISION_SOLVER_HW_ACCELERATION
+        HWAcceleration.HWA_SolveCollision.RBCollisionHWA _hwaData;
+#else
         Jacobian _jN = new Jacobian(Jacobian.Type.Normal); //Normal
         Jacobian _jT = new Jacobian(Jacobian.Type.Tangent); //Tangent
         Jacobian _jB = new Jacobian(Jacobian.Type.Tangent); //Bi-Tangent
+#endif
 
         public Vector3 Velocity_a { get { return rigidbody_a?.Velocity ?? Vector3.zero; } }
         public Vector3 AngularVelocity_a { get { return rigidbody_a?.AngularVelocity ?? Vector3.zero; } }
@@ -473,6 +473,10 @@ namespace RBPhys
         public Vector3 ExpAngularVelocity_b { get { return rigidbody_b?.ExpAngularVelocity ?? Vector3.zero; } }
         public float InverseMass_b { get { return rigidbody_b?.InverseMass ?? 0; } }
         public Vector3 InverseInertiaWs_b { get { return rigidbody_b?.InverseInertiaWs ?? Vector3.zero; } }
+
+#if COLLISION_SOLVER_HW_ACCELERATION
+        public HWAcceleration.HWA_SolveCollision.RBCollisionHWA HWAData { get { return _hwaData; } }
+#endif
 
         public bool IsSleeping_a { get { return rigidbody_a?.isSleeping ?? true; } }
         public bool IsSleeping_b { get { return rigidbody_b?.isSleeping ?? true; } }
@@ -491,6 +495,10 @@ namespace RBPhys
 
             this.penetration = penetration;
             ContactNormal = (traj_b.isStatic ? Vector3.zero : traj_b.rigidbody.Velocity) - (traj_a.isStatic ? Vector3.zero : traj_a.rigidbody.Velocity);
+
+#if COLLISION_SOLVER_HW_ACCELERATION
+            _hwaData = new HWAcceleration.HWA_SolveCollision.RBCollisionHWA(this);
+#endif
         }
 
         public RBCollision(RBCollider col_a, RBCollider col_b, Vector3 penetration)
@@ -505,6 +513,10 @@ namespace RBPhys
 
             this.penetration = penetration;
             ContactNormal = penetration.normalized;
+
+#if COLLISION_SOLVER_HW_ACCELERATION
+            _hwaData = new HWAcceleration.HWA_SolveCollision.RBCollisionHWA(this);
+#endif
         }
 
         public bool ObjectEquals(RBCollision col)
@@ -590,8 +602,20 @@ namespace RBPhys
             rB = bNearest - cg_b;
         }
 
+#if COLLISION_SOLVER_HW_ACCELERATION
+
+        public void UpdateHWA()
+        {
+            _hwaData.Update(this);
+        }
+#endif
+
         public void InitVelocityConstraint(float dt)
         {
+
+#if COLLISION_SOLVER_HW_ACCELERATION
+            _hwaData.Init(this, dt);
+#else
             Vector3 contactNormal = ContactNormal;
             Vector3 tangent = Vector3.zero;
             Vector3 bitangent = Vector3.zero;
@@ -601,7 +625,10 @@ namespace RBPhys
             _jN.Init(this, contactNormal, dt);
             _jT.Init(this, tangent, dt);
             _jB.Init(this, bitangent, dt);
+#endif
         }
+
+#if !COLLISION_SOLVER_HW_ACCELERATION
 
         public void SolveVelocityConstraints(out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b)
         {
@@ -716,6 +743,7 @@ namespace RBPhys
                 avAdd_b += Vector3.Scale(col.InverseInertiaWs_b, _wb) * lambda;
             }
         }
+#endif
     }
 
     public struct RBColliderAABB
@@ -854,6 +882,8 @@ namespace RBPhys
             float up = Mathf.Abs(Vector3.Dot(rot * new Vector3(0, size.y, 0), axisN));
             return fwd + right + up;
         }
+
+        const float V3_PARALLEL_DOT_EPSILON = 0.0000001f;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3 GetAxisOffset(Vector3 axisN, out int parallelAxisMask)

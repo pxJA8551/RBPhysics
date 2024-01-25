@@ -152,3 +152,8 @@ float3 CalcNearestLine(float3 beginA, float3 endA, float3 beginB, float3 endB)
 
     return beginA + r1 * dirAN;
 }
+
+float3 Scale(float3 a, float3 b)
+{
+    return float3(a.x * b.x, a.y * b.y, a.z * b.z);
+}

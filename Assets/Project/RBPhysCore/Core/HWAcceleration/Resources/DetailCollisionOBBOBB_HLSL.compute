@@ -380,7 +380,7 @@ void HWA_DetectCollision(uint3 id : SV_DispatchThreadID)
             penetration = length(p) < length(penetration) ? p : penetration;
         }
     }
-    
+   
     // OBB-A & OBB-B Penetrating
     {
         if (any(penetration != 0))
@@ -388,7 +388,7 @@ void HWA_DetectCollision(uint3 id : SV_DispatchThreadID)
             dc_Penetrations[pairId] = penetration;
             float3 pDirN = -normalize(penetration);
         
-            float eps = 0;
+            float eps = 0.000001;
         
             float dAFwd = Sign101E(dot(aFwd, pDirN), eps);
             float dARight = Sign101E(dot(aRight, pDirN), eps);
@@ -411,8 +411,6 @@ void HWA_DetectCollision(uint3 id : SV_DispatchThreadID)
             float3 aDp = center_a + (ofAFwd + ofARight + ofAUp);
             float3 bDp = center_b + (ofBFwd + ofBRight + ofBUp);
         
-            dc_Penetrations[pairId] = penetration + float3(0.001 * aPd + 0.0001 * bPd - penetration.x % 0.1, 0, 0);
-            
             float3 contacts[24] = { float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0), float3(0, 0, 0) };
         
             float3 fA1 = 0;
@@ -449,6 +447,7 @@ void HWA_DetectCollision(uint3 id : SV_DispatchThreadID)
                 else if (aPd == 2)
                 {
                     aDp = ProjectPointToPlane(bDp, aDp, aDp);
+
                 }
                 else if (bPd == 1)
                 {
@@ -573,9 +572,6 @@ void HWA_DetectCollision(uint3 id : SV_DispatchThreadID)
                     return;
                 }
             }
-        
-            dc_Contacts[obb_id_a] = 0;
-            dc_Contacts[obb_id_b] = 0;
         }
     }
 }

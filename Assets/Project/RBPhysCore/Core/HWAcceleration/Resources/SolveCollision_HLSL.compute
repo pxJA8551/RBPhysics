@@ -1,0 +1,103 @@
+#include "ColliderUtil_HLSL.cginc"
+#include "VectorUtil_HLSL.cginc"
+
+#pragma kernel HWA_SolveCollision;
+
+struct RBCollision
+{
+    float3 penetration;
+    
+    float3 expVel_a;
+    float3 expAngVel_a;
+    float3 expVel_b;
+    float3 expAngVel_b;
+    
+    float inverseMass_a;
+    float3 inverseInertiaWs_a;
+    float inverseMass_b;
+    float3 inverseInertiaWs_b;
+    
+    float friction;
+};
+
+struct RBCollisionJacobian
+{
+    float3 va;
+    float3 wa;
+    float3 vb;
+    float3 wb;
+    int type;
+    float totalLambda;
+    float totalLambdaInFrame;
+    float effectiveMass;
+    float bias;
+};
+
+void ResolveJacobian(RBCollision rbc, inout RBCollisionJacobian j, inout float3 velAdd_a, inout float3 angVelAdd_a, inout float3 velAdd_b, inout float3 angVelAdd_b, float nTotalLambda)
+{
+    float jv = 0;
+    jv += dot(j.va, rbc.expVel_a + velAdd_a);
+    jv += dot(j.wa, rbc.expAngVel_a + angVelAdd_a);
+    jv += dot(j.vb, rbc.expVel_b + velAdd_b);
+    jv += dot(j.wb, rbc.expAngVel_b + angVelAdd_b);
+    
+    float lambda = j.effectiveMass * (-(jv + j.bias));
+    
+    float oldTotalLambda = j.totalLambda;
+    
+    if (j.type == 0)
+    {
+        j.totalLambda = max(0, j.totalLambda + lambda);
+    }
+    else
+    {
+        float maxFriction = rbc.friction * nTotalLambda;
+        j.totalLambda = clamp(j.totalLambda + lambda, -maxFriction, maxFriction);
+    }
+    
+    lambda = j.totalLambda - oldTotalLambda;
+    
+    velAdd_a += rbc.inverseMass_a * j.va * lambda;
+    angVelAdd_a += Scale(rbc.inverseInertiaWs_a, j.wa) * lambda;
+    velAdd_b += rbc.inverseMass_b * j.vb * lambda;
+    angVelAdd_b += Scale(rbc.inverseInertiaWs_b, j.wb) * lambda;
+    
+    j.totalLambdaInFrame = 0;
+}
+
+int sc_threads_w;
+
+StructuredBuffer<RBCollision> sc_cols;
+
+RWStructuredBuffer<RBCollisionJacobian> sc_jacobians;
+RWStructuredBuffer<float3> sc_Vels;
+
+[numthreads(32,32,1)]
+void HWA_SolveCollision(int3 id : SV_DispatchThreadID)
+{
+    int colId = id.x + id.y * sc_threads_w;
+    
+    RBCollision col = sc_cols[colId];
+    
+    RBCollisionJacobian jN = sc_jacobians[colId * 3];
+    RBCollisionJacobian jT = sc_jacobians[colId * 3 + 1];
+    RBCollisionJacobian jB = sc_jacobians[colId * 3 + 2];
+    
+    float3 velAdd_a = 0;
+    float3 angVelAdd_a = 0;
+    float3 velAdd_b = 0;
+    float3 angVelAdd_b = 0;
+    
+    ResolveJacobian(col, jN, velAdd_a, angVelAdd_a, velAdd_b, angVelAdd_b, 0);
+    ResolveJacobian(col, jT, velAdd_a, angVelAdd_a, velAdd_b, angVelAdd_b, jN.totalLambda);
+    ResolveJacobian(col, jB, velAdd_a, angVelAdd_a, velAdd_b, angVelAdd_b, jN.totalLambda);
+    
+    sc_jacobians[colId * 3] = jN;
+    sc_jacobians[colId * 3 + 1] = jT;
+    sc_jacobians[colId * 3 + 2] = jB;
+    
+    sc_Vels[colId * 4] = velAdd_a;
+    sc_Vels[colId * 4 + 1] = angVelAdd_a;
+    sc_Vels[colId * 4 + 2] = velAdd_b;
+    sc_Vels[colId * 4 + 3] = angVelAdd_b;
+}
