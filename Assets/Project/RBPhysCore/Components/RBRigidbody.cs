@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,6 +28,8 @@ namespace RBPhys
         Vector3 _position;
         Quaternion _rotation;
 
+        Guid _guid;
+
         RBCollider[] _colliders;
 
         public Vector3 Velocity { get { return _velocity; } }
@@ -42,6 +45,8 @@ namespace RBPhys
         public float InverseMass { get { return 1 / mass; } }
 
         public bool isSleeping = false;
+
+        public Guid Guid { get { return _guid; } }
 
         public Vector3 InverseInertiaWs
         {
@@ -60,6 +65,7 @@ namespace RBPhys
             UpdateTransform();
             RecalculateInertiaTensor();
             isSleeping = false;
+            _guid = Guid.NewGuid();
         }
 
         void OnDestroy()

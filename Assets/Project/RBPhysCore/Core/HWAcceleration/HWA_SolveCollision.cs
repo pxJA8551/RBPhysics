@@ -1,4 +1,3 @@
-#undef COLLISION_SOLVER_HW_ACCELERATION
 #define COLLISION_SOLVER_HW_ACCELERATION
 
 #if COLLISION_SOLVER_HW_ACCELERATION
@@ -6,15 +5,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Dynamic;
-using System.Globalization;
-using System.Net.NetworkInformation;
+using System.Linq;
 using System.Runtime.InteropServices;
-using Unity.Android.Types;
 using UnityEngine;
-using UnityEngine.Assertions.Must;
 using UnityEngine.Profiling;
-using System.Threading.Tasks;
 
 namespace RBPhys.HWAcceleration
 {
@@ -23,34 +17,50 @@ namespace RBPhys.HWAcceleration
         const int SOLVER_ITERATION = 15;
 
         const string FILE_NAME_OF_CS = "SolveCollision_HLSL";
+
         static ComputeShader _computeShader;
         static int _kernelIndex_hwa_solveCollision;
         static int _nameId_threads_w;
+        static int _nameId_threadGroups_w;
         static int _nameId_cols;
         static int _nameId_jacobians;
         static int _nameId_ret_vels;
+        static int _nameId_cols_count;
+
+        static int _kernelIndex_hwa_updateBufferVelocity;
+        static int _nameId_vels_count;
+        static int _nameId_cols_group_count;
+        static int _nameId_vels_offset;
+        static int _nameId_cols_group_offset;
 
         RBHWABuffer<RBCollisionHWA_Layout> _cols;
         RBHWABuffer<RBCollisionHWAJacobian_Layout> _jacobians;
-        RBHWABuffer<Vector3> _ret_vels;
         int _bufferColsCount;
+
+        List<RBRigidbody> _vels_rb_list = new List<RBRigidbody>();
+        RBHWABuffer<Vector3> _ret_vels;
+        Vector3[] _ret_vels_array = new Vector3[0];
 
         RBCollisionHWA_Layout[] _cols_array;
         RBCollisionHWAJacobian_Layout[] _jacobians_array;
-        Vector3[] _ret_vels_array;
         int _arrayColsCount;
 
         int _minBufferColsBuffer;
+        int _minRigidbodyBuffer;
 
-        public HWA_SolveCollision(int minBufferColsCount)
+        public HWA_SolveCollision(int minBufferColsCount = 32, int minRigidbodyBufferCount = 64)
         {
             bool succeeded = LoadCS();
+
             if (!succeeded)
             {
                 Debug.LogWarning("Loading HWA Resources failed.");
             }
 
             _minBufferColsBuffer = minBufferColsCount;
+            _minRigidbodyBuffer = minRigidbodyBufferCount;
+
+            AllocateBuffer(_minBufferColsBuffer);
         }
 
         bool LoadCS()
@@ -60,7 +70,15 @@ namespace RBPhys.HWAcceleration
             _nameId_threads_w = Shader.PropertyToID("sc_threads_w");
             _nameId_cols = Shader.PropertyToID("sc_cols");
             _nameId_jacobians = Shader.PropertyToID("sc_jacobians");
-            _nameId_ret_vels = Shader.PropertyToID("sc_Vels");
+            _nameId_ret_vels = Shader.PropertyToID("sc_vels");
+            _nameId_cols_count = Shader.PropertyToID("sc_cols_count");
+
+            _kernelIndex_hwa_updateBufferVelocity = _computeShader.FindKernel("HWA_UpdateBufferVelocity");
+            _nameId_threadGroups_w = Shader.PropertyToID("sc_threadGroups_w");
+            _nameId_vels_count = Shader.PropertyToID("sc_vels_count");
+            _nameId_cols_group_count = Shader.PropertyToID("sc_cols_group_count");
+            _nameId_vels_offset = Shader.PropertyToID("sc_vels_offset");
+            _nameId_cols_group_offset = Shader.PropertyToID("sc_cols_group_offset");
 
             return _computeShader != null;
         }
@@ -68,6 +86,11 @@ namespace RBPhys.HWAcceleration
         public void SetMinColsCount(int minColsCount)
         {
             _minBufferColsBuffer = minColsCount;
+        }
+        
+        public void SetMinRigidbodyCount(int minRigidbodyCount)
+        {
+            _minRigidbodyBuffer = minRigidbodyCount;
         }
 
         void TryAllocateBuffer(int colsCount)
@@ -83,7 +106,6 @@ namespace RBPhys.HWAcceleration
         {
             _cols = new RBHWABuffer<RBCollisionHWA_Layout>(colsCount);
             _jacobians = new RBHWABuffer<RBCollisionHWAJacobian_Layout>(colsCount * 3);
-            _ret_vels = new RBHWABuffer<Vector3>(colsCount * 4);
 
             _bufferColsCount = colsCount;
         }
@@ -92,7 +114,6 @@ namespace RBPhys.HWAcceleration
         {
             _cols?.Dispose();
             _jacobians?.Dispose();
-            _ret_vels?.Dispose();
         }
 
         void ResizeBuffers(int colsCount)
@@ -119,7 +140,6 @@ namespace RBPhys.HWAcceleration
         {
             _cols_array = new RBCollisionHWA_Layout[colsCount];
             _jacobians_array = new RBCollisionHWAJacobian_Layout[colsCount * 3];
-            _ret_vels_array = new Vector3[colsCount * 4];
 
             _arrayColsCount = colsCount;
         }
@@ -138,36 +158,116 @@ namespace RBPhys.HWAcceleration
                 int threadGroupsY = Mathf.Max(Mathf.FloorToInt(pairCount / 1024f), 1);
                 int threads_w = threadGroupsX * 32;
 
+                SetBufferDatas(cols);
                 SetProperties(threads_w);
+
+                Profiler.BeginSample(name: "SolveCollisionsHWA");
 
                 for (int i = 0; i < SOLVER_ITERATION; i++)
                 {
-                    Profiler.BeginSample(name: String.Format("SolveCollisions({0}/{1})", i, SOLVER_ITERATION));
-
-                    SetBufferDatas(cols);
-                    Profiler.BeginSample(name: String.Format("SolveCollisionsHWA({0}/{1})", i, SOLVER_ITERATION));
                     SolveCollision(threadGroupsX, threadGroupsY);
-                    Profiler.EndSample();
-                    GetBufferDatas();
-                    UpdateVelocity(cols);
-                    Profiler.EndSample();
+                    UpdateBufferVelocity();
                 }
+
+                GetBufferDatas();
+                Profiler.EndSample();
+                SetVelocity();
             }
         }
 
         void SetBufferDatas(List<RBCollision> cols)
         {
-            for (int i = 0; i < cols.Count; i++)
+            TryResizeVels(cols.Count * 2);
+            _vels_rb_list.Clear();
+
+            for (int i = 0; i < _ret_vels_array.Length; i++)
             {
-                cols[i].UpdateHWA();
-                _cols_array[i] = cols[i].HWAData.col;
-                _jacobians_array[i * 3] = cols[i].HWAData.jN;
-                _jacobians_array[i * 3 + 1] = cols[i].HWAData.jT;
-                _jacobians_array[i * 3 + 2] = cols[i].HWAData.jB;
+                _ret_vels_array[i] = Vector3.zero;
             }
+
+            for (int i = 0; i < _arrayColsCount; i++)
+            {
+                if (i < cols.Count)
+                {
+                    cols[i].UpdateHWA();
+
+                    _cols_array[i] = cols[i].HWAData.col;
+                    _jacobians_array[i * 3] = cols[i].HWAData.jN;
+                    _jacobians_array[i * 3 + 1] = cols[i].HWAData.jT;
+                    _jacobians_array[i * 3 + 2] = cols[i].HWAData.jB;
+
+                    if (cols[i].rigidbody_a != null)
+                    {
+                        int velId_a = _vels_rb_list.IndexOf(cols[i].rigidbody_a);
+
+                        if (velId_a == -1)
+                        {
+                            velId_a = _vels_rb_list.Count;
+
+                            _vels_rb_list.Add(cols[i].rigidbody_a);
+                            _ret_vels_array[velId_a * 2] = cols[i].rigidbody_a.ExpVelocity;
+                            _ret_vels_array[velId_a * 2 + 1] = cols[i].rigidbody_a.ExpAngularVelocity;
+                        }
+
+                        _cols_array[i].velId_a = velId_a;
+                    }
+                    else
+                    {
+                        _cols_array[i].velId_a = -1;
+                    }
+
+                    if (cols[i].rigidbody_b != null)
+                    {
+                        int velId_b = _vels_rb_list.IndexOf(cols[i].rigidbody_b);
+
+                        if (velId_b == -1)
+                        {
+                            velId_b = _vels_rb_list.Count;
+
+                            _vels_rb_list.Add(cols[i].rigidbody_b);
+                            _ret_vels_array[velId_b * 2] = cols[i].rigidbody_b.ExpVelocity;
+                            _ret_vels_array[velId_b * 2 + 1] = cols[i].rigidbody_b.ExpAngularVelocity;
+                        }
+
+                        _cols_array[i].velId_b = velId_b;
+                    }
+                    else
+                    {
+                        _cols_array[i].velId_b = -1;
+                    }
+                }
+                else
+                {
+                    _cols_array[i] = default;
+                    _jacobians_array[i * 3] = default;
+                    _jacobians_array[i * 3 + 1] = default;
+                    _jacobians_array[i * 3 + 2] = default;
+                }
+            }
+
+            TryResizeVels(_vels_rb_list.Count);
 
             _cols.SetData(_cols_array);
             _jacobians.SetData(_jacobians_array);
+            _ret_vels.SetData(_ret_vels_array);
+        }
+
+        void TryResizeVels(int count)
+        {
+            if (count > _minRigidbodyBuffer * 2)
+            {
+                Array.Resize(ref _ret_vels_array, count * 2);
+
+                _ret_vels?.Dispose();
+                _ret_vels = new RBHWABuffer<Vector3>(count * 2);
+            }
+            else if (_ret_vels_array.Length != _minRigidbodyBuffer * 2 || _ret_vels == null)
+            {
+                Array.Resize(ref _ret_vels_array, _minRigidbodyBuffer * 2);
+
+                _ret_vels?.Dispose();
+                _ret_vels = new RBHWABuffer<Vector3>(_minRigidbodyBuffer * 2);
+            }
         }
 
         void GetBufferDatas()
@@ -175,23 +275,13 @@ namespace RBPhys.HWAcceleration
             _ret_vels.GetData(_ret_vels_array);
         }
 
-        void UpdateVelocity(List<RBCollision> cols)
+        void SetVelocity()
         {
-            for (int i = 0; i < cols.Count; i++)
+            for (int i = 0; i < _vels_rb_list.Count; i++)
             {
-                if (cols[i].rigidbody_a != null)
-                {
-                    cols[i].rigidbody_a.ExpVelocity += _ret_vels_array[i * 4];
-                    cols[i].rigidbody_a.ExpAngularVelocity += _ret_vels_array[i * 4 + 1];
-                }
-
-                if (cols[i].rigidbody_b != null)
-                {
-                    cols[i].rigidbody_b.ExpVelocity += _ret_vels_array[i * 4 + 2];
-                    cols[i].rigidbody_b.ExpAngularVelocity += _ret_vels_array[i * 4 + 3];
-                }
-
-                cols[i].UpdateHWA();
+                var rb = _vels_rb_list[i];
+                rb.ExpVelocity = _ret_vels_array[i * 2];
+                rb.ExpAngularVelocity = _ret_vels_array[i * 2 + 1];
             }
         }
 
@@ -201,9 +291,16 @@ namespace RBPhys.HWAcceleration
 
             int kernelIndex = _kernelIndex_hwa_solveCollision;
             c.SetInt(_nameId_threads_w, threadGroupsX * 32);
+            c.SetInt(_nameId_cols_count, _bufferColsCount);
+
             c.SetBuffer(kernelIndex, _nameId_cols, _cols.GetGraphicsBuffer());
             c.SetBuffer(kernelIndex, _nameId_jacobians, _jacobians.GetGraphicsBuffer());
             c.SetBuffer(kernelIndex, _nameId_ret_vels, _ret_vels.GetGraphicsBuffer());
+
+            c.SetBuffer(_kernelIndex_hwa_updateBufferVelocity, _nameId_cols, _cols.GetGraphicsBuffer());
+            c.SetBuffer(_kernelIndex_hwa_updateBufferVelocity, _nameId_ret_vels, _ret_vels.GetGraphicsBuffer());
+
+            GL.Flush();
         }
 
         void SolveCollision(int threadX, int threadY)
@@ -211,6 +308,32 @@ namespace RBPhys.HWAcceleration
             ComputeShader c = _computeShader;
             c.Dispatch(_kernelIndex_hwa_solveCollision, threadX, threadY, 1);
             GL.Flush();
+        }
+
+        void UpdateBufferVelocity()
+        {
+            ComputeShader c = _computeShader;
+            
+            for (int i = 0; i < Mathf.CeilToInt(_cols.Count / 1024f); i++) 
+            {
+                for (int j = 0; j < Mathf.CeilToInt(_ret_vels.Count / 2048f); j++) 
+                {
+                    float pairSqrt = Mathf.Sqrt(_ret_vels.Count / 2f);
+
+                    int threadGroupsX = Mathf.CeilToInt(pairSqrt);
+                    int threadGroupsY = Mathf.CeilToInt(pairSqrt);
+
+                    c.SetInt(_nameId_threadGroups_w, threadGroupsX);
+
+                    c.SetInt(_nameId_cols_group_offset, i * 1024);
+                    c.SetInt(_nameId_cols_group_count, Mathf.Min(_cols.Count - 1024 * i, 1024));
+                    c.SetInt(_nameId_vels_offset, j * 1024);
+                    c.SetInt(_nameId_vels_count, Mathf.Min(_ret_vels.Count - 2048 * j, 2048) / 2);
+
+                    c.Dispatch(_kernelIndex_hwa_updateBufferVelocity, threadGroupsX, threadGroupsY, 1);
+                    GL.Flush();
+                }
+            }
         }
 
         public void Dispose()
@@ -259,10 +382,14 @@ namespace RBPhys.HWAcceleration
         {
             public Vector3 penetration;
 
-            public Vector3 expVel_a;
-            public Vector3 expAngVel_a;
-            public Vector3 expVel_b;
-            public Vector3 expAngVel_b;
+            public int velId_a;
+            public int velId_b;
+
+            // HWA offset
+            Vector3 a;
+            Vector3 b;
+            Vector3 c;
+            Vector3 d;
 
             public float inverseMass_a;
             public Vector3 inverseInertiaWs_a;
@@ -275,10 +402,10 @@ namespace RBPhys.HWAcceleration
             {
                 penetration = rbc.penetration;
 
-                expVel_a = rbc.ExpVelocity_a;
-                expAngVel_a = rbc.ExpAngularVelocity_a;
-                expVel_b = rbc.ExpVelocity_b;
-                expAngVel_b = rbc.ExpAngularVelocity_b;
+                velId_a = -1;
+                velId_b = -1;
+
+                a = b = c = d = Vector3.zero;
 
                 inverseMass_a = rbc.InverseMass_a;
                 inverseInertiaWs_a = rbc.InverseInertiaWs_a;
@@ -292,11 +419,8 @@ namespace RBPhys.HWAcceleration
             {
                 penetration = rbc.penetration;
 
-                expVel_a = rbc.ExpVelocity_a;
-                expAngVel_a = rbc.ExpAngularVelocity_a;
-
-                expVel_b = rbc.ExpVelocity_b;
-                expAngVel_b = rbc.ExpAngularVelocity_b;
+                velId_a = -1;
+                velId_b = -1;
 
                 inverseMass_a = rbc.InverseMass_a;
                 inverseInertiaWs_a = rbc.InverseInertiaWs_a;

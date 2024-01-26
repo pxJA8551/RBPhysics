@@ -40,7 +40,7 @@ namespace RBPhys
         static HWAcceleration.DetailCollision.HWA_DetailCollisionOBBOBB _hwa_obb_obb_detail = new HWAcceleration.DetailCollision.HWA_DetailCollisionOBBOBB(15);
 
 #if COLLISION_SOLVER_HW_ACCELERATION
-        static HWAcceleration.HWA_SolveCollision _hwa_solveCollision = new HWAcceleration.HWA_SolveCollision(15);
+        static HWAcceleration.HWA_SolveCollision _hwa_solveCollision = new HWAcceleration.HWA_SolveCollision(32, 64);
 #endif
 
         public static void AddRigidbody(RBRigidbody rb)
@@ -129,10 +129,11 @@ namespace RBPhys
         static List<(RBCollider, RBCollider)> _obb_obb_cols = new List<(RBCollider, RBCollider)>();
         static List<(Vector3 p, Vector3 pA, Vector3 pB)> _obb_obb_cols_res = new List<(Vector3 p, Vector3 pA, Vector3 pB)>();
 
+#if !COLLISION_SOLVER_HW_ACCELERATION
         static List<Task<RBCollision>> _detectCollisionTasks = new List<Task<RBCollision>>();
         static SemaphoreSlim _solverRemoveSemaphore = new SemaphoreSlim(1, 1);
-
         static SemaphoreSlim _solverVelocityChgSemaphore = new SemaphoreSlim(1, 1);
+#endif
 
         public static void SolveColliders(float dt)
         {
@@ -221,7 +222,7 @@ namespace RBPhys
                 {
                     var rbc = FindCollision(_obb_obb_cols[i].Item1, _obb_obb_cols[i].Item2, out bool isInverted);
 
-                    if (isInverted)
+                    if (isInverted && rbc != null)
                     {
                         rbc.SwapTo(_obb_obb_cols[i].Item1, _obb_obb_cols[i].Item2);
                     }
@@ -233,6 +234,7 @@ namespace RBPhys
 
                     rbc.Update(_obb_obb_cols_res[i].p, _obb_obb_cols_res[i].pA, _obb_obb_cols_res[i].pB);
                     rbc.InitVelocityConstraint(dt);
+
                     _collisionsInFrame.Add(rbc);
                 }
             }
@@ -352,17 +354,6 @@ namespace RBPhys
                         break;
                     }
 
-                    RBCollision rbc = FindCollision(collider_a.collider, collider_b.collider, out bool isInverted);
-                    if (rbc != null)
-                    {
-                        if (isInverted)
-                        {
-                            _rbcEditSemaphore.Wait();
-                            rbc.SwapTo(collider_a.collider, collider_b.collider);
-                            _rbcEditSemaphore.Release();
-                        }
-                    }
-
                     Vector3 cg = traj_a.isStatic ? traj_b.isStatic ? Vector3.zero : traj_b.rigidbody.CenterOfGravityWorld : traj_a.rigidbody.CenterOfGravityWorld;
 
                     bool aabbCollide = collider_a.aabb.OverlapAABB(collider_b.aabb);
@@ -431,6 +422,10 @@ namespace RBPhys
         public static void Dispose()
         {
             _hwa_obb_obb_detail?.Dispose();
+
+#if COLLISION_SOLVER_HW_ACCELERATION
+            _hwa_solveCollision?.Dispose();
+#endif
         }
     }
 
@@ -494,7 +489,7 @@ namespace RBPhys
             cg_b = traj_b.isStatic ? col_b.GetColliderCenter() : traj_b.rigidbody.CenterOfGravityWorld;
 
             this.penetration = penetration;
-            ContactNormal = (traj_b.isStatic ? Vector3.zero : traj_b.rigidbody.Velocity) - (traj_a.isStatic ? Vector3.zero : traj_a.rigidbody.Velocity);
+            _contactNormal = (traj_b.isStatic ? Vector3.zero : traj_b.rigidbody.Velocity) - (traj_a.isStatic ? Vector3.zero : traj_a.rigidbody.Velocity);
 
 #if COLLISION_SOLVER_HW_ACCELERATION
             _hwaData = new HWAcceleration.HWA_SolveCollision.RBCollisionHWA(this);
@@ -512,7 +507,7 @@ namespace RBPhys
             cg_b = rigidbody_b?.CenterOfGravityWorld ?? col_b.GetColliderCenter();
 
             this.penetration = penetration;
-            ContactNormal = penetration.normalized;
+            _contactNormal = penetration.normalized;
 
 #if COLLISION_SOLVER_HW_ACCELERATION
             _hwaData = new HWAcceleration.HWA_SolveCollision.RBCollisionHWA(this);
