@@ -15,19 +15,20 @@ namespace RBPhys
 {
     public static class RBPhysCore
     {
-        public const int COLLISION_SOLVER_MAX_ITERATION = 15;
+        public const int CPU_COLLISION_SOLVER_MAX_ITERATION = 15;
+        public const float CPU_SOLVER_ABORT_VELADD_SQRT = 0.01f * 0.01f;
+        public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0.05f * 0.05f;
+
         public const int DEFAULT_SOLVER_ITERATION = 6;
 
-        public const float SOLVER_ABORT_VELADD_SQRT = 0.01f * 0.01f;
-        public const float SOLVER_ABORT_ANGVELADD_SQRT = 0.05f * 0.05f;
+        public const int COLLISION_TRAJ_BUFFER_LENGTH_UNIT = 512;
+        public const int COLLISION_TRAJ_BUFFER_LENGTH_SCHMITT_TRIGGER_WIDTH = 64;
 
         static List<RBRigidbody> _rigidbodies = new List<RBRigidbody>();
         static List<RBCollider> _colliders = new List<RBCollider>();
 
-        static RBTrajectory[] _activeTrajectories = new RBTrajectory[0];
-        static RBTrajectory[] _staticTrajectories = new RBTrajectory[0];
-
         static RBTrajectory[] _trajectories_orderByXMin = new RBTrajectory[0];
+        static int _trajectory_avail_count = 0;
 
         static List<RBCollision > _collisions = new List<RBCollision>();
         static List<RBCollision> _collisionsInFrame = new List<RBCollision>();
@@ -65,44 +66,48 @@ namespace RBPhys
 
         public static void OpenPhysicsFrameWindow(float dt)
         {
+            Profiler.BeginSample(name: "Physics-CollisionResolution-UpdateRigidbody");
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                rb.UpdateTransform();
+                rb.UpdateTransform(false);
             }
+            Profiler.EndSample();
 
+            Profiler.BeginSample(name: "Physics-CollisionResolution-UpdateCollider");
             foreach (RBCollider c in _colliders)
             {
                 c.UpdateTransform();
             }
+            Profiler.EndSample();
 
+            Profiler.BeginSample(name: "Physics-CollisionResolution-CalcTRAJ");
             _colliders.ForEach(item => item.UpdateTransform());
 
-            if (_activeTrajectories.Length != _rigidbodies.Count)
-            {
-                _activeTrajectories = new RBTrajectory[_rigidbodies.Count];
-            }
+            int count = _rigidbodies.Count + _colliders.Count;
+            int target = Mathf.CeilToInt(count / (float)COLLISION_TRAJ_BUFFER_LENGTH_UNIT) * COLLISION_TRAJ_BUFFER_LENGTH_UNIT;
+            int length = _trajectories_orderByXMin.Length;
 
-            if (_staticTrajectories.Length != _colliders.Count)
+            if (length != target && ((target < length && count < target - COLLISION_TRAJ_BUFFER_LENGTH_SCHMITT_TRIGGER_WIDTH) || (target > length)))
             {
-                _staticTrajectories = new RBTrajectory[_colliders.Count];
+                _trajectories_orderByXMin = new RBTrajectory[target];
             }
 
             for (int i = 0; i < _rigidbodies.Count; i++)
             {
-                _activeTrajectories[i] = new RBTrajectory(_rigidbodies[i]);
+                _trajectories_orderByXMin[i] = _rigidbodies[i].ObjectTrajectory;
             }
 
             for (int i = 0; i < _colliders.Count; i++)
             {
-                if (_colliders[i].GetParentRigidbody() == null)
+                if (_colliders[i].ParentRigidbody == null)
                 {
-                    _staticTrajectories[i] = new RBTrajectory(_colliders[i]);
-                }
-                else
-                {
-                    _staticTrajectories[i] = new RBTrajectory();
+                    _trajectories_orderByXMin[_rigidbodies.Count + i] = _colliders[i].Trajectory;
                 }
             }
+
+            _trajectory_avail_count = count;
+
+            Profiler.EndSample();
 
             SolveColliders(dt);
 
@@ -144,14 +149,13 @@ namespace RBPhys
             Profiler.BeginSample(name: "Physics-CollisionResolution-Sort");
             {
                 //AABB��x�ŏ��l�ŏ����\�[�g
-                _trajectories_orderByXMin = _activeTrajectories.Concat(_staticTrajectories).ToArray();
-                _trajectories_orderByXMin = _trajectories_orderByXMin.OrderBy(item => item.trajectoryAABB.GetMin().x).ToArray();
+                _trajectories_orderByXMin = _trajectories_orderByXMin.Take(_trajectory_avail_count).Where(item => item != null).OrderBy(item => item.trajectoryAABB.GetMin().x).ToArray();
 
                 for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
                 {
                     RBTrajectory activeTraj = _trajectories_orderByXMin[i];
 
-                    if (activeTraj.isValidTrajectory)
+                    if (activeTraj.IsValidTrajectory)
                     {
                         float x_min = activeTraj.trajectoryAABB.GetMin().x;
                         float x_max = activeTraj.trajectoryAABB.GetMax().x;
@@ -160,9 +164,9 @@ namespace RBPhys
                         {
                             RBTrajectory targetTraj = _trajectories_orderByXMin[j];
 
-                            if (!activeTraj.isStaticOrSleeping || !targetTraj.isStaticOrSleeping)
+                            if (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping)
                             {
-                                if (targetTraj.isValidTrajectory)
+                                if (targetTraj.IsValidTrajectory)
                                 {
                                     float x_min_target = targetTraj.trajectoryAABB.GetMin().x;
                                     float x_max_target = targetTraj.trajectoryAABB.GetMax().x;
@@ -210,7 +214,9 @@ namespace RBPhys
                 DetectCollisions(trajPair.Item1, trajPair.Item2, ref _obb_obb_cols);
             }
 
-            _hwa_obb_obb_detail.HWA_ComputeDetailCollision(_obb_obb_cols, ref _obb_obb_cols_res);
+            _hwa_obb_obb_detail.HWA_ComputeDetailCollision(_obb_obb_cols);
+
+            _hwa_obb_obb_detail.GetDatas_AfterDispatch(_obb_obb_cols.Count, ref _obb_obb_cols_res);
 
             Profiler.EndSample();
 
@@ -245,11 +251,11 @@ namespace RBPhys
 #if COLLISION_SOLVER_HW_ACCELERATION
             _hwa_solveCollision.HWA_ComputeSolveCollision(_collisionsInSolver);
 #else
-            for (int i = 0; i < COLLISION_SOLVER_MAX_ITERATION; i++)
+            for (int i = 0; i < CPU_COLLISION_SOLVER_MAX_ITERATION; i++)
             {
                 _solveCollisionTasks.Clear();
 
-                Profiler.BeginSample(name: String.Format("SolveCollisions({0}/{1})", i, COLLISION_SOLVER_MAX_ITERATION));
+                Profiler.BeginSample(name: String.Format("SolveCollisions({0}/{1})", i, CPU_COLLISION_SOLVER_MAX_ITERATION));
 
                 _collisionsRemoveFromSolver.Clear();
                 foreach (var col in _collisionsInSolver)
@@ -274,7 +280,7 @@ namespace RBPhys
                             _solverVelocityChgSemaphore.Release();
                         }
 
-                        if (velAdd_a.sqrMagnitude < SOLVER_ABORT_VELADD_SQRT && angVel_add_a.sqrMagnitude < SOLVER_ABORT_ANGVELADD_SQRT && velAdd_b.sqrMagnitude < SOLVER_ABORT_VELADD_SQRT && angVel_add_b.sqrMagnitude < SOLVER_ABORT_ANGVELADD_SQRT)
+                        if (velAdd_a.sqrMagnitude < CPU_SOLVER_ABORT_VELADD_SQRT && angVel_add_a.sqrMagnitude < CPU_SOLVER_ABORT_ANGVELADD_SQRT && velAdd_b.sqrMagnitude < CPU_SOLVER_ABORT_VELADD_SQRT && angVel_add_b.sqrMagnitude < CPU_SOLVER_ABORT_ANGVELADD_SQRT)
                         {
                             _solverRemoveSemaphore.Wait();
                             _collisionsRemoveFromSolver.Add(col);
@@ -307,22 +313,22 @@ namespace RBPhys
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_b;
 
-            if (traj_a.isStatic)
+            if (traj_a.IsStatic)
             {
-                trajAABB_a = new (RBCollider, RBColliderAABB)[] { (traj_a.collider, traj_a.collider.CalcAABB()) };
+                trajAABB_a = new (RBCollider, RBColliderAABB)[] { (traj_a.Collider, traj_a.Collider.CalcAABB()) };
             }
             else
             {
-                trajAABB_a = traj_a.rigidbody.GetColliders().Select(item => (item, item.CalcAABB())).ToArray();
+                trajAABB_a = traj_a.Rigidbody.GetColliders().Select(item => (item, item.CalcAABB())).ToArray();
             }
 
-            if (traj_b.isStatic)
+            if (traj_b.IsStatic)
             {
-                trajAABB_b = new (RBCollider, RBColliderAABB)[] { (traj_b.collider, traj_b.collider.CalcAABB()) };
+                trajAABB_b = new (RBCollider, RBColliderAABB)[] { (traj_b.Collider, traj_b.Collider.CalcAABB()) };
             }
             else
             {
-                trajAABB_b = traj_b.rigidbody.GetColliders().Select(item => (item, item.CalcAABB())).ToArray();
+                trajAABB_b = traj_b.Rigidbody.GetColliders().Select(item => (item, item.CalcAABB())).ToArray();
             }
 
             //AABB��x�ŏ��l�ŃR���C�_������\�[�g
@@ -354,7 +360,7 @@ namespace RBPhys
                         break;
                     }
 
-                    Vector3 cg = traj_a.isStatic ? traj_b.isStatic ? Vector3.zero : traj_b.rigidbody.CenterOfGravityWorld : traj_a.rigidbody.CenterOfGravityWorld;
+                    Vector3 cg = traj_a.IsStatic ? traj_b.IsStatic ? Vector3.zero : traj_b.Rigidbody.CenterOfGravityWorld : traj_a.Rigidbody.CenterOfGravityWorld;
 
                     bool aabbCollide = collider_a.aabb.OverlapAABB(collider_b.aabb);
 
@@ -481,15 +487,15 @@ namespace RBPhys
         public RBCollision(RBTrajectory traj_a, RBCollider col_a, RBTrajectory traj_b, RBCollider col_b, Vector3 penetration)
         {
             collider_a = col_a;
-            rigidbody_a = traj_a.rigidbody;
+            rigidbody_a = traj_a.Rigidbody;
             collider_b = col_b;
-            rigidbody_b = traj_b.rigidbody;
+            rigidbody_b = traj_b.Rigidbody;
 
-            cg_a = traj_a.isStatic ? col_a.GetColliderCenter() : traj_a.rigidbody.CenterOfGravityWorld;
-            cg_b = traj_b.isStatic ? col_b.GetColliderCenter() : traj_b.rigidbody.CenterOfGravityWorld;
+            cg_a = traj_a.IsStatic ? col_a.GetColliderCenter() : traj_a.Rigidbody.CenterOfGravityWorld;
+            cg_b = traj_b.IsStatic ? col_b.GetColliderCenter() : traj_b.Rigidbody.CenterOfGravityWorld;
 
             this.penetration = penetration;
-            _contactNormal = (traj_b.isStatic ? Vector3.zero : traj_b.rigidbody.Velocity) - (traj_a.isStatic ? Vector3.zero : traj_a.rigidbody.Velocity);
+            _contactNormal = (traj_b.IsStatic ? Vector3.zero : traj_b.Rigidbody.Velocity) - (traj_a.IsStatic ? Vector3.zero : traj_a.Rigidbody.Velocity);
 
 #if COLLISION_SOLVER_HW_ACCELERATION
             _hwaData = new HWAcceleration.HWA_SolveCollision.RBCollisionHWA(this);
@@ -1137,20 +1143,27 @@ namespace RBPhys
         Sphere
     }
 
-    public struct RBTrajectory
+    public class RBTrajectory
     {
         public RBColliderAABB trajectoryAABB;
 
-        public bool isValidTrajectory;
+        public bool IsValidTrajectory { get { return _isValidTrajectory; } }
+        public RBRigidbody Rigidbody { get { return _rigidbody; } }
+        public bool IsStatic { get { return _isStatic; } }
+        public RBCollider Collider { get { return _collider; } }
+        public RBCollider[] Colliders { get { return _colliders; } }
+        public bool IsStaticOrSleeping { get { return Rigidbody?.isSleeping ?? true || IsStatic; } }
 
-        public readonly RBRigidbody rigidbody;
-        public readonly bool isStatic;
+        bool _isValidTrajectory;
+        RBRigidbody _rigidbody;
+        bool _isStatic;
+        RBCollider _collider;
+        RBCollider[] _colliders;
 
-        public readonly RBCollider collider;
-
-        public readonly RBCollider[] colliders;
-
-        public bool isStaticOrSleeping { get { return rigidbody?.isSleeping ?? true || isStatic; } }
+        public RBTrajectory()
+        {
+            _isValidTrajectory = false;
+        }
 
         public RBTrajectory(RBRigidbody rigidbody)
         {
@@ -1165,30 +1178,62 @@ namespace RBPhys
             }
 
             trajectoryAABB = aabb;
-            this.rigidbody = rigidbody;
-            this.collider = null;
-            isStatic = false;
-            isValidTrajectory = true;
+            _rigidbody = rigidbody;
+            _collider = null;
+            _isStatic = false;
+            _isValidTrajectory = true;
 
-            colliders = rigidbody.GetColliders();
+            _colliders = rigidbody.GetColliders();
         }
 
         public RBTrajectory(RBCollider collider)
         {
             trajectoryAABB = collider.CalcAABB(collider.GameObjectPos, collider.GameObjectRot, collider.GameObjectLossyScale);
-            this.rigidbody = null;
-            this.collider = collider;
-            isStatic = true;
-            isValidTrajectory = true;
+            _rigidbody = null;
+            _collider = collider;
+            _isStatic = true;
+            _isValidTrajectory = true;
 
-            colliders = new RBCollider[] { collider };
+            _colliders = new RBCollider[] { collider };
+        }
+
+        public void Update(RBRigidbody rigidbody)
+        {
+            RBColliderAABB aabb = new RBColliderAABB();
+
+            foreach (RBCollider c in rigidbody.GetColliders())
+            {
+                if (c.isActiveAndEnabled)
+                {
+                    aabb.Encapsulate(c.CalcAABB());
+                }
+            }
+
+            trajectoryAABB = aabb;
+            _rigidbody = rigidbody;
+            _collider = null;
+            _isStatic = false;
+            _isValidTrajectory = true;
+
+            _colliders = rigidbody.GetColliders();
+        }
+
+        public void Update(RBCollider collider)
+        {
+            trajectoryAABB = collider.CalcAABB(collider.GameObjectPos, collider.GameObjectRot, collider.GameObjectLossyScale);
+            _rigidbody = null;
+            _collider = collider;
+            _isStatic = true;
+            _isValidTrajectory = true;
+
+            _colliders = new RBCollider[] { collider };
         }
 
         public void TryPhysAwake()
         {
-            if (rigidbody != null)
+            if (Rigidbody != null)
             {
-                rigidbody.PhysAwake();
+                Rigidbody.PhysAwake();
             }
         }
     }

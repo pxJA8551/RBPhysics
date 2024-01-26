@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Threading.Tasks;
+using UnityEngine.Profiling;
+using UnityEngine.Rendering;
 
 namespace RBPhys.HWAcceleration
 {
@@ -129,7 +131,7 @@ namespace RBPhys.HWAcceleration
                 _arrayObbPairCount = obbPairCount;
             }
 
-            public void HWA_ComputeDetailCollision(List<(RBCollider obb_a, RBCollider obb_b)> cols, ref List<(Vector3 penetration, Vector3 nearestA, Vector3 nearestB)> pList)
+            public void HWA_ComputeDetailCollision(List<(RBCollider obb_a, RBCollider obb_b)> cols)
             {
                 int obbCount = cols.Count;
 
@@ -137,17 +139,8 @@ namespace RBPhys.HWAcceleration
                 {
                     ResizeBuffers(obbCount);
                     TryResizeArrays(_bufferObbPairCount);
-
                     SetBufferDatas(cols);
                     DetailCollision();
-                    GetBufferDatas();
-
-                    pList.Clear();
-
-                    for (int i = 0; i < obbCount; i++)
-                    {
-                        pList.Add((_ret_obb_penetrations_array[i], _ret_obb_contacts_array[i * 2], _ret_obb_contacts_array[i * 2 + 1]));
-                    }
                 }
             }
 
@@ -178,6 +171,18 @@ namespace RBPhys.HWAcceleration
                 _obb_sizes.SetData(_obb_sizes_array);
                 _obb_rotations.SetData(_obb_rotations_array);
                 _obb_centers.SetData(_obb_centers_array);
+            }
+
+            public void GetDatas_AfterDispatch(int colsCount, ref List<(Vector3 penetration, Vector3 nearestA, Vector3 nearestB)> pList)
+            {
+                GetBufferDatas();
+
+                pList.Clear();
+
+                for (int i = 0; i < colsCount; i++)
+                {
+                    pList.Add((_ret_obb_penetrations_array[i], _ret_obb_contacts_array[i * 2], _ret_obb_contacts_array[i * 2 + 1]));
+                }
             }
 
             void GetBufferDatas()

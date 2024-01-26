@@ -48,6 +48,10 @@ namespace RBPhys
 
         public Guid Guid { get { return _guid; } }
 
+        public RBTrajectory ObjectTrajectory { get { return _objTrajectory; } }
+
+        RBTrajectory _objTrajectory;
+
         public Vector3 InverseInertiaWs
         {
             get
@@ -60,7 +64,6 @@ namespace RBPhys
 
         void Awake()
         {
-            RBPhysCore.AddRigidbody(this);
             FindColliders();
             UpdateTransform();
             RecalculateInertiaTensor();
@@ -70,8 +73,24 @@ namespace RBPhys
 
         void OnDestroy()
         {
-            RBPhysCore.RemoveRigidbody(this);
             ReleaseColliders();
+        }
+
+        void OnEnable()
+        {
+            RBPhysCore.AddRigidbody(this);
+        }
+
+        private void OnDisable()
+        {
+            RBPhysCore.RemoveRigidbody(this);
+        }
+
+        private void FixedUpdate() { }
+
+        public RBRigidbody()
+        {
+            _objTrajectory = new RBTrajectory();
         }
 
         void ChangeVelocity(Vector3 velocity, int solverIteration = 5)
@@ -140,15 +159,20 @@ namespace RBPhys
             }
         }
 
-        public void UpdateTransform()
+        public void UpdateTransform(bool updateColliders = true)
         {
             Position = transform.position;
             Rotation = transform.rotation;
 
-            foreach (RBCollider c in _colliders)
+            if (updateColliders) 
             {
-                c.UpdateTransform();
+                foreach (RBCollider c in _colliders)
+                {
+                    c.UpdateTransform();
+                }
             }
+
+            _objTrajectory.Update(this);
 
             inertiaTensor = rb.inertiaTensor;
             inertiaTensorRotation = rb.inertiaTensorRotation;
