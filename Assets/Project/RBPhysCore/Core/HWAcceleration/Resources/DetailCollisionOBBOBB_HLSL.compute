@@ -446,7 +446,7 @@ void HWA_DetectCollision(uint3 id : SV_DispatchThreadID)
                 }
                 else if (aPd == 2)
                 {
-                    aDp = ProjectPointToPlane(bDp, aDp, aDp);
+                    aDp = ProjectPointToPlane(bDp, pDirN, aDp);
 
                 }
                 else if (bPd == 1)
@@ -455,7 +455,7 @@ void HWA_DetectCollision(uint3 id : SV_DispatchThreadID)
                 }
                 else if (bPd == 2)
                 {
-                    bDp = ProjectPointToPlane(aDp, bDp, bDp);
+                    bDp = ProjectPointToPlane(aDp, pDirN, bDp);
                 }
             
                 dc_Contacts[obb_id_a] = aDp;
@@ -498,21 +498,16 @@ void HWA_DetectCollision(uint3 id : SV_DispatchThreadID)
                     }
                 }
             
-                float3 te_a_begin = aDp + (fA1 + fA2);
-                float3 te_a_end = aDp - (fA1 + fA2);
-                float3 te_b_begin = bDp + (fB1 + fB2);
-                float3 te_b_end = bDp - (fB1 + fB2);
-            
                 if (aPd == 1)
                 {
-                    float3 te_begin = aDp + (fA1 + fA2) / 2;
-                    float3 te_end = aDp - (fA1 + fA2) / 2;
+                    float3 te_begin = aDp + (fA1 + fA2);
+                    float3 te_end = aDp - (fA1 + fA2);
                     
                     ReverseProjectLineToLine(te_begin, te_end, contacts[4], contacts[5]);
                     ReverseProjectLineToLine(te_begin, te_end, contacts[5], contacts[6]);
                     
-                    aDp = (te_begin + te_end) / 2.;
-                    bDp = ProjectPointToPlane(aDp, bDp, bDp);
+                    aDp = (te_begin + te_end) / 2;
+                    bDp = ProjectPointToPlane(aDp, pDirN, bDp);
                     
                     dc_Contacts[obb_id_a] = aDp;
                     dc_Contacts[obb_id_b] = bDp;
@@ -520,14 +515,14 @@ void HWA_DetectCollision(uint3 id : SV_DispatchThreadID)
                 }
                 else if (bPd == 1)
                 {
-                    float3 te_begin = bDp + (fB1 + fB2) / 2;
-                    float3 te_end = bDp - (fB1 + fB2) / 2;
+                    float3 te_begin = bDp + (fB1 + fB2);
+                    float3 te_end = bDp - (fB1 + fB2);
                     
                     ReverseProjectLineToLine(te_begin, te_end, contacts[0], contacts[1]);
                     ReverseProjectLineToLine(te_begin, te_end, contacts[1], contacts[2]);
 
                     bDp = (te_begin + te_end) / 2;
-                    aDp = ProjectPointToPlane(bDp, aDp, aDp);
+                    aDp = ProjectPointToPlane(bDp, pDirN, aDp);
                     
                     dc_Contacts[obb_id_a] = aDp;
                     dc_Contacts[obb_id_b] = bDp;
@@ -563,8 +558,8 @@ void HWA_DetectCollision(uint3 id : SV_DispatchThreadID)
                         }
                     }
                 
-                    aDp = ProjectPointToPlane(sum / count, aDp, aDp);
-                    bDp = ProjectPointToPlane(sum / count, bDp, bDp);
+                    aDp = ProjectPointToPlane(sum / count, pDirN, aDp);
+                    bDp = ProjectPointToPlane(sum / count, pDirN, bDp);
                 
                     dc_Contacts[obb_id_a] = aDp;
                     dc_Contacts[obb_id_b] = bDp;
