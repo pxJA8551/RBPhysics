@@ -99,11 +99,10 @@ float3 ProjectPointToRect(float3 p, float3 a, float3 b, float3 c, float3 d, floa
 void ProjectLineToLine(inout float3 beginA, inout float3 endA, float3 beginB, float3 endB)
 {
     float ebA = length(endA - beginA);
-    float3 prjDirN = (endA - beginA) / ebA;
+    float3 prjDirN = ebA > 0 ? (endA - beginA) / ebA : 0;
     
     float3 avg = (endA + beginA) / 2;
     
-
     float db = clamp(dot(prjDirN, beginB - avg), -ebA / 2, ebA / 2);
     float de = clamp(dot(-prjDirN, endB - avg), -ebA / 2, ebA / 2);
     
@@ -120,7 +119,7 @@ float3 ReverseProject(float d, float3 prjDirN, float3 revPrjDirN)
 void ReverseProjectLineToLine(inout float3 beginA, inout float3 endA, float3 beginB, float3 endB)
 {
     float ebA = length(endA - beginA);
-    float3 prjDirN = (endA - beginA) / ebA;
+    float3 prjDirN = ebA > 0 ? (endA - beginA) / ebA : 0;
     
     float3 bDirN = normalize(endB - beginB);
     
@@ -137,12 +136,12 @@ void ReverseProjectLineToLine(inout float3 beginA, inout float3 endA, float3 beg
     endA = avg + prjDirN * de;
 }
 
-void CalcNearest(float3 beginA, float3 endA, float3 beginB, float3 endB, out float3 nearestA, float3 nearestB)
+void CalcNearest(float3 beginA, float3 endA, float3 beginB, float3 endB, out float3 nearestA, out float3 nearestB)
 {
     float ebA = length(endA - beginA);
     float ebB = length(endB - beginB);
-    float3 dirAN = (endA - beginA) / ebA;
-    float3 dirBN = (endB - beginB) / ebB;
+    float3 dirAN = ebA > 0 ? (endA - beginA) / ebA : 0;
+    float3 dirBN = ebB > 0 ? (endB - beginB) / ebB : 0;
     
     float dotAB = dot(dirAN, dirBN);
     float div = 1 - dotAB * dotAB;
@@ -160,8 +159,8 @@ float3 CalcNearest(float3 beginA, float3 endA, float3 beginB, float3 endB)
 {
     float ebA = length(endA - beginA);
     float ebB = length(endB - beginB);
-    float3 dirAN = (endA - beginA) / ebA;
-    float3 dirBN = (endB - beginB) / ebB;
+    float3 dirAN = ebA > 0 ? (endA - beginA) / ebA : 0;
+    float3 dirBN = ebB > 0 ? (endB - beginB) / ebB : 0;
     
     float dotAB = dot(dirAN, dirBN);
     float div = 1 - dotAB * dotAB;
@@ -174,7 +173,7 @@ float3 CalcNearest(float3 beginA, float3 endA, float3 beginB, float3 endB)
     return beginA + clamp(r1, 0, ebA) * dirAN;
 }
 
-void CalcNearestLine(float3 beginA, float3 endA, float3 beginB, float3 endB, out float3 nearestA, float3 nearestB)
+void CalcNearestLine(float3 beginA, float3 endA, float3 beginB, float3 endB, out float3 nearestA, out float3 nearestB)
 {
     float3 dirAN = normalize(endA - beginA);
     float3 dirBN = normalize(endB - beginB);

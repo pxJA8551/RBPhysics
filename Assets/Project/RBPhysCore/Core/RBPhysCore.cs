@@ -238,6 +238,11 @@ namespace RBPhys
                         rbc = new RBCollision(_obb_obb_cols[i].Item1, _obb_obb_cols[i].Item2, _obb_obb_cols_res[i].p);
                     }
 
+                    if (rbc.collider_a.name.Contains("sfp") || rbc.collider_b.name.Contains("sfp"))
+                    {
+                        Debug.Log((rbc.collider_a.name, rbc.collider_b.name, _obb_obb_cols_res[i].p, _obb_obb_cols_res[i].p.normalized, _obb_obb_cols_res[i].pA, _obb_obb_cols_res[i].pB));
+                    }
+
                     rbc.Update(_obb_obb_cols_res[i].p, _obb_obb_cols_res[i].pA, _obb_obb_cols_res[i].pB);
                     rbc.InitVelocityConstraint(dt);
 
