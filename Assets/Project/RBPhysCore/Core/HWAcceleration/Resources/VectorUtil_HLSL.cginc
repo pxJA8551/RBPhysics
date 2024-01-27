@@ -11,6 +11,13 @@ float3 ProjectPointToLine(float3 p, float3 begin, float3 dirN)
     return begin + dirN * dot(p - begin, dirN);
 }
 
+float3 ProjectPointToEdge(float3 p, float3 begin, float3 end)
+{
+    float dn = length(end - begin);
+    float3 dirN = (end - begin) / dn;
+    return begin + dirN * clamp(dot(p - begin, dirN), 0, dn);
+}
+
 float3 ProjectPointToPlane(float3 p, float3 plane, float3 center)
 {
     return center + ProjectOnPlane(p - center, plane);
@@ -40,6 +47,53 @@ bool IsInRect(float3 p, float3 a, float3 b, float3 c, float3 d, float3 n)
     }
     
     return false;
+}
+
+float3 ProjectPointToRect(float3 p, float3 a, float3 b, float3 c, float3 d, float3 n)
+{
+    float3 prjP = ProjectPointToPlane(p, n, a);
+    
+    if (IsInRect(prjP, a, b, c, d, n))
+    {
+        return prjP;
+    }
+    else
+    {
+        float3 prjA = ProjectPointToEdge(prjP, a, b);
+        float3 prjB = ProjectPointToEdge(prjP, b, c);
+        float3 prjC = ProjectPointToEdge(prjP, c, d);
+        float3 prjD = ProjectPointToEdge(prjP, d, a);
+
+        float dMin = -1;
+        float3 prjR = prjP;
+        
+        float dt = length(prjA - prjP);
+        dMin = dt;
+        prjR = prjA;
+        
+        dt = length(prjB - prjP);
+        if (dt < dMin)
+        {
+            dMin = dt;
+            prjR = prjB;
+        }
+        
+        dt = length(prjC - prjP);
+        if (dt < dMin)
+        {
+            dMin = dt;
+            prjR = prjC;
+        }
+        
+        dt = length(prjD - prjP);
+        if (dt < dMin)
+        {
+            dMin = dt;
+            prjR = prjD;
+        }
+        
+        return prjR;
+    }
 }
 
 void ProjectLineToLine(inout float3 beginA, inout float3 endA, float3 beginB, float3 endB)

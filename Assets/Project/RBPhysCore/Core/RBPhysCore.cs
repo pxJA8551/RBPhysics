@@ -131,7 +131,7 @@ namespace RBPhys
             }
         }
 
-        static List<(RBCollider, RBCollider)> _obb_obb_cols = new List<(RBCollider, RBCollider)>();
+        static List<(RBCollider col_a, RBCollider col_b, Vector3 cg_a, Vector3 cg_b)> _obb_obb_cols = new List<(RBCollider, RBCollider, Vector3, Vector3)>();
         static List<(Vector3 p, Vector3 pA, Vector3 pB)> _obb_obb_cols_res = new List<(Vector3 p, Vector3 pA, Vector3 pB)>();
 
 #if !COLLISION_SOLVER_HW_ACCELERATION
@@ -308,7 +308,7 @@ namespace RBPhys
 
         static SemaphoreSlim _rbcEditSemaphore = new SemaphoreSlim(1, 1);
 
-        static void DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b, ref List<(RBCollider, RBCollider)> obb_obb_cols)
+        static void DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b, ref List<(RBCollider, RBCollider, Vector3, Vector3)> obb_obb_cols)
         {
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_b;
@@ -369,7 +369,7 @@ namespace RBPhys
                         if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.OBB)
                         {
                             //OBB-OBB衝突
-                            obb_obb_cols.Add((collider_a.collider, collider_b.collider));
+                            obb_obb_cols.Add((collider_a.collider, collider_b.collider, traj_a.Rigidbody?.CenterOfGravityWorld ?? Vector3.zero, traj_b.Rigidbody?.CenterOfGravityWorld ?? Vector3.zero));
                         }
                         else if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.Sphere)
                         {
