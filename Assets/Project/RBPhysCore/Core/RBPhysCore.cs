@@ -481,7 +481,7 @@ namespace RBPhys
         public Vector3 InverseInertiaWs_b { get { return rigidbody_b?.InverseInertiaWs ?? Vector3.zero; } }
 
 #if COLLISION_SOLVER_HW_ACCELERATION
-        public HWAcceleration.HWA_SolveCollision.RBCollisionHWA HWAData { get { return _hwaData; } }
+        public HWAcceleration.HWA_SolveCollision.RBCollisionHWA HWAData { get { return _hwaData; } set { _hwaData = value; } }
 #endif
 
         public bool IsSleeping_a { get { return rigidbody_a?.isSleeping ?? true; } }

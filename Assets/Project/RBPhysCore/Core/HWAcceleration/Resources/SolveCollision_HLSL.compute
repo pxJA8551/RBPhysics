@@ -45,7 +45,7 @@ void ResolveJacobian(RBCollision rbc, inout RBCollisionJacobian j, float3 vel_a,
     jv += dot(j.vb, vel_b + velAdd_b);
     jv += dot(j.wb, angVel_b + angVelAdd_b);
     
-    float lambda = j.effectiveMass * (-(jv + j.bias));
+    float lambda = j.effectiveMass * (-(jv + j.bias)) + j.totalLambdaInFrame;
     
     float oldTotalLambda = j.totalLambda;
     

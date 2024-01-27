@@ -24,6 +24,7 @@ namespace RBPhys.HWAcceleration
         static int _nameId_threadGroups_w;
         static int _nameId_cols;
         static int _nameId_jacobians;
+        static int _nameId_jacobianFeedbacks;
         static int _nameId_ret_vels;
         static int _nameId_cols_count;
 
@@ -35,7 +36,7 @@ namespace RBPhys.HWAcceleration
 
         RBHWABuffer<RBCollisionHWA_Layout> _cols;
         RBHWABuffer<RBCollisionHWAJacobian_Layout> _jacobians;
-        RBHWABuffer<RBCollisionHWAJacobian_Layout> _cgs;
+        RBHWABuffer<float> _jacobianFeedbacks;
         int _bufferColsCount;
 
         List<RBRigidbody> _vels_rb_list = new List<RBRigidbody>();
@@ -44,6 +45,7 @@ namespace RBPhys.HWAcceleration
 
         RBCollisionHWA_Layout[] _cols_array;
         RBCollisionHWAJacobian_Layout[] _jacobians_array;
+        float[] _jacobianFeedbacks_array;
         int _arrayColsCount;
 
         int _minBufferColsBuffer;
@@ -71,6 +73,7 @@ namespace RBPhys.HWAcceleration
             _nameId_threads_w = Shader.PropertyToID("sc_threads_w");
             _nameId_cols = Shader.PropertyToID("sc_cols");
             _nameId_jacobians = Shader.PropertyToID("sc_jacobians");
+            _nameId_jacobianFeedbacks = Shader.PropertyToID("sc_jacobianFeedbacks");
             _nameId_ret_vels = Shader.PropertyToID("sc_vels");
             _nameId_cols_count = Shader.PropertyToID("sc_cols_count");
 
@@ -107,6 +110,7 @@ namespace RBPhys.HWAcceleration
         {
             _cols = new RBHWABuffer<RBCollisionHWA_Layout>(colsCount);
             _jacobians = new RBHWABuffer<RBCollisionHWAJacobian_Layout>(colsCount * 3);
+            _jacobianFeedbacks = new RBHWABuffer<float>(colsCount * 3);
 
             _bufferColsCount = colsCount;
         }
@@ -115,6 +119,7 @@ namespace RBPhys.HWAcceleration
         {
             _cols?.Dispose();
             _jacobians?.Dispose();
+            _jacobianFeedbacks?.Dispose();
         }
 
         void ResizeBuffers(int colsCount)
@@ -141,6 +146,7 @@ namespace RBPhys.HWAcceleration
         {
             _cols_array = new RBCollisionHWA_Layout[colsCount];
             _jacobians_array = new RBCollisionHWAJacobian_Layout[colsCount * 3];
+            _jacobianFeedbacks_array = new float[colsCount * 3];
 
             _arrayColsCount = colsCount;
         }
@@ -173,6 +179,7 @@ namespace RBPhys.HWAcceleration
                 GetBufferDatas();
                 Profiler.EndSample();
                 SetVelocity();
+                FeedbackJacobians(cols);
             }
         }
 
@@ -191,7 +198,7 @@ namespace RBPhys.HWAcceleration
                 if (i < cols.Count)
                 {
                     cols[i].UpdateHWA();
-
+                    
                     _cols_array[i] = cols[i].HWAData.col;
                     _jacobians_array[i * 3] = cols[i].HWAData.jN;
                     _jacobians_array[i * 3 + 1] = cols[i].HWAData.jT;
@@ -273,6 +280,7 @@ namespace RBPhys.HWAcceleration
 
         void GetBufferDatas()
         {
+            _jacobianFeedbacks.GetData(_jacobianFeedbacks_array);
             _ret_vels.GetData(_ret_vels_array);
         }
 
@@ -286,6 +294,14 @@ namespace RBPhys.HWAcceleration
             }
         }
 
+        void FeedbackJacobians(List<RBCollision> cols)
+        {
+            for (int i = 0; i < cols.Count; i++)
+            {
+                cols[i].HWAData.FeedbackLambdas(_jacobianFeedbacks_array[i * 3], _jacobianFeedbacks_array[i * 3 + 1], _jacobianFeedbacks_array[i * 3 + 2]);
+            }
+        }
+
         void SetProperties(int threadGroupsX)
         {
             ComputeShader c = _computeShader;
@@ -296,6 +312,7 @@ namespace RBPhys.HWAcceleration
 
             c.SetBuffer(kernelIndex, _nameId_cols, _cols.GetGraphicsBuffer());
             c.SetBuffer(kernelIndex, _nameId_jacobians, _jacobians.GetGraphicsBuffer());
+            c.SetBuffer(kernelIndex, _nameId_jacobianFeedbacks, _jacobianFeedbacks.GetGraphicsBuffer());
             c.SetBuffer(kernelIndex, _nameId_ret_vels, _ret_vels.GetGraphicsBuffer());
 
             c.SetBuffer(_kernelIndex_hwa_updateBufferVelocity, _nameId_cols, _cols.GetGraphicsBuffer());
@@ -370,6 +387,13 @@ namespace RBPhys.HWAcceleration
                 jN.Init(contactNormal, rbc, dt);
                 jT.Init(tangent, rbc, dt);
                 jB.Init(bitangent, rbc, dt);
+            }
+
+            public void FeedbackLambdas(float jN, float jT, float jB)
+            {
+                this.jN.totalLambda = jN;
+                this.jT.totalLambda = jT;
+                this.jB.totalLambda = jB;
             }
 
             public void Update(RBCollision rbc)
