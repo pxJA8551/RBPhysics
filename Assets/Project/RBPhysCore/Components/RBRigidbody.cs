@@ -142,6 +142,9 @@ namespace RBPhys
             _velocity = _expVelocity;
             _angularVelocity = _expAngularVelocity;
 
+            _expVelocity *= 0.97f;
+            _expAngularVelocity *= 0.97f;
+
             transform.position = _position + (_velocity * dt);
             transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
 

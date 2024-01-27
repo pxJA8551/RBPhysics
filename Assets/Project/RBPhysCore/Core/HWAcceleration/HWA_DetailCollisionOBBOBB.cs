@@ -20,7 +20,6 @@ namespace RBPhys.HWAcceleration
             static int _nameId_obb_centers;
             static int _nameId_obb_rotations;
             static int _nameId_obb_sizes;
-            static int _nameId_obb_cgs;
             static int _nameId_threads_w;
             static int _nameId_ret_obb_penetrations;
             static int _nameId_ret_obb_contacts;
@@ -28,7 +27,6 @@ namespace RBPhys.HWAcceleration
             RBHWABuffer<Vector3> _obb_centers;
             RBHWABuffer<RBMatrix3x3> _obb_rotations;
             RBHWABuffer<Vector3> _obb_sizes;
-            RBHWABuffer<Vector3> _obb_cgs;
             RBHWABuffer<Vector3> _ret_obb_penetrations;
             RBHWABuffer<Vector3> _ret_obb_contacts;
             int _bufferObbPairCount;
@@ -36,7 +34,6 @@ namespace RBPhys.HWAcceleration
             Vector3[] _obb_centers_array;
             RBMatrix3x3[] _obb_rotations_array;
             Vector3[] _obb_sizes_array;
-            Vector3[] _obb_cgs_array;
             Vector3[] _ret_obb_penetrations_array;
             Vector3[] _ret_obb_contacts_array;
             int _arrayObbPairCount;
@@ -64,7 +61,6 @@ namespace RBPhys.HWAcceleration
                 _nameId_obb_centers = Shader.PropertyToID("dc_obb_centers");
                 _nameId_obb_rotations = Shader.PropertyToID("dc_obb_rotations");
                 _nameId_obb_sizes = Shader.PropertyToID("dc_obb_sizes");
-                _nameId_obb_cgs = Shader.PropertyToID("dc_obb_cgs");
                 _nameId_threads_w = Shader.PropertyToID("dc_threads_w");
                 _nameId_ret_obb_penetrations = Shader.PropertyToID("dc_Penetrations");
                 _nameId_ret_obb_contacts = Shader.PropertyToID("dc_Contacts");
@@ -91,7 +87,6 @@ namespace RBPhys.HWAcceleration
                 _obb_centers = new RBHWABuffer<Vector3>(obbPairCount * 2);
                 _obb_rotations = new RBHWABuffer<RBMatrix3x3>(obbPairCount * 2);
                 _obb_sizes = new RBHWABuffer<Vector3>(obbPairCount * 2);
-                _obb_cgs = new RBHWABuffer<Vector3>(obbPairCount * 2);
                 _ret_obb_penetrations = new RBHWABuffer<Vector3>(obbPairCount);
                 _ret_obb_contacts = new RBHWABuffer<Vector3>(obbPairCount * 2);
 
@@ -103,7 +98,6 @@ namespace RBPhys.HWAcceleration
                 _obb_centers?.Dispose();
                 _obb_rotations?.Dispose();
                 _obb_sizes?.Dispose();
-                _obb_cgs?.Dispose();
                 _ret_obb_penetrations?.Dispose();
                 _ret_obb_contacts?.Dispose();
             }
@@ -133,13 +127,12 @@ namespace RBPhys.HWAcceleration
                 _obb_centers_array = new Vector3[obbPairCount * 2];
                 _obb_rotations_array = new RBMatrix3x3[obbPairCount * 2];
                 _obb_sizes_array = new Vector3[obbPairCount * 2];
-                _obb_cgs_array = new Vector3[obbPairCount * 2];
                 _ret_obb_penetrations_array = new Vector3[obbPairCount];
                 _ret_obb_contacts_array = new Vector3[obbPairCount * 2];
                 _arrayObbPairCount = obbPairCount;
             }
 
-            public void HWA_ComputeDetailCollision(List<(RBCollider obb_a, RBCollider obb_b, Vector3 cg_a, Vector3 cg_b)> cols)
+            public void HWA_ComputeDetailCollision(List<(RBCollider obb_a, RBCollider obb_b)> cols)
             {
                 int obbCount = cols.Count;
 
@@ -152,7 +145,7 @@ namespace RBPhys.HWAcceleration
                 }
             }
 
-            void SetBufferDatas(List<(RBCollider obb_a, RBCollider obb_b, Vector3 cg_a, Vector3 cg_b)> cols)
+            void SetBufferDatas(List<(RBCollider obb_a, RBCollider obb_b)> cols)
             {
                 for (int i = 0; i < cols.Count; i++)
                 {
@@ -170,11 +163,8 @@ namespace RBPhys.HWAcceleration
                     _obb_rotations_array[id_b] = obb_b.RotMatrix.Transposed();
                     _obb_sizes_array[id_a] = obb_a.size;
                     _obb_sizes_array[id_b] = obb_b.size;
-                    _obb_cgs_array[id_a] = pair.cg_a;
-                    _obb_cgs_array[id_b] = pair.cg_b;
                 }
 
-                _obb_cgs.SetData(_obb_cgs_array);
                 _obb_sizes.SetData(_obb_sizes_array);
                 _obb_rotations.SetData(_obb_rotations_array);
                 _obb_centers.SetData(_obb_centers_array);
@@ -212,7 +202,6 @@ namespace RBPhys.HWAcceleration
                 c.SetBuffer(kernelIndex, _nameId_obb_centers, _obb_centers.GetGraphicsBuffer());
                 c.SetBuffer(kernelIndex, _nameId_obb_rotations, _obb_rotations.GetGraphicsBuffer());
                 c.SetBuffer(kernelIndex, _nameId_obb_sizes, _obb_sizes.GetGraphicsBuffer());
-                c.SetBuffer(kernelIndex, _nameId_obb_cgs, _obb_cgs.GetGraphicsBuffer());
                 c.SetBuffer(kernelIndex, _nameId_ret_obb_penetrations, _ret_obb_penetrations.GetGraphicsBuffer());
                 c.SetBuffer(kernelIndex, _nameId_ret_obb_contacts, _ret_obb_contacts.GetGraphicsBuffer());
 

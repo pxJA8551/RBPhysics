@@ -49,9 +49,9 @@ bool IsInRect(float3 p, float3 a, float3 b, float3 c, float3 d, float3 n)
     return false;
 }
 
-float3 ProjectPointToRect(float3 p, float3 a, float3 b, float3 c, float3 d, float3 n)
+float3 ProjectPointToRect(float3 p, float3 a, float3 b, float3 c, float3 d, float3 cx, float3 n)
 {
-    float3 prjP = ProjectPointToPlane(p, n, a);
+    float3 prjP = ProjectPointToPlane(p, n, cx);
     
     if (IsInRect(prjP, a, b, c, d, n))
     {
@@ -63,13 +63,11 @@ float3 ProjectPointToRect(float3 p, float3 a, float3 b, float3 c, float3 d, floa
         float3 prjB = ProjectPointToEdge(prjP, b, c);
         float3 prjC = ProjectPointToEdge(prjP, c, d);
         float3 prjD = ProjectPointToEdge(prjP, d, a);
-
-        float dMin = -1;
-        float3 prjR = prjP;
         
         float dt = length(prjA - prjP);
-        dMin = dt;
-        prjR = prjA;
+
+        float dMin = dt;
+        float3 prjR = prjA;
         
         dt = length(prjB - prjP);
         if (dt < dMin)
@@ -209,4 +207,9 @@ float3 CalcNearestLine(float3 beginA, float3 endA, float3 beginB, float3 endB)
 float3 Scale(float3 a, float3 b)
 {
     return float3(a.x * b.x, a.y * b.y, a.z * b.z);
+}
+
+float3 Epsilon(float3 v, float eps)
+{
+    return v - (v % eps);
 }
