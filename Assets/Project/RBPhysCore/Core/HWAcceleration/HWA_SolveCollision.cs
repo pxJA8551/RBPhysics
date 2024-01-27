@@ -35,6 +35,7 @@ namespace RBPhys.HWAcceleration
 
         RBHWABuffer<RBCollisionHWA_Layout> _cols;
         RBHWABuffer<RBCollisionHWAJacobian_Layout> _jacobians;
+        RBHWABuffer<RBCollisionHWAJacobian_Layout> _cgs;
         int _bufferColsCount;
 
         List<RBRigidbody> _vels_rb_list = new List<RBRigidbody>();
