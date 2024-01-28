@@ -129,7 +129,6 @@ namespace RBPhys
             Vector3 aToB = beginB - beginA;
 
             float r1 = (Vector3.Dot(aToB, dirAN) - dotAB * Vector3.Dot(aToB, dirBN)) / div;
-            float r2 = (dotAB * Vector3.Dot(aToB, dirAN) - Vector3.Dot(aToB, dirBN)) / div;
 
             return beginA + r1 * dirAN;
         }
@@ -152,6 +151,25 @@ namespace RBPhys
 
             nearestA = beginA + Mathf.Clamp(r1, 0, ebA) * dirAN;
             nearestB = beginB + Mathf.Clamp(r2, 0, ebB) * dirBN;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 CalcNearestOrNInf(Vector3 beginA, Vector3 endA, Vector3 beginB, Vector3 endB)
+        {
+            float ebA = (endA - beginA).magnitude;
+            float ebB = (endB - beginB).magnitude;
+            Vector3 dirAN = ebA > 0 ? (endA - beginA) / ebA : Vector3.zero;
+            Vector3 dirBN = ebB > 0 ? (endB - beginB) / ebB : Vector3.zero;
+
+            float dotAB = Vector3.Dot(dirAN, dirBN);
+            float div = 1 - dotAB * dotAB;
+
+            Vector3 aToB = beginB - beginA;
+
+            float r1 = (Vector3.Dot(aToB, dirAN) - dotAB * Vector3.Dot(aToB, dirBN)) / div;
+            float r2 = (dotAB * Vector3.Dot(aToB, dirAN) - Vector3.Dot(aToB, dirBN)) / div;
+
+            return (0 <= r1 && r1 <= ebA && 0 <= r2 && r2 <= ebB) ? beginA + r1 * dirAN : Vector3.negativeInfinity;
         }
     }
 }

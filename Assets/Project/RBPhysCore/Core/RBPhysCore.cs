@@ -10,11 +10,6 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Profiling;
 using System.Threading;
-using UnityEngine.UIElements;
-using UnityEditorInternal;
-using UnityEngine.VFX;
-using System.Drawing;
-using System.Linq.Expressions;
 using UnityEditor;
 
 namespace RBPhys
@@ -24,6 +19,8 @@ namespace RBPhys
         public const int CPU_COLLISION_SOLVER_MAX_ITERATION = 15;
         public const float CPU_SOLVER_ABORT_VELADD_SQRT = 0.01f * 0.01f;
         public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0.15f * 0.15f;
+
+        public const float CPU_COLLISION_FACE_PARALLEL_EPSILON = 0.005f;
 
         public const int DEFAULT_SOLVER_ITERATION = 6;
 
