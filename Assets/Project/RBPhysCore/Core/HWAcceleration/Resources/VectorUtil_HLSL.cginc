@@ -111,7 +111,7 @@ void ProjectLineToLine(inout float3 beginA, inout float3 endA, float3 beginB, fl
 float3 ReverseProject(float d, float3 prjDirN, float3 revPrjDirN)
 {
     float div = dot(prjDirN, revPrjDirN);
-    return div != 0 ? revPrjDirN * (d / div) : d;
+    return (div != 0) ? (revPrjDirN * (d / div)) : 0;
 }
 
 void ReverseProjectLineToLine(inout float3 beginA, inout float3 endA, float3 beginB, float3 endB)
@@ -122,7 +122,7 @@ void ReverseProjectLineToLine(inout float3 beginA, inout float3 endA, float3 beg
     float3 bDirN = normalize(endB - beginB);
     
     float3 avg = (endA + beginA) / 2;
-    float3 prjAvg = ProjectPointToLine(avg, beginB, normalize(endB - beginB));
+    float3 prjAvg = ProjectPointToLine(avg, beginB, bDirN);
     
     float3 pbB = beginB - prjAvg;
     float3 peB = endB - prjAvg;

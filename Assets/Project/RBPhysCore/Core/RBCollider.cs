@@ -22,7 +22,7 @@ namespace RBPhys
         public Quaternion GameObjectRot { get; private set; }
         public Vector3 GameObjectLossyScale { get; private set; }
 
-        [HideInInspector] public float beta = 0.5f;
+        [HideInInspector] public float beta = 0.7f;
         public float restitution = 0.5f; //”½”­ŒW”
         public float friction = 0.7f; //–€CŒW”
 
