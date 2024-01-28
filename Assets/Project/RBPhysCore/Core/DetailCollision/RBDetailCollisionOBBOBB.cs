@@ -1,5 +1,7 @@
+using JetBrains.Annotations;
 using System.Collections;
 using System.Collections.Generic;
+using System.Security.AccessControl;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
@@ -412,6 +414,7 @@ namespace RBPhys
                     }
                 }
 
+                if (pSqrMag != -1)
                 {
                     Vector3 pDirN = -penetration.normalized;
 
@@ -496,33 +499,39 @@ namespace RBPhys
                         return (penetration, aDp, bDp);
                     }
                     else if (aPd == 1)
-                    {
-                        Vector3 te_begin = aDp + (fA1 + fA2);
-                        Vector3 te_end = aDp - (fA1 + fA2);
+                            {
+                                verts[4 + i] = bDp + fB1 * (((i + (i / 2)) % 2 == 0) ? 1 : -1) + fB2 * ((i / 2 == 0) ? 1 : -1);
+                            }
+                        }
+
+                        if (aPd == 1)
+                        {
+                            Vector3 te_begin = aDp + (fA1 + fA2);
+                            Vector3 te_end = aDp - (fA1 + fA2);
 
                         ReverseProjectLineToLine(ref te_begin, ref te_end, aDp + fA1, aDp - fA1);
                         ReverseProjectLineToLine(ref te_begin, ref te_end, aDp + fA2, aDp - fA2);
 
-                        aDp = (te_begin + te_end) / 2;
-                        bDp = ProjectPointToLine(aDp, nB, bDp);
+                            aDp = (te_begin + te_end) / 2;
+                            bDp = ProjectPointToLine(aDp, nB, bDp);
 
-                        return (penetration, aDp, bDp);
-                    }
-                    else if (bPd == 1)
-                    {
-                        Vector3 te_begin = bDp + (fB1 + fB2);
-                        Vector3 te_end = bDp - (fB1 + fB2);
+                            return (penetration, aDp, bDp);
+                        }
+                        else if (bPd == 1)
+                        {
+                            Vector3 te_begin = bDp + (fB1 + fB2);
+                            Vector3 te_end = bDp - (fB1 + fB2);
 
                         ReverseProjectLineToLine(ref te_begin, ref te_end, bDp + fB1, bDp - fB1);
                         ReverseProjectLineToLine(ref te_begin, ref te_end, bDp + fB2, bDp - fB2);
 
-                        bDp = (te_begin + te_end) / 2;
-                        aDp = ProjectPointToLine(bDp, nA, aDp);
+                            bDp = (te_begin + te_end) / 2;
+                            aDp = ProjectPointToLine(bDp, nA, aDp);
 
-                        return (penetration, aDp, bDp);
-                    }
-                    else
-                    {
+                            return (penetration, aDp, bDp);
+                        }
+                        else
+                        {
                         Vector3[] verts = new Vector3[8];
 
                         for (int i = 0; i < aPd * 2; i++)
@@ -541,52 +550,55 @@ namespace RBPhys
                             }
                         }
 
-                        for (int i = 0; i < 4; i++)
-                        {
-                            verts[4 + i] = ProjectPointToPlane(verts[4 + i], nA, aDp);
-                        }
-
-                        Vector3[] contacts = new Vector3[16];
-
-                        for (int ie = 0; ie < 4; ie++)
-                        {
-                            for (int je = 0; je < 4; je++)
+                            for (int i = 0; i < 4; i++)
                             {
-                                contacts[ie * 4 + je] = CalcNearestLine(verts[ie], verts[(ie + 1) % 4], verts[4 + je], verts[4 + (je + 1) % 4]);
+                                verts[4 + i] = ProjectPointToPlane(verts[4 + i], nA, aDp);
                             }
-                        }
 
-                        Vector3 sum = Vector3.zero;
-                        int count = 0;
+                            Vector3[] contacts = new Vector3[16];
 
-                        for (int i = 0; i < 8; i++)
-                        {
-                            Vector3 c = verts[i];
-
-                            if (c != Vector3.zero && IsInRect(c, verts[0], verts[1], verts[2], verts[3], nA) && IsInRect(c, verts[4], verts[5], verts[6], verts[7], nB))
+                            for (int ie = 0; ie < 4; ie++)
                             {
-                                sum += c;
-                                count++;
+                                for (int je = 0; je < 4; je++)
+                                {
+                                    contacts[ie * 4 + je] = CalcNearestLine(verts[ie], verts[(ie + 1) % 4], verts[4 + je], verts[4 + (je + 1) % 4]);
+                                }
                             }
-                        }
 
-                        for (int i = 0; i < 16; i++)
-                        {
-                            Vector3 c = contacts[i];
+                            Vector3 sum = Vector3.zero;
+                            int count = 0;
+
+                            for (int i = 0; i < 8; i++)
+                            {
+                                Vector3 c = verts[i];
+
+                                if (c != Vector3.zero && IsInRect(c, verts[0], verts[1], verts[2], verts[3], nA) && IsInRect(c, verts[4], verts[5], verts[6], verts[7], nB))
+                                {
+                                    sum += c;
+                                    count++;
+                                }
+                            }
+
+                            for (int i = 0; i < 16; i++)
+                            {
+                                Vector3 c = contacts[i];
 ;
-                            if (c != Vector3.zero && IsInRect(c, verts[0], verts[1], verts[2], verts[3], nA) && IsInRect(c, verts[4], verts[5], verts[6], verts[7], nB))
-                            {
-                                sum += c;
-                                count++;
+                                if (c != Vector3.zero && IsInRect(c, verts[0], verts[1], verts[2], verts[3], nA) && IsInRect(c, verts[4], verts[5], verts[6], verts[7], nB))
+                                {
+                                    sum += c;
+                                    count++;
+                                }
                             }
+
+                            aDp = ProjectPointToPlane(sum / count, nA, aDp);
+                            bDp = ProjectPointToPlane(sum / count, nB, bDp);
+
+                            return (penetration, aDp, bDp);
                         }
-
-                        aDp = ProjectPointToPlane(sum / count, nA, aDp);
-                        bDp = ProjectPointToPlane(sum / count, nB, bDp);
-
-                        return (penetration, aDp, bDp);
                     }
                 }
+
+                return (Vector3.zero, Vector3.zero, Vector3.zero);
             }
         }
     }

@@ -234,6 +234,15 @@ namespace RBPhys
             }
 #endif
 
+            Task.WhenAll(tList).Wait();
+
+            foreach (var t in tList)
+            {
+                var r = t.Result;
+                _obb_obb_cols_res.Add((r.p, r.pA, r.pB));
+            }
+#endif
+
             Profiler.EndSample();
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-SolveCollisions");
@@ -439,6 +448,10 @@ namespace RBPhys
 
         public static void Dispose()
         {
+
+#if COLLISION_NARROW_PHASE_HW_ACCELERATION
+            _hwa_obb_obb_detail?.Dispose()
+#endif
 
 #if COLLISION_NARROW_PHASE_HW_ACCELERATION
             _hwa_obb_obb_detail?.Dispose()
