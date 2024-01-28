@@ -1,4 +1,4 @@
-#define COLLISION_SOLVER_HW_ACCELERATION
+#undef COLLISION_SOLVER_HW_ACCELERATION
 
 #if COLLISION_SOLVER_HW_ACCELERATION
 
@@ -14,7 +14,7 @@ namespace RBPhys.HWAcceleration
 {
     public class HWA_SolveCollision : IDisposable
     {
-        const int SOLVER_ITERATION = 15;
+        const int SOLVER_ITERATION = 6;
 
         const string FILE_NAME_OF_CS = "SolveCollision_HLSL";
 
@@ -262,7 +262,7 @@ namespace RBPhys.HWAcceleration
 
         void TryResizeVels(int count)
         {
-            if (count > _minRigidbodyBuffer * 2)
+            if (count > _minRigidbodyBuffer)
             {
                 Array.Resize(ref _ret_vels_array, count * 2);
 

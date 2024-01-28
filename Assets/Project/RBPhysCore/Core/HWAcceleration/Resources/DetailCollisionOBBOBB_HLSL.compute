@@ -67,7 +67,7 @@ void HWA_DetectCollision(uint3 id : SV_DispatchThreadID)
         }
         
         float3 p = aFwdN * (dp / 2.) * Sign11(dd);
-        penetration = p;
+        penetration = length(p) < length(penetration) ? p : penetration;
     }
 
     // Separating Axis 2: aRight
@@ -510,7 +510,7 @@ void HWA_DetectCollision(uint3 id : SV_DispatchThreadID)
                     aDp = (te_begin + te_end) / 2;
                     bDp = ProjectPointToPlane(aDp, nB, bDp);
                     
-                    aDp = (te_begin + te_end) / 2;
+                    dc_Contacts[obb_id_a] = aDp;
                     dc_Contacts[obb_id_b] = bDp;
                     return;
                 }

@@ -9,6 +9,12 @@ namespace RBPhys
     {
         [SerializeField] bool _disableUnityPhysics = true;
 
+        private void Awake()
+        {
+            Debug.Log(string.Format("CPU: {0} / {1}cores", SystemInfo.processorType, SystemInfo.processorCount));
+            Debug.Log(string.Format("GPU: {0} / {1}MB API: {2}", SystemInfo.graphicsDeviceName, SystemInfo.graphicsMemorySize, SystemInfo.graphicsDeviceType)); 
+        }
+
         void FixedUpdate()
         {
             StartCoroutine(PhysicsFrame(Time.fixedDeltaTime));

@@ -1,4 +1,5 @@
-#define COLLISION_SOLVER_HW_ACCELERATION
+#undef COLLISION_NARROW_PHASE_HW_ACCELERATION
+#undef COLLISION_SOLVER_HW_ACCELERATION
 
 using System;
 using System.Collections;
@@ -9,7 +10,6 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Profiling;
 using System.Threading;
-using System.Runtime.InteropServices;
 
 namespace RBPhys
 {
@@ -21,8 +21,8 @@ namespace RBPhys
 
         public const int DEFAULT_SOLVER_ITERATION = 6;
 
-        public const int COLLISION_TRAJ_BUFFER_LENGTH_UNIT = 512;
-        public const int COLLISION_TRAJ_BUFFER_LENGTH_SCHMITT_TRIGGER_WIDTH = 64;
+        public const int COLLISION_TRAJ_BUFFER_LENGTH_UNIT = 128;
+        public const int COLLISION_TRAJ_BUFFER_LENGTH_SCHMITT_TRIGGER_WIDTH = 16;
 
         static List<RBRigidbody> _rigidbodies = new List<RBRigidbody>();
         static List<RBCollider> _colliders = new List<RBCollider>();
@@ -34,14 +34,15 @@ namespace RBPhys
         static List<RBCollision> _collisionsInFrame = new List<RBCollision>();
 
         static List<RBCollision> _collisionsInSolver = new List<RBCollision>();
-        static List<RBCollision> _collisionsRemoveFromSolver = new List<RBCollision>();
 
         static List<Task> _solveCollisionTasks = new List<Task>();
 
-        static HWAcceleration.DetailCollision.HWA_DetailCollisionOBBOBB _hwa_obb_obb_detail = new HWAcceleration.DetailCollision.HWA_DetailCollisionOBBOBB(15);
+#if COLLISION_NARROW_PHASE_HW_ACCELERATION
+        static HWAcceleration.DetailCollision.HWA_DetailCollisionOBBOBB _hwa_obb_obb_detail = new HWAcceleration.DetailCollision.HWA_DetailCollisionOBBOBB(8);
+#endif
 
 #if COLLISION_SOLVER_HW_ACCELERATION
-        static HWAcceleration.HWA_SolveCollision _hwa_solveCollision = new HWAcceleration.HWA_SolveCollision(32, 64);
+        static HWAcceleration.HWA_SolveCollision _hwa_solveCollision = new HWAcceleration.HWA_SolveCollision(4, 8);
 #endif
 
         public static void AddRigidbody(RBRigidbody rb)
@@ -209,14 +210,33 @@ namespace RBPhys
             Profiler.BeginSample(name: "Physics-CollisionResolution-DetailTest");
 
             _obb_obb_cols.Clear();
+            _obb_obb_cols_res.Clear();
+
             foreach (var trajPair in collidingTrajs)
             {
                 DetectCollisions(trajPair.Item1, trajPair.Item2, ref _obb_obb_cols);
             }
 
+#if COLLISION_NARROW_PHASE_HW_ACCELERATION
             _hwa_obb_obb_detail.HWA_ComputeDetailCollision(_obb_obb_cols);
 
             _hwa_obb_obb_detail.GetDatas_AfterDispatch(_obb_obb_cols.Count, ref _obb_obb_cols_res);
+#else
+            var tList = new List<Task<(Vector3 p, Vector3 pA, Vector3 pB)>>();
+            foreach (var colPair in _obb_obb_cols)
+            {
+                var t = Task.Run(() => RBDetailCollision.DetailCollisionOBBOBB.CalcDetailCollision(colPair.col_a.CalcOBB(), colPair.col_b.CalcOBB()));
+                tList.Add(t);
+            }
+
+            Task.WhenAll(tList).Wait();
+
+            foreach (var t in tList)
+            {
+                var r = t.Result;
+                _obb_obb_cols_res.Add((r.p, r.pA, r.pB));
+            }
+#endif
 
             Profiler.EndSample();
 
@@ -262,43 +282,37 @@ namespace RBPhys
 
                 Profiler.BeginSample(name: String.Format("SolveCollisions({0}/{1})", i, CPU_COLLISION_SOLVER_MAX_ITERATION));
 
-                _collisionsRemoveFromSolver.Clear();
                 foreach (var col in _collisionsInSolver)
                 {
-                    var t = Task.Run(() =>
+                    if (!col.skipInSolver)
                     {
-                        (Vector3 velAdd_a, Vector3 angVel_add_a, Vector3 velAdd_b, Vector3 angVel_add_b) = SolveCollision(col, dt);
-
-                        if (col.rigidbody_a != null)
+                        var t = Task.Run(() =>
                         {
-                            _solverVelocityChgSemaphore.Wait();
-                            col.rigidbody_a.ExpVelocity += velAdd_a;
-                            col.rigidbody_a.ExpAngularVelocity += angVel_add_a;
-                            _solverVelocityChgSemaphore.Release();
-                        }
+                            (Vector3 velAdd_a, Vector3 angVel_add_a, Vector3 velAdd_b, Vector3 angVel_add_b) = SolveCollision(col, dt);
 
-                        if (col.rigidbody_b != null)
-                        {
-                            _solverVelocityChgSemaphore.Wait();
-                            col.rigidbody_b.ExpVelocity += velAdd_b;
-                            col.rigidbody_b.ExpAngularVelocity += angVel_add_b;
-                            _solverVelocityChgSemaphore.Release();
-                        }
+                            if (col.rigidbody_a != null)
+                            {
+                                col.rigidbody_a.ExpVelocity += velAdd_a;
+                                col.rigidbody_a.ExpAngularVelocity += angVel_add_a;
+                            }
 
-                        if (velAdd_a.sqrMagnitude < CPU_SOLVER_ABORT_VELADD_SQRT && angVel_add_a.sqrMagnitude < CPU_SOLVER_ABORT_ANGVELADD_SQRT && velAdd_b.sqrMagnitude < CPU_SOLVER_ABORT_VELADD_SQRT && angVel_add_b.sqrMagnitude < CPU_SOLVER_ABORT_ANGVELADD_SQRT)
-                        {
-                            _solverRemoveSemaphore.Wait();
-                            _collisionsRemoveFromSolver.Add(col);
-                            _solverRemoveSemaphore.Release();
-                        }
-                    });
+                            if (col.rigidbody_b != null)
+                            {
+                                col.rigidbody_b.ExpVelocity += velAdd_b;
+                                col.rigidbody_b.ExpAngularVelocity += angVel_add_b;
+                            }
 
-                    _solveCollisionTasks.Add(t);
+                            if (velAdd_a.sqrMagnitude < CPU_SOLVER_ABORT_VELADD_SQRT && angVel_add_a.sqrMagnitude < CPU_SOLVER_ABORT_ANGVELADD_SQRT && velAdd_b.sqrMagnitude < CPU_SOLVER_ABORT_VELADD_SQRT && angVel_add_b.sqrMagnitude < CPU_SOLVER_ABORT_ANGVELADD_SQRT)
+                            {
+                                col.skipInSolver = true;
+                            }
+                        });
+
+                        _solveCollisionTasks.Add(t);
+                    }
                 }
 
                 Task.WhenAll(_solveCollisionTasks).Wait();
-
-                _collisionsInSolver = _collisionsInSolver.Except(_collisionsRemoveFromSolver).ToList();
 
                 Profiler.EndSample();
             }
@@ -432,7 +446,10 @@ namespace RBPhys
 
         public static void Dispose()
         {
-            _hwa_obb_obb_detail?.Dispose();
+
+#if COLLISION_NARROW_PHASE_HW_ACCELERATION
+            _hwa_obb_obb_detail?.Dispose()
+#endif
 
 #if COLLISION_SOLVER_HW_ACCELERATION
             _hwa_solveCollision?.Dispose();
@@ -457,6 +474,8 @@ namespace RBPhys
         public Vector3 ContactNormal { get { return _contactNormal;  } set { _contactNormal = value.normalized; } }
         public Vector3 rA;
         public Vector3 rB;
+
+        public bool skipInSolver;
 
 #if COLLISION_SOLVER_HW_ACCELERATION
         HWAcceleration.HWA_SolveCollision.RBCollisionHWA _hwaData;
@@ -606,6 +625,8 @@ namespace RBPhys
 
             rA = aNearest - cg_a;
             rB = bNearest - cg_b;
+
+            skipInSolver = false;
         }
 
 #if COLLISION_SOLVER_HW_ACCELERATION
@@ -631,8 +652,9 @@ namespace RBPhys
             _jN.Init(this, contactNormal, dt);
             _jT.Init(this, tangent, dt);
             _jB.Init(this, bitangent, dt);
-#endif
+
         }
+#endif
 
 #if !COLLISION_SOLVER_HW_ACCELERATION
 
@@ -661,6 +683,7 @@ namespace RBPhys
 
             float _bias;
             float _totalLambda;
+            float _totalLambdaInFrame;
             float _effectiveMass;
 
             public enum Type
@@ -680,6 +703,7 @@ namespace RBPhys
 
                 _bias = 0;
                 _totalLambda = 0;
+                _totalLambdaInFrame = 0;
                 _effectiveMass = 0;
             }
 
@@ -715,6 +739,7 @@ namespace RBPhys
                 k += Vector3.Dot(_wb, Vector3.Scale(col.InverseInertiaWs_b, _wb));
 
                 _effectiveMass = 1 / k;
+                _totalLambdaInFrame = _totalLambda;
                 _totalLambda = 0;
             }
 
@@ -726,7 +751,7 @@ namespace RBPhys
                 jv += Vector3.Dot(_vb, col.ExpVelocity_b + vAdd_b);
                 jv += Vector3.Dot(_wb, col.ExpAngularVelocity_b + avAdd_b);
 
-                float lambda = _effectiveMass * (-(jv + _bias));
+                float lambda = _effectiveMass * (-(jv + _bias)) + _totalLambdaInFrame;
 
                 float oldTotalLambda = _totalLambda;
 
@@ -747,6 +772,8 @@ namespace RBPhys
                 vAdd_b += col.InverseMass_b * _vb * lambda;
                 avAdd_a += Vector3.Scale(col.InverseInertiaWs_a, _wa) * lambda;
                 avAdd_b += Vector3.Scale(col.InverseInertiaWs_b, _wb) * lambda;
+
+                _totalLambdaInFrame = 0;
             }
         }
 #endif
@@ -859,25 +886,18 @@ namespace RBPhys
         public Quaternion rot;
         public Vector3 size;
         public bool isValidOBB;
-        public Vector3[] verts;
 
-        public Vector3 _center;
-        public RBMatrix3x3 _rotMatrix;
+        Vector3 _center;
 
         public Vector3 Center { get { return _center; } }
-        public RBMatrix3x3 RotMatrix { get { return _rotMatrix; } }
 
         public RBColliderOBB(Vector3 pos, Quaternion rot, Vector3 size)
         {
             this.pos = pos;
             this.rot = rot;
             this.size = size;
-            verts = new Vector3[0];
             isValidOBB = true;
             _center = pos + rot * size / 2f;
-            _rotMatrix = new RBMatrix3x3(rot);
-
-            verts = GetVertices();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -887,205 +907,6 @@ namespace RBPhys
             float right = Mathf.Abs(Vector3.Dot(rot * new Vector3(size.x, 0, 0), axisN));
             float up = Mathf.Abs(Vector3.Dot(rot * new Vector3(0, size.y, 0), axisN));
             return fwd + right + up;
-        }
-
-        const float V3_PARALLEL_DOT_EPSILON = 0.0000001f;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector3 GetAxisOffset(Vector3 axisN, out int parallelAxisMask)
-        {
-            parallelAxisMask = 0;
-
-            Vector3 aFwd = rot * new Vector3(0, 0, size.z);
-            Vector3 aRight = rot * new Vector3(size.x, 0, 0);
-            Vector3 aUp = rot * new Vector3(0, size.y, 0);
-
-            float dotFwd = Vector3.Dot(aFwd.normalized, axisN);
-            float dotRight = Vector3.Dot(aRight.normalized, axisN);
-            float dotUp = Vector3.Dot(aUp.normalized, axisN);
-
-            Vector3 p = (aFwd * RBPhysUtil.F32Sign101(dotFwd) + aRight * RBPhysUtil.F32Sign101(dotRight) + aUp * RBPhysUtil.F32Sign101(dotUp)) / 2;
-
-            if (RBPhysUtil.IsF32AbsEpsilonEqual(dotFwd, 1, V3_PARALLEL_DOT_EPSILON))
-            {
-                if (dotFwd > 0)
-                {
-                    parallelAxisMask = 1 << 4; // z-positive axis
-                }
-                else
-                {
-                    parallelAxisMask = 1 << 5; // z-negative axis
-                }
-
-                return p;
-            }
-
-            if (RBPhysUtil.IsF32AbsEpsilonEqual(dotRight, 1, V3_PARALLEL_DOT_EPSILON))
-            {
-                if (dotRight > 0)
-                {
-                    parallelAxisMask = 1 << 0; // x-positive axis
-                }
-                else
-                {
-                    parallelAxisMask = 1 << 1; // x-negative axis
-                }
-
-                return p;
-            }
-
-            if (RBPhysUtil.IsF32AbsEpsilonEqual(dotUp, 1, V3_PARALLEL_DOT_EPSILON))
-            {
-                if (dotUp > 0)
-                {
-                    parallelAxisMask = 1 << 2; // y-positive axis
-                }
-                else
-                {
-                    parallelAxisMask = 1 << 3; // y-negative axis
-                }
-
-                return p;
-            }
-
-            Vector3 cFwd = Vector3.Cross(aFwd, axisN);
-            Vector3 cRight = Vector3.Cross(aRight, axisN);
-            Vector3 cUp = Vector3.Cross(aUp, axisN);
-
-            if (RBPhysUtil.IsV3AbsDotEpsilonEqual(cFwd, cRight, 1, V3_PARALLEL_DOT_EPSILON))
-            {
-                if (dotFwd > 0)
-                {
-                    parallelAxisMask += 1 << 4; // z-positive axis
-                }
-                else
-                {
-                    parallelAxisMask += 1 << 5; // z-negative axis
-                }
-
-                if (dotRight > 0)
-                {
-                    parallelAxisMask += 1 << 0; // x-positive axis
-                }
-                else
-                {
-                    parallelAxisMask += 1 << 1; // x-negative axis
-                }
-
-                return p;
-            }
-
-            if (RBPhysUtil.IsV3AbsDotEpsilonEqual(cRight, cUp, 1, V3_PARALLEL_DOT_EPSILON))
-            {
-                if (dotRight > 0)
-                {
-                    parallelAxisMask += 1 << 0; // x-positive axis
-                }
-                else
-                {
-                    parallelAxisMask += 1 << 1; // x-negative axis
-                }
-
-                if (dotUp > 0)
-                {
-                    parallelAxisMask += 1 << 2; // y-positive axis
-                }
-                else
-                {
-                    parallelAxisMask += 1 << 3; // y-negative axis
-                }
-
-                return p;
-            }
-
-            if (RBPhysUtil.IsV3AbsDotEpsilonEqual(cUp, cFwd, 1, V3_PARALLEL_DOT_EPSILON))
-            {
-                if (dotUp > 0)
-                {
-                    parallelAxisMask += 1 << 2; // y-positive axis
-                }
-                else
-                {
-                    parallelAxisMask += 1 << 3; // y-negative axis
-                }
-
-                if (dotFwd > 0)
-                {
-                    parallelAxisMask += 1 << 4; // z-positive axis
-                }
-                else
-                {
-                    parallelAxisMask += 1 << 5; // z-negative axis
-                }
-
-                return p;
-            }
-
-            return p;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector3 GetDirectional(Vector3 dirN, out int axisInfo)
-        {
-            return Center + GetAxisOffset(dirN, out axisInfo);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public (Vector3 begin, Vector3 end) GetDirectionalEdge(int axisInfo)
-        {
-            int axis_a = -1;
-            for (int i = 0; i < 6; i++)
-            {
-                int sel = 1 << i;
-                if ((axisInfo & (sel)) == sel)
-                {
-                    if (axis_a == -1)
-                    {
-                        axis_a = i;
-                    }
-                    else
-                    {
-                        (Vector3 begin, Vector3 end) edge = (axis_a, i) switch
-                        {
-                            (0, 2) => (verts[3], verts[7]),
-                            (0, 3) => (verts[1], verts[5]),
-                            (0, 4) => (verts[5], verts[7]),
-                            (0, 5) => (verts[1], verts[3]),
-
-                            (1, 2) => (verts[2], verts[6]),
-                            (1, 3) => (verts[0], verts[4]),
-                            (1, 4) => (verts[4], verts[6]),
-                            (1, 5) => (verts[0], verts[2]),
-
-                            (2, 4) => (verts[6], verts[7]),
-                            (2, 5) => (verts[2], verts[3]),
-
-                            (3, 4) => (verts[4], verts[5]),
-                            (3, 5) => (verts[0], verts[1]),
-                            _ => (Vector3.zero, Vector3.zero)
-                        };
-
-                        return edge;
-                    }
-                }
-            }
-
-            return (Vector3.zero, Vector3.zero);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public (Vector3[] vertsCW, Vector3 normal) GetDirectionalRect(int axisInfo)
-        {
-            return axisInfo switch
-            {
-                1 << 0 => (new Vector3[4] { verts[1], verts[3], verts[7], verts[5] }, GetAxisRight()),
-                1 << 1 => (new Vector3[4] { verts[4], verts[6], verts[2], verts[0] }, -GetAxisRight()),
-                1 << 2 => (new Vector3[4] { verts[2], verts[6], verts[7], verts[3] }, GetAxisUp()),
-                1 << 3 => (new Vector3[4] { verts[1], verts[5], verts[4], verts[0] }, -GetAxisUp()),
-                1 << 4 => (new Vector3[4] { verts[5], verts[7], verts[6], verts[4] }, GetAxisForward()),
-                1 << 5 => (new Vector3[4] { verts[0], verts[2], verts[3], verts[1] }, -GetAxisForward()),
-                _ => (new Vector3[4], Vector3.zero)
-            };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1104,21 +925,6 @@ namespace RBPhys
         public Vector3 GetAxisUp()
         {
             return rot * Vector3.up;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector3[] GetVertices()
-        {
-            Vector3 xyz = pos + rot * new Vector3(0, 0, 0);
-            Vector3 Xyz = pos + rot * new Vector3(size.x, 0, 0);
-            Vector3 xYz = pos + rot * new Vector3(0, size.y, 0);
-            Vector3 XYz = pos + rot * new Vector3(size.x, size.y, 0);
-            Vector3 xyZ = pos + rot * new Vector3(0, 0, size.z);
-            Vector3 XyZ = pos + rot * new Vector3(size.x, 0, size.z);
-            Vector3 xYZ = pos + rot * new Vector3(0, size.y, size.z);
-            Vector3 XYZ = pos + rot * new Vector3(size.x, size.y, size.z);
-
-            return new Vector3[] { xyz, Xyz, xYz, XYz, xyZ, XyZ, xYZ, XYZ };
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,3 +1,7 @@
+#undef COLLISION_NARROW_PHASE_HW_ACCELERATION
+
+#if COLLISION_NARROW_PHASE_HW_ACCELERATION
+
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -174,8 +178,6 @@ namespace RBPhys.HWAcceleration
             {
                 GetBufferDatas();
 
-                pList.Clear();
-
                 for (int i = 0; i < colsCount; i++)
                 {
                     pList.Add((_ret_obb_penetrations_array[i], _ret_obb_contacts_array[i * 2], _ret_obb_contacts_array[i * 2 + 1]));
@@ -216,3 +218,4 @@ namespace RBPhys.HWAcceleration
         }
     }
 }
+#endif
