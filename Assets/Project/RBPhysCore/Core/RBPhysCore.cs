@@ -10,25 +10,34 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Profiling;
 using System.Threading;
+using UnityEngine.UIElements;
+using UnityEditorInternal;
+using UnityEngine.VFX;
+using System.Drawing;
+using System.Linq.Expressions;
+using UnityEditor;
 
 namespace RBPhys
 {
     public static class RBPhysCore
     {
-        public const int CPU_COLLISION_SOLVER_MAX_ITERATION = 6;
-        public const float CPU_SOLVER_ABORT_VELADD_SQRT = 0.005f * 0.005f;
-        public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0.05f * 0.05f;
+        public const int CPU_COLLISION_SOLVER_MAX_ITERATION = 15;
+        public const float CPU_SOLVER_ABORT_VELADD_SQRT = 0.01f * 0.01f;
+        public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0.15f * 0.15f;
 
         public const int DEFAULT_SOLVER_ITERATION = 6;
-
-        public const int COLLISION_TRAJ_BUFFER_LENGTH_UNIT = 128;
-        public const int COLLISION_TRAJ_BUFFER_LENGTH_SCHMITT_TRIGGER_WIDTH = 16;
 
         static List<RBRigidbody> _rigidbodies = new List<RBRigidbody>();
         static List<RBCollider> _colliders = new List<RBCollider>();
 
         static RBTrajectory[] _trajectories_orderByXMin = new RBTrajectory[0];
-        static int _trajectory_avail_count = 0;
+        static float[] _trajectories_xMin = new float[0];
+
+        static List<RBRigidbody> _rbAddQueue = new List<RBRigidbody>();
+        static List<RBRigidbody> _rbRemoveQueue = new List<RBRigidbody>();
+
+        static List<RBCollider> _colAddQueue = new List<RBCollider>();
+        static List<RBCollider> _colRemoveQueue = new List<RBCollider>();
 
         static List<RBCollision > _collisions = new List<RBCollision>();
         static List<RBCollision> _collisionsInSolver = new List<RBCollision>();
@@ -50,21 +59,36 @@ namespace RBPhys
         public static void AddRigidbody(RBRigidbody rb)
         {
             _rigidbodies.Add(rb);
+            _rbAddQueue.Add(rb);
         }
 
         public static void RemoveRigidbody(RBRigidbody rb)
         {
             _rigidbodies.Remove(rb);
+            _rbRemoveQueue.Add(rb);
         }
 
         public static void AddCollider(RBCollider c)
         {
             _colliders.Add(c);
+            _colAddQueue.Add(c);
         }
 
         public static void RemoveCollider(RBCollider c)
         {
             _colliders.Remove(c);
+            _colRemoveQueue.Add(c);
+        }
+
+        public static void SwitchToCollider(RBCollider c)
+        {
+            _colAddQueue.Add(c);
+        }
+
+        public static void SwitchToRigidbody(RBCollider c)
+        {
+            _colRemoveQueue.Add(c);
+            _colAddQueue.Remove(c);
         }
 
         public static void OpenPhysicsFrameWindow(float dt)
@@ -83,32 +107,99 @@ namespace RBPhys
             }
             Profiler.EndSample();
 
-            Profiler.BeginSample(name: "Physics-CollisionResolution-CalcTRAJ");
-            _colliders.ForEach(item => item.UpdateTransform());
+            Profiler.BeginSample(name: "Physics-CollisionResolution-Sort");
 
-            int count = _rigidbodies.Count + _colliders.Count;
-            int target = Mathf.CeilToInt(count / (float)COLLISION_TRAJ_BUFFER_LENGTH_UNIT) * COLLISION_TRAJ_BUFFER_LENGTH_UNIT;
-            int length = _trajectories_orderByXMin.Length;
+            int count = _trajectories_orderByXMin.Length + _rbAddQueue.Count + _colAddQueue.Count;
 
-            if (length != target && ((target < length && count < target - COLLISION_TRAJ_BUFFER_LENGTH_SCHMITT_TRIGGER_WIDTH) || (target > length)))
+            for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
             {
-                _trajectories_orderByXMin = new RBTrajectory[target];
+                _trajectories_xMin[i] = _trajectories_orderByXMin[i].trajectoryAABB.MinX;
             }
 
-            for (int i = 0; i < _rigidbodies.Count; i++)
+            if (_rbAddQueue.Any() || _colAddQueue.Any())
             {
-                _trajectories_orderByXMin[i] = _rigidbodies[i].ObjectTrajectory;
-            }
+                int offset = _trajectories_orderByXMin.Length;
 
-            for (int i = 0; i < _colliders.Count; i++)
-            {
-                if (_colliders[i].ParentRigidbody == null)
+                Array.Resize(ref _trajectories_orderByXMin, count);
+                Array.Resize(ref _trajectories_xMin, count);
+
+                for (int i = 0; i < _rbAddQueue.Count; i++)
                 {
-                    _trajectories_orderByXMin[_rigidbodies.Count + i] = _colliders[i].Trajectory;
+                    int p = offset + i;
+                    _trajectories_xMin[p] = _rbAddQueue[i].ObjectTrajectory.trajectoryAABB.MinX;
+                    _trajectories_orderByXMin[p] = _rbAddQueue[i].ObjectTrajectory;
+                }
+
+                for (int i = 0; i < _colAddQueue.Count; i++)
+                {
+                    int p = offset + _rbAddQueue.Count + i;
+                    _trajectories_xMin[p] = _colAddQueue[i].Trajectory.trajectoryAABB.MinX;
+                    _trajectories_orderByXMin[p] = _colAddQueue[i].Trajectory;
+                }
+
+                _rbAddQueue.Clear();
+                _colAddQueue.Clear();
+            }
+
+            if (_rbRemoveQueue.Any() || _colRemoveQueue.Any())
+            {
+                int rmvOffset = 0;
+
+                //削除（間をつめる）
+                for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
+                {
+                    if (i < _trajectories_orderByXMin.Length - rmvOffset)
+                    {
+                        bool isStatic = _trajectories_orderByXMin[i].IsStatic;
+
+                        if (rmvOffset > 0)
+                        {
+                            _trajectories_orderByXMin[i - rmvOffset] = _trajectories_orderByXMin[i];
+                            _trajectories_xMin[i - rmvOffset] = _trajectories_xMin[i];
+                        }
+
+                        if ((isStatic && _colRemoveQueue.Contains(_trajectories_orderByXMin[i].Collider)) || (!isStatic && _rbRemoveQueue.Contains(_trajectories_orderByXMin[i].Rigidbody)))
+                        {
+                            rmvOffset++;
+                        }
+                    }
+                }
+
+                int pc = _rbRemoveQueue.Count + _colRemoveQueue.Count;
+                Array.Resize(ref _trajectories_orderByXMin, _trajectories_orderByXMin.Length - pc);
+                Array.Resize(ref _trajectories_xMin, _trajectories_xMin.Length - pc);
+
+                _rbRemoveQueue.Clear();
+                _colRemoveQueue.Clear();
+            }
+
+            //_trajectories_orderByXMin = _trajectories_orderByXMin.OrderBy(item => item.trajectoryAABB.MinX).ToArray();
+
+            //挿入ソート
+            for (int i = 1; i < _trajectories_orderByXMin.Length; i++)
+            {
+                float a = _trajectories_xMin[i];
+                var aTraj = _trajectories_orderByXMin[i];
+
+                for (int j = i - 1; j >= 0; j--)
+                {
+                    float p = _trajectories_xMin[j];
+                    if (a < p)
+                    {
+                        _trajectories_xMin[j + 1] = p;
+                        _trajectories_orderByXMin[j + 1] = _trajectories_orderByXMin[j];
+                    }
+                    else
+                    {
+                        _trajectories_xMin[j + 1] = a;
+                        _trajectories_orderByXMin[j + 1] = aTraj;
+                        break;
+                    }
+
+                    _trajectories_xMin[j] = a;
+                    _trajectories_orderByXMin[j] = aTraj;
                 }
             }
-
-            _trajectory_avail_count = count;
 
             Profiler.EndSample();
 
@@ -143,19 +234,16 @@ namespace RBPhys
 
             List<(RBTrajectory, RBTrajectory)> collidingTrajs = new List<(RBTrajectory, RBTrajectory)>();
 
-            Profiler.BeginSample(name: "Physics-CollisionResolution-Sort");
+            Profiler.BeginSample(name: "Physics-CollisionResolution-TrajectoryAABBTest");
             {
-                //AABB��x�ŏ��l�ŏ����\�[�g
-                _trajectories_orderByXMin = _trajectories_orderByXMin.Take(_trajectory_avail_count).Where(item => item != null).OrderBy(item => item.trajectoryAABB.GetMin().x).ToArray();
-
                 for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
                 {
                     RBTrajectory activeTraj = _trajectories_orderByXMin[i];
 
                     if (activeTraj.IsValidTrajectory)
                     {
-                        float x_min = activeTraj.trajectoryAABB.GetMin().x;
-                        float x_max = activeTraj.trajectoryAABB.GetMax().x;
+                        float x_min = activeTraj.trajectoryAABB.MinX;
+                        float x_max = activeTraj.trajectoryAABB.MaxX;
 
                         for (int j = i + 1; j < _trajectories_orderByXMin.Length; j++)
                         {
@@ -165,15 +253,15 @@ namespace RBPhys
                             {
                                 if (targetTraj.IsValidTrajectory)
                                 {
-                                    float x_min_target = targetTraj.trajectoryAABB.GetMin().x;
-                                    float x_max_target = targetTraj.trajectoryAABB.GetMax().x;
+                                    float x_min_target = targetTraj.trajectoryAABB.MinX;
+                                    float x_max_target = targetTraj.trajectoryAABB.MaxX;
 
                                     if (x_max < x_min_target)
                                     {
                                         break;
                                     }
 
-                                    if(RBPhysUtil.RangeOverlap(x_min, x_max, x_min_target, x_max_target))
+                                    if (RBPhysUtil.RangeOverlap(x_min, x_max, x_min_target, x_max_target) && activeTraj.trajectoryAABB.OverlapAABB(targetTraj.trajectoryAABB))
                                     {
                                         collidingTrajs.Add((activeTraj, targetTraj));
                                     }
@@ -184,26 +272,11 @@ namespace RBPhys
                 }
 
                 Profiler.EndSample();
-
-                Profiler.BeginSample(name: "Physics-CollisionResolution-TrajectoryAABBTest");
-
-                for (int i = 0; i < collidingTrajs.Count; i++)
-                {
-                    (RBTrajectory, RBTrajectory) trajPair = collidingTrajs[i];
-
-                    if (!trajPair.Item1.trajectoryAABB.OverlapAABB(trajPair.Item2.trajectoryAABB))
-                    {
-                        collidingTrajs.RemoveAt(i);
-                        i--;
-                    }
-                }
-
-                Profiler.EndSample();
             }
 
             //�Փˌ��m�i�i���[�t�F�[�Y�j�Ɖ��
 
-            Profiler.BeginSample(name: "Physics-CollisionResolution-DetailTest");
+            Profiler.BeginSample(name: "Physics-CollisionResolution-PrepareDetailTest");
 
             _obb_obb_cols.Clear();
             _obb_obb_cols_res.Clear();
@@ -212,6 +285,10 @@ namespace RBPhys
             {
                 DetectCollisions(trajPair.Item1, trajPair.Item2, ref _obb_obb_cols);
             }
+
+            Profiler.EndSample();
+
+            Profiler.BeginSample(name: "Physics-CollisionResolution-DetailTest");
 
 #if COLLISION_NARROW_PHASE_HW_ACCELERATION
             _hwa_obb_obb_detail.HWA_ComputeDetailCollision(_obb_obb_cols);
@@ -231,15 +308,6 @@ namespace RBPhys
             {
                 var r = t.Result;
                 _obb_obb_cols_res.Add((r.Item1, r.Item2, r.Item3));
-            }
-#endif
-
-            Task.WhenAll(tList).Wait();
-
-            foreach (var t in tList)
-            {
-                var r = t.Result;
-                _obb_obb_cols_res.Add((r.p, r.pA, r.pB));
             }
 #endif
 
@@ -353,23 +421,23 @@ namespace RBPhys
             }
 
             //AABB��x�ŏ��l�ŃR���C�_������\�[�g
-            trajAABB_a = trajAABB_a.OrderBy(item => item.aabb.GetMin().x).ToArray();
-            trajAABB_b = trajAABB_b.OrderBy(item => item.aabb.GetMin().x).ToArray();
+            trajAABB_a = trajAABB_a.OrderBy(item => item.aabb.MinX).ToArray();
+            trajAABB_b = trajAABB_b.OrderBy(item => item.aabb.MinX).ToArray();
 
             //�R���C�_���ɐڐG�𔻒�
             for (int i = 0; i < trajAABB_a.Length; i++)
             {
                 var collider_a = trajAABB_a[i];
 
-                float a_x_min = collider_a.aabb.GetMin().x;
-                float a_x_max = collider_a.aabb.GetMax().x;
+                float a_x_min = collider_a.aabb.MinX;
+                float a_x_max = collider_a.aabb.MaxX;
 
                 for (int j = 0; j < trajAABB_b.Length; j++)
                 {
                     var collider_b = trajAABB_b[j];
 
-                    float b_x_min = collider_b.aabb.GetMin().x;
-                    float b_x_max = collider_b.aabb.GetMax().x;
+                    float b_x_min = collider_b.aabb.MinX;
+                    float b_x_max = collider_b.aabb.MaxX;
 
                     if (b_x_max < a_x_min)
                     {
@@ -676,7 +744,7 @@ namespace RBPhys
             _jB.Resolve(this, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
         }
 
-        const float COLLISION_ERROR_SLOP = 0.0001f;
+        const float COLLISION_ERROR_SLOP = -0.0001f;
 
         struct Jacobian
         {
@@ -792,27 +860,26 @@ namespace RBPhys
         public Vector3 Size { get; private set; }
         public Vector3 Extents { get { return Size / 2f; } }
 
+        public float MinX { get { return _minX; } }
+        public float MaxX { get { return _maxX; } }
+        public Vector3 Min { get { return _min; } }
+        public Vector3 Max { get { return _max; } }
+
+        float _minX;
+        float _maxX;
+        Vector3 _min;
+        Vector3 _max;
+
         public RBColliderAABB(Vector3 center, Vector3 size)
         {
             isValidAABB = true;
             this.Center = center;
             this.Size = RBPhysUtil.V3Abs(size);
-        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector3 GetMin()
-        {
-            Vector3 p = Center - Extents;
-            Vector3 q = Center + Extents;
-            return Vector3.Min(p, q);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector3 GetMax()
-        {
-            Vector3 p = Center - Extents;
-            Vector3 q = Center + Extents;
-            return Vector3.Max(p, q);
+            _min = Center - Size / 2;
+            _max = Center + Size / 2;
+            _minX = _min.x;
+            _maxX = _max.x;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -822,11 +889,16 @@ namespace RBPhys
             {
                 if (!ContainsPoint(point))
                 {
-                    Vector3 res_min = Vector3.Min(GetMin(), point);
-                    Vector3 res_max = Vector3.Max(GetMax(), point);
+                    Vector3 res_min = Vector3.Min(Min, point);
+                    Vector3 res_max = Vector3.Max(Max, point);
 
                     Center = (res_min + res_max) / 2f;
                     Size = res_max - res_min;
+
+                    _min = Center - Size / 2;
+                    _max = Center + Size / 2;
+                    _minX = _min.x;
+                    _maxX = _max.x;
                 }
             }
             else
@@ -834,6 +906,11 @@ namespace RBPhys
                 Center = point;
                 Size = Vector3.zero;
                 isValidAABB = true;
+
+                _min = Center;
+                _max = Center;
+                _minX = _min.x;
+                _maxX = _max.x;
             }
         }
 
@@ -844,17 +921,27 @@ namespace RBPhys
             {
                 if (isValidAABB)
                 {
-                    Vector3 res_min = Vector3.Min(GetMin(), aabb.GetMin());
-                    Vector3 res_max = Vector3.Max(GetMax(), aabb.GetMax());
+                    Vector3 res_min = Vector3.Min(Min, aabb.Min);
+                    Vector3 res_max = Vector3.Max(Max, aabb.Max);
 
                     Center = (res_min + res_max) / 2f;
                     Size = res_max - res_min;
+
+                    _min = Center - Size / 2;
+                    _max = Center + Size / 2;
+                    _minX = _min.x;
+                    _maxX = _max.x;
                 }
                 else
                 {
                     Center = aabb.Center;
                     Size = aabb.Size;
                     isValidAABB = true;
+
+                    _min = Center - Size / 2;
+                    _max = Center + Size / 2;
+                    _minX = _min.x;
+                    _maxX = _max.x;
                 }
             }
         }
@@ -862,7 +949,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsPoint(Vector3 point)
         {
-            return isValidAABB && RBPhysUtil.IsV3Less(GetMin(), point) && RBPhysUtil.IsV3Less(point, GetMax());
+            return isValidAABB && RBPhysUtil.IsV3Less(Min, point) && RBPhysUtil.IsV3Less(point, Max);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -870,14 +957,9 @@ namespace RBPhys
         {
             if (isValidAABB && ext.isValidAABB)
             {
-                Vector3 min = GetMin();
-                Vector3 max = GetMax();
-                Vector3 extMin = ext.GetMin();
-                Vector3 extMax = ext.GetMax();
-
-                if (!RBPhysUtil.RangeOverlap(min.x, max.x, extMin.x, extMax.x)) return false;
-                if (!RBPhysUtil.RangeOverlap(min.y, max.y, extMin.y, extMax.y)) return false;
-                if (!RBPhysUtil.RangeOverlap(min.z, max.z, extMin.z, extMax.z)) return false;
+                if (!RBPhysUtil.RangeOverlap(Min.x, Max.x, ext.Min.x, ext.Max.x)) return false;
+                if (!RBPhysUtil.RangeOverlap(Min.y, Max.y, ext.Min.y, ext.Max.y)) return false;
+                if (!RBPhysUtil.RangeOverlap(Min.z, Max.z, ext.Min.z, ext.Max.z)) return false;
 
                 return true;
             }
@@ -931,12 +1013,6 @@ namespace RBPhys
         public Vector3 GetAxisUp()
         {
             return rot * Vector3.up;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector3 GetVertex(int axisMask)
-        {
-            return Vector3.zero;
         }
     }
 

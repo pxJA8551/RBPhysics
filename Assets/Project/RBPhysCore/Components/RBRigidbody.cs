@@ -79,11 +79,21 @@ namespace RBPhys
         void OnEnable()
         {
             RBPhysCore.AddRigidbody(this);
+
+            foreach (var c in _colliders)
+            {
+                RBPhysCore.SwitchToRigidbody(c);
+            }
         }
 
         private void OnDisable()
         {
             RBPhysCore.RemoveRigidbody(this);
+
+            foreach (var c in _colliders)
+            {
+                RBPhysCore.SwitchToCollider(c);
+            }
         }
 
         private void FixedUpdate() { }

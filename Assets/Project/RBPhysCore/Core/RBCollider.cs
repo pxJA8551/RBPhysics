@@ -32,6 +32,7 @@ namespace RBPhys
 
         void Awake()
         {
+            UpdateTransform();
         }
 
         void OnDestroy()
