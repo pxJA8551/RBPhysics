@@ -23,6 +23,17 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 ProjectPointToEdge(Vector3 p, Vector3 begin, Vector3 end, out bool outsideEdge)
+        {
+            float dn = (end - begin).magnitude;
+            Vector3 dirN = (end - begin) / dn;
+            float dd = Vector3.Dot(p - begin, dirN);
+            outsideEdge = dd < 0 || dn < dd;
+
+            return begin + dirN * Mathf.Clamp(dd, 0, dn);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 ProjectPointToPlane(Vector3 p, Vector3 planeNormal, Vector3 planeCenter)
         {
             return planeCenter + Vector3.ProjectOnPlane(p - planeCenter, planeNormal);
@@ -170,6 +181,28 @@ namespace RBPhys
             float r2 = (dotAB * Vector3.Dot(aToB, dirAN) - Vector3.Dot(aToB, dirBN)) / div;
 
             return (0 <= r1 && r1 <= ebA && 0 <= r2 && r2 <= ebB) ? beginA + r1 * dirAN : Vector3.negativeInfinity;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 CalcNearestOnPlane(Vector3 edgeBegin, Vector3 edgeEnd, Vector3 planeNormal, Vector3 planeCenter)
+        {
+            Vector3 dirN = edgeEnd - edgeBegin;
+            float dirL = dirN.magnitude;
+            dirN = dirN / dirL;
+
+            Vector3 prjBegin = planeCenter + Vector3.ProjectOnPlane(edgeBegin - planeCenter, planeNormal);
+            Vector3 pd = prjBegin - edgeBegin;
+            float dc = Vector3.Dot(pd, dirN);
+            float ff = 1 / dc;
+
+            if(0 <= ff && ff <= dirL)
+            {
+                return edgeBegin + (dirN * Mathf.Clamp(ff, 0, dirL));
+            }
+            else
+            {
+                return ProjectPointToPlane(edgeBegin + (dirN * Mathf.Clamp(ff, 0, dirL)), planeNormal, planeCenter);
+            }
         }
     }
 }

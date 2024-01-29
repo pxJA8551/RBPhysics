@@ -20,7 +20,6 @@ namespace RBPhys
 
         public Vector3 GameObjectPos { get; private set; }
         public Quaternion GameObjectRot { get; private set; }
-        public Vector3 GameObjectLossyScale { get; private set; }
 
         [HideInInspector] public float beta = 0.7f;
         public float restitution = 0.5f; //îΩî≠åWêî
@@ -78,40 +77,40 @@ namespace RBPhys
         {
             GameObjectPos = gameObject.transform.position;
             GameObjectRot = gameObject.transform.rotation;
-            GameObjectLossyScale = gameObject.transform.lossyScale;
             _trajectory.Update(this);
         }
 
-        public abstract float CalcVolume(Vector3 scale);
-        public abstract RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot, Vector3 scale);
-        public abstract RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot, Vector3 scale);
-        public abstract RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot, Vector3 scale);
-
-        public virtual float CalcVolume()
-        {
-            return CalcVolume(GameObjectLossyScale);
-        }
+        public abstract float CalcVolume();
+        public abstract RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot);
+        public abstract RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot);
+        public abstract RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot);
+        public abstract RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot);
 
         public virtual RBColliderSphere CalcSphere()
         {
-            return CalcSphere(GameObjectPos, GameObjectRot, GameObjectLossyScale);
+            return CalcSphere(GameObjectPos, GameObjectRot);
         }
 
         public virtual RBColliderAABB CalcAABB()
         {
-            return CalcAABB(GameObjectPos, GameObjectRot, GameObjectLossyScale);
+            return CalcAABB(GameObjectPos, GameObjectRot);
         }
 
         public virtual RBColliderOBB CalcOBB()
         {
-            return CalcOBB(GameObjectPos, GameObjectRot, GameObjectLossyScale);
+            return CalcOBB(GameObjectPos, GameObjectRot);
         }
 
-        public abstract Vector3 GetColliderCenter(Vector3 pos, Quaternion rot, Vector3 scale);
+        public virtual RBColliderCapsule CalcCapsule()
+        {
+            return CalcCapsule(GameObjectPos, GameObjectRot);
+        }
+
+        public abstract Vector3 GetColliderCenter(Vector3 pos, Quaternion rot);
 
         public virtual Vector3 GetColliderCenter()
         {
-            return GetColliderCenter(GameObjectPos, GameObjectRot, GameObjectLossyScale);
+            return GetColliderCenter(GameObjectPos, GameObjectRot);
         }
     }
 }

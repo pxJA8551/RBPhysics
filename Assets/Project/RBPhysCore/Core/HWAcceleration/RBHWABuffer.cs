@@ -5,54 +5,57 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-public class RBHWABuffer<T> : IDisposable
+namespace RBPhys
 {
-    GraphicsBuffer _graphicsBuffer;
-    int _count;
-
-    int _stride;
-
-    public int Count { get { return _count; } }
-
-    public RBHWABuffer(GraphicsBuffer.Target target, int count)
+    public class RBHWABuffer<T> : IDisposable
     {
-        _count = count;
-        _graphicsBuffer = new GraphicsBuffer(target, count, Marshal.SizeOf(typeof(T)));
-    }
+        GraphicsBuffer _graphicsBuffer;
+        int _count;
 
-    public RBHWABuffer(int count)
-    {
-        _count = count;
-        _stride = Marshal.SizeOf(typeof(T));
-        _graphicsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, count, _stride);
-    }
+        int _stride;
 
-    public GraphicsBuffer GetGraphicsBuffer()
-    {
-        return _graphicsBuffer;
-    }
+        public int Count { get { return _count; } }
 
-    public void SetData(T[] data)
-    {
-        _graphicsBuffer.SetData(data);
-    }
+        public RBHWABuffer(GraphicsBuffer.Target target, int count)
+        {
+            _count = count;
+            _graphicsBuffer = new GraphicsBuffer(target, count, Marshal.SizeOf(typeof(T)));
+        }
 
-    public void GetData(T[] data)
-    {
-        _graphicsBuffer.GetData(data);
-    }
+        public RBHWABuffer(int count)
+        {
+            _count = count;
+            _stride = Marshal.SizeOf(typeof(T));
+            _graphicsBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, count, _stride);
+        }
 
-    public T[] GetData()
-    {
-        T[] data = new T[_count];
-        _graphicsBuffer.GetData(data);
+        public GraphicsBuffer GetGraphicsBuffer()
+        {
+            return _graphicsBuffer;
+        }
 
-        return data;
-    }
+        public void SetData(T[] data)
+        {
+            _graphicsBuffer.SetData(data);
+        }
 
-    public void Dispose()
-    {
-        _graphicsBuffer.Dispose();
-        _count = -1;
+        public void GetData(T[] data)
+        {
+            _graphicsBuffer.GetData(data);
+        }
+
+        public T[] GetData()
+        {
+            T[] data = new T[_count];
+            _graphicsBuffer.GetData(data);
+
+            return data;
+        }
+
+        public void Dispose()
+        {
+            _graphicsBuffer.Dispose();
+            _count = -1;
+        }
     }
 }

@@ -11,6 +11,8 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using System.Threading;
 using UnityEditor;
+using JetBrains.Annotations;
+using System.Runtime.InteropServices;
 
 namespace RBPhys
 {
@@ -195,8 +197,6 @@ namespace RBPhys
                 }
             }
 
-            _trajectories_orderByXMin = _trajectories_orderByXMin.OrderBy(item => item.trajectoryAABB.MinX).ToArray();
-
             Profiler.EndSample();
 
             SolveColliders(dt);
@@ -224,6 +224,10 @@ namespace RBPhys
         static List<(RBCollider col_a, RBCollider col_b)> _obb_obb_cols = new List<(RBCollider, RBCollider)>();
         static List<(RBCollider col_a, RBCollider col_b)> _obb_sphere_cols = new List<(RBCollider, RBCollider)>();
         static List<(RBCollider col_a, RBCollider col_b)> _sphere_sphere_cols = new List<(RBCollider, RBCollider)>();
+        static List<(RBCollider col_a, RBCollider col_b)> _capsule_obb_cols = new List<(RBCollider, RBCollider)>();
+        static List<(RBCollider col_a, RBCollider col_b)> _capsule_sphere_cols = new List<(RBCollider, RBCollider)>();
+        static List<(RBCollider col_a, RBCollider col_b)> _capsule_capsule_cols = new List<(RBCollider, RBCollider)>();
+
         static List<(Vector3 p, Vector3 pA, Vector3 pB)> _cols_res = new List<(Vector3 p, Vector3 pA, Vector3 pB)>();
 
         public static void SolveColliders(float dt)
@@ -279,10 +283,12 @@ namespace RBPhys
             _cols_res.Clear();
             _obb_obb_cols.Clear();
             _obb_sphere_cols.Clear();
+            _sphere_sphere_cols.Clear();
+            _capsule_obb_cols.Clear();
 
             foreach (var trajPair in collidingTrajs)
             {
-                DetectCollisions(trajPair.Item1, trajPair.Item2, ref _obb_obb_cols, ref _obb_sphere_cols, ref _sphere_sphere_cols);
+                DetectCollisions(trajPair.Item1, trajPair.Item2, ref _obb_obb_cols, ref _obb_sphere_cols, ref _sphere_sphere_cols, ref _capsule_obb_cols);
             }
 
             Profiler.EndSample();
@@ -310,6 +316,12 @@ namespace RBPhys
             foreach (var colPair in _sphere_sphere_cols)
             {
                 var t = Task.Run(() => RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollision(colPair.col_a.CalcSphere(), colPair.col_b.CalcSphere()));
+                _detailCollisionTasks.Add(t);
+            }
+
+            foreach (var colPair in _capsule_obb_cols)
+            {
+                var t = Task.Run(() => RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollision(colPair.col_a.CalcOBB(), colPair.col_b.CalcCapsule()));
                 _detailCollisionTasks.Add(t);
             }
 
@@ -355,10 +367,11 @@ namespace RBPhys
                     _collisionsInSolver.Add(rbc);
                 }
             }
+            int offset = _obb_obb_cols.Count;
 
             for (int i = 0; i < _obb_sphere_cols.Count; i++)
             {
-                int p = _obb_obb_cols.Count + i;
+                int p = offset + i;
 
                 if (_cols_res[p].p == Vector3.negativeInfinity)
                 {
@@ -387,10 +400,11 @@ namespace RBPhys
                     _collisionsInSolver.Add(rbc);
                 }
             }
+            offset += _obb_sphere_cols.Count;
 
             for (int i = 0; i < _sphere_sphere_cols.Count; i++)
             {
-                int p = _obb_obb_cols.Count + _obb_sphere_cols.Count + i;
+                int p = offset + i;
 
                 if (_cols_res[p].p == Vector3.negativeInfinity)
                 {
@@ -401,6 +415,39 @@ namespace RBPhys
                 if (_cols_res[p].p != Vector3.zero)
                 {
                     var pair = _sphere_sphere_cols[i];
+                    var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
+
+                    if (isInverted && rbc != null)
+                    {
+                        rbc.SwapTo(pair.Item1, pair.Item2);
+                    }
+
+                    if (rbc == null)
+                    {
+                        rbc = new RBCollision(pair.Item1, pair.Item2, _cols_res[i].p);
+                    }
+
+                    rbc.Update(_cols_res[p].p, _cols_res[p].pA, _cols_res[p].pB);
+                    rbc.InitVelocityConstraint(dt);
+
+                    _collisionsInSolver.Add(rbc);
+                }
+            }
+            offset += _sphere_sphere_cols.Count;
+
+            for (int i = 0; i < _capsule_obb_cols.Count; i++)
+            {
+                int p = offset + i;
+
+                if (_cols_res[p].p == Vector3.negativeInfinity)
+                {
+                    //衝突しているものの衝突量を計算できない場合
+                    continue;
+                }
+
+                if (_cols_res[p].p != Vector3.zero)
+                {
+                    var pair = _capsule_obb_cols[i];
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
                     if (isInverted && rbc != null)
@@ -472,7 +519,7 @@ namespace RBPhys
             _collisionsInSolver.Clear();
         }
 
-        static void DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b, ref List<(RBCollider, RBCollider)> obb_obb_cols, ref List<(RBCollider, RBCollider)> obb_sphere_cols, ref List<(RBCollider, RBCollider)> sphere_sphere_cols)
+        static void DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b, ref List<(RBCollider, RBCollider)> obb_obb_cols, ref List<(RBCollider, RBCollider)> obb_sphere_cols, ref List<(RBCollider, RBCollider)> sphere_sphere_cols, ref List<(RBCollider, RBCollider)> capsule_obb_cols)
         {
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_b;
@@ -552,6 +599,16 @@ namespace RBPhys
                                 {
                                     //Sphere-Sphere衝突
                                     sphere_sphere_cols.Add((collider_b.collider, collider_a.collider));
+                                }
+                                else if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.Capsule)
+                                {
+                                    //OBB-Capsule衝突
+                                    capsule_obb_cols.Add((collider_a.collider, collider_b.collider));
+                                }
+                                else if (collider_a.collider.GeometryType == RBGeometryType.Capsule && collider_b.collider.GeometryType == RBGeometryType.OBB)
+                                {
+                                    //OBB-Capsule衝突（逆転）
+                                    capsule_obb_cols.Add((collider_b.collider, collider_a.collider));
                                 }
                             }
                         }
@@ -1081,19 +1138,19 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector3 GetAxisForward()
+        public Vector3 GetAxisForwardN()
         {
             return rot * Vector3.forward;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector3 GetAxisRight()
+        public Vector3 GetAxisRightN()
         {
             return rot * Vector3.right;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector3 GetAxisUp()
+        public Vector3 GetAxisUpN()
         {
             return rot * Vector3.up;
         }
@@ -1110,6 +1167,39 @@ namespace RBPhys
             this.pos = pos;
             this.radius = radius;
             isValidSphere = true;
+        }
+    }
+    
+    public struct RBColliderCapsule
+    {
+        public Vector3 pos;
+        public Quaternion rot;
+        public float radius;
+        public float height;
+        public bool isValidCapsule;
+
+        public RBColliderCapsule(Vector3 pos, Quaternion rot, float radius, float height)
+        {
+            this.pos = pos;
+            this.rot = rot;
+            this.radius = radius;
+            this.height = height;
+            isValidCapsule = true;
+        }
+
+        public Vector3 GetHeightAxisN()
+        {
+            return rot * Vector3.up;
+        }
+
+        public float GetAxisSize(Vector3 axisN)
+        {
+            return　Mathf.Abs(Vector3.Dot(rot * new Vector3(0, height, 0), axisN)) + radius * 2;
+        }
+
+        public (Vector3 begin, Vector3 end) GetEdge()
+        {
+            return (pos + rot * new Vector3(0, height / 2f, 0), pos - rot * new Vector3(0, height / 2f, 0));
         }
     }
 
@@ -1165,7 +1255,7 @@ namespace RBPhys
 
         public RBTrajectory(RBCollider collider)
         {
-            trajectoryAABB = collider.CalcAABB(collider.GameObjectPos, collider.GameObjectRot, collider.GameObjectLossyScale);
+            trajectoryAABB = collider.CalcAABB(collider.GameObjectPos, collider.GameObjectRot);
             _rigidbody = null;
             _collider = collider;
             _isStatic = true;
@@ -1197,7 +1287,7 @@ namespace RBPhys
 
         public void Update(RBCollider collider)
         {
-            trajectoryAABB = collider.CalcAABB(collider.GameObjectPos, collider.GameObjectRot, collider.GameObjectLossyScale);
+            trajectoryAABB = collider.CalcAABB(collider.GameObjectPos, collider.GameObjectRot);
             _rigidbody = null;
             _collider = collider;
             _isStatic = true;
