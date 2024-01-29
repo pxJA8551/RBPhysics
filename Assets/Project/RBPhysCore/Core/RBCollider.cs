@@ -42,6 +42,11 @@ namespace RBPhys
         void OnEnable()
         {
             RBPhysCore.AddCollider(this);
+
+            if (ParentRigidbody != null)
+            {
+                RBPhysCore.SwitchToRigidbody(this);
+            }
         }
 
         private void OnDisable()

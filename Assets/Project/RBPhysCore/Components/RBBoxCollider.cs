@@ -17,7 +17,7 @@ namespace RBPhys
         public override RBGeometryType GeometryType { get { return GEOMETRY_TYPE; } }
 
         public Vector3 Center { get { return _center; } set { _center = value; } }
-        public Vector3 Size { get { return _size; } }
+        public Vector3 Size { get { return _size; } set { _size = RBPhysUtil.V3Abs(value); } }
         public Quaternion LocalRot { get { return Quaternion.Euler(_rotationEuler); } set { _rotationEuler = value.eulerAngles; } }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
