@@ -15,7 +15,7 @@ namespace RBPhys
     {
         public static class DetailCollisionOBBOBB
         {
-            const float FACE_PARALLEL_DOT_EPSILON = 0.0005f;
+            const float FACE_PARALLEL_DOT_EPSILON = 0.002f;
 
             public static (Vector3 p, Vector3 pA, Vector3 pB) CalcDetailCollision(RBColliderOBB obb_a, RBColliderOBB obb_b)
             {
@@ -486,10 +486,10 @@ namespace RBPhys
                     fB2 += (fB2 == Vector3.zero) ? bRight * (dBRight == 0 ? 1 : 0) : Vector3.zero;
                     fB2 += (fB2 == Vector3.zero) ? bFwd * (dBFwd == 0 ? 1 : 0) : Vector3.zero;
 
-                    fA1 /= 2f;
-                    fA2 /= 2f;
-                    fB1 /= 2f;
-                    fB2 /= 2f;
+                    fA1 /= 4f;
+                    fA2 /= 4f;
+                    fB1 /= 4f;
+                    fB2 /= 4f;
 
                     if (aPd == 0 || bPd == 0)
                     {
@@ -519,6 +519,9 @@ namespace RBPhys
                     }
                     else if (aPd == 1)
                     {
+                        fA1 *= 2f;
+                        fA2 *= 2f;
+
                         Vector3 te_begin = aDp + (fA1 + fA2);
                         Vector3 te_end = aDp - (fA1 + fA2);
 
@@ -532,6 +535,9 @@ namespace RBPhys
                     }
                     else if (bPd == 1)
                     {
+                        fB1 *= 2f;
+                        fB2 *= 2f;
+
                         Vector3 te_begin = bDp + (fB1 + fB2);
                         Vector3 te_end = bDp - (fB1 + fB2);
 
@@ -546,6 +552,11 @@ namespace RBPhys
                     else
                     {
                         Vector3[] verts = new Vector3[8];
+
+                        fA1 *= 2f;
+                        fA2 *= 2f;
+                        fB1 *= 2f;
+                        fB2 *= 2f;
 
                         for (int i = 0; i < aPd * 2; i++)
                         {

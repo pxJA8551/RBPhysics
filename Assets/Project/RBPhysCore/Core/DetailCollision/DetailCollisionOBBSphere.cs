@@ -13,9 +13,9 @@ namespace RBPhys
             {
                 Vector3 d = (sphere_b.pos - obb_a.Center);
 
-                Vector3 aFwdN = obb_a.GetAxisForward();
-                Vector3 aRightN = obb_a.GetAxisRight();
-                Vector3 aUpN = obb_a.GetAxisUp();
+                Vector3 aFwdN = obb_a.GetAxisForwardN();
+                Vector3 aRightN = obb_a.GetAxisRightN();
+                Vector3 aUpN = obb_a.GetAxisUpN();
 
                 float dpx = Mathf.Clamp(Vector3.Dot(aRightN, d), -obb_a.size.x / 2, obb_a.size.x / 2);
                 float dpy = Mathf.Clamp(Vector3.Dot(aUpN, d), -obb_a.size.y / 2, obb_a.size.y / 2);

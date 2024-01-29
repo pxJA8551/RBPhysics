@@ -1,4 +1,5 @@
 using RBPhys;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -19,42 +20,40 @@ namespace RBPhys
         public float Radius { get { return _radius; } set { _radius = Mathf.Abs(value); } }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override float CalcVolume(Vector3 scale)
+        public override float CalcVolume()
         {
-            scale = RBPhysUtil.V3Abs(scale);
-            float r = Mathf.Max(scale.x, scale.y, scale.z) * _radius;
-            return (4f * Mathf.PI * r * r * r) / 3f;
+            return (4f * Mathf.PI * _radius * _radius * _radius) / 3f;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot, Vector3 scale)
+        public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot)
         {
-            scale = RBPhysUtil.V3Abs(scale);
-            float r = Mathf.Max(scale.x, scale.y, scale.z) * _radius;
-            return new RBColliderSphere(pos + _center, r);
+            return new RBColliderSphere(pos + _center, _radius);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot, Vector3 scale)
+        public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot)
         {
-            scale = RBPhysUtil.V3Abs(scale);
-            float r = Mathf.Max(scale.x, scale.y, scale.z) * _radius * 2;
-            return new RBColliderAABB(pos + _center, Vector3.one * r);
+            return new RBColliderAABB(pos + _center, Vector3.one * _radius * 2);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot, Vector3 scale)
+        public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot)
         {
-            scale = RBPhysUtil.V3Abs(scale);
-            float r = Mathf.Max(scale.x, scale.y, scale.z) * _radius * 2;
-            Vector3 size = Vector3.one * r;
+            Vector3 size = Vector3.one * _radius * 2;
             return new RBColliderOBB(pos + _center - size / 2f, rot, size);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override Vector3 GetColliderCenter(Vector3 pos, Quaternion rot, Vector3 scale)
+        public override Vector3 GetColliderCenter(Vector3 pos, Quaternion rot)
         {
             return pos + _center;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }
