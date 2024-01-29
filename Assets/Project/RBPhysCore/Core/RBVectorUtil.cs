@@ -165,7 +165,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 CalcNearestOrNInf(Vector3 beginA, Vector3 endA, Vector3 beginB, Vector3 endB)
+        public static Vector3 CalcNearest(Vector3 beginA, Vector3 endA, Vector3 beginB, Vector3 endB, out bool invalid)
         {
             float ebA = (endA - beginA).magnitude;
             float ebB = (endB - beginB).magnitude;
@@ -180,7 +180,14 @@ namespace RBPhys
             float r1 = (Vector3.Dot(aToB, dirAN) - dotAB * Vector3.Dot(aToB, dirBN)) / div;
             float r2 = (dotAB * Vector3.Dot(aToB, dirAN) - Vector3.Dot(aToB, dirBN)) / div;
 
-            return (0 <= r1 && r1 <= ebA && 0 <= r2 && r2 <= ebB) ? beginA + r1 * dirAN : Vector3.negativeInfinity;
+            invalid = !(0 <= r1 && r1 <= ebA && 0 <= r2 && r2 <= ebB);
+            return beginA + r1 * dirAN;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 CalcNearest(Vector3 beginA, Vector3 endA, Vector3 beginB, Vector3 endB)
+        {
+            return CalcNearest(beginA, endA, beginB, endB, out _);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

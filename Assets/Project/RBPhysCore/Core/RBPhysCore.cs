@@ -11,7 +11,6 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using System.Threading;
 using UnityEditor;
-using JetBrains.Annotations;
 using System.Runtime.InteropServices;
 
 namespace RBPhys
@@ -340,12 +339,6 @@ namespace RBPhys
 
             for (int i = 0; i < _obb_obb_cols.Count; i++)
             {
-                if (_cols_res[i].p == Vector3.negativeInfinity)
-                {
-                    //衝突しているものの衝突量を計算できない場合
-                    continue;
-                }
-
                 if (_cols_res[i].p != Vector3.zero)
                 {
                     var pair = _obb_obb_cols[i];
@@ -372,12 +365,6 @@ namespace RBPhys
             for (int i = 0; i < _obb_sphere_cols.Count; i++)
             {
                 int p = offset + i;
-
-                if (_cols_res[p].p == Vector3.negativeInfinity)
-                {
-                    //衝突しているものの衝突量を計算できない場合
-                    continue;
-                }
 
                 if (_cols_res[p].p != Vector3.zero)
                 {
@@ -406,12 +393,6 @@ namespace RBPhys
             {
                 int p = offset + i;
 
-                if (_cols_res[p].p == Vector3.negativeInfinity)
-                {
-                    //衝突しているものの衝突量を計算できない場合
-                    continue;
-                }
-
                 if (_cols_res[p].p != Vector3.zero)
                 {
                     var pair = _sphere_sphere_cols[i];
@@ -438,12 +419,6 @@ namespace RBPhys
             for (int i = 0; i < _capsule_obb_cols.Count; i++)
             {
                 int p = offset + i;
-
-                if (_cols_res[p].p == Vector3.negativeInfinity)
-                {
-                    //衝突しているものの衝突量を計算できない場合
-                    continue;
-                }
 
                 if (_cols_res[p].p != Vector3.zero)
                 {

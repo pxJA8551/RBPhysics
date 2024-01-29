@@ -27,7 +27,7 @@ namespace RBPhys
 
                 if (pdL == 0)
                 {
-                    return (Vector3.negativeInfinity, pA, sphere_b.pos);
+                    return (V3NaN, pA, sphere_b.pos);
                 }
 
                 Vector3 pdN = pd / pdL;

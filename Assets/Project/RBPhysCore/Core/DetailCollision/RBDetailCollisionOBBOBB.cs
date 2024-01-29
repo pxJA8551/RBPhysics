@@ -580,12 +580,14 @@ namespace RBPhys
                         }
 
                         Vector3[] contacts = new Vector3[16];
+                        bool[] valid = new bool[16];
 
                         for (int ie = 0; ie < 4; ie++)
                         {
                             for (int je = 0; je < 4; je++)
                             {
-                                contacts[ie * 4 + je] = CalcNearestOrNInf(verts[ie], verts[(ie + 1) % 4], verts[4 + je], verts[4 + (je + 1) % 4]);
+                                contacts[ie * 4 + je] = CalcNearest(verts[ie], verts[(ie + 1) % 4], verts[4 + je], verts[4 + (je + 1) % 4], out bool invalid);
+                                valid[ie * 4 + je] = !invalid;
                             }
                         }
 
@@ -617,7 +619,7 @@ namespace RBPhys
                         for (int i = 0; i < 16; i++)
                         {
                             Vector3 c = contacts[i];
-                            if (c != Vector3.negativeInfinity)
+                            if (valid[i])
                             {
                                 sum += c;
                                 count++;
