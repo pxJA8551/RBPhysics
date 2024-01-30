@@ -23,7 +23,7 @@ namespace RBPhys
 
         [HideInInspector] public float beta = 0.7f;
         public float restitution = 0.5f; //”½”­ŒW”
-        public float friction = 0.7f; //–€CŒW”
+        public float friction = 0.5f; //–€CŒW”
 
         public RBTrajectory Trajectory { get { return _trajectory; } }
 
