@@ -223,8 +223,8 @@ namespace RBPhys
         static List<(RBCollider col_a, RBCollider col_b)> _obb_obb_cols = new List<(RBCollider, RBCollider)>();
         static List<(RBCollider col_a, RBCollider col_b)> _obb_sphere_cols = new List<(RBCollider, RBCollider)>();
         static List<(RBCollider col_a, RBCollider col_b)> _sphere_sphere_cols = new List<(RBCollider, RBCollider)>();
-        static List<(RBCollider col_a, RBCollider col_b)> _capsule_obb_cols = new List<(RBCollider, RBCollider)>();
-        static List<(RBCollider col_a, RBCollider col_b)> _capsule_sphere_cols = new List<(RBCollider, RBCollider)>();
+        static List<(RBCollider col_a, RBCollider col_b)> _obb_capsule_cols = new List<(RBCollider, RBCollider)>();
+        static List<(RBCollider col_a, RBCollider col_b)> _sphere_capsule_cols = new List<(RBCollider, RBCollider)>();
         static List<(RBCollider col_a, RBCollider col_b)> _capsule_capsule_cols = new List<(RBCollider, RBCollider)>();
 
         static List<(Vector3 p, Vector3 pA, Vector3 pB)> _cols_res = new List<(Vector3 p, Vector3 pA, Vector3 pB)>();
@@ -283,11 +283,13 @@ namespace RBPhys
             _obb_obb_cols.Clear();
             _obb_sphere_cols.Clear();
             _sphere_sphere_cols.Clear();
-            _capsule_obb_cols.Clear();
+            _obb_capsule_cols.Clear();
+            _sphere_capsule_cols.Clear();
+            _capsule_capsule_cols.Clear();
 
             foreach (var trajPair in collidingTrajs)
             {
-                DetectCollisions(trajPair.Item1, trajPair.Item2, ref _obb_obb_cols, ref _obb_sphere_cols, ref _sphere_sphere_cols, ref _capsule_obb_cols);
+                DetectCollisions(trajPair.Item1, trajPair.Item2, ref _obb_obb_cols, ref _obb_sphere_cols, ref _sphere_sphere_cols, ref _obb_capsule_cols, ref _sphere_capsule_cols, ref _capsule_capsule_cols);
             }
 
             Profiler.EndSample();
@@ -318,9 +320,21 @@ namespace RBPhys
                 _detailCollisionTasks.Add(t);
             }
 
-            foreach (var colPair in _capsule_obb_cols)
+            foreach (var colPair in _obb_capsule_cols)
             {
                 var t = Task.Run(() => RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollision(colPair.col_a.CalcOBB(), colPair.col_b.CalcCapsule()));
+                _detailCollisionTasks.Add(t);
+            }
+
+            foreach (var colPair in _sphere_capsule_cols)
+            {
+                var t = Task.Run(() => RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollision(colPair.col_a.CalcSphere(), colPair.col_b.CalcCapsule()));
+                _detailCollisionTasks.Add(t);
+            }
+
+            foreach (var colPair in _capsule_capsule_cols)
+            {
+                var t = Task.Run(() => RBDetailCollision.DetailCollisionCapsuleCapsule.CalcDetailCollision(colPair.col_a.CalcCapsule(), colPair.col_b.CalcCapsule()));
                 _detailCollisionTasks.Add(t);
             }
 
@@ -416,13 +430,13 @@ namespace RBPhys
             }
             offset += _sphere_sphere_cols.Count;
 
-            for (int i = 0; i < _capsule_obb_cols.Count; i++)
+            for (int i = 0; i < _obb_capsule_cols.Count; i++)
             {
                 int p = offset + i;
 
                 if (_cols_res[p].p != Vector3.zero)
                 {
-                    var pair = _capsule_obb_cols[i];
+                    var pair = _obb_capsule_cols[i];
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
                     if (isInverted && rbc != null)
@@ -441,6 +455,61 @@ namespace RBPhys
                     _collisionsInSolver.Add(rbc);
                 }
             }
+            offset += _obb_capsule_cols.Count;
+
+            for (int i = 0; i < _sphere_capsule_cols.Count; i++)
+            {
+                int p = offset + i;
+
+                if (_cols_res[p].p != Vector3.zero)
+                {
+                    var pair = _sphere_capsule_cols[i];
+                    var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
+
+                    if (isInverted && rbc != null)
+                    {
+                        rbc.SwapTo(pair.Item1, pair.Item2);
+                    }
+
+                    if (rbc == null)
+                    {
+                        rbc = new RBCollision(pair.Item1, pair.Item2, _cols_res[i].p);
+                    }
+
+                    rbc.Update(_cols_res[p].p, _cols_res[p].pA, _cols_res[p].pB);
+                    rbc.InitVelocityConstraint(dt);
+
+                    _collisionsInSolver.Add(rbc);
+                }
+            }
+            offset += _sphere_capsule_cols.Count;
+
+            for (int i = 0; i < _capsule_capsule_cols.Count; i++)
+            {
+                int p = offset + i;
+
+                if (_cols_res[p].p != Vector3.zero)
+                {
+                    var pair = _capsule_capsule_cols[i];
+                    var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
+
+                    if (isInverted && rbc != null)
+                    {
+                        rbc.SwapTo(pair.Item1, pair.Item2);
+                    }
+
+                    if (rbc == null)
+                    {
+                        rbc = new RBCollision(pair.Item1, pair.Item2, _cols_res[i].p);
+                    }
+
+                    rbc.Update(_cols_res[p].p, _cols_res[p].pA, _cols_res[p].pB);
+                    rbc.InitVelocityConstraint(dt);
+
+                    _collisionsInSolver.Add(rbc);
+                }
+            }
+            offset += _capsule_capsule_cols.Count;
 
 #if COLLISION_SOLVER_HW_ACCELERATION
             _hwa_solveCollision.HWA_ComputeSolveCollision(_collisionsInSolver);
@@ -494,7 +563,7 @@ namespace RBPhys
             _collisionsInSolver.Clear();
         }
 
-        static void DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b, ref List<(RBCollider, RBCollider)> obb_obb_cols, ref List<(RBCollider, RBCollider)> obb_sphere_cols, ref List<(RBCollider, RBCollider)> sphere_sphere_cols, ref List<(RBCollider, RBCollider)> capsule_obb_cols)
+        static void DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b, ref List<(RBCollider, RBCollider)> obb_obb_cols, ref List<(RBCollider, RBCollider)> obb_sphere_cols, ref List<(RBCollider, RBCollider)> sphere_sphere_cols, ref List<(RBCollider, RBCollider)> capsule_obb_cols, ref List<(RBCollider, RBCollider)> capsule_sphere_cols, ref List<(RBCollider, RBCollider)> capsule_capsule_cols)
         {
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_b;
@@ -584,6 +653,21 @@ namespace RBPhys
                                 {
                                     //OBB-Capsule衝突（逆転）
                                     capsule_obb_cols.Add((collider_b.collider, collider_a.collider));
+                                }
+                                else if (collider_a.collider.GeometryType == RBGeometryType.Sphere && collider_b.collider.GeometryType == RBGeometryType.Capsule)
+                                {
+                                    //Sphere-Capsule衝突
+                                    capsule_sphere_cols.Add((collider_a.collider, collider_b.collider));
+                                }
+                                else if (collider_a.collider.GeometryType == RBGeometryType.Sphere && collider_b.collider.GeometryType == RBGeometryType.Capsule)
+                                {
+                                    //Sphere-Capsule衝突（逆転）
+                                    capsule_sphere_cols.Add((collider_b.collider, collider_a.collider));
+                                }
+                                else if (collider_a.collider.GeometryType == RBGeometryType.Capsule && collider_b.collider.GeometryType == RBGeometryType.Capsule)
+                                {
+                                    //Capsule-Capsule衝突
+                                    capsule_capsule_cols.Add((collider_a.collider, collider_b.collider));
                                 }
                             }
                         }
