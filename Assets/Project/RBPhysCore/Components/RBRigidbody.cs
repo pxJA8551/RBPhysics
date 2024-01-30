@@ -17,8 +17,6 @@ namespace RBPhys
         [HideInInspector] public Vector3 inertiaTensor;
         [HideInInspector] public Quaternion inertiaTensorRotation;
 
-        [SerializeField] Rigidbody rb;
-
         Vector3 _centerOfGravity;
 
         Vector3 _velocity;
@@ -183,9 +181,6 @@ namespace RBPhys
             }
 
             _objTrajectory.Update(this);
-
-            inertiaTensor = rb.inertiaTensor;
-            inertiaTensorRotation = rb.inertiaTensorRotation;
         }
 
         public bool IsUnderSleepLevel()
@@ -212,10 +207,10 @@ namespace RBPhys
 
         public void RecalculateInertiaTensor()
         {
-            ComputeMassAndInertia(_colliders, out inertiaTensor, out inertiaTensorRotation);
+            ComputeMassAndInertia(_colliders, out inertiaTensor, out inertiaTensorRotation, out _centerOfGravity);
         }
 
-        void ComputeMassAndInertia(RBCollider[] colliders, out Vector3 inertiaTensor, out Quaternion inertiaTensorRotation)
+        void ComputeMassAndInertia(RBCollider[] colliders, out Vector3 inertiaTensor, out Quaternion inertiaTensorRotation, out Vector3 cg)
         {
             inertiaTensor = Vector3.zero;
             inertiaTensorRotation = Quaternion.identity;
@@ -237,18 +232,26 @@ namespace RBPhys
 
                 switch (c.GeometryType)
                 {
-                    case RBGeometryType.Sphere:
+                    case RBGeometryType.OBB:
                         {
-                            geometryIt.SetInertiaSphere(c.CalcSphere(), relPos, relRot, m);
+                            geometryIt.SetInertiaOBB(c.CalcOBB(), relPos, relRot);
                         }
                         break;
 
-                    case RBGeometryType.OBB:
+                    case RBGeometryType.Sphere:
                         {
-                            geometryIt.SetInertiaOBB(c.CalcOBB(), relPos, relRot, m);
+                            geometryIt.SetInertiaSphere(c.CalcSphere(), relPos, relRot);
+                        }
+                        break;
+
+                    case RBGeometryType.Capsule:
+                        {
+                            geometryIt.SetInertiaCapsule(c.CalcCapsule(), relPos, relRot);
                         }
                         break;
                 }
+
+                geometryIt.ScaleDensity(m / geometryIt.Mass);
 
                 it.Merge(geometryIt);
             }
@@ -257,8 +260,7 @@ namespace RBPhys
 
             inertiaTensor = diagonalizedIt;
             inertiaTensorRotation = itRot;
-
-            _centerOfGravity = it.CenterOfGravity;
+            cg = it.CenterOfGravity;
         }
     }
 }

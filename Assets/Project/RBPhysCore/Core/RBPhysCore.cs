@@ -563,7 +563,7 @@ namespace RBPhys
             _collisionsInSolver.Clear();
         }
 
-        static void DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b, ref List<(RBCollider, RBCollider)> obb_obb_cols, ref List<(RBCollider, RBCollider)> obb_sphere_cols, ref List<(RBCollider, RBCollider)> sphere_sphere_cols, ref List<(RBCollider, RBCollider)> capsule_obb_cols, ref List<(RBCollider, RBCollider)> capsule_sphere_cols, ref List<(RBCollider, RBCollider)> capsule_capsule_cols)
+        static void DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b, ref List<(RBCollider, RBCollider)> obb_obb_cols, ref List<(RBCollider, RBCollider)> obb_sphere_cols, ref List<(RBCollider, RBCollider)> sphere_sphere_cols, ref List<(RBCollider, RBCollider)> obb_capsule_cols, ref List<(RBCollider, RBCollider)> _sphere_capsule_cols, ref List<(RBCollider, RBCollider)> capsule_capsule_cols)
         {
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_b;
@@ -647,22 +647,22 @@ namespace RBPhys
                                 else if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.Capsule)
                                 {
                                     //OBB-Capsule衝突
-                                    capsule_obb_cols.Add((collider_a.collider, collider_b.collider));
+                                    obb_capsule_cols.Add((collider_a.collider, collider_b.collider));
                                 }
                                 else if (collider_a.collider.GeometryType == RBGeometryType.Capsule && collider_b.collider.GeometryType == RBGeometryType.OBB)
                                 {
                                     //OBB-Capsule衝突（逆転）
-                                    capsule_obb_cols.Add((collider_b.collider, collider_a.collider));
+                                    obb_capsule_cols.Add((collider_b.collider, collider_a.collider));
                                 }
                                 else if (collider_a.collider.GeometryType == RBGeometryType.Sphere && collider_b.collider.GeometryType == RBGeometryType.Capsule)
                                 {
                                     //Sphere-Capsule衝突
-                                    capsule_sphere_cols.Add((collider_a.collider, collider_b.collider));
+                                    _sphere_capsule_cols.Add((collider_a.collider, collider_b.collider));
                                 }
-                                else if (collider_a.collider.GeometryType == RBGeometryType.Sphere && collider_b.collider.GeometryType == RBGeometryType.Capsule)
+                                else if (collider_a.collider.GeometryType == RBGeometryType.Capsule && collider_b.collider.GeometryType == RBGeometryType.Sphere)
                                 {
                                     //Sphere-Capsule衝突（逆転）
-                                    capsule_sphere_cols.Add((collider_b.collider, collider_a.collider));
+                                    _sphere_capsule_cols.Add((collider_b.collider, collider_a.collider));
                                 }
                                 else if (collider_a.collider.GeometryType == RBGeometryType.Capsule && collider_b.collider.GeometryType == RBGeometryType.Capsule)
                                 {

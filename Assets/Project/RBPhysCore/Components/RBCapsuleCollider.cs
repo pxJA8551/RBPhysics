@@ -37,14 +37,12 @@ namespace RBPhys
             return new RBColliderSphere(pos + _center, _height + _radius);
         }
 
-        static float sqrt3 = Mathf.Sqrt(3);
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot)
         {
             var p = GetEdge(pos, rot);
 
-            Vector3 r = Vector3.one * _radius * sqrt3;
+            Vector3 r = Vector3.one * _radius;
 
             Vector3 min = Vector3.Min(p.begin, p.end) - r;
             Vector3 max = Vector3.Max(p.begin, p.end) + r;
@@ -68,8 +66,8 @@ namespace RBPhys
         public (Vector3 begin, Vector3 end) GetEdge(Vector3 pos, Quaternion rot)
         {
             Quaternion r = rot * LocalRot;
-            float p = (_height + _radius) / 2f;
-            return (pos + _center + (r * new Vector3(0, p, 0)), pos + _center + (r * new Vector3(0, -p, 0)));
+            Vector3 v = (r * new Vector3(0, _height / 2f, 0));
+            return (pos + _center + v, pos + _center - v);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

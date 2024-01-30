@@ -24,29 +24,43 @@ namespace RBPhys
             return t;
         }
 
-        public void SetInertiaOBB(RBColliderOBB obb, Vector3 pos, Quaternion rot, float mass)
+        public void SetInertiaOBB(RBColliderOBB obb, Vector3 pos, Quaternion rot)
         {
             Vector3 extents = obb.size / 2f;
 
-            float cMass = 8f / (mass / RBPhysUtil.V3Volume(extents));
-            float s = (1f / 3f) + cMass;
+            float cMass = 8f * RBPhysUtil.V3Volume(extents);
+            float s = (1f / 3f) * cMass;
 
             float x = extents.x * extents.x;
             float y = extents.y * extents.y;
             float z = extents.z * extents.z;
 
-            SetDiagonal(mass, new Vector3(x, y, z) * s);
+            SetDiagonal(cMass, new Vector3(y + z, z + x, x + y) * s);
 
             ApplyTransform(pos, rot);
         }
 
-        public void SetInertiaSphere(RBColliderSphere sphere, Vector3 pos, Quaternion rot, float mass)
+        public void SetInertiaSphere(RBColliderSphere sphere, Vector3 pos, Quaternion rot)
         {
             float r = sphere.radius;
-            float mr = mass / ((4f / 3f) * Mathf.PI * r * r * r);
+            float mr = ((4f / 3f) * Mathf.PI * r * r * r);
             float ms = mr * r * r * (2f / 5f);
-            SetDiagonal(mass, new Vector3(ms, ms, ms));
+            SetDiagonal(mr, new Vector3(ms, ms, ms));
 
+            ApplyTransform(pos, rot);
+        }
+
+        public void SetInertiaCapsule(RBColliderCapsule capsule, Vector3 pos, Quaternion rot)
+        {
+            float r = capsule.radius;
+            float h = capsule.height / 2f;
+            float m = ((4f / 3f) * Mathf.PI * r * r * r) + (Mathf.PI * r * r * 2f * h);
+
+            float t = Mathf.PI * r * r;
+            float i1 = t * ((r * r * r * 8f / 15f) + (h * r * r));
+            float i2 = t * ((r * r * r * 8f / 15f) + (h * r * r * 3f / 2f) + (h * h * r * 4f / 3f) + (h * h * h * 2f / 3f));
+
+            SetDiagonal(m, new Vector3(i2, i1, i2));
             ApplyTransform(pos, rot);
         }
 
@@ -63,24 +77,28 @@ namespace RBPhys
 
             RBMatrix3x3 m = RBMatrix3x3.CreateFromCols(c0, c1, c2);
 
-            Vector3 sum = _cg + pos;
-
-            if (sum == Vector3.zero)
+            if (pos != Vector3.zero)
             {
-                _inertiaTensor += (m * m) * _mass;
+
+                Vector3 sum = _cg + pos;
+
+                if (sum == Vector3.zero)
+                {
+                    _inertiaTensor += (m * m) * _mass;
+                }
+                else
+                {
+                    Vector3 rc0 = new Vector3(0, sum.z, -sum.y);
+                    Vector3 rc1 = new Vector3(-sum.z, 0, sum.x);
+                    Vector3 rc2 = new Vector3(sum.y, -sum.x, 0);
+
+                    RBMatrix3x3 mr = RBMatrix3x3.CreateFromCols(rc0, rc1, rc2);
+
+                    _inertiaTensor += (m * m - mr * mr) * _mass;
+                }
+
+                _cg += pos;
             }
-            else
-            {
-                Vector3 rc0 = new Vector3(0, sum.z, -sum.y);
-                Vector3 rc1 = new Vector3(-sum.z, 0, sum.x);
-                Vector3 rc2 = new Vector3(sum.y, -sum.x, 0);
-
-                RBMatrix3x3 mr = RBMatrix3x3.CreateFromCols(rc0, rc1, rc2);
-
-                _inertiaTensor += (m * m - mr * mr) * _mass;
-            }
-
-            _cg += pos;
         }
 
         void SetDiagonal(float mass, Vector3 dv)
@@ -88,6 +106,12 @@ namespace RBPhys
             _mass = mass;
             _inertiaTensor = RBMatrix3x3.CreateDiagonal(dv);
             _cg = Vector3.zero;
+        }
+
+        public void ScaleDensity(float densityScale)
+        {
+            _inertiaTensor *= densityScale;
+            _mass *= densityScale;
         }
 
         public void Merge(RBInertiaTensor t)

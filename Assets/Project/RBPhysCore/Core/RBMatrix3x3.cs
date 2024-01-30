@@ -270,6 +270,8 @@ namespace RBPhys
 
             RBMatrix3x3 d = new RBMatrix3x3();
 
+            //?????????????????????????
+
             for (int i = 0; i < DIAGONALIZE_MAX_ITERATION; i++)
             {
                 RBMatrix3x3 axis = new RBMatrix3x3(q);
@@ -290,8 +292,6 @@ namespace RBPhys
 
                 float w = (d[a1][a1] - d[a2][a2]) / (2 * d[a1][a2]);
                 float absw = Mathf.Abs(w);
-
-                //?????????????????????????
 
                 Quaternion r;
                 if (absw > 1000)
