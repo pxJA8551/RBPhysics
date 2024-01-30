@@ -1,4 +1,4 @@
-#undef COLLISION_NARROW_PHASE_HW_ACCELERATION
+﻿#undef COLLISION_NARROW_PHASE_HW_ACCELERATION
 #undef COLLISION_SOLVER_HW_ACCELERATION
 
 using System;
@@ -35,7 +35,7 @@ namespace RBPhys
         static List<RBRigidbody> _rbRemoveQueue = new List<RBRigidbody>();
         static List<RBCollider> _colAddQueue = new List<RBCollider>();
         static List<RBCollider> _colRemoveQueue = new List<RBCollider>();
-        static List<RBCollision > _collisions = new List<RBCollision>();
+        static List<RBCollision> _collisions = new List<RBCollision>();
         static List<RBCollision> _collisionsInSolver = new List<RBCollision>();
 
 #if !COLLISION_NARROW_PHASE_HW_ACCELERATION
@@ -682,7 +682,7 @@ namespace RBPhys
 
             foreach (RBCollision r in _collisions.ToList())
             {
-                if (r != null) 
+                if (r != null)
                 {
                     if ((r.collider_a, r.collider_b) == (col_a, col_b))
                     {
@@ -744,7 +744,7 @@ namespace RBPhys
         public Vector3 aNearest;
         public Vector3 bNearest;
         public Vector3 penetration;
-        public Vector3 ContactNormal { get { return _contactNormal;  } set { _contactNormal = value.normalized; } }
+        public Vector3 ContactNormal { get { return _contactNormal; } set { _contactNormal = value.normalized; } }
         public Vector3 rA;
         public Vector3 rB;
 
@@ -1228,7 +1228,7 @@ namespace RBPhys
             isValidSphere = true;
         }
     }
-    
+
     public struct RBColliderCapsule
     {
         public Vector3 pos;
@@ -1253,7 +1253,7 @@ namespace RBPhys
 
         public float GetAxisSize(Vector3 axisN)
         {
-            return　Mathf.Abs(Vector3.Dot(rot * new Vector3(0, height, 0), axisN)) + radius * 2;
+            return Mathf.Abs(Vector3.Dot(rot * new Vector3(0, height, 0), axisN)) + radius * 2;
         }
 
         public (Vector3 begin, Vector3 end) GetEdge()
