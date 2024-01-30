@@ -12,6 +12,7 @@ using UnityEngine.Profiling;
 using System.Threading;
 using UnityEditor;
 using System.Runtime.InteropServices;
+using UnityEditor.Android;
 
 namespace RBPhys
 {
@@ -720,10 +721,6 @@ namespace RBPhys
             _hwa_obb_obb_detail?.Dispose()
 #endif
 
-#if COLLISION_NARROW_PHASE_HW_ACCELERATION
-            _hwa_obb_obb_detail?.Dispose()
-#endif
-
 #if COLLISION_SOLVER_HW_ACCELERATION
             _hwa_solveCollision?.Dispose();
 #endif
@@ -943,7 +940,7 @@ namespace RBPhys
             _jB.Resolve(this, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
         }
 
-        const float COLLISION_ERROR_SLOP = -0.0001f;
+        const float COLLISION_ERROR_SLOP = 0.0001f;
 
         struct Jacobian
         {
@@ -1045,6 +1042,14 @@ namespace RBPhys
                 vAdd_b += col.InverseMass_b * _vb * lambda;
                 avAdd_a += Vector3.Scale(col.InverseInertiaWs_a, _wa) * lambda;
                 avAdd_b += Vector3.Scale(col.InverseInertiaWs_b, _wb) * lambda;
+
+                if (_type == Type.Normal)
+                {
+                    float fr = col.collider_a.friction * col.collider_b.friction;
+                    Vector3 dd = col.ContactNormal * Vector3.Dot(col.ExpAngularVelocity_b - col.ExpAngularVelocity_a, col.ContactNormal);
+                    avAdd_a += Vector3.Scale(col.InverseInertiaWs_a, dd * fr);
+                    avAdd_b += Vector3.Scale(col.InverseInertiaWs_b, -dd * fr);
+                }
 
                 _totalLambdaInFrame = 0;
             }
