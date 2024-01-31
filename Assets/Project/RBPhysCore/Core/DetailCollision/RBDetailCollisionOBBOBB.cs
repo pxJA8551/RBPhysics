@@ -15,7 +15,7 @@ namespace RBPhys
     {
         public static class DetailCollisionOBBOBB
         {
-            const float FACE_PARALLEL_DOT_EPSILON = 0.00001f;
+            const float FACE_PARALLEL_DOT_EPSILON = 0.000001f;
 
             public static (Vector3 p, Vector3 pA, Vector3 pB) CalcDetailCollision(RBColliderOBB obb_a, RBColliderOBB obb_b)
             {
@@ -437,7 +437,7 @@ namespace RBPhys
                 {
                     Vector3 pDirN = -penetration.normalized;
 
-                    float eps = 0.00001f;
+                    float eps = FACE_PARALLEL_DOT_EPSILON;
 
                     float dAFwd = F32Sign101Epsilon(Vector3.Dot(aFwdN, pDirN), eps);
                     float dARight = F32Sign101Epsilon(Vector3.Dot(aRightN, pDirN), eps);

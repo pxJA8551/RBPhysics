@@ -13,6 +13,7 @@ using System.Threading;
 using UnityEditor;
 using System.Runtime.InteropServices;
 using UnityEditor.Android;
+using UnityEngine.Rendering;
 
 namespace RBPhys
 {
@@ -20,9 +21,7 @@ namespace RBPhys
     {
         public const int CPU_COLLISION_SOLVER_MAX_ITERATION = 15;
         public const float CPU_SOLVER_ABORT_VELADD_SQRT = 0.01f * 0.01f;
-        public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0.15f * 0.15f;
-
-        public const float CPU_COLLISION_FACE_PARALLEL_EPSILON = 0.005f;
+        public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0.1f * 0.1f;
 
         public const int DEFAULT_SOLVER_ITERATION = 6;
 
@@ -515,6 +514,11 @@ namespace RBPhys
 #if COLLISION_SOLVER_HW_ACCELERATION
             _hwa_solveCollision.HWA_ComputeSolveCollision(_collisionsInSolver);
 #else
+            foreach (var col in _collisionsInSolver)
+            {
+                col.ApplyImpulse();
+            }
+
             for (int i = 0; i < CPU_COLLISION_SOLVER_MAX_ITERATION; i++)
             {
                 _solveCollisionTasks.Clear();
@@ -527,21 +531,23 @@ namespace RBPhys
                     {
                         var t = Task.Run(() =>
                         {
-                            (Vector3 velAdd_a, Vector3 angVel_add_a, Vector3 velAdd_b, Vector3 angVel_add_b) = SolveCollision(col, dt);
+                            (Vector3 velAdd_a, Vector3 angVelAdd_a, Vector3 velAdd_b, Vector3 angVelAdd_b) = SolveCollision(col, dt);
 
                             if (col.rigidbody_a != null)
                             {
                                 col.rigidbody_a.ExpVelocity += velAdd_a;
-                                col.rigidbody_a.ExpAngularVelocity += angVel_add_a;
+                                col.rigidbody_a.ExpAngularVelocity += angVelAdd_a;
                             }
 
                             if (col.rigidbody_b != null)
                             {
                                 col.rigidbody_b.ExpVelocity += velAdd_b;
-                                col.rigidbody_b.ExpAngularVelocity += angVel_add_b;
+                                col.rigidbody_b.ExpAngularVelocity += angVelAdd_b;
                             }
 
-                            if (velAdd_a.sqrMagnitude < CPU_SOLVER_ABORT_VELADD_SQRT && angVel_add_a.sqrMagnitude < CPU_SOLVER_ABORT_ANGVELADD_SQRT && velAdd_b.sqrMagnitude < CPU_SOLVER_ABORT_VELADD_SQRT && angVel_add_b.sqrMagnitude < CPU_SOLVER_ABORT_ANGVELADD_SQRT)
+                            col.PushImpulse(velAdd_a, angVelAdd_a, velAdd_b, angVelAdd_b);
+
+                            if (velAdd_a.sqrMagnitude < CPU_SOLVER_ABORT_VELADD_SQRT && angVelAdd_a.sqrMagnitude < CPU_SOLVER_ABORT_ANGVELADD_SQRT && velAdd_b.sqrMagnitude < CPU_SOLVER_ABORT_VELADD_SQRT && angVelAdd_b.sqrMagnitude < CPU_SOLVER_ABORT_ANGVELADD_SQRT)
                             {
                                 col.skipInSolver = true;
                             }
@@ -729,6 +735,8 @@ namespace RBPhys
 
     public class RBCollision
     {
+        const int VEL_CHG_BUFFER_COUNT = 215;
+
         public bool isValidCollision = false;
 
         public RBCollider collider_a;
@@ -744,6 +752,8 @@ namespace RBPhys
         public Vector3 ContactNormal { get { return _contactNormal; } set { _contactNormal = value.normalized; } }
         public Vector3 rA;
         public Vector3 rB;
+
+        public (Vector3 v_a, Vector3 av_a, Vector3 v_b, Vector3 av_b)[] cp = new (Vector3, Vector3, Vector3, Vector3)[VEL_CHG_BUFFER_COUNT];
 
         public bool skipInSolver;
 
@@ -869,6 +879,10 @@ namespace RBPhys
                 penetration = -penetration;
                 _contactNormal = -_contactNormal;
                 (rA, rB) = (rB, rA);
+                for (int i  = 0; i < VEL_CHG_BUFFER_COUNT; i++)
+                {
+                    (cp[i].v_a, cp[i].av_a) = (cp[i].v_b, cp[i].av_b);
+                }
             }
         }
 
@@ -922,7 +936,46 @@ namespace RBPhys
             _jN.Init(this, contactNormal, dt);
             _jT.Init(this, tangent, dt);
             _jB.Init(this, bitangent, dt);
+        }
 
+        public void PushImpulse(Vector3 v_a, Vector3 av_a, Vector3 v_b, Vector3 av_b)
+        {
+            for (int i = VEL_CHG_BUFFER_COUNT - 1; i > 0; i--)
+            {
+                cp[i] = cp[i - 1];
+            }
+
+            cp[0] = (v_a, av_a, v_b, av_b);
+        }
+
+        public void ApplyImpulse()
+        {
+            (Vector3 t_v_a, Vector3 t_av_a, Vector3 t_v_b, Vector3 t_av_b) sum = (Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero);
+
+            for (int i = 0; i < VEL_CHG_BUFFER_COUNT; i++)
+            {
+                sum.t_v_a += cp[i].v_a;
+                sum.t_av_a += cp[i].av_a;
+                sum.t_v_b += cp[i].v_b;
+                sum.t_av_b += cp[i].av_b;
+            }
+
+            sum.t_v_a /= VEL_CHG_BUFFER_COUNT;
+            sum.t_av_a /= VEL_CHG_BUFFER_COUNT;
+            sum.t_v_b /= VEL_CHG_BUFFER_COUNT;
+            sum.t_av_b /= VEL_CHG_BUFFER_COUNT;
+
+            if (rigidbody_a != null)
+            {
+                rigidbody_a.ExpVelocity += sum.t_v_a;
+                rigidbody_a.ExpAngularVelocity += sum.t_av_a;
+            }
+
+            if (rigidbody_b != null)
+            {
+                rigidbody_b.ExpVelocity += sum.t_v_b;
+                rigidbody_b.ExpAngularVelocity += sum.t_av_b;
+            }
         }
 #endif
 
@@ -1040,6 +1093,13 @@ namespace RBPhys
 
                 vAdd_a += col.InverseMass_a * _va * lambda;
                 vAdd_b += col.InverseMass_b * _vb * lambda;
+
+                //Vector3 asp = Vector3.Scale(col.InverseInertiaWs_a, _wa) * lambda;
+                //Vector3 bsp = Vector3.Scale(col.InverseInertiaWs_b, _wb) * lambda;
+
+                //avAdd_a += Vector3.Cross(rSP, Vector3.Cross(asp, col.rA)) / Mathf.Pow(rSP, 2);
+                //avAdd_b += Vector3.Cross(rSP, Vector3.Cross(bsp, col.rB)) / Mathf.Pow(rSP, 2);
+
                 avAdd_a += Vector3.Scale(col.InverseInertiaWs_a, _wa) * lambda;
                 avAdd_b += Vector3.Scale(col.InverseInertiaWs_b, _wb) * lambda;
 

@@ -21,7 +21,7 @@ namespace RBPhys
         public Vector3 GameObjectPos { get; private set; }
         public Quaternion GameObjectRot { get; private set; }
 
-        [HideInInspector] public float beta = 0.6f; //‰Â”\‚ÈŒÀ‚è‰º‚°‚é
+        [HideInInspector] public float beta = .5f; //‰Â”\‚ÈŒÀ‚è‰º‚°‚é
         public float restitution = 0.5f; //”½”­ŒW”
         public float friction = 0.5f; //–€CŒW”
 
