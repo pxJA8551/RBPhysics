@@ -7,7 +7,7 @@ namespace RBPhys
 {
     public static class RBPhysUtil
     {
-        public const float EPSILON_FLOAT32 = 0.000001f;
+        public const float EPSILON_FLOAT32 = 0.00001f;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float V3Volume(Vector3 v)
@@ -139,6 +139,17 @@ namespace RBPhys
             float b_min = Mathf.Min(b_x1, b_x2);
             float b_max = Mathf.Max(b_x1, b_x2);
             
+            return !(a_max < b_min || b_max < a_min);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool RangeOverlap(float a_x1, float a_x2, float b_x1, float b_x2, float epsilonHalf)
+        {
+            float a_min = Mathf.Min(a_x1, a_x2) - epsilonHalf;
+            float a_max = Mathf.Max(a_x1, a_x2) + epsilonHalf;
+            float b_min = Mathf.Min(b_x1, b_x2) - epsilonHalf;
+            float b_max = Mathf.Max(b_x1, b_x2) + epsilonHalf;
+
             return !(a_max < b_min || b_max < a_min);
         }
 

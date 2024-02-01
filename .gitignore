@@ -12,6 +12,7 @@
 /[Tt]est[Bb]uild/
 /[Tt]est[Bb]ld/
 /[Bb]ld/
+/Assets/TestModel
 
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data

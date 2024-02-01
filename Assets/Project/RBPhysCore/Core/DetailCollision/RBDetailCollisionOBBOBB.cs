@@ -15,7 +15,7 @@ namespace RBPhys
     {
         public static class DetailCollisionOBBOBB
         {
-            const float FACE_PARALLEL_DOT_EPSILON = 0.000001f;
+            const float FACE_PARALLEL_DOT_EPSILON = 0;
 
             public static (Vector3 p, Vector3 pA, Vector3 pB) CalcDetailCollision(RBColliderOBB obb_a, RBColliderOBB obb_b)
             {

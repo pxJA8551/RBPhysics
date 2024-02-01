@@ -46,9 +46,9 @@ namespace RBPhys
 
         public Guid Guid { get { return _guid; } }
 
-        public RBTrajectory ObjectTrajectory { get { return _objTrajectory; } }
+        public RBTrajectory ExpObjectTrajectory { get { return _expObjTrajectory; } }
 
-        RBTrajectory _objTrajectory;
+        RBTrajectory _expObjTrajectory;
 
         public Vector3 InverseInertiaWs
         {
@@ -98,7 +98,7 @@ namespace RBPhys
 
         public RBRigidbody()
         {
-            _objTrajectory = new RBTrajectory();
+            _expObjTrajectory = new RBTrajectory();
         }
 
         void ChangeVelocity(Vector3 velocity, int solverIteration = 5)
@@ -145,6 +145,11 @@ namespace RBPhys
             return _colliders;
         }
 
+        public void GetRigidbodyAABB()
+        {
+
+        }
+
         public void ApplyTransform(float dt)
         {
             _velocity = _expVelocity;
@@ -154,12 +159,13 @@ namespace RBPhys
             transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
 
             UpdateTransform();
+            UpdateExpTrajectory(dt);
 
             if (IsUnderSleepLevel())
             {
-                PhysSleep();
-                _expVelocity = Vector3.zero;
-                _expAngularVelocity = Vector3.zero;
+                //PhysSleep();
+                //_expVelocity = Vector3.zero;
+                //_expAngularVelocity = Vector3.zero;
             }
             else
             {
@@ -172,15 +178,43 @@ namespace RBPhys
             Position = transform.position;
             Rotation = transform.rotation;
 
-            if (updateColliders) 
+            if (updateColliders)
             {
                 foreach (RBCollider c in _colliders)
                 {
                     c.UpdateTransform();
                 }
             }
+        }
 
-            _objTrajectory.Update(this);
+        public void UpdateExpTrajectory(float dt, bool updateColliders = true)
+        {
+            (Vector3 pos, Quaternion rot) r = GetIntergrated(dt);
+
+            if (updateColliders)
+            {
+                foreach (RBCollider c in _colliders)
+                {
+                    c.UpdateExpTrajectory(Position, Rotation, r.pos, r.rot);
+                }
+            }
+
+            _expObjTrajectory.Update(this, dt);
+        }
+
+        public void UpdateColliderExpTrajectory(float dt)
+        {
+            (Vector3 pos, Quaternion rot) r = GetIntergrated(dt);
+
+            foreach (RBCollider c in _colliders)
+            {
+                c.UpdateExpTrajectory(Position, Rotation, r.pos, r.rot);
+            }
+        }
+
+        public (Vector3 pos, Quaternion rot) GetIntergrated(float dt)
+        {
+            return (_position + _expVelocity * dt, Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * dt, _expAngularVelocity.normalized) * _rotation);
         }
 
         public bool IsUnderSleepLevel()
