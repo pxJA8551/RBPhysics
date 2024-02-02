@@ -27,8 +27,6 @@ namespace RBPhys
         public const float CPU_SOLVER_ABORT_VELADD_SQRT = 0.01f * 0.01f;
         public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0.1f * 0.1f;
 
-        public const float AABB_EPSILON = 0.01f;
-
         public const int DEFAULT_SOLVER_ITERATION = 6;
 
         static List<RBRigidbody> _rigidbodies = new List<RBRigidbody>();
@@ -540,7 +538,7 @@ namespace RBPhys
 
                     foreach (var col in _collisionsInSolver)
                     {
-                        if (col.penetration != Vector3.zero)
+                        if (!col.skipInSolver && col.penetration != Vector3.zero)
                         {
                             var t = Task.Run(() =>
                             {
@@ -560,6 +558,7 @@ namespace RBPhys
 
                                 if (velAdd_a.sqrMagnitude < CPU_SOLVER_ABORT_VELADD_SQRT && angVelAdd_a.sqrMagnitude < CPU_SOLVER_ABORT_ANGVELADD_SQRT && velAdd_b.sqrMagnitude < CPU_SOLVER_ABORT_VELADD_SQRT && angVelAdd_b.sqrMagnitude < CPU_SOLVER_ABORT_ANGVELADD_SQRT)
                                 {
+                                    col.skipInSolver = true;
                                 }
                             });
 
@@ -576,21 +575,25 @@ namespace RBPhys
 
                 _updateTrajectorieTasks.Clear();
 
+                UpdateExpTrajectories(dt);
+
                 foreach (var col in _collisionsInSolver)
                 {
                     var t = Task.Run(() =>
                     {
-                        col.rigidbody_a?.UpdateColliderExpTrajectory(dt);
-                        col.rigidbody_b?.UpdateColliderExpTrajectory(dt);
-
                         bool collide = RecalculateCollision(col.collider_a, col.collider_b, out Vector3 p, out Vector3 pA, out Vector3 pB);
-                        if (collide)
-                        {
-                            pA = col.collider_a.ExpToCurrent(pA);
-                            pB = col.collider_b.ExpToCurrent(pB);
+                        p = col.collider_a.ExpToCurrentVector(p);
+                        pA = col.collider_a.ExpToCurrent(pA);
+                        pB = col.collider_b.ExpToCurrent(pB);
 
+                        if (p != Vector3.zero)
+                        {
                             col.Update(p, pA, pB);
                             col.InitVelocityConstraint(dt, false);
+                        }
+                        else
+                        {
+                            col.skipInSolver = true;
                         }
                     });
                     _updateTrajectorieTasks.Add(t);
@@ -610,7 +613,7 @@ namespace RBPhys
 
         static bool RecalculateCollision(RBCollider col_a, RBCollider col_b, out Vector3 p, out Vector3 pA, out Vector3 pB)
         {
-            bool aabbCollide = col_a.ExpTrajectory.trajectoryAABB.OverlapAABBEpsilon(col_b.ExpTrajectory.trajectoryAABB, AABB_EPSILON);
+            bool aabbCollide = col_a.ExpTrajectory.trajectoryAABB.OverlapAABB(col_b.ExpTrajectory.trajectoryAABB);
 
             if (aabbCollide)
             {
@@ -737,7 +740,7 @@ namespace RBPhys
                         {
                             Vector3 cg = traj_a.IsStatic ? traj_b.IsStatic ? Vector3.zero : traj_b.Rigidbody.CenterOfGravityWorld : traj_a.Rigidbody.CenterOfGravityWorld;
 
-                            bool aabbCollide = collider_a.aabb.OverlapAABBEpsilon(collider_b.aabb, AABB_EPSILON);
+                            bool aabbCollide = collider_a.aabb.OverlapAABB(collider_b.aabb);
 
                             if (aabbCollide)
                             {
@@ -1096,19 +1099,17 @@ namespace RBPhys
             public void Resolve(RBCollision col, ref Vector3 vAdd_a, ref Vector3 avAdd_a, ref Vector3 vAdd_b, ref Vector3 avAdd_b)
             {
                 float jv = 0;
-                jv += Vector3.Dot(_va, col.ExpVelocity_a + vAdd_a);
-                jv += Vector3.Dot(_wa, col.ExpAngularVelocity_a + avAdd_a);
-                jv += Vector3.Dot(_vb, col.ExpVelocity_b + vAdd_b);
-                jv += Vector3.Dot(_wb, col.ExpAngularVelocity_b + avAdd_b);
+                jv += Vector3.Dot(_va, col.ExpVelocity_a);
+                jv += Vector3.Dot(_wa, col.ExpAngularVelocity_a);
+                jv += Vector3.Dot(_vb, col.ExpVelocity_b);
+                jv += Vector3.Dot(_wb, col.ExpAngularVelocity_b);
 
                 float lambda = _effectiveMass * (-(jv + _bias));
-
                 float oldTotalLambda = _totalLambda;
 
                 if (_type == Type.Normal)
                 {
                     _totalLambda = Mathf.Max(0.0f, _totalLambda + lambda);
-                    lambda = _totalLambda - oldTotalLambda;
                 }
                 else if (_type == Type.Tangent)
                 {
@@ -1116,6 +1117,8 @@ namespace RBPhys
                     float maxFriction = friction * col._jN._totalLambda;
                     _totalLambda = Mathf.Clamp(_totalLambda + lambda, -maxFriction, maxFriction);
                 }
+
+                lambda = _totalLambda - oldTotalLambda;
 
                 vAdd_a += col.InverseMass_a * _va * lambda;
                 vAdd_b += col.InverseMass_b * _vb * lambda;

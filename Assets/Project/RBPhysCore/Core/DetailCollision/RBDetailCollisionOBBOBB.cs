@@ -15,7 +15,7 @@ namespace RBPhys
     {
         public static class DetailCollisionOBBOBB
         {
-            const float FACE_PARALLEL_DOT_EPSILON = 0;
+            const float FACE_PARALLEL_DOT_EPSILON = 0.00001f;
 
             public static (Vector3 p, Vector3 pA, Vector3 pB) CalcDetailCollision(RBColliderOBB obb_a, RBColliderOBB obb_b)
             {
@@ -42,8 +42,6 @@ namespace RBPhys
                 Vector3 bRightN = obb_b.rot * Vector3.right;
                 Vector3 bUpN = obb_b.rot * Vector3.up;
 
-                bool faceParallel = false;
-
                 //Separating Axis 1: aFwd
                 {
                     float dd = Vector3.Dot(d, aFwdN);
@@ -63,8 +61,6 @@ namespace RBPhys
 
                     penetration = p;
                     pSqrMag = p.sqrMagnitude;
-
-                    faceParallel |= IsF32AbsEpsilonEqual(dd / d.magnitude, 1, FACE_PARALLEL_DOT_EPSILON);
                 }
 
                 //Separating Axis 2: aRight
@@ -87,8 +83,6 @@ namespace RBPhys
                     bool pMin = p.sqrMagnitude < pSqrMag;
                     penetration = pMin ? p : penetration;
                     pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-
-                    faceParallel |= IsF32AbsEpsilonEqual(dd / d.magnitude, 1, FACE_PARALLEL_DOT_EPSILON);
                 }
 
                 //Separating Axis 3: aUp
@@ -111,8 +105,6 @@ namespace RBPhys
                     bool pMin = p.sqrMagnitude < pSqrMag;
                     penetration = pMin ? p : penetration;
                     pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-
-                    faceParallel |= IsF32AbsEpsilonEqual(dd / d.magnitude, 1, FACE_PARALLEL_DOT_EPSILON);
                 }
 
                 //Separating Axis 4: bFwd
@@ -135,8 +127,6 @@ namespace RBPhys
                     bool pMin = p.sqrMagnitude < pSqrMag;
                     penetration = pMin ? p : penetration;
                     pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-
-                    faceParallel |= IsF32AbsEpsilonEqual(dd / d.magnitude, 1, FACE_PARALLEL_DOT_EPSILON);
                 }
 
                 //Separating Axis 5: bRight
@@ -159,8 +149,6 @@ namespace RBPhys
                     bool pMin = p.sqrMagnitude < pSqrMag;
                     penetration = pMin ? p : penetration;
                     pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-
-                    faceParallel |= IsF32AbsEpsilonEqual(dd / d.magnitude, 1, FACE_PARALLEL_DOT_EPSILON);
                 }
 
                 //Separating Axis 6: bUp
@@ -183,253 +171,248 @@ namespace RBPhys
                     bool pMin = p.sqrMagnitude < pSqrMag;
                     penetration = pMin ? p : penetration;
                     pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-
-                    faceParallel |= IsF32AbsEpsilonEqual(dd / d.magnitude, 1, FACE_PARALLEL_DOT_EPSILON);
                 }
 
-                if (!faceParallel)
+                //Separating Axis 7: aFwd x bFwd
                 {
-                    //Separating Axis 7: aFwd x bFwd
+                    Vector3 c = Vector3.Cross(aFwdN, bFwdN).normalized;
+
+                    if (c != Vector3.zero)
                     {
-                        Vector3 c = Vector3.Cross(aFwdN, bFwdN).normalized;
+                        float dd = Vector3.Dot(d, c);
+                        float prjL = Mathf.Abs(dd);
+                        float rA = obb_a.GetAxisSize(c);
+                        float rB = obb_b.GetAxisSize(c);
 
-                        if (c != Vector3.zero)
+                        float dp = prjL * 2 - (rA + rB);
+
+                        if (dp > 0)
                         {
-                            float dd = Vector3.Dot(d, c);
-                            float prjL = Mathf.Abs(dd);
-                            float rA = obb_a.GetAxisSize(c);
-                            float rB = obb_b.GetAxisSize(c);
-
-                            float dp = prjL * 2 - (rA + rB);
-
-                            if (dp > 0)
-                            {
-                                penetration = Vector3.zero;
-                                return (penetration, aDp, bDp);
-                            }
-
-                            Vector3 p = c * (dp / 2) * F32Sign11(dd);
-
-                            bool pMin = p.sqrMagnitude < pSqrMag;
-                            penetration = pMin ? p : penetration;
-                            pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                            penetration = Vector3.zero;
+                            return (penetration, aDp, bDp);
                         }
+
+                        Vector3 p = c * (dp / 2) * F32Sign11(dd);
+
+                        bool pMin = p.sqrMagnitude < pSqrMag;
+                        penetration = pMin ? p : penetration;
+                        pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
                     }
+                }
 
-                    //Separating Axis 8: aFwd x bRight
+                //Separating Axis 8: aFwd x bRight
+                {
+                    Vector3 c = Vector3.Cross(aFwdN, bRightN).normalized;
+
+                    if (c != Vector3.zero)
                     {
-                        Vector3 c = Vector3.Cross(aFwdN, bRightN).normalized;
+                        float dd = Vector3.Dot(d, c);
+                        float prjL = Mathf.Abs(dd);
+                        float rA = obb_a.GetAxisSize(c);
+                        float rB = obb_b.GetAxisSize(c);
 
-                        if (c != Vector3.zero)
+                        float dp = prjL * 2 - (rA + rB);
+
+                        if (dp > 0)
                         {
-                            float dd = Vector3.Dot(d, c);
-                            float prjL = Mathf.Abs(dd);
-                            float rA = obb_a.GetAxisSize(c);
-                            float rB = obb_b.GetAxisSize(c);
-
-                            float dp = prjL * 2 - (rA + rB);
-
-                            if (dp > 0)
-                            {
-                                penetration = Vector3.zero;
-                                return (penetration, aDp, bDp);
-                            }
-
-                            Vector3 p = c * (dp / 2) * F32Sign11(dd);
-
-                            bool pMin = p.sqrMagnitude < pSqrMag;
-                            penetration = pMin ? p : penetration;
-                            pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                            penetration = Vector3.zero;
+                            return (penetration, aDp, bDp);
                         }
+
+                        Vector3 p = c * (dp / 2) * F32Sign11(dd);
+
+                        bool pMin = p.sqrMagnitude < pSqrMag;
+                        penetration = pMin ? p : penetration;
+                        pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
                     }
+                }
 
-                    //Separating Axis 9: aFwd x bUp
+                //Separating Axis 9: aFwd x bUp
+                {
+                    Vector3 c = Vector3.Cross(aFwdN, bUpN).normalized;
+
+                    if (c != Vector3.zero)
                     {
-                        Vector3 c = Vector3.Cross(aFwdN, bUpN).normalized;
+                        float dd = Vector3.Dot(d, c);
+                        float prjL = Mathf.Abs(dd);
+                        float rA = obb_a.GetAxisSize(c);
+                        float rB = obb_b.GetAxisSize(c);
 
-                        if (c != Vector3.zero)
+                        float dp = prjL * 2 - (rA + rB);
+
+                        if (dp > 0)
                         {
-                            float dd = Vector3.Dot(d, c);
-                            float prjL = Mathf.Abs(dd);
-                            float rA = obb_a.GetAxisSize(c);
-                            float rB = obb_b.GetAxisSize(c);
-
-                            float dp = prjL * 2 - (rA + rB);
-
-                            if (dp > 0)
-                            {
-                                penetration = Vector3.zero;
-                                return (penetration, aDp, bDp);
-                            }
-
-                            Vector3 p = c * (dp / 2) * F32Sign11(dd);
-
-                            bool pMin = p.sqrMagnitude < pSqrMag;
-                            penetration = pMin ? p : penetration;
-                            pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                            penetration = Vector3.zero;
+                            return (penetration, aDp, bDp);
                         }
+
+                        Vector3 p = c * (dp / 2) * F32Sign11(dd);
+
+                        bool pMin = p.sqrMagnitude < pSqrMag;
+                        penetration = pMin ? p : penetration;
+                        pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
                     }
+                }
 
-                    //Separating Axis 10: aRight x bFwd
+                //Separating Axis 10: aRight x bFwd
+                {
+                    Vector3 c = Vector3.Cross(aRightN, bFwdN).normalized;
+
+                    if (c != Vector3.zero)
                     {
-                        Vector3 c = Vector3.Cross(aRightN, bFwdN).normalized;
+                        float dd = Vector3.Dot(d, c);
+                        float prjL = Mathf.Abs(dd);
+                        float rA = obb_a.GetAxisSize(c);
+                        float rB = obb_b.GetAxisSize(c);
 
-                        if (c != Vector3.zero)
+                        float dp = prjL * 2 - (rA + rB);
+
+                        if (dp > 0)
                         {
-                            float dd = Vector3.Dot(d, c);
-                            float prjL = Mathf.Abs(dd);
-                            float rA = obb_a.GetAxisSize(c);
-                            float rB = obb_b.GetAxisSize(c);
-
-                            float dp = prjL * 2 - (rA + rB);
-
-                            if (dp > 0)
-                            {
-                                penetration = Vector3.zero;
-                                return (penetration, aDp, bDp);
-                            }
-
-                            Vector3 p = c * (dp / 2) * F32Sign11(dd);
-
-                            bool pMin = p.sqrMagnitude < pSqrMag;
-                            penetration = pMin ? p : penetration;
-                            pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                            penetration = Vector3.zero;
+                            return (penetration, aDp, bDp);
                         }
+
+                        Vector3 p = c * (dp / 2) * F32Sign11(dd);
+
+                        bool pMin = p.sqrMagnitude < pSqrMag;
+                        penetration = pMin ? p : penetration;
+                        pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
                     }
+                }
 
-                    //Separating Axis 11: aRight x bRight
+                //Separating Axis 11: aRight x bRight
+                {
+                    Vector3 c = Vector3.Cross(aRightN, bRightN).normalized;
+
+                    if (c != Vector3.zero)
                     {
-                        Vector3 c = Vector3.Cross(aRightN, bRightN).normalized;
+                        float dd = Vector3.Dot(d, c);
+                        float prjL = Mathf.Abs(dd);
+                        float rA = obb_a.GetAxisSize(c);
+                        float rB = obb_b.GetAxisSize(c);
 
-                        if (c != Vector3.zero)
+                        float dp = prjL * 2 - (rA + rB);
+
+                        if (dp > 0)
                         {
-                            float dd = Vector3.Dot(d, c);
-                            float prjL = Mathf.Abs(dd);
-                            float rA = obb_a.GetAxisSize(c);
-                            float rB = obb_b.GetAxisSize(c);
-
-                            float dp = prjL * 2 - (rA + rB);
-
-                            if (dp > 0)
-                            {
-                                penetration = Vector3.zero;
-                                return (penetration, aDp, bDp);
-                            }
-
-                            Vector3 p = c * (dp / 2) * F32Sign11(dd);
-
-                            bool pMin = p.sqrMagnitude < pSqrMag;
-                            penetration = pMin ? p : penetration;
-                            pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                            penetration = Vector3.zero;
+                            return (penetration, aDp, bDp);
                         }
+
+                        Vector3 p = c * (dp / 2) * F32Sign11(dd);
+
+                        bool pMin = p.sqrMagnitude < pSqrMag;
+                        penetration = pMin ? p : penetration;
+                        pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
                     }
+                }
 
-                    //Separating Axis 12: aRight x bUp
+                //Separating Axis 12: aRight x bUp
+                {
+                    Vector3 c = Vector3.Cross(aRightN, bUpN).normalized;
+
+                    if (c != Vector3.zero)
                     {
-                        Vector3 c = Vector3.Cross(aRightN, bUpN).normalized;
+                        float dd = Vector3.Dot(d, c);
+                        float prjL = Mathf.Abs(dd);
+                        float rA = obb_a.GetAxisSize(c);
+                        float rB = obb_b.GetAxisSize(c);
 
-                        if (c != Vector3.zero)
+                        float dp = prjL * 2 - (rA + rB);
+
+                        if (dp > 0)
                         {
-                            float dd = Vector3.Dot(d, c);
-                            float prjL = Mathf.Abs(dd);
-                            float rA = obb_a.GetAxisSize(c);
-                            float rB = obb_b.GetAxisSize(c);
-
-                            float dp = prjL * 2 - (rA + rB);
-
-                            if (dp > 0)
-                            {
-                                penetration = Vector3.zero;
-                                return (penetration, aDp, bDp);
-                            }
-
-                            Vector3 p = c * (dp / 2) * F32Sign11(dd);
-
-                            bool pMin = p.sqrMagnitude < pSqrMag;
-                            penetration = pMin ? p : penetration;
-                            pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                            penetration = Vector3.zero;
+                            return (penetration, aDp, bDp);
                         }
+
+                        Vector3 p = c * (dp / 2) * F32Sign11(dd);
+
+                        bool pMin = p.sqrMagnitude < pSqrMag;
+                        penetration = pMin ? p : penetration;
+                        pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
                     }
+                }
 
-                    //Separating Axis 13: aUp x bFwd
+                //Separating Axis 13: aUp x bFwd
+                {
+                    Vector3 c = Vector3.Cross(aUpN, bFwdN).normalized;
+
+                    if (c != Vector3.zero)
                     {
-                        Vector3 c = Vector3.Cross(aUpN, bFwdN).normalized;
+                        float dd = Vector3.Dot(d, c);
+                        float prjL = Mathf.Abs(dd);
+                        float rA = obb_a.GetAxisSize(c);
+                        float rB = obb_b.GetAxisSize(c);
 
-                        if (c != Vector3.zero)
+                        float dp = prjL * 2 - (rA + rB);
+
+                        if (dp > 0)
                         {
-                            float dd = Vector3.Dot(d, c);
-                            float prjL = Mathf.Abs(dd);
-                            float rA = obb_a.GetAxisSize(c);
-                            float rB = obb_b.GetAxisSize(c);
-
-                            float dp = prjL * 2 - (rA + rB);
-
-                            if (dp > 0)
-                            {
-                                penetration = Vector3.zero;
-                                return (penetration, aDp, bDp);
-                            }
-
-                            Vector3 p = c * (dp / 2) * F32Sign11(dd);
-
-                            bool pMin = p.sqrMagnitude < pSqrMag;
-                            penetration = pMin ? p : penetration;
-                            pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                            penetration = Vector3.zero;
+                            return (penetration, aDp, bDp);
                         }
+
+                        Vector3 p = c * (dp / 2) * F32Sign11(dd);
+
+                        bool pMin = p.sqrMagnitude < pSqrMag;
+                        penetration = pMin ? p : penetration;
+                        pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
                     }
+                }
 
-                    //Separating Axis 14: aUp x bRight
+                //Separating Axis 14: aUp x bRight
+                {
+                    Vector3 c = Vector3.Cross(aUpN, bRightN).normalized;
+
+                    if (c != Vector3.zero)
                     {
-                        Vector3 c = Vector3.Cross(aUpN, bRightN).normalized;
+                        float dd = Vector3.Dot(d, c);
+                        float prjL = Mathf.Abs(dd);
+                        float rA = obb_a.GetAxisSize(c);
+                        float rB = obb_b.GetAxisSize(c);
 
-                        if (c != Vector3.zero)
+                        float dp = prjL * 2 - (rA + rB);
+
+                        if (dp > 0)
                         {
-                            float dd = Vector3.Dot(d, c);
-                            float prjL = Mathf.Abs(dd);
-                            float rA = obb_a.GetAxisSize(c);
-                            float rB = obb_b.GetAxisSize(c);
-
-                            float dp = prjL * 2 - (rA + rB);
-
-                            if (dp > 0)
-                            {
-                                penetration = Vector3.zero;
-                                return (penetration, aDp, bDp);
-                            }
-
-                            Vector3 p = c * (dp / 2) * F32Sign11(dd);
-
-                            bool pMin = p.sqrMagnitude < pSqrMag;
-                            penetration = pMin ? p : penetration;
-                            pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                            penetration = Vector3.zero;
+                            return (penetration, aDp, bDp);
                         }
+
+                        Vector3 p = c * (dp / 2) * F32Sign11(dd);
+
+                        bool pMin = p.sqrMagnitude < pSqrMag;
+                        penetration = pMin ? p : penetration;
+                        pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
                     }
+                }
 
-                    //Separating Axis 15: aUp x bUp
+                //Separating Axis 15: aUp x bUp
+                {
+                    Vector3 c = Vector3.Cross(aUpN, bUpN).normalized;
+
+                    if (c != Vector3.zero)
                     {
-                        Vector3 c = Vector3.Cross(aUpN, bUpN).normalized;
+                        float dd = Vector3.Dot(d, c);
+                        float prjL = Mathf.Abs(dd);
+                        float rA = obb_a.GetAxisSize(c);
+                        float rB = obb_b.GetAxisSize(c);
 
-                        if (c != Vector3.zero)
+                        float dp = prjL * 2 - (rA + rB);
+
+                        if (dp > 0)
                         {
-                            float dd = Vector3.Dot(d, c);
-                            float prjL = Mathf.Abs(dd);
-                            float rA = obb_a.GetAxisSize(c);
-                            float rB = obb_b.GetAxisSize(c);
-
-                            float dp = prjL * 2 - (rA + rB);
-
-                            if (dp > 0)
-                            {
-                                penetration = Vector3.zero;
-                                return (penetration, aDp, bDp);
-                            }
-
-                            Vector3 p = c * (dp / 2) * F32Sign11(dd);
-
-                            bool pMin = p.sqrMagnitude < pSqrMag;
-                            penetration = pMin ? p : penetration;
-                            pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                            penetration = Vector3.zero;
+                            return (penetration, aDp, bDp);
                         }
+
+                        Vector3 p = c * (dp / 2) * F32Sign11(dd);
+
+                        bool pMin = p.sqrMagnitude < pSqrMag;
+                        penetration = pMin ? p : penetration;
+                        pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
                     }
                 }
 
@@ -525,11 +508,11 @@ namespace RBPhys
                         Vector3 te_begin = aDp + (fA1 + fA2);
                         Vector3 te_end = aDp - (fA1 + fA2);
 
-                        ReverseProjectLineToLine(ref te_begin, ref te_end, aDp + fA1, aDp - fA1);
-                        ReverseProjectLineToLine(ref te_begin, ref te_end, aDp + fA2, aDp - fA2);
+                        ReverseProjectLineToLine(ref te_begin, ref te_end, bDp + fB1, bDp - fB1);
+                        ReverseProjectLineToLine(ref te_begin, ref te_end, bDp + fB2, bDp - fB2);
 
                         aDp = (te_begin + te_end) / 2;
-                        bDp = ProjectPointToLine(aDp, nB, bDp);
+                        bDp = ProjectPointToPlane(aDp, nB, bDp);
 
                         return (penetration, aDp, bDp);
                     }
@@ -541,11 +524,11 @@ namespace RBPhys
                         Vector3 te_begin = bDp + (fB1 + fB2);
                         Vector3 te_end = bDp - (fB1 + fB2);
 
-                        ReverseProjectLineToLine(ref te_begin, ref te_end, bDp + fB1, bDp - fB1);
-                        ReverseProjectLineToLine(ref te_begin, ref te_end, bDp + fB2, bDp - fB2);
+                        ReverseProjectLineToLine(ref te_begin, ref te_end, aDp + fA1, aDp - fA1);
+                        ReverseProjectLineToLine(ref te_begin, ref te_end, aDp + fA2, aDp - fA2);
 
                         bDp = (te_begin + te_end) / 2;
-                        aDp = ProjectPointToLine(bDp, nA, aDp);
+                        aDp = ProjectPointToPlane(bDp, nA, aDp);
 
                         return (penetration, aDp, bDp);
                     }
@@ -628,7 +611,6 @@ namespace RBPhys
 
                         aDp = ProjectPointToPlane(sum / count, nA, aDp);
                         bDp = ProjectPointToPlane(sum / count, nB, bDp);
-
                         return (penetration, aDp, bDp);
                     }
                 }
