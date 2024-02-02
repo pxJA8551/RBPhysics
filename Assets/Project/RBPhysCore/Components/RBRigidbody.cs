@@ -26,8 +26,6 @@ namespace RBPhys
         Vector3 _position;
         Quaternion _rotation;
 
-        Guid _guid;
-
         RBCollider[] _colliders;
 
         public Vector3 Velocity { get { return _velocity; } }
@@ -43,8 +41,6 @@ namespace RBPhys
         public float InverseMass { get { return 1 / mass; } }
 
         public bool isSleeping = false;
-
-        public Guid Guid { get { return _guid; } }
 
         public RBTrajectory ExpObjectTrajectory { get { return _expObjTrajectory; } }
 
@@ -66,7 +62,6 @@ namespace RBPhys
             UpdateTransform();
             RecalculateInertiaTensor();
             isSleeping = false;
-            _guid = Guid.NewGuid();
         }
 
         void OnDestroy()
@@ -152,8 +147,8 @@ namespace RBPhys
 
         public void ApplyTransform(float dt)
         {
-            _velocity = _expVelocity;
-            _angularVelocity = _expAngularVelocity;
+            _velocity = Vector3.ClampMagnitude(_expVelocity, Mathf.Max(0, _expVelocity.magnitude - 0.03f));
+            _angularVelocity = Vector3.ClampMagnitude(_expAngularVelocity, Mathf.Max(0, _expAngularVelocity.magnitude - 0.07f));
 
             transform.position = _position + (_velocity * dt);
             transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;

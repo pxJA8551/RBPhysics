@@ -6,17 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Profiling;
-using System.Threading;
 using UnityEditor;
-using System.Runtime.InteropServices;
-using UnityEditor.Android;
-using UnityEngine.Rendering;
-using System.Security.Cryptography;
-using UnityEditor.PackageManager;
-using UnityEngine.UIElements;
-using UnityEditor.Graphs;
-using System.Linq.Expressions;
-using UnityEngine.Assertions.Must;
 
 namespace RBPhys
 {
@@ -394,7 +384,7 @@ namespace RBPhys
             {
                 int p = offset + i;
 
-                if (_cols_res[p].p != Vector3.zero || true)
+                if (_cols_res[p].p != Vector3.zero)
                 {
                     var pair = _obb_sphere_cols[i];
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
@@ -571,37 +561,41 @@ namespace RBPhys
                     Profiler.EndSample();
                 }
 
-                Profiler.BeginSample(name: String.Format("UpdateTrajectories({0}/{1})", iter, CPU_COLLISION_SOLVER_MAX_ITERATION));
-
-                _updateTrajectorieTasks.Clear();
-
-                UpdateExpTrajectories(dt);
-
-                foreach (var col in _collisionsInSolver)
+                if (iter != CPU_COLLISION_SOLVER_MAX_ITERATION - 1)
                 {
-                    var t = Task.Run(() =>
+                    Profiler.BeginSample(name: String.Format("UpdateTrajectories({0}/{1})", iter, CPU_COLLISION_SOLVER_MAX_ITERATION));
+
+                    _updateTrajectorieTasks.Clear();
+
+                    UpdateExpTrajectories(dt);
+
+                    foreach (var col in _collisionsInSolver)
                     {
-                        bool collide = RecalculateCollision(col.collider_a, col.collider_b, out Vector3 p, out Vector3 pA, out Vector3 pB);
-                        p = col.collider_a.ExpToCurrentVector(p);
-                        pA = col.collider_a.ExpToCurrent(pA);
-                        pB = col.collider_b.ExpToCurrent(pB);
+                        var t = Task.Run(() =>
+                        {
+                            bool collide = RecalculateCollision(col.collider_a, col.collider_b, out Vector3 p, out Vector3 pA, out Vector3 pB);
+                            p = col.collider_a.ExpToCurrentVector(p);
+                            pA = col.collider_a.ExpToCurrent(pA);
+                            pB = col.collider_b.ExpToCurrent(pB);
 
-                        if (p != Vector3.zero)
-                        {
-                            col.Update(p, pA, pB);
-                            col.InitVelocityConstraint(dt, false);
-                        }
-                        else
-                        {
-                            col.skipInSolver = true;
-                        }
-                    });
-                    _updateTrajectorieTasks.Add(t);
+                            if (p != Vector3.zero)
+                            {
+                                col.Update(p, pA, pB);
+                                col.InitVelocityConstraint(dt, false);
+                            }
+                            else
+                            {
+                                col.skipInSolver = true;
+                            }
+                        });
+
+                        _updateTrajectorieTasks.Add(t);
+                    }
+
+                    Task.WhenAll(_updateTrajectorieTasks).Wait();
+
+                    Profiler.EndSample();
                 }
-
-                Task.WhenAll(_updateTrajectorieTasks).Wait();
-
-                Profiler.EndSample();
             }
 
             Profiler.EndSample();
