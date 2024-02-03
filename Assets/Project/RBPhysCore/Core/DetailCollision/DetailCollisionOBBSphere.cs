@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using static RBPhys.RBPhysUtil;
 
@@ -9,6 +11,12 @@ namespace RBPhys
     {
         public static class DetailCollisionOBBSphere
         {
+            public static (Vector3 p, Vector3 pA, Vector3 pB, DetailCollisionInfo info) CalcDetailCollisionInfo(RBColliderOBB obb_a, RBColliderSphere sphere_b)
+            {
+                var r = CalcDetailCollision(obb_a, sphere_b);
+                return (r.p, r.pA, r.pB, default);
+            }
+
             public static (Vector3 p, Vector3 pA, Vector3 pB) CalcDetailCollision(RBColliderOBB obb_a, RBColliderSphere sphere_b)
             {
                 Vector3 d = (sphere_b.pos - obb_a.Center);

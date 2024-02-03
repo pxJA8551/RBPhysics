@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Drawing;
+using System.Threading.Tasks;
 using UnityEngine;
 using static RBPhys.RBPhysUtil;
 using static RBPhys.RBVectorUtil;
@@ -10,6 +11,12 @@ namespace RBPhys
     {
         public static class DetailCollisionCapsuleCapsule
         {
+            public static (Vector3 p, Vector3 pA, Vector3 pB, DetailCollisionInfo info) CalcDetailCollisionInfo(RBColliderCapsule capsule_a, RBColliderCapsule capsule_b)
+            {
+                var r = CalcDetailCollision(capsule_a, capsule_b);
+                return (r.p, r.pA, r.pB, default);
+            }
+
             public static (Vector3 p, Vector3 pA, Vector3 pB) CalcDetailCollision(RBColliderCapsule capsule_a, RBColliderCapsule capsule_b)
             {
                 var edge_a = capsule_a.GetEdge();
