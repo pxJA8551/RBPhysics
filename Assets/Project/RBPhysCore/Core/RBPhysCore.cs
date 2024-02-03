@@ -519,9 +519,9 @@ namespace RBPhys
                 {
                     Profiler.BeginSample(name: String.Format("SolveCollisions({0}-{1}/{2})", iter, i, CPU_COLLISION_SOLVER_INTERNAL_MAX_ITERATION * CPU_COLLISION_SOLVER_MAX_ITERATION));
 
-                    Parallel.ForEach(_collisionsInSolver, col =>
+                    Parallel.For(0, _collisionsInSolver.Count, i =>
                     {
-                        SolveCollisionPair(col, dt);
+                        SolveCollisionPair(_collisionsInSolver[i], dt);
                     });
 
                     Profiler.EndSample();
@@ -533,9 +533,9 @@ namespace RBPhys
 
                     UpdateColliderExtTrajectories(dt);
 
-                    Parallel.ForEach(_collisionsInSolver, col =>
+                    Parallel.For(0, _collisionsInSolver.Count, i =>
                     {
-                        UpdateTrajectoryPair(col, dt);
+                        UpdateTrajectoryPair(_collisionsInSolver[i], dt);
                     });
 
                     Profiler.EndSample();
@@ -685,10 +685,6 @@ namespace RBPhys
                 trajAABB_b = traj_b.Rigidbody.GetColliders().Select(item => (item, item.ExpTrajectory.trajectoryAABB)).ToArray();
             }
 
-            //AABB��x�ŏ��l�ŃR���C�_������\�[�g
-            trajAABB_a = trajAABB_a.OrderBy(item => item.aabb.MinX).ToArray();
-            trajAABB_b = trajAABB_b.OrderBy(item => item.aabb.MinX).ToArray();
-
             //�R���C�_���ɐڐG�𔻒�
             for (int i = 0; i < trajAABB_a.Length; i++)
             {
@@ -704,16 +700,6 @@ namespace RBPhys
                         var collider_b = trajAABB_b[j];
                         float b_x_min = collider_b.aabb.MinX;
                         float b_x_max = collider_b.aabb.MaxX;
-
-                        if (b_x_max < a_x_min)
-                        {
-                            continue;
-                        }
-
-                        if (a_x_max < b_x_min)
-                        {
-                            break;
-                        }
 
                         if (collider_b.collider.isActiveAndEnabled)
                         {
@@ -992,9 +978,9 @@ namespace RBPhys
             vAdd_b = Vector3.zero;
             avAdd_b = Vector3.zero;
 
-            _jN.Resolve(this, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
-            _jT.Resolve(this, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
-            _jB.Resolve(this, ref vAdd_a, ref avAdd_a, ref vAdd_b, ref avAdd_b);
+            (vAdd_a, avAdd_a, vAdd_b, avAdd_b) = _jN.Resolve(this, vAdd_a, avAdd_a, vAdd_b, avAdd_b);
+            (vAdd_a, avAdd_a, vAdd_b, avAdd_b) = _jT.Resolve(this, vAdd_a, avAdd_a, vAdd_b, avAdd_b);
+            (vAdd_a, avAdd_a, vAdd_b, avAdd_b) = _jB.Resolve(this, vAdd_a, avAdd_a, vAdd_b, avAdd_b);
         }
 
         const float COLLISION_ERROR_SLOP = 0.005f;
@@ -1076,7 +1062,7 @@ namespace RBPhys
                 }
             }
 
-            public void Resolve(RBCollision col, ref Vector3 vAdd_a, ref Vector3 avAdd_a, ref Vector3 vAdd_b, ref Vector3 avAdd_b)
+            public (Vector3, Vector3, Vector3, Vector3) Resolve(RBCollision col, Vector3 vAdd_a, Vector3 avAdd_a, Vector3 vAdd_b, Vector3 avAdd_b)
             {
                 float jv = 0;
                 jv += Vector3.Dot(_va, col.ExpVelocity_a);
@@ -1101,9 +1087,11 @@ namespace RBPhys
                 lambda = _totalLambda - oldTotalLambda;
 
                 vAdd_a += col.InverseMass_a * _va * lambda;
-                vAdd_b += col.InverseMass_b * _vb * lambda;
                 avAdd_a += Vector3.Scale(col.InverseInertiaWs_a, _wa) * lambda;
+                vAdd_b += col.InverseMass_b * _vb * lambda;
                 avAdd_b += Vector3.Scale(col.InverseInertiaWs_b, _wb) * lambda;
+
+                return (vAdd_a, avAdd_a, vAdd_b, avAdd_b);
             }
         }
     }
