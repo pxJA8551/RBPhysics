@@ -10,7 +10,7 @@ namespace RBPhys
 {
     public class RBRigidbody : MonoBehaviour
     {
-        const float SLEEP_VEL_MAX_SQRT = 0.08f * 0.08f;
+        const float SLEEP_VEL_MAX_SQRT = 0.1f * 0.1f;
         const float SLEEP_ANGVEL_MAX_SQRT = 0.3f * 0.3f;
         const int SLEEP_GRACE_FRAMES = 5;
 
