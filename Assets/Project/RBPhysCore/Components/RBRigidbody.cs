@@ -266,7 +266,7 @@ namespace RBPhys
                     sleepGrace = 0;
                 }
 
-                if (sleepGrace >= 5)
+                if (sleepGrace >= SLEEP_GRACE_FRAMES)
                 {
                     PhysSleep();
                 }

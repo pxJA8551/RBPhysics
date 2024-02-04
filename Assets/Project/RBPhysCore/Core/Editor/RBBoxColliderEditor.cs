@@ -1,3 +1,5 @@
+#if UNITY_EDITOR
+
 using Microsoft.Win32.SafeHandles;
 using System.Collections;
 using System.Collections.Generic;
@@ -290,3 +292,5 @@ namespace RBPhys
         }
     }
 }
+
+#endif

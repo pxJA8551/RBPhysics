@@ -138,24 +138,16 @@ namespace RBPhys
             foreach (RBRigidbody rb in _rigidbodies)
             {
                 rb.UpdateTransform();
-            }
 
-            Parallel.ForEach(_rigidbodies, rb =>
-            {
                 if (!rb.isSleeping)
                 {
-                    for (int i = 0; i < rb.colliding.Length; i++)
-                    {
-                        rb.colliding[i] = null;
-                    }
-
                     if (Mathf.Max(2, rb.collidingCount) != rb.colliding.Length)
                     {
                         Array.Resize(ref rb.colliding, rb.collidingCount);
                     }
                     rb.collidingCount = 0;
                 }
-            });
+            }
 
             Profiler.EndSample();
 
@@ -172,7 +164,7 @@ namespace RBPhys
 
         static void UpdateColliderExtTrajectories(float dt)
         {
-            Profiler.BeginSample(name: "Physics-CollisionResolution-UpdateRigidbody");
+            Profiler.BeginSample(name: "Physics-CollisionResolution-UpdateRigidbodyTrajectory");
             foreach (RBRigidbody rb in _rigidbodies)
             {
                 rb.UpdateColliderExpTrajectory(dt);

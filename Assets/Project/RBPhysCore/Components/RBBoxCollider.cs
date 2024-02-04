@@ -29,7 +29,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot)
         {
-            return new RBColliderSphere(pos + rot * Center, Mathf.Sqrt(Mathf.Pow(_size.x, 2) + Mathf.Pow(_size.y, 2) + Mathf.Pow(_size.z, 2)) / 2f);
+            return new RBColliderSphere(pos + rot * Center,  Mathf.Sqrt(Mathf.Pow(_size.x, 2) + Mathf.Pow(_size.y, 2) + Mathf.Pow(_size.z, 2)) / 2f);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -37,9 +37,9 @@ namespace RBPhys
         {
             Quaternion r = rot * LocalRot;
 
-            float size_prjX =  RBPhysUtil.GetOBBAxisSize(_size, rot, Vector3.right);
-            float size_prjY = RBPhysUtil.GetOBBAxisSize(_size, rot, Vector3.up);
-            float size_prjZ = RBPhysUtil.GetOBBAxisSize(_size, rot, Vector3.forward);
+            float size_prjX =  RBPhysUtil.GetOBBAxisSize(_size, r, Vector3.right);
+            float size_prjY = RBPhysUtil.GetOBBAxisSize(_size, r, Vector3.up);
+            float size_prjZ = RBPhysUtil.GetOBBAxisSize(_size, r, Vector3.forward);
 
             RBColliderAABB aabb = new RBColliderAABB(pos + rot * Center, new Vector3(size_prjX, size_prjY, size_prjZ));
             return aabb;
@@ -48,7 +48,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot)
         {
-            return new RBColliderOBB(pos + rot * (Center - _size / 2f), rot * LocalRot, _size);
+            return new RBColliderOBB(pos + rot * (Center - LocalRot * _size / 2f), rot * LocalRot, _size);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
