@@ -275,6 +275,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &37869503
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -394,6 +395,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &95750203
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -513,6 +515,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &225453259
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -697,6 +700,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &226385021
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -752,6 +756,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &304646877
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -871,6 +876,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &356334175
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -990,6 +996,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &366442884
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1109,6 +1116,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &388042885
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1228,6 +1236,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &400827551
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1461,6 +1470,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &433085964
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1579,6 +1589,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &450336074
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1780,6 +1791,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!1 &625204628
 GameObject:
   m_ObjectHideFlags: 0
@@ -1816,6 +1828,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &625204630
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1936,6 +1949,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!23 &630001080
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2149,6 +2163,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &706956534
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2268,6 +2283,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &710785742
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2387,6 +2403,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &727597737
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2507,6 +2524,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &739372083
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2626,6 +2644,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &785012927
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2745,6 +2764,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &786843232
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2864,6 +2884,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &813777400
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2983,6 +3004,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &855324647
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3102,6 +3124,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &858234698
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3221,6 +3244,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &864310012
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3340,6 +3364,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &870745278
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3459,6 +3484,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &883042468
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3662,6 +3688,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &963673452
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3781,6 +3808,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1021013194
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3900,6 +3928,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1025299247
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4019,6 +4048,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1046130745
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4116,7 +4146,7 @@ GameObject:
   - component: {fileID: 1092712618}
   - component: {fileID: 1092712617}
   m_Layer: 0
-  m_Name: Box (75)
+  m_Name: Box (75) sfp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4138,6 +4168,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1092712618
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4257,6 +4288,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1096955998
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4376,6 +4408,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1129179360
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4592,6 +4625,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1221843015
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4711,6 +4745,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1227842401
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4830,6 +4865,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1230396461
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4949,6 +4985,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1335322249
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5068,6 +5105,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1379968031
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5187,6 +5225,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1433861030
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5306,6 +5345,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1454243980
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5425,6 +5465,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1570496495
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5544,6 +5585,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1584702571
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5663,6 +5705,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1665660797
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5782,6 +5825,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1787127218
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5901,6 +5945,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1802346888
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6019,6 +6064,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1813379462
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6138,6 +6184,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1819128138
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6302,6 +6349,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1872620291
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6421,6 +6469,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1876379471
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6540,6 +6589,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1927784736
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6659,6 +6709,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &1961651626
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6892,6 +6943,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &2086974159
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7011,6 +7063,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &2096466397
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7130,6 +7183,7 @@ MonoBehaviour:
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
   isSleeping: 0
+  colliding: []
 --- !u!114 &2130580355
 MonoBehaviour:
   m_ObjectHideFlags: 0

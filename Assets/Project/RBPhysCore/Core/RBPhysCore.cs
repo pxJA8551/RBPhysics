@@ -14,8 +14,8 @@ namespace RBPhys
     {
         public const int CPU_COLLISION_SOLVER_MAX_ITERATION = 5;
         public const int CPU_COLLISION_SOLVER_INTERNAL_MAX_ITERATION = 3;
-        public const float CPU_SOLVER_ABORT_VELADD_SQRT = 0.01f * 0.01f;
-        public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0.1f * 0.1f;
+        public const float CPU_SOLVER_ABORT_VELADD_SQRT = 0.1f * 0.1f;
+        public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0.3f * 0.3f;
 
         public const int DEFAULT_SOLVER_ITERATION = 6;
 
@@ -81,8 +81,14 @@ namespace RBPhys
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                rb.ExpVelocity += new Vector3(0, -9.81f, 0) * dt;
+                if (!rb.isSleeping)
+                {
+                    rb.ExpVelocity += new Vector3(0, -9.81f, 0) * dt;
+                }
             }
+            
+            TrySleepRigidbodies();
+            TryAwakeRigidbodies();
 
             //OnClosePhysicsFrame��
         }
@@ -99,12 +105,47 @@ namespace RBPhys
             }
         }
 
+        static void TrySleepRigidbodies()
+        {
+            foreach (RBRigidbody rb in _rigidbodies)
+            {
+                rb.TryPhysSleep();
+            }
+        }
+
+        static void TryAwakeRigidbodies()
+        {
+            foreach (RBRigidbody rb in _rigidbodies)
+            {
+                if (rb.isSleeping)
+                {
+                    foreach (var c in rb.colliding)
+                    {
+                        if (!(c?.isActiveAndEnabled ?? false))
+                        {
+                            rb.PhysAwake();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         static void UpdateTransforms()
         {
             Profiler.BeginSample(name: "Physics-CollisionResolution-UpdateRigidbody");
             foreach (RBRigidbody rb in _rigidbodies)
             {
                 rb.UpdateTransform();
+
+                if (!rb.isSleeping)
+                {
+                    if (Mathf.Max(2, rb.collidingCount) != rb.colliding.Length)
+                    {
+                        Array.Resize(ref rb.colliding, rb.collidingCount);
+                    }
+                    rb.collidingCount = 0;
+                }
             }
             Profiler.EndSample();
 
@@ -260,7 +301,7 @@ namespace RBPhys
                         {
                             RBTrajectory targetTraj = _trajectories_orderByXMin[j];
 
-                            if (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping) //罪
+                            if (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping)
                             {
                                 if (targetTraj.IsValidTrajectory)
                                 {
@@ -511,6 +552,17 @@ namespace RBPhys
             offset += _capsule_capsule_cols.Count;
             Profiler.EndSample();
 
+            Profiler.BeginSample(name: "Physics-CollisionResolution-RigidbodyPrepareSolve");
+            foreach(RBCollision col in _collisionsInSolver)
+            {
+                col.rigidbody_a?.PhysAwake();
+                col.rigidbody_b?.PhysAwake();
+
+                if (col.rigidbody_a != null) AddCollision(col.rigidbody_a, col.collider_b);
+                if (col.rigidbody_b != null) AddCollision(col.rigidbody_b, col.collider_a);
+            }
+            Profiler.EndSample();
+
             Profiler.BeginSample(name: "Physics-CollisionResolution-SolveCollisions");
 
             for (int iter = 0; iter < CPU_COLLISION_SOLVER_MAX_ITERATION; iter++)
@@ -621,6 +673,17 @@ namespace RBPhys
             return false;
         }
 
+        static void AddCollision(RBRigidbody rb, RBCollider collider)
+        {
+            if (rb.colliding.Length <= rb.collidingCount)
+            {
+                Array.Resize(ref rb.colliding, rb.collidingCount + 1);
+            }
+
+            rb.colliding[rb.collidingCount] = collider;
+            rb.collidingCount++;
+        }
+
         static void SolveCollisionPair(RBCollision col, float dt)
         {
             (Vector3 velAdd_a, Vector3 angVelAdd_a, Vector3 velAdd_b, Vector3 angVelAdd_b) = SolveCollision(col, dt);
@@ -652,7 +715,6 @@ namespace RBPhys
 
             if (p != Vector3.zero)
             {
-                //Debug.Log((p, pA, pB, col.info.obb_obb_penetrationIndex));
                 col.Update(p, pA, pB);
                 col.InitVelocityConstraint(dt, false);
             }
@@ -793,7 +855,6 @@ namespace RBPhys
 
         static void VerifyVelocity(RBRigidbody rb, bool enableStaticCollision = false)
         {
-
         }
 
         public static void Dispose()

@@ -10,8 +10,9 @@ namespace RBPhys
 {
     public class RBRigidbody : MonoBehaviour
     {
-        const float SLEEP_VEL_MAX_SQRT = 0.01f * 0.01f;
-        const float SLEEP_ANGVEL_MAX_SQRT = 0.1f * 0.1f;
+        const float SLEEP_VEL_MAX_SQRT = 0.08f * 0.08f;
+        const float SLEEP_ANGVEL_MAX_SQRT = 0.3f * 0.3f;
+        const int SLEEP_GRACE_FRAMES = 5;
 
         public float mass;
         [HideInInspector] public Vector3 inertiaTensor;
@@ -41,6 +42,10 @@ namespace RBPhys
         public float InverseMass { get { return 1 / mass; } }
 
         public bool isSleeping = false;
+        public int sleepGrace = 0;
+
+        public RBCollider[] colliding = new RBCollider[2];
+        public int collidingCount = 0;
 
         public RBTrajectory ExpObjectTrajectory { get { return _expObjTrajectory; } }
 
@@ -155,17 +160,6 @@ namespace RBPhys
 
             UpdateTransform();
             UpdateExpTrajectory(dt);
-
-            if (IsUnderSleepLevel())
-            {
-                //PhysSleep();
-                //_expVelocity = Vector3.zero;
-                //_expAngularVelocity = Vector3.zero;
-            }
-            else
-            {
-                PhysAwake();
-            }
         }
 
         public void UpdateTransform(bool updateColliders = true)
@@ -212,14 +206,28 @@ namespace RBPhys
             return (_position + _expVelocity * dt, Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * dt, _expAngularVelocity.normalized) * _rotation);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsUnderSleepLevel()
         {
             return _velocity.sqrMagnitude < SLEEP_VEL_MAX_SQRT && _angularVelocity.sqrMagnitude < SLEEP_ANGVEL_MAX_SQRT;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsExpUnderSleepLevel()
         {
             return _expVelocity.sqrMagnitude < SLEEP_VEL_MAX_SQRT && _expAngularVelocity.sqrMagnitude < SLEEP_ANGVEL_MAX_SQRT;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsUnderSleepLevelOrSleeping()
+        {
+            return (_velocity.sqrMagnitude < SLEEP_VEL_MAX_SQRT && _angularVelocity.sqrMagnitude < SLEEP_ANGVEL_MAX_SQRT) || isSleeping;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsExpUnderSleepLevelOrSleeping()
+        {
+            return (_expVelocity.sqrMagnitude < SLEEP_VEL_MAX_SQRT && _expAngularVelocity.sqrMagnitude < SLEEP_ANGVEL_MAX_SQRT) || isSleeping;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -231,7 +239,38 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void PhysSleep()
         {
+            _expVelocity = Vector3.zero;
+            _expAngularVelocity = Vector3.zero;
             isSleeping = true;
+            sleepGrace = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void TryPhysSleep()
+        {
+            if (!isSleeping && IsExpUnderSleepLevel())
+            {
+                bool sleep = true;
+
+                for (int i = 0; i < collidingCount; i++)
+                {
+                    if (!(colliding[i].ParentRigidbody?.IsExpUnderSleepLevelOrSleeping() ?? true)) sleep = false;
+                }
+
+                if (sleep)
+                {
+                    sleepGrace++;
+                }
+                else
+                {
+                    sleepGrace = 0;
+                }
+
+                if (sleepGrace >= 5)
+                {
+                    PhysSleep();
+                }
+            }
         }
 
         public void RecalculateInertiaTensor()
