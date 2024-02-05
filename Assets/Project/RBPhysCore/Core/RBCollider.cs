@@ -15,7 +15,7 @@ namespace RBPhys
     {
         RBRigidbody _parent;
 
-        public RBRigidbody ParentRigidbody { get { return (_parent?.isActiveAndEnabled ?? false) ? _parent : null; } }
+        public RBRigidbody ParentRigidbody { get { return (_parent ?? false) ? _parent : null; } }
         public abstract RBGeometryType GeometryType { get; }
 
         public Vector3 GameObjectPos { get; private set; }
