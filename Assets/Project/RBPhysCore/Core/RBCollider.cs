@@ -86,9 +86,9 @@ namespace RBPhys
             _expPos = GameObjectPos;
             _expRot = GameObjectRot;
 
-            _expTrajectory.Update(this);
-
             _hasParentRigidbodyInFrame = _parent?.isActiveAndEnabled ?? false;
+
+            _expTrajectory.Update(this);
         }
 
         public void UpdateExpTrajectory(Vector3 rbPos, Quaternion rbRot, Vector3 intergratedPos, Quaternion intergratedRot)
