@@ -16,10 +16,10 @@ namespace RBPhys
 
         public override RBGeometryType GeometryType { get { return GEOMETRY_TYPE; } }
 
-        Vector3 Center { get { return _center; } set { _center = value; } }
-        Quaternion LocalRot { get { return Quaternion.Euler(_rotationEuler); } set { _rotationEuler = value.eulerAngles; } }
-        float Radius { get { return _radius; } set { _radius = Mathf.Abs(value); } }
-        float Height { get { return _height; } set { _height = Mathf.Abs(value); } }
+        public Vector3 Center { get { return _center; } set { _center = value; } }
+        public Quaternion LocalRot { get { return Quaternion.Euler(_rotationEuler); } set { _rotationEuler = value.eulerAngles; } }
+        public float Radius { get { return _radius; } set { _radius = Mathf.Abs(value); } }
+        public float Height { get { return _height; } set { _height = Mathf.Abs(value); } }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override float CalcVolume()

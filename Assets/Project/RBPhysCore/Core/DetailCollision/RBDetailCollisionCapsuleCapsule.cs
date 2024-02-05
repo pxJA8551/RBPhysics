@@ -11,10 +11,10 @@ namespace RBPhys
     {
         public static class DetailCollisionCapsuleCapsule
         {
-            public static (Vector3 p, Vector3 pA, Vector3 pB, DetailCollisionInfo info) CalcDetailCollisionInfo(RBColliderCapsule capsule_a, RBColliderCapsule capsule_b)
+            public static Penetration CalcDetailCollisionInfo(RBColliderCapsule capsule_a, RBColliderCapsule capsule_b)
             {
                 var r = CalcDetailCollision(capsule_a, capsule_b);
-                return (r.p, r.pA, r.pB, default);
+                return new Penetration(r.p, r.pA, r.pB, default);
             }
 
             public static (Vector3 p, Vector3 pA, Vector3 pB) CalcDetailCollision(RBColliderCapsule capsule_a, RBColliderCapsule capsule_b)

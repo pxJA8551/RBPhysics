@@ -19,7 +19,7 @@ namespace RBPhys
         {
             const float FACE_PARALLEL_DOT_EPSILON = 0.00001f;
 
-            public static (Vector3 p, Vector3 pA, Vector3 pB, DetailCollisionInfo info) CalcDetailCollisionInfo(RBColliderOBB obb_a, RBColliderOBB obb_b)
+            public static Penetration CalcDetailCollisionInfo(RBColliderOBB obb_a, RBColliderOBB obb_b)
             {
                 Vector3 penetration;
                 Vector3 aDp = Vector3.zero;
@@ -59,7 +59,7 @@ namespace RBPhys
                     if (dp > 0)
                     {
                         penetration = Vector3.zero;
-                        return (penetration, aDp, bDp, default);
+                        return new Penetration(penetration, aDp, bDp, default);
                     }
 
                     Vector3 p = aFwdN * (dp / 2) * F32Sign11(dd);
@@ -81,7 +81,7 @@ namespace RBPhys
                     if (dp > 0)
                     {
                         penetration = Vector3.zero;
-                        return (penetration, aDp, bDp, default);
+                        return new Penetration(penetration, aDp, bDp, default);
                     }
 
                     Vector3 p = aRightN * (dp / 2) * F32Sign11(dd);
@@ -104,7 +104,7 @@ namespace RBPhys
                     if (dp > 0)
                     {
                         penetration = Vector3.zero;
-                        return (penetration, aDp, bDp, default);
+                        return new Penetration(penetration, aDp, bDp, default);
                     }
 
                     Vector3 p = aUpN * (dp / 2) * F32Sign11(dd);
@@ -127,7 +127,7 @@ namespace RBPhys
                     if (dp > 0)
                     {
                         penetration = Vector3.zero;
-                        return (penetration, aDp, bDp, default);
+                        return new Penetration(penetration, aDp, bDp, default);
                     }
 
                     Vector3 p = bFwdN * (dp / 2) * F32Sign11(dd);
@@ -150,7 +150,7 @@ namespace RBPhys
                     if (dp > 0)
                     {
                         penetration = Vector3.zero;
-                        return (penetration, aDp, bDp, default);
+                        return new Penetration(penetration, aDp, bDp, default);
                     }
 
                     Vector3 p = bRightN * (dp / 2) * F32Sign11(dd);
@@ -173,7 +173,7 @@ namespace RBPhys
                     if (dp > 0)
                     {
                         penetration = Vector3.zero;
-                        return (penetration, aDp, bDp, default);
+                        return new Penetration(penetration, aDp, bDp, default);
                     }
 
                     Vector3 p = bUpN * (dp / 2) * F32Sign11(dd);
@@ -200,7 +200,7 @@ namespace RBPhys
                         if (dp > 0)
                         {
                             penetration = Vector3.zero;
-                            return (penetration, aDp, bDp, default);
+                            return new Penetration(penetration, aDp, bDp, default);
                         }
 
                         Vector3 p = c * (dp / 2) * F32Sign11(dd);
@@ -228,7 +228,7 @@ namespace RBPhys
                         if (dp > 0)
                         {
                             penetration = Vector3.zero;
-                            return (penetration, aDp, bDp, default);
+                            return new Penetration(penetration, aDp, bDp, default);
                         }
 
                         Vector3 p = c * (dp / 2) * F32Sign11(dd);
@@ -256,7 +256,7 @@ namespace RBPhys
                         if (dp > 0)
                         {
                             penetration = Vector3.zero;
-                            return (penetration, aDp, bDp, default);
+                            return new Penetration(penetration, aDp, bDp, default);
                         }
 
                         Vector3 p = c * (dp / 2) * F32Sign11(dd);
@@ -284,7 +284,7 @@ namespace RBPhys
                         if (dp > 0)
                         {
                             penetration = Vector3.zero;
-                            return (penetration, aDp, bDp, default);
+                            return new Penetration(penetration, aDp, bDp, default);
                         }
 
                         Vector3 p = c * (dp / 2) * F32Sign11(dd);
@@ -312,7 +312,7 @@ namespace RBPhys
                         if (dp > 0)
                         {
                             penetration = Vector3.zero;
-                            return (penetration, aDp, bDp, default);
+                            return new Penetration(penetration, aDp, bDp, default);
                         }
 
                         Vector3 p = c * (dp / 2) * F32Sign11(dd);
@@ -340,7 +340,7 @@ namespace RBPhys
                         if (dp > 0)
                         {
                             penetration = Vector3.zero;
-                            return (penetration, aDp, bDp, default);
+                            return new Penetration(penetration, aDp, bDp, default);
                         }
 
                         Vector3 p = c * (dp / 2) * F32Sign11(dd);
@@ -368,7 +368,7 @@ namespace RBPhys
                         if (dp > 0)
                         {
                             penetration = Vector3.zero;
-                            return (penetration, aDp, bDp, default);
+                            return new Penetration(penetration, aDp, bDp, default);
                         }
 
                         Vector3 p = c * (dp / 2) * F32Sign11(dd);
@@ -396,7 +396,7 @@ namespace RBPhys
                         if (dp > 0)
                         {
                             penetration = Vector3.zero;
-                            return (penetration, aDp, bDp, default);
+                            return new Penetration(penetration, aDp, bDp, default);
                         }
 
                         Vector3 p = c * (dp / 2) * F32Sign11(dd);
@@ -424,7 +424,7 @@ namespace RBPhys
                         if (dp > 0)
                         {
                             penetration = Vector3.zero;
-                            return (penetration, aDp, bDp, default);
+                            return new Penetration(penetration, aDp, bDp, default);
                         }
 
                         Vector3 p = c * (dp / 2) * F32Sign11(dd);
@@ -513,12 +513,12 @@ namespace RBPhys
                             bDp = ProjectPointToPlane(aDp, nB, bDp);
                         }
 
-                        return (penetration, aDp, bDp, info);
+                        return new Penetration(penetration, aDp, bDp, info);
                     }
                     else if (aPd == 1 && bPd == 1)
                     {
                         CalcNearest(aDp + (fA1 + fA2), aDp - (fA1 + fA2), bDp + (fB1 + fB2), bDp - (fB1 + fB2), out aDp, out bDp);
-                        return (penetration, aDp, bDp, info);
+                        return new Penetration(penetration, aDp, bDp, info);
                     }
                     else if (aPd == 1)
                     {
@@ -534,7 +534,7 @@ namespace RBPhys
                         aDp = (te_begin + te_end) / 2;
                         bDp = ProjectPointToPlane(aDp, nB, bDp);
 
-                        return (penetration, aDp, bDp, info);
+                        return new Penetration(penetration, aDp, bDp, info);
                     }
                     else if (bPd == 1)
                     {
@@ -550,7 +550,7 @@ namespace RBPhys
                         bDp = (te_begin + te_end) / 2;
                         aDp = ProjectPointToPlane(bDp, nA, aDp);
 
-                        return (penetration, aDp, bDp, info);
+                        return new Penetration(penetration, aDp, bDp, info);
                     }
                     else
                     {
@@ -631,11 +631,11 @@ namespace RBPhys
 
                         aDp = ProjectPointToPlane(sum / count, nA, aDp);
                         bDp = ProjectPointToPlane(sum / count, nB, bDp);
-                        return (penetration, aDp, bDp, info);
+                        return new Penetration(penetration, aDp, bDp, info);
                     }
                 }
 
-                return (Vector3.zero, Vector3.zero, Vector3.zero, default);
+                return new Penetration(Vector3.zero, Vector3.zero, Vector3.zero, default);
             }
 
             public static (Vector3 p, Vector3 pA, Vector3 pB) CalcDetailCollisionLighter(RBColliderOBB obb_a, RBColliderOBB obb_b, DetailCollisionInfo info)

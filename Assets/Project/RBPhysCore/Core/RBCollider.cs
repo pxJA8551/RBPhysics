@@ -15,7 +15,7 @@ namespace RBPhys
     {
         RBRigidbody _parent;
 
-        public RBRigidbody ParentRigidbody { get { return (_parent?.isActiveAndEnabled ?? false) ? _parent : null; } }
+        public RBRigidbody ParentRigidbody { get { return _hasParentRigidbodyInFrame ? _parent : null; } }
         public abstract RBGeometryType GeometryType { get; }
 
         public Vector3 GameObjectPos { get; private set; }
@@ -31,6 +31,8 @@ namespace RBPhys
 
         Vector3 _expPos;
         Quaternion _expRot;
+
+        bool _hasParentRigidbodyInFrame = false;
 
         void Awake()
         {
@@ -85,6 +87,8 @@ namespace RBPhys
             _expRot = GameObjectRot;
 
             _expTrajectory.Update(this);
+
+            _hasParentRigidbodyInFrame = _parent?.isActiveAndEnabled ?? false;
         }
 
         public void UpdateExpTrajectory(Vector3 rbPos, Quaternion rbRot, Vector3 intergratedPos, Quaternion intergratedRot)

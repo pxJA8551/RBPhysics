@@ -1,4 +1,3 @@
-using Microsoft.Win32.SafeHandles;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
@@ -7,17 +6,18 @@ using UnityEditor.Build.Content;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using RBPhys;
+using UnityEngine.Assertions.Must;
 
 namespace RBPhysEditor
 {
-    [CustomEditor(typeof(RBBoxCollider))]
+    [CustomEditor(typeof(RBCapsuleCollider))]
     [CanEditMultipleObjects]
-
-    public class RBBoxColliderEditor : Editor
+    public class RBCapsuleColliderEditor : Editor
     {
         SerializedProperty center;
+        SerializedProperty height;
         SerializedProperty rotationEuler;
-        SerializedProperty size;
+        SerializedProperty radius;
 
         bool scaleEditMode = false;
         bool rotationEditMode = false;
@@ -43,7 +43,8 @@ namespace RBPhysEditor
         {
             center = serializedObject.FindProperty("_center");
             rotationEuler = serializedObject.FindProperty("_rotationEuler");
-            size = serializedObject.FindProperty("_size");
+            height = serializedObject.FindProperty("_height");
+            radius = serializedObject.FindProperty("_radius");
         }
 
         public override void OnInspectorGUI()
@@ -51,7 +52,8 @@ namespace RBPhysEditor
             serializedObject.Update();
             EditorGUILayout.PropertyField(center);
             EditorGUILayout.PropertyField(rotationEuler);
-            EditorGUILayout.PropertyField(size);
+            EditorGUILayout.PropertyField(height);
+            EditorGUILayout.PropertyField(radius);
 
             EditorGUILayout.Space(1);
             GUILayout.BeginHorizontal();
@@ -100,24 +102,34 @@ namespace RBPhysEditor
 
         public void OnSceneGUI()
         {
-            RBBoxCollider collider = target as RBBoxCollider;
+            RBCapsuleCollider collider = target as RBCapsuleCollider;
 
             if (target != null && collider.isActiveAndEnabled)
             {
                 Vector3 pos = collider.transform.position;
                 Quaternion rot = collider.transform.rotation;
-
-                Vector3 xSize = new Vector3(collider.Size.x / 2f, 0, 0);
-                Vector3 ySize = new Vector3(0, collider.Size.y / 2f, 0);
-                Vector3 zSize = new Vector3(0, 0, collider.Size.z / 2f);
-
                 Quaternion colRot = rot * collider.LocalRot;
+
+                Vector3 xSize = new Vector3(collider.Radius, 0, 0);
+                Vector3 ySize = new Vector3(0, collider.Height / 2f + collider.Radius, 0);
+                Vector3 yHeightSize = new Vector3(0, collider.Height / 2f, 0);
+                Vector3 zSize = new Vector3(0, 0, collider.Radius);
 
                 //Bug (https://issuetracker.unity3d.com/issues/object-with-the-wrong-color-is-drawn-when-using-the-handles-dot-drawwirecube-and-handles-dot-color-functions)
                 Handles.color = Color.cyan;
 
                 Handles.matrix = Matrix4x4.TRS(pos + rot * collider.Center, colRot, Vector3.one);
-                Handles.DrawWireCube(Vector3.zero, collider.Size);
+                Handles.DrawWireDisc(Vector3.zero, ySize.normalized, collider.Radius);
+                Handles.DrawLine(yHeightSize + xSize, -yHeightSize + xSize);
+                Handles.DrawLine(yHeightSize - xSize, -yHeightSize - xSize);
+                Handles.DrawLine(yHeightSize + zSize, -yHeightSize + zSize);
+                Handles.DrawLine(yHeightSize - zSize, -yHeightSize - zSize);
+                Handles.DrawWireDisc(yHeightSize, yHeightSize.normalized, collider.Radius);
+                Handles.DrawWireDisc(-yHeightSize, yHeightSize.normalized, collider.Radius);
+                Handles.DrawWireArc(yHeightSize, xSize.normalized, -zSize.normalized, 180, collider.Radius);
+                Handles.DrawWireArc(yHeightSize, zSize.normalized, xSize.normalized, 180, collider.Radius);
+                Handles.DrawWireArc(-yHeightSize, xSize.normalized, zSize.normalized, 180, collider.Radius);
+                Handles.DrawWireArc(-yHeightSize, zSize.normalized, -xSize.normalized, 180, collider.Radius);
 
                 if (scaleEditMode)
                 {
@@ -159,12 +171,12 @@ namespace RBPhysEditor
                         ctrlId_zn = GUIUtility.GetControlID(FocusType.Passive);
                         Vector3 c = collider.Center;
                         Handles.color = Color.magenta;
-                        RBColliderEditorUtil.DotHandleCapConstSize(ctrlId_xp, xSize, colRot, HANDLE_DOT_SIZE, Event.current.type);
-                        RBColliderEditorUtil.DotHandleCapConstSize(ctrlId_xn, -xSize, colRot, HANDLE_DOT_SIZE, Event.current.type);
-                        RBColliderEditorUtil.DotHandleCapConstSize(ctrlId_yp, ySize, colRot, HANDLE_DOT_SIZE, Event.current.type);
-                        RBColliderEditorUtil.DotHandleCapConstSize(ctrlId_yn, -ySize, colRot, HANDLE_DOT_SIZE, Event.current.type);
-                        RBColliderEditorUtil.DotHandleCapConstSize(ctrlId_zp, zSize, colRot, HANDLE_DOT_SIZE, Event.current.type);
-                        RBColliderEditorUtil.DotHandleCapConstSize(ctrlId_zn, -zSize, colRot, HANDLE_DOT_SIZE, Event.current.type);
+                        RBColliderEditorUtil.DotHandleCapConstSize(ctrlId_xp, xSize, Quaternion.identity, HANDLE_DOT_SIZE, Event.current.type);
+                        RBColliderEditorUtil.DotHandleCapConstSize(ctrlId_xn, -xSize, Quaternion.identity, HANDLE_DOT_SIZE, Event.current.type);
+                        RBColliderEditorUtil.DotHandleCapConstSize(ctrlId_yp, ySize, Quaternion.identity, HANDLE_DOT_SIZE, Event.current.type);
+                        RBColliderEditorUtil.DotHandleCapConstSize(ctrlId_yn, -ySize, Quaternion.identity, HANDLE_DOT_SIZE, Event.current.type);
+                        RBColliderEditorUtil.DotHandleCapConstSize(ctrlId_zp, zSize, Quaternion.identity, HANDLE_DOT_SIZE, Event.current.type);
+                        RBColliderEditorUtil.DotHandleCapConstSize(ctrlId_zn, -zSize, Quaternion.identity, HANDLE_DOT_SIZE, Event.current.type);
                     }
 
                     if (Event.current.type == EventType.MouseUp)
@@ -180,91 +192,91 @@ namespace RBPhysEditor
                     if (selected_xp)
                     {
                         Ray r = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + colRot * (xSize * 2), pos + rot * collider.Center + colRot * (-xSize * 2), r.origin, r.origin + r.direction * 10000f);
-                        float newXSize = (Quaternion.Inverse(colRot) * (p - (pos + rot * collider.Center) - colRot * -xSize)).x;
-                        Undo.RecordObject(target, "Changed Collider Center/Scale .x");
-                        collider.Center += (Quaternion.Inverse(colRot) * (p - (pos + rot * collider.Center) + colRot * -xSize)) / 2f;
+                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + rot * (xSize * 2), pos + rot * collider.Center + rot * (-xSize * 2), r.origin, r.origin + r.direction * 10000f);
+                        float newXSize = (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) - rot * -xSize)).x;
+                        Undo.RecordObject(target, "Changed Collider Center/Radius");
+                        collider.Center += (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) + rot * -xSize)) / 2f;
                         if (newXSize < 0)
                         {
                             selected_xp = false;
                             selected_xn = true;
                         }
-                        collider.Size = new Vector3(newXSize, size.vector3Value.y, size.vector3Value.z);
+                        collider.Radius = newXSize / 2f;
                         Repaint();
                     }
                     else if (selected_xn)
                     {
                         Ray r = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + colRot * (xSize * 2), pos + rot * collider.Center + colRot * (-xSize * 2), r.origin, r.origin + r.direction * 10000f);
-                        float newXSize = -(Quaternion.Inverse(colRot) * (p - (pos + rot * collider.Center) - colRot * xSize)).x;
-                        Undo.RecordObject(target, "Changed Collider Center/Scale .x");
-                        collider.Center += (Quaternion.Inverse(colRot) * (p - (pos + rot * collider.Center) + colRot * xSize)) / 2f;
+                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + rot * (xSize * 2), pos + rot * collider.Center + rot * (-xSize * 2), r.origin, r.origin + r.direction * 10000f);
+                        float newXSize = -(Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) - rot * xSize)).x;
+                        Undo.RecordObject(target, "Changed Collider Center/Radius");
+                        collider.Center += (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) + rot * xSize)) / 2f;
                         if (newXSize < 0)
                         {
                             selected_xp = true;
                             selected_xn = false;
                         }
-                        collider.Size = new Vector3(newXSize, size.vector3Value.y, size.vector3Value.z);
+                        collider.Radius = newXSize / 2f;
                         Repaint();
                     }
                     else if (selected_yp)
                     {
                         Ray r = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + colRot * (ySize * 2), pos + rot * collider.Center + colRot * (-ySize * 2), r.origin, r.origin + r.direction * 10000f);
-                        float newYSize = (Quaternion.Inverse(colRot) * (p - (pos + rot * collider.Center) - colRot * -ySize)).y;
-                        Undo.RecordObject(target, "Changed Collider Center/Scale .y");
-                        collider.Center += (Quaternion.Inverse(colRot) * (p - (pos + rot * collider.Center) + colRot * -ySize)) / 2f;
+                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + rot * (ySize * 2), pos + rot * collider.Center + rot * (-ySize * 2), r.origin, r.origin + r.direction * 10000f);
+                        float newYSize = (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) - rot * -ySize)).y;
+                        Undo.RecordObject(target, "Changed Collider Center/Height");
+                        collider.Center += (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) + rot * -ySize)) / 2f;
                         if (newYSize < 0)
                         {
                             selected_yp = false;
                             selected_yn = true;
                         }
-                        collider.Size = new Vector3(size.vector3Value.x, newYSize, size.vector3Value.z);
+                        collider.Height = newYSize - collider.Radius * 2;
                         Repaint();
                     }
                     else if (selected_yn)
                     {
                         Ray r = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + colRot * (ySize * 2), pos + rot * collider.Center + colRot * (-ySize * 2), r.origin, r.origin + r.direction * 10000f);
-                        float newYSize = -(Quaternion.Inverse(colRot) * (p - (pos + rot * collider.Center) - colRot * ySize)).y;
-                        Undo.RecordObject(target, "Changed Collider Center/Scale .y");
-                        collider.Center += (Quaternion.Inverse(colRot) * (p - (pos + rot * collider.Center) + colRot * ySize)) / 2f;
+                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + rot * (ySize * 2), pos + rot * collider.Center + rot * (-ySize * 2), r.origin, r.origin + r.direction * 10000f);
+                        float newYSize = -(Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) - rot * ySize)).y;
+                        Undo.RecordObject(target, "Changed Collider Center/Height");
+                        collider.Center += (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) + rot * ySize)) / 2f;
                         if (newYSize < 0)
                         {
                             selected_yp = true;
                             selected_yn = false;
                         }
-                        collider.Size = new Vector3(size.vector3Value.x, newYSize, size.vector3Value.z);
+                        collider.Height = newYSize - collider.Radius * 2;
                         Repaint();
                     }
                     else if (selected_zp)
                     {
                         Ray r = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + colRot * (zSize * 2), pos + rot * collider.Center + colRot * (-zSize * 2), r.origin, r.origin + r.direction * 10000f);
-                        float newZSize = (Quaternion.Inverse(colRot) * (p - (pos + rot * collider.Center) - colRot * -zSize)).z;
-                        Undo.RecordObject(target, "Changed Collider Center/Scale .z");
-                        collider.Center += (Quaternion.Inverse(colRot) * (p - (pos + rot * collider.Center) + colRot * -zSize)) / 2f;
-                        if (newZSize < 0)
+                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + rot * (zSize * 2), pos + rot * collider.Center + rot * (-zSize * 2), r.origin, r.origin + r.direction * 10000f);
+                        float newzSize = (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) - rot * -zSize)).z;
+                        Undo.RecordObject(target, "Changed Collider Center/Radius");
+                        collider.Center += (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) + rot * -zSize)) / 2f;
+                        if (newzSize < 0)
                         {
                             selected_zp = false;
                             selected_zn = true;
                         }
-                        collider.Size = new Vector3(size.vector3Value.x, size.vector3Value.y, newZSize);
+                        collider.Radius = newzSize / 2f;
                         Repaint();
                     }
                     else if (selected_zn)
                     {
                         Ray r = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + colRot * (zSize * 2), pos + rot * collider.Center + colRot * (-zSize * 2), r.origin, r.origin + r.direction * 10000f);
-                        float newZSize = -(Quaternion.Inverse(colRot) * (p - (pos + rot * collider.Center) - colRot * zSize)).z;
-                        Undo.RecordObject(target, "Changed Collider Center/Scale .z");
-                        collider.Center += (Quaternion.Inverse(colRot) * (p - (pos + rot * collider.Center) + colRot * zSize)) / 2f;
-                        if (newZSize < 0)
+                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + rot * (zSize * 2), pos + rot * collider.Center + rot * (-zSize * 2), r.origin, r.origin + r.direction * 10000f);
+                        float newzSize = -(Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) - rot * zSize)).z;
+                        Undo.RecordObject(target, "Changed Collider Center/Radius");
+                        collider.Center += (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) + rot * zSize)) / 2f;
+                        if (newzSize < 0)
                         {
                             selected_zp = true;
                             selected_zn = false;
                         }
-                        collider.Size = new Vector3(size.vector3Value.x, size.vector3Value.y, newZSize);
+                        collider.Radius = newzSize / 2f;
                         Repaint();
                     }
                 }
@@ -273,7 +285,7 @@ namespace RBPhysEditor
                     EditorGUI.BeginChangeCheck();
                     Handles.matrix = Matrix4x4.TRS(pos + rot * collider.Center, rot, Vector3.one);
                     Quaternion q = Handles.RotationHandle(collider.LocalRot, Vector3.zero);
-                    if (EditorGUI.EndChangeCheck()) 
+                    if (EditorGUI.EndChangeCheck())
                     {
                         Undo.RecordObject(target, "Changed Collider LocalRotation");
                         collider.LocalRot = q;

@@ -13,10 +13,10 @@ namespace RBPhys
         {
             const float FACE_PARALLEL_DOT_EPSILON = 0.000001f;
 
-            public static (Vector3 p, Vector3 pA, Vector3 pB, DetailCollisionInfo info) CalcDetailCollisionInfo(RBColliderOBB obb_a, RBColliderCapsule capsule_b)
+            public static Penetration CalcDetailCollisionInfo(RBColliderOBB obb_a, RBColliderCapsule capsule_b)
             {
                 var r = CalcDetailCollision(obb_a, capsule_b);
-                return (r.p, r.pA, r.pB, default);
+                return new Penetration(r.p, r.pA, r.pB, default);
             }
 
             public static (Vector3 p, Vector3 pA, Vector3 pB) CalcDetailCollision(RBColliderOBB obb_a, RBColliderCapsule capsule_b)
