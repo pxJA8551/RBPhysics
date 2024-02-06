@@ -14,8 +14,8 @@ namespace RBPhys
     {
         public const int CPU_COLLISION_SYNC_SOLVER_MAX_ITERATION = 5;
         public const int CPU_COLLISION_SYNC_NESTED_SOLVER_MAX_ITERATION = 3;
-        public const float CPU_SOLVER_ABORT_VELADD_SQRT = 0.1f * 0.1f;
-        public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0.3f * 0.3f;
+        public const float CPU_SOLVER_ABORT_VELADD_SQRT = 0.01f * 0.01f;
+        public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0.1f * 0.1f;
 
         public static ParallelOptions parallelOptions = new ParallelOptions();
 
@@ -293,8 +293,6 @@ namespace RBPhys
 
         public static void SolveColliders(float dt)
         {
-            parallelOptions.MaxDegreeOfParallelism = Environment.ProcessorCount;
-
             //�Փˌ��m�i�u���[�h�t�F�[�Y�j
 
             List<(RBTrajectory, RBTrajectory)> collidingTrajs = new List<(RBTrajectory, RBTrajectory)>();
@@ -358,7 +356,7 @@ namespace RBPhys
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-DetailTest");
 
-            Parallel.For(0, _obb_obb_cols.Count, parallelOptions, i =>
+            Parallel.For(0, _obb_obb_cols.Count, i =>
             {
                 var colPair = _obb_obb_cols[i];
                 RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionOBBOBB.CalcDetailCollisionInfo(colPair.col_a.CalcExpOBB(), colPair.col_b.CalcExpOBB());
@@ -404,7 +402,7 @@ namespace RBPhys
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-PrepareSolveCollisions");
 
-            Parallel.For(0, _obb_obb_cols.Count, parallelOptions, i =>
+            Parallel.For(0, _obb_obb_cols.Count, i =>
             {
                 var pair = _obb_obb_cols[i];
 
@@ -652,9 +650,9 @@ namespace RBPhys
                 {
                     Profiler.BeginSample(name: String.Format("SolveCollisions({0}-{1}/{2})", iter, i, CPU_COLLISION_SYNC_NESTED_SOLVER_MAX_ITERATION));
 
-                    Parallel.For(0, _collisionsInSolver.Count, parallelOptions, i =>
+                    Parallel.For(0, _collisionsInSolver.Count, j =>
                     {
-                        SolveCollisionPair(_collisionsInSolver[i]);
+                        SolveCollisionPair(_collisionsInSolver[j]);
                     });
 
                     Profiler.EndSample();
@@ -666,9 +664,9 @@ namespace RBPhys
 
                     UpdateColliderExtTrajectories(dt);
 
-                    Parallel.For(0, _collisionsInSolver.Count, parallelOptions, i =>
+                    Parallel.For(0, _collisionsInSolver.Count, j =>
                     {
-                        UpdateTrajectoryPair(_collisionsInSolver[i], dt);
+                        UpdateTrajectoryPair(_collisionsInSolver[j], dt);
                     });
 
                     Profiler.EndSample();
@@ -790,12 +788,12 @@ namespace RBPhys
         static void UpdateTrajectoryPair(RBCollision col, float dt)
         {
             RecalculateCollision(col.collider_a, col.collider_b, col.info, out Vector3 p, out Vector3 pA, out Vector3 pB);
-            p = col.collider_a.ExpToCurrentVector(p);
-            pA = col.collider_a.ExpToCurrent(pA);
-            pB = col.collider_b.ExpToCurrent(pB);
 
             if (p != Vector3.zero)
             {
+                p = col.collider_a.ExpToCurrentVector(p);
+                pA = col.collider_a.ExpToCurrent(pA);
+                pB = col.collider_b.ExpToCurrent(pB);
                 col.Update(p, pA, pB);
                 col.InitVelocityConstraint(dt, false);
             }
@@ -870,7 +868,7 @@ namespace RBPhys
                                 else if (collider_a.collider.GeometryType == RBGeometryType.Sphere && collider_b.collider.GeometryType == RBGeometryType.Sphere)
                                 {
                                     //Sphere-Sphere衝突
-                                    sphere_sphere_cols.Add((collider_b.collider, collider_a.collider, default, null));
+                                    sphere_sphere_cols.Add((collider_a.collider, collider_b.collider, default, null));
                                 }
                                 else if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.Capsule)
                                 {
