@@ -93,8 +93,8 @@ namespace RBPhys
                 Vector3 aabbSize = Vector3.Scale(mr.localBounds.size, gameObject.transform.lossyScale);
                 Vector3 aabbCenter = Vector3.Scale(mr.localBounds.center, gameObject.transform.lossyScale);
 
-                _height = aabbSize.y;
-                _radius = Mathf.Max(aabbSize.x, aabbSize.z);
+                _radius = Mathf.Max(aabbSize.x, aabbSize.z) / 2f;
+                _height = Mathf.Max(aabbSize.y - _radius * 2, 0);
                 _center = aabbCenter;
             }
         }
