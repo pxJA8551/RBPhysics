@@ -188,16 +188,6 @@ namespace RBPhys
             _expObjTrajectory = new RBTrajectory();
         }
 
-        void ChangeVelocity(Vector3 velocity, int solverIteration = 5)
-        {
-
-        }
-
-        void ChangeAngularVelocity(Vector3 velocity, int solverIteration = 5)
-        {
-
-        }
-
         void FindColliders()
         {
             _colliders = GetComponentsInChildren<RBCollider>(true).ToArray();

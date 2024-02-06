@@ -12,6 +12,10 @@ namespace RBPhysEditor
         {
             Vector3 handlePos = Handles.matrix.GetPosition();
             float s = Vector3.Distance(handlePos + pos, SceneView.currentDrawingSceneView.camera.transform.position) * size * 2f;
+            var c = Handles.color;
+            Handles.color = Color.white;
+            Handles.DotHandleCap(controlId, pos, rot, s * 1.5f, eventType);
+            Handles.color = c;
             Handles.DotHandleCap(controlId, pos, rot, s, eventType);
         }
     }

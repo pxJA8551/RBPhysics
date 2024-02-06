@@ -13,6 +13,9 @@ using static RBPhys.RBVectorUtil;
 
 namespace RBPhys
 {
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
     public static partial class RBDetailCollision
     {
         public static class DetailCollisionOBBOBB

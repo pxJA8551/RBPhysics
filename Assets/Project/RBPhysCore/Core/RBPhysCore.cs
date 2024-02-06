@@ -7,12 +7,13 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEditor;
-using UnityEditor.Callbacks;
-using JetBrains.Annotations;
-using static UnityEditor.Progress;
+using Unity.IL2CPP.CompilerServices;
 
 namespace RBPhys
 {
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
     public static class RBPhysCore
     {
         public const int CPU_STD_SOLVER_MAX_ITERATION = 5;
@@ -22,8 +23,6 @@ namespace RBPhys
 
         public const float CPU_SOLVER_ABORT_VELADD_SQRT = 0.01f * 0.01f;
         public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0.05f * 0.05f;
-
-        public static ParallelOptions parallelOptions = new ParallelOptions();
 
         public const int DEFAULT_SOLVER_ITERATION = 6;
 
@@ -186,7 +185,7 @@ namespace RBPhys
 
         static void ClearCollisions()
         {
-            Parallel.ForEach(_rigidbodies, parallelOptions, rb =>
+            Parallel.ForEach(_rigidbodies, rb =>
             {
                 if (!rb.isSleeping)
                 {
@@ -213,7 +212,7 @@ namespace RBPhys
         static void UpdateColliderExtTrajectories(float dt)
         {
             Profiler.BeginSample(name: "Physics-CollisionResolution-UpdateRigidbodyTrajectory");
-            Parallel.ForEach(_rigidbodies, parallelOptions, rb =>
+            Parallel.ForEach(_rigidbodies, rb =>
             {
                 rb.UpdateColliderExpTrajectory(dt);
             });
@@ -400,35 +399,35 @@ namespace RBPhys
                 _obb_obb_cols[i] = (colPair.col_a, colPair.col_b, p, null);
             });
 
-            Parallel.For(0, _obb_sphere_cols.Count, parallelOptions, i =>
+            Parallel.For(0, _obb_sphere_cols.Count, i =>
             {
                 var colPair = _obb_sphere_cols[i];
                 RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(colPair.col_a.CalcExpOBB(), colPair.col_b.CalcExpSphere());
                 _obb_sphere_cols[i] = (colPair.col_a, colPair.col_b, p, null);
             });
 
-            Parallel.For(0, _sphere_sphere_cols.Count, parallelOptions, i =>
+            Parallel.For(0, _sphere_sphere_cols.Count, i =>
             {
                 var colPair = _sphere_sphere_cols[i];
                 RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfo(colPair.col_a.CalcExpSphere(), colPair.col_b.CalcExpSphere());
                 _sphere_sphere_cols[i] = (colPair.col_a, colPair.col_b, p, null);
             });
 
-            Parallel.For(0, _obb_capsule_cols.Count, parallelOptions, i =>
+            Parallel.For(0, _obb_capsule_cols.Count, i =>
             {
                 var colPair = _obb_capsule_cols[i];
                 RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(colPair.col_a.CalcExpOBB(), colPair.col_b.CalcExpCapsule());
                 _obb_capsule_cols[i] = (colPair.col_a, colPair.col_b, p, null);
             });
 
-            Parallel.For(0, _sphere_capsule_cols.Count, parallelOptions, i =>
+            Parallel.For(0, _sphere_capsule_cols.Count, i =>
             {
                 var colPair = _sphere_capsule_cols[i];
                 RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(colPair.col_a.CalcExpSphere(), colPair.col_b.CalcExpCapsule());
                 _sphere_capsule_cols[i] = (colPair.col_a, colPair.col_b, p, null);
             });
 
-            Parallel.For(0, _capsule_capsule_cols.Count, parallelOptions, i =>
+            Parallel.For(0, _capsule_capsule_cols.Count, i =>
             {
                 var colPair = _capsule_capsule_cols[i];
                 RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionCapsuleCapsule.CalcDetailCollisionInfo(colPair.col_a.CalcExpCapsule(), colPair.col_b.CalcExpCapsule());
@@ -477,7 +476,7 @@ namespace RBPhys
                 }
             }
 
-            Parallel.For(0, _obb_sphere_cols.Count, parallelOptions, i =>
+            Parallel.For(0, _obb_sphere_cols.Count, i =>
             {
                 var pair = _obb_sphere_cols[i];
 
@@ -515,7 +514,7 @@ namespace RBPhys
                 }
             }
 
-            Parallel.For(0, _sphere_sphere_cols.Count, parallelOptions, i =>
+            Parallel.For(0, _sphere_sphere_cols.Count, i =>
             {
                 var pair = _sphere_sphere_cols[i];
 
@@ -553,7 +552,7 @@ namespace RBPhys
                 }
             }
 
-            Parallel.For(0, _obb_capsule_cols.Count, parallelOptions, i =>
+            Parallel.For(0, _obb_capsule_cols.Count, i =>
             {
                 var pair = _obb_capsule_cols[i];
 
@@ -591,7 +590,7 @@ namespace RBPhys
                 }
             }
 
-            Parallel.For(0, _sphere_capsule_cols.Count, parallelOptions, i =>
+            Parallel.For(0, _sphere_capsule_cols.Count, i =>
             {
                 var pair = _sphere_capsule_cols[i];
 
@@ -629,7 +628,7 @@ namespace RBPhys
                 }
             }
 
-            Parallel.For(0, _capsule_capsule_cols.Count, parallelOptions, i =>
+            Parallel.For(0, _capsule_capsule_cols.Count, i =>
             {
                 var pair = _capsule_capsule_cols[i];
 
@@ -704,9 +703,9 @@ namespace RBPhys
             {
                 for (int i = 0; i < CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION; i++)
                 {
-                    Profiler.BeginSample(name: "SolveCollisions({0}-{1}/{2})");
+                    Profiler.BeginSample(name: "SolveCollisions");
 
-                    Parallel.For(0, _collisionsInSolver.Count, parallelOptions, j =>
+                    Parallel.For(0, _collisionsInSolver.Count, j =>
                     {
                         SolveCollisionPair(_collisionsInSolver[j]);
                     });
@@ -721,11 +720,11 @@ namespace RBPhys
 
                 if (iter != CPU_STD_SOLVER_MAX_ITERATION - 1)
                 {
-                    Profiler.BeginSample(name: "UpdateTrajectories({0}/{1})");
+                    Profiler.BeginSample(name: "UpdateTrajectories");
 
                     UpdateColliderExtTrajectories(dt);
 
-                    Parallel.For(0, _collisionsInSolver.Count, parallelOptions, j =>
+                    Parallel.For(0, _collisionsInSolver.Count, j =>
                     {
                         UpdateTrajectoryPair(_collisionsInSolver[j], dt);
                     });
@@ -1020,6 +1019,9 @@ namespace RBPhys
         }
     }
 
+    [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
+    [Il2CppSetOption(Option.NullChecks, false)]
+    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
     public class RBCollision
     {
         public bool isValidCollision = false;

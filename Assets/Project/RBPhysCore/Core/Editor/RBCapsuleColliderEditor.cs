@@ -287,7 +287,9 @@ namespace RBPhysEditor
                     Quaternion q = Handles.RotationHandle(collider.LocalRot, Vector3.zero);
                     if (EditorGUI.EndChangeCheck())
                     {
+#if UNITY_EDITOR
                         Undo.RecordObject(target, "Changed Collider LocalRotation");
+#endif
                         collider.LocalRot = q;
                     }
                 }
