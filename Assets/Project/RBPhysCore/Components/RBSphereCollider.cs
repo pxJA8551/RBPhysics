@@ -3,7 +3,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using UnityEditor;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 namespace RBPhys
 {
@@ -54,6 +56,27 @@ namespace RBPhys
         public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot)
         {
             throw new System.NotImplementedException();
+        }
+
+        private void Reset()
+        {
+            AutoAlign();
+        }
+
+        public void AutoAlign()
+        {
+            GameObject g = gameObject;
+
+            if (g.TryGetComponent(out MeshRenderer mr))
+            {
+                Undo.RecordObject(this, "Aligned RBSphereCollider");
+
+                Vector3 aabbSize = Vector3.Scale(mr.localBounds.size, gameObject.transform.lossyScale);
+                Vector3 aabbCenter = Vector3.Scale(mr.localBounds.center, gameObject.transform.lossyScale);
+
+                _radius = Mathf.Max(aabbSize.x, aabbSize.y, aabbSize.z) / 2f;
+                _center = aabbCenter;
+            }
         }
     }
 }
