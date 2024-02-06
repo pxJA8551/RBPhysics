@@ -671,7 +671,7 @@ namespace RBPhys
 
             Parallel.For(0, _rigidbodies.Count, j =>
             {
-                _rigidbodies[j].OnStdSolverInitialization();
+                _rigidbodies[j].OnStdSolverInitialization(dt, false);
             });
 
             foreach (RBCollision col in _collisionsInSolver)
@@ -710,11 +710,14 @@ namespace RBPhys
                         SolveCollisionPair(_collisionsInSolver[j]);
                     });
 
+                    Profiler.EndSample();
+
+                    Profiler.BeginSample(name: "SolveConstraints");
+
                     Parallel.For(0, _rigidbodies.Count, j =>
                     {
                         _rigidbodies[j].OnStdSolverIteration(iter);
                     });
-
                     Profiler.EndSample();
                 }
 
@@ -727,6 +730,11 @@ namespace RBPhys
                     Parallel.For(0, _collisionsInSolver.Count, j =>
                     {
                         UpdateTrajectoryPair(_collisionsInSolver[j], dt);
+                    });
+
+                    Parallel.For(0, _rigidbodies.Count, j =>
+                    {
+                        _rigidbodies[j].OnStdSolverInitialization(dt, true);
                     });
 
                     Profiler.EndSample();
@@ -742,7 +750,7 @@ namespace RBPhys
             Profiler.BeginSample(name: "Physics-PriorSolver");
             Parallel.For(0, _rigidbodies.Count, j =>
             {
-                _rigidbodies[j].OnPriorSolverInitialization();
+                _rigidbodies[j].OnPriorSolverInitialization(dt);
             });
 
             for (int iter = 0; iter < CPU_PRIOR_SOLVER_MAX_ITERATION; iter++)
@@ -1010,10 +1018,6 @@ namespace RBPhys
             return (velocityAdd_a, angularVelocityAdd_a, velocityAdd_b, angularVelocityAdd_b);
         }
 
-        static void VerifyVelocity(RBRigidbody rb, bool enableStaticCollision = false)
-        {
-        }
-
         public static void Dispose()
         {
         }
@@ -1208,6 +1212,8 @@ namespace RBPhys
 
         struct Jacobian
         {
+            // Jv + b >= 0
+
             Type _type;
 
             Vector3 _va;
@@ -1251,6 +1257,7 @@ namespace RBPhys
                 if (initBias)
                 {
                     _bias = 0;
+                    _totalLambda = 0;
                 }
 
                 if (_type == Type.Normal)
@@ -1276,11 +1283,6 @@ namespace RBPhys
                 k += col.InverseMass_b;
                 k += Vector3.Dot(_wb, Vector3.Scale(col.InverseInertiaWs_b, _wb));
                 _effectiveMass = 1 / k;
-
-                if (initBias)
-                {
-                    _totalLambda = 0;
-                }
             }
 
             public (Vector3, Vector3, Vector3, Vector3) Resolve(RBCollision col, Vector3 vAdd_a, Vector3 avAdd_a, Vector3 vAdd_b, Vector3 avAdd_b)
