@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEditor;
+using UnityEditor.Callbacks;
+using JetBrains.Annotations;
 
 namespace RBPhys
 {
@@ -15,7 +17,7 @@ namespace RBPhys
         public const int CPU_COLLISION_SYNC_SOLVER_MAX_ITERATION = 5;
         public const int CPU_COLLISION_SYNC_NESTED_SOLVER_MAX_ITERATION = 3;
         public const float CPU_SOLVER_ABORT_VELADD_SQRT = 0.01f * 0.01f;
-        public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0.1f * 0.1f;
+        public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0.05f * 0.05f;
 
         public static ParallelOptions parallelOptions = new ParallelOptions();
 
@@ -110,6 +112,11 @@ namespace RBPhys
         static void TrySleepRigidbodies()
         {
             Profiler.BeginSample(name: "Physics-CollisionResolution-RigidbodySleepTest");
+            Parallel.ForEach(_rigidbodies, rb =>
+            {
+                rb.UpdatePhysSleepGrace();
+            });
+
             foreach (RBRigidbody rb in _rigidbodies)
             {
                 rb.TryPhysSleep();
@@ -124,9 +131,10 @@ namespace RBPhys
             {
                 if (rb.isSleeping)
                 {
-                    foreach (var c in rb.colliding)
+                    for(int i = 0; i < rb.collidingCount; i++)
                     {
-                        if (!(c?.isActiveAndEnabled ?? false))
+                        var c = rb.colliding[i];
+                        if (c.ParentRigidbody != null && ((c.ParentRigidbody.isActiveAndEnabled && !c.ParentRigidbody.isSleeping) || !c.ParentRigidbody.isActiveAndEnabled))
                         {
                             rb.PhysAwake();
                             break;
@@ -144,20 +152,9 @@ namespace RBPhys
             foreach (RBRigidbody rb in _rigidbodies)
             {
                 rb.UpdateTransform();
-
             }
 
-            Parallel.ForEach(_rigidbodies, parallelOptions, rb =>
-            {
-                if (!rb.isSleeping)
-                {
-                    if (Mathf.Max(2, rb.collidingCount) != rb.colliding.Length)
-                    {
-                        Array.Resize(ref rb.colliding, rb.collidingCount);
-                    }
-                    rb.collidingCount = 0;
-                }
-            });
+            ClearCollisions();
 
             Profiler.EndSample();
 
@@ -172,14 +169,39 @@ namespace RBPhys
             Profiler.EndSample();
         }
 
+        static void ClearCollisions()
+        {
+            Parallel.ForEach(_rigidbodies, parallelOptions, rb =>
+            {
+                if (!rb.isSleeping)
+                {
+                    ClearCollision(rb);
+                }
+            });
+        }
+
+        static void ClearCollision(RBRigidbody rb)
+        {
+            for (int i = 0; i < rb.collidingCount; i++)
+            {
+                rb.colliding[i] = null;
+            }
+
+            if (Mathf.Max(2, rb.collidingCount) != rb.colliding.Length)
+            {
+                Array.Resize(ref rb.colliding, rb.collidingCount);
+            }
+            rb.collidingCount = 0;
+        }
+
         //こいつを並列化するとなんか遅くなるし物理挙動が乱れるので触らない
         static void UpdateColliderExtTrajectories(float dt)
         {
             Profiler.BeginSample(name: "Physics-CollisionResolution-UpdateRigidbodyTrajectory");
-            foreach (RBRigidbody rb in _rigidbodies)
+            Parallel.ForEach(_rigidbodies, parallelOptions, rb =>
             {
                 rb.UpdateColliderExpTrajectory(dt);
-            }
+            });
             Profiler.EndSample();
         }
 
@@ -634,11 +656,25 @@ namespace RBPhys
             Profiler.BeginSample(name: "Physics-CollisionResolution-RigidbodyPrepareSolve");
             foreach(RBCollision col in _collisionsInSolver)
             {
-                col.rigidbody_a?.PhysAwake();
-                col.rigidbody_b?.PhysAwake();
+                if (col.rigidbody_a != null)
+                {
+                    if (col.rigidbody_a.isSleeping)
+                    {
+                        ClearCollision(col.rigidbody_a);
+                    }
+                    col.rigidbody_a.PhysAwake();
+                    AddCollision(col.rigidbody_a, col.collider_b);
+                }
 
-                if (col.rigidbody_a != null) AddCollision(col.rigidbody_a, col.collider_b);
-                if (col.rigidbody_b != null) AddCollision(col.rigidbody_b, col.collider_a);
+                if (col.rigidbody_b != null)
+                {
+                    if (col.rigidbody_b.isSleeping)
+                    {
+                        ClearCollision(col.rigidbody_b);
+                    }
+                    col.rigidbody_b.PhysAwake();
+                    AddCollision(col.rigidbody_b, col.collider_a);
+                }
             }
             Profiler.EndSample();
 
@@ -650,7 +686,7 @@ namespace RBPhys
                 {
                     Profiler.BeginSample(name: String.Format("SolveCollisions({0}-{1}/{2})", iter, i, CPU_COLLISION_SYNC_NESTED_SOLVER_MAX_ITERATION));
 
-                    Parallel.For(0, _collisionsInSolver.Count, j =>
+                    Parallel.For(0, _collisionsInSolver.Count, parallelOptions, j =>
                     {
                         SolveCollisionPair(_collisionsInSolver[j]);
                     });
@@ -664,7 +700,7 @@ namespace RBPhys
 
                     UpdateColliderExtTrajectories(dt);
 
-                    Parallel.For(0, _collisionsInSolver.Count, j =>
+                    Parallel.For(0, _collisionsInSolver.Count, parallelOptions, j =>
                     {
                         UpdateTrajectoryPair(_collisionsInSolver[j], dt);
                     });
@@ -765,23 +801,26 @@ namespace RBPhys
 
         static void SolveCollisionPair(RBCollision col)
         {
-            (Vector3 velAdd_a, Vector3 angVelAdd_a, Vector3 velAdd_b, Vector3 angVelAdd_b) = SolveCollision(col);
-
-            if (col.rigidbody_a != null)
+            if (!col.skipInSolver && col.penetration != Vector3.zero)
             {
-                col.rigidbody_a.ExpVelocity += velAdd_a;
-                col.rigidbody_a.ExpAngularVelocity += angVelAdd_a;
-            }
+                (Vector3 velAdd_a, Vector3 angVelAdd_a, Vector3 velAdd_b, Vector3 angVelAdd_b) = SolveCollision(col);
 
-            if (col.rigidbody_b != null)
-            {
-                col.rigidbody_b.ExpVelocity += velAdd_b;
-                col.rigidbody_b.ExpAngularVelocity += angVelAdd_b;
-            }
+                if (col.rigidbody_a != null)
+                {
+                    col.rigidbody_a.ExpVelocity += velAdd_a;
+                    col.rigidbody_a.ExpAngularVelocity += angVelAdd_a;
+                }
 
-            if (velAdd_a.sqrMagnitude < CPU_SOLVER_ABORT_VELADD_SQRT && angVelAdd_a.sqrMagnitude < CPU_SOLVER_ABORT_ANGVELADD_SQRT && velAdd_b.sqrMagnitude < CPU_SOLVER_ABORT_VELADD_SQRT && angVelAdd_b.sqrMagnitude < CPU_SOLVER_ABORT_ANGVELADD_SQRT)
-            {
-                col.skipInSolver = true;
+                if (col.rigidbody_b != null)
+                {
+                    col.rigidbody_b.ExpVelocity += velAdd_b;
+                    col.rigidbody_b.ExpAngularVelocity += angVelAdd_b;
+                }
+
+                if (velAdd_a.sqrMagnitude < CPU_SOLVER_ABORT_VELADD_SQRT && angVelAdd_a.sqrMagnitude < CPU_SOLVER_ABORT_ANGVELADD_SQRT && velAdd_b.sqrMagnitude < CPU_SOLVER_ABORT_VELADD_SQRT && angVelAdd_b.sqrMagnitude < CPU_SOLVER_ABORT_ANGVELADD_SQRT)
+                {
+                    col.skipInSolver = true;
+                }
             }
         }
 

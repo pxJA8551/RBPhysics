@@ -242,31 +242,38 @@ namespace RBPhys
             _expVelocity = Vector3.zero;
             _expAngularVelocity = Vector3.zero;
             isSleeping = true;
-            sleepGrace = 0;
+            sleepGrace = 5;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void UpdatePhysSleepGrace()
+        {
+            if (IsExpUnderSleepLevel())
+            {
+                if (sleepGrace < 5) 
+                {
+                    sleepGrace++;
+                }
+            }
+            else
+            {
+                sleepGrace = 0;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TryPhysSleep()
         {
-            if (!isSleeping && IsExpUnderSleepLevel())
+            if (!isSleeping && sleepGrace >= 5)
             {
-                bool sleep = true;
+                int sMin = 5;
 
                 for (int i = 0; i < collidingCount; i++)
                 {
-                    if (!(colliding[i].ParentRigidbody?.IsExpUnderSleepLevelOrSleeping() ?? true)) sleep = false;
+                    sMin = Mathf.Min(sMin, colliding[i].ParentRigidbody?.sleepGrace ?? 5);
                 }
 
-                if (sleep)
-                {
-                    sleepGrace++;
-                }
-                else
-                {
-                    sleepGrace = 0;
-                }
-
-                if (sleepGrace >= SLEEP_GRACE_FRAMES)
+                if (sMin >= 5)
                 {
                     PhysSleep();
                 }
