@@ -116,7 +116,7 @@ namespace RBPhysEditor
                 Vector3 zSize = new Vector3(0, 0, collider.Radius);
 
                 //Bug (https://issuetracker.unity3d.com/issues/object-with-the-wrong-color-is-drawn-when-using-the-handles-dot-drawwirecube-and-handles-dot-color-functions)
-                Handles.color = Color.cyan;
+                Handles.color = Color.blue;
 
                 Handles.matrix = Matrix4x4.TRS(pos + rot * collider.Center, colRot, Vector3.one);
                 Handles.DrawWireDisc(Vector3.zero, ySize.normalized, collider.Radius);

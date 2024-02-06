@@ -2348,15 +2348,15 @@ GameObject:
   - component: {fileID: 471040264}
   - component: {fileID: 471040263}
   - component: {fileID: 471040262}
-  - component: {fileID: 471040265}
   - component: {fileID: 471040266}
+  - component: {fileID: 471040265}
   m_Layer: 0
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!23 &471040262
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2434,11 +2434,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eebacddcd60ac054fb19a3b9047c4897, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  beta: 0.7
+  beta: 0.5
   restitution: 0.5
-  friction: 0.7
+  friction: 0.5
   _center: {x: 0, y: 0, z: 0}
-  _radius: 0.5
+  _radius: 0.50000006
 --- !u!114 &471040266
 MonoBehaviour:
   m_ObjectHideFlags: 0

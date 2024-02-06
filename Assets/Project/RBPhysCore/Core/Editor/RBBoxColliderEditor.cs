@@ -113,11 +113,27 @@ namespace RBPhysEditor
 
                 Quaternion colRot = rot * collider.LocalRot;
 
-                //Bug (https://issuetracker.unity3d.com/issues/object-with-the-wrong-color-is-drawn-when-using-the-handles-dot-drawwirecube-and-handles-dot-color-functions)
-                Handles.color = Color.cyan;
-
+                Handles.color = Color.blue;
                 Handles.matrix = Matrix4x4.TRS(pos + rot * collider.Center, colRot, Vector3.one);
-                Handles.DrawWireCube(Vector3.zero, collider.Size);
+
+                //Bug (https://issuetracker.unity3d.com/issues/object-with-the-wrong-color-is-drawn-when-using-the-handles-dot-drawwirecube-and-handles-dot-color-functions)
+                //Handles.DrawWireCube(Vector3.zero, collider.Size);
+
+                {
+                    float lineThickness = HANDLE_SIZE * 1.75f;
+                    Handles.DrawLine(xSize + ySize + zSize, -xSize + ySize + zSize, lineThickness);
+                    Handles.DrawLine(xSize + ySize + zSize, xSize + ySize - zSize, lineThickness);
+                    Handles.DrawLine(-xSize + ySize - zSize, -xSize + ySize + zSize, lineThickness);
+                    Handles.DrawLine(-xSize + ySize - zSize, xSize + ySize - zSize, lineThickness);
+                    Handles.DrawLine(xSize -ySize + zSize, -xSize - ySize + zSize, lineThickness);
+                    Handles.DrawLine(xSize - ySize + zSize, xSize - ySize - zSize, lineThickness);
+                    Handles.DrawLine(-xSize - ySize - zSize, -xSize - ySize + zSize, lineThickness);
+                    Handles.DrawLine(-xSize - ySize - zSize, xSize - ySize - zSize, lineThickness);
+                    Handles.DrawLine(xSize + ySize + zSize, xSize - ySize + zSize, lineThickness);
+                    Handles.DrawLine(-xSize + ySize + zSize, -xSize - ySize + zSize, lineThickness);
+                    Handles.DrawLine(xSize + ySize - zSize, xSize - ySize - zSize, lineThickness);
+                    Handles.DrawLine(-xSize + ySize - zSize, -xSize - ySize - zSize, lineThickness);
+                }
 
                 if (scaleEditMode)
                 {
