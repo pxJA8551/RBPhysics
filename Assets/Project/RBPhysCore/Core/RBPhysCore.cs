@@ -9,13 +9,17 @@ using UnityEngine.Profiling;
 using UnityEditor;
 using UnityEditor.Callbacks;
 using JetBrains.Annotations;
+using static UnityEditor.Progress;
 
 namespace RBPhys
 {
     public static class RBPhysCore
     {
-        public const int CPU_COLLISION_SYNC_SOLVER_MAX_ITERATION = 5;
-        public const int CPU_COLLISION_SYNC_NESTED_SOLVER_MAX_ITERATION = 3;
+        public const int CPU_STD_SOLVER_MAX_ITERATION = 5;
+        public const int CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION = 3;
+
+        public const int CPU_PRIOR_SOLVER_MAX_ITERATION = 5;
+
         public const float CPU_SOLVER_ABORT_VELADD_SQRT = 0.01f * 0.01f;
         public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0.05f * 0.05f;
 
@@ -81,7 +85,18 @@ namespace RBPhys
             UpdateTransforms();
             UpdateExtTrajectories(dt);
             SortTrajectories();
-            SolveColliders(dt);
+
+            for (int i = 0; i < _rigidbodies.Count; i++)
+            {
+                _rigidbodies[i].BeforeSolver();
+            }
+
+            SolveConstraints(dt);
+
+            for (int i = 0; i < _rigidbodies.Count; i++)
+            {
+                _rigidbodies[i].AfterSolver();
+            }
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
@@ -313,7 +328,7 @@ namespace RBPhys
         static List<(RBCollider col_a, RBCollider col_b, RBDetailCollision.Penetration p, RBCollision col)> _sphere_capsule_cols = new List<(RBCollider, RBCollider, RBDetailCollision.Penetration p, RBCollision col)>();
         static List<(RBCollider col_a, RBCollider col_b, RBDetailCollision.Penetration p, RBCollision col)> _capsule_capsule_cols = new List<(RBCollider, RBCollider, RBDetailCollision.Penetration p, RBCollision col)>();
 
-        public static void SolveColliders(float dt)
+        public static void SolveConstraints(float dt)
         {
             //�Փˌ��m�i�u���[�h�t�F�[�Y�j
 
@@ -654,7 +669,13 @@ namespace RBPhys
             Profiler.EndSample();
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-RigidbodyPrepareSolve");
-            foreach(RBCollision col in _collisionsInSolver)
+
+            Parallel.For(0, _rigidbodies.Count, j =>
+            {
+                _rigidbodies[j].OnStdSolverInitialization();
+            });
+
+            foreach (RBCollision col in _collisionsInSolver)
             {
                 if (col.rigidbody_a != null)
                 {
@@ -678,25 +699,29 @@ namespace RBPhys
             }
             Profiler.EndSample();
 
-            Profiler.BeginSample(name: "Physics-CollisionResolution-SolveCollisions");
-
-            for (int iter = 0; iter < CPU_COLLISION_SYNC_SOLVER_MAX_ITERATION; iter++)
+            Profiler.BeginSample(name: "Physics-CollisionResolution-SolveCollisions/StdSolver");
+            for (int iter = 0; iter < CPU_STD_SOLVER_MAX_ITERATION; iter++)
             {
-                for (int i = 0; i < CPU_COLLISION_SYNC_NESTED_SOLVER_MAX_ITERATION; i++)
+                for (int i = 0; i < CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION; i++)
                 {
-                    Profiler.BeginSample(name: String.Format("SolveCollisions({0}-{1}/{2})", iter, i, CPU_COLLISION_SYNC_NESTED_SOLVER_MAX_ITERATION));
+                    Profiler.BeginSample(name: "SolveCollisions({0}-{1}/{2})");
 
                     Parallel.For(0, _collisionsInSolver.Count, parallelOptions, j =>
                     {
                         SolveCollisionPair(_collisionsInSolver[j]);
                     });
 
+                    Parallel.For(0, _rigidbodies.Count, j =>
+                    {
+                        _rigidbodies[j].OnStdSolverIteration(iter);
+                    });
+
                     Profiler.EndSample();
                 }
 
-                if (iter != CPU_COLLISION_SYNC_SOLVER_MAX_ITERATION - 1)
+                if (iter != CPU_STD_SOLVER_MAX_ITERATION - 1)
                 {
-                    Profiler.BeginSample(name: String.Format("UpdateTrajectories({0}/{1})", iter, CPU_COLLISION_SYNC_SOLVER_MAX_ITERATION));
+                    Profiler.BeginSample(name: "UpdateTrajectories({0}/{1})");
 
                     UpdateColliderExtTrajectories(dt);
 
@@ -714,6 +739,21 @@ namespace RBPhys
             _collisions.Clear();
             _collisions.AddRange(_collisionsInSolver);
             _collisionsInSolver.Clear();
+
+            Profiler.BeginSample(name: "Physics-PriorSolver");
+            Parallel.For(0, _rigidbodies.Count, j =>
+            {
+                _rigidbodies[j].OnPriorSolverInitialization();
+            });
+
+            for (int iter = 0; iter < CPU_PRIOR_SOLVER_MAX_ITERATION; iter++)
+            {
+                Parallel.For(0, _rigidbodies.Count, j =>
+                {
+                    _rigidbodies[j].OnPriorSolverIteration(iter);
+                });
+            }
+            Profiler.EndSample();
         }
 
         static bool RecalculateCollision(RBCollider col_a, RBCollider col_b, RBDetailCollision.DetailCollisionInfo info, out Vector3 p, out Vector3 pA, out Vector3 pB)

@@ -3,6 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Security.Policy;
+using System.Threading.Tasks;
 using UnityEngine;
 using static RBPhys.RBPhysUtil;
 
@@ -44,12 +46,49 @@ namespace RBPhys
         public bool isSleeping = false;
         public int sleepGrace = 0;
 
-        public RBCollider[] colliding = new RBCollider[2];
-        public int collidingCount = 0;
+        [HideInInspector] public RBCollider[] colliding = new RBCollider[2];
+        [HideInInspector] public int collidingCount = 0;
 
         public RBTrajectory ExpObjectTrajectory { get { return _expObjTrajectory; } }
 
         RBTrajectory _expObjTrajectory;
+
+        /// <summary>
+        /// 標準・優先物理ソルバーの実行前
+        /// </summary>
+        public delegate void BeforeSolverDelegate(RBRigidbody rb);
+
+        /// <summary>
+        /// 標準・優先物理ソルバーを全て試行完了した後で実行
+        /// </summary>
+        public delegate void AfterSolverDelegate(RBRigidbody rb);
+
+        /// <summary>
+        /// 標準物理ソルバーの初期化
+        /// </summary>
+        public delegate void StdInitDelegate(RBRigidbody rb);
+
+        /// <summary>
+        /// 標準物理ソルバー試行
+        /// </summary>
+        public delegate void StdResolveDelegate(RBRigidbody rb, int iterationCount);
+
+        /// <summary>
+        /// 優先物理ソルバーの初期化（標準物理ソルバーを全て試行完了した後で実行）
+        /// </summary>
+        public delegate void PriorInitDelegate(RBRigidbody rb);
+
+        /// <summary>
+        /// 優先物理ソルバー試行（標準物理ソルバーを全て試行完了した後で実行）
+        /// </summary>
+        public delegate void PriorResolveDelegate(RBRigidbody rb, int iterationCount);
+
+        public BeforeSolverDelegate ds_beforeSolver;
+        public BeforeSolverDelegate ds_afterSolver;
+        public StdInitDelegate ds_stdSolverInit;
+        public StdResolveDelegate ds_stdSolverIter;
+        public PriorInitDelegate ds_priorSolverInit;
+        public PriorResolveDelegate ds_priorSolverIter;
 
         public Vector3 InverseInertiaWs
         {
@@ -95,6 +134,54 @@ namespace RBPhys
         }
 
         private void FixedUpdate() { }
+
+        internal void BeforeSolver()
+        {
+            if (ds_beforeSolver != null)
+            {
+                ds_beforeSolver(this);
+            }
+        }
+
+        internal void AfterSolver()
+        {
+            if (ds_afterSolver != null)
+            {
+                ds_afterSolver(this);
+            }
+        }
+
+        internal void OnStdSolverInitialization()
+        {
+            if (ds_stdSolverInit != null)
+            {
+                ds_stdSolverInit(this);
+            }
+        }
+
+        internal void OnStdSolverIteration(int iterationCount)
+        {
+            if (ds_stdSolverIter != null)
+            {
+                ds_stdSolverIter(this, iterationCount);
+            }
+        }
+
+        internal void OnPriorSolverInitialization()
+        {
+            if (ds_priorSolverInit != null)
+            {
+                ds_priorSolverInit(this);
+            }
+        }
+
+        internal void OnPriorSolverIteration(int iterationCount)
+        {
+            if (ds_priorSolverIter != null)
+            {
+                ds_priorSolverIter(this, iterationCount);
+            }
+        }
 
         public RBRigidbody()
         {
@@ -145,12 +232,7 @@ namespace RBPhys
             return _colliders;
         }
 
-        public void GetRigidbodyAABB()
-        {
-
-        }
-
-        public void ApplyTransform(float dt)
+        internal void ApplyTransform(float dt)
         {
             _velocity = Vector3.ClampMagnitude(_expVelocity, Mathf.Max(0, _expVelocity.magnitude - 0.03f));
             _angularVelocity = Vector3.ClampMagnitude(_expAngularVelocity, Mathf.Max(0, _expAngularVelocity.magnitude - 0.07f));
@@ -162,7 +244,7 @@ namespace RBPhys
             UpdateExpTrajectory(dt);
         }
 
-        public void UpdateTransform(bool updateColliders = true)
+        internal void UpdateTransform(bool updateColliders = true)
         {
             Position = transform.position;
             Rotation = transform.rotation;
@@ -176,7 +258,7 @@ namespace RBPhys
             }
         }
 
-        public void UpdateExpTrajectory(float dt, bool updateColliders = true)
+        internal void UpdateExpTrajectory(float dt, bool updateColliders = true)
         {
             (Vector3 pos, Quaternion rot) r = GetIntergrated(dt);
 
@@ -191,7 +273,7 @@ namespace RBPhys
             _expObjTrajectory.Update(this, dt);
         }
 
-        public void UpdateColliderExpTrajectory(float dt)
+        internal void UpdateColliderExpTrajectory(float dt)
         {
             (Vector3 pos, Quaternion rot) r = GetIntergrated(dt);
 
@@ -242,15 +324,15 @@ namespace RBPhys
             _expVelocity = Vector3.zero;
             _expAngularVelocity = Vector3.zero;
             isSleeping = true;
-            sleepGrace = 5;
+            sleepGrace = SLEEP_GRACE_FRAMES;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UpdatePhysSleepGrace()
+        internal void UpdatePhysSleepGrace()
         {
             if (IsExpUnderSleepLevel())
             {
-                if (sleepGrace < 5) 
+                if (sleepGrace < SLEEP_GRACE_FRAMES) 
                 {
                     sleepGrace++;
                 }
@@ -262,18 +344,18 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void TryPhysSleep()
+        internal void TryPhysSleep()
         {
-            if (!isSleeping && sleepGrace >= 5)
+            if (!isSleeping && sleepGrace >= SLEEP_GRACE_FRAMES)
             {
-                int sMin = 5;
+                int sMin = SLEEP_GRACE_FRAMES;
 
                 for (int i = 0; i < collidingCount; i++)
                 {
-                    sMin = Mathf.Min(sMin, colliding[i].ParentRigidbody?.sleepGrace ?? 5);
+                    sMin = Mathf.Min(sMin, colliding[i].ParentRigidbody?.sleepGrace ?? SLEEP_GRACE_FRAMES);
                 }
 
-                if (sMin >= 5)
+                if (sMin >= SLEEP_GRACE_FRAMES)
                 {
                     PhysSleep();
                 }
