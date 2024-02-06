@@ -56,32 +56,32 @@ namespace RBPhys
         /// <summary>
         /// 標準・優先物理ソルバーの実行前
         /// </summary>
-        public delegate void BeforeSolverDelegate(RBRigidbody rb);
+        public delegate void BeforeSolverDelegate();
 
         /// <summary>
         /// 標準・優先物理ソルバーを全て試行完了した後で実行
         /// </summary>
-        public delegate void AfterSolverDelegate(RBRigidbody rb);
+        public delegate void AfterSolverDelegate();
 
         /// <summary>
         /// 標準物理ソルバーの初期化
         /// </summary>
-        public delegate void StdInitDelegate(RBRigidbody rb);
+        public delegate void StdInitDelegate(float dt, bool syncInit);
 
         /// <summary>
         /// 標準物理ソルバー試行
         /// </summary>
-        public delegate void StdResolveDelegate(RBRigidbody rb, int iterationCount);
+        public delegate void StdResolveDelegate(int iterationCount);
 
         /// <summary>
         /// 優先物理ソルバーの初期化（標準物理ソルバーを全て試行完了した後で実行）
         /// </summary>
-        public delegate void PriorInitDelegate(RBRigidbody rb);
+        public delegate void PriorInitDelegate(float dt);
 
         /// <summary>
         /// 優先物理ソルバー試行（標準物理ソルバーを全て試行完了した後で実行）
         /// </summary>
-        public delegate void PriorResolveDelegate(RBRigidbody rb, int iterationCount);
+        public delegate void PriorResolveDelegate(int iterationCount);
 
         public BeforeSolverDelegate ds_beforeSolver;
         public BeforeSolverDelegate ds_afterSolver;
@@ -139,7 +139,7 @@ namespace RBPhys
         {
             if (ds_beforeSolver != null)
             {
-                ds_beforeSolver(this);
+                ds_beforeSolver();
             }
         }
 
@@ -147,15 +147,15 @@ namespace RBPhys
         {
             if (ds_afterSolver != null)
             {
-                ds_afterSolver(this);
+                ds_afterSolver();
             }
         }
 
-        internal void OnStdSolverInitialization()
+        internal void OnStdSolverInitialization(float dt, bool syncInit)
         {
             if (ds_stdSolverInit != null)
             {
-                ds_stdSolverInit(this);
+                ds_stdSolverInit(dt, syncInit);
             }
         }
 
@@ -163,15 +163,15 @@ namespace RBPhys
         {
             if (ds_stdSolverIter != null)
             {
-                ds_stdSolverIter(this, iterationCount);
+                ds_stdSolverIter(iterationCount);
             }
         }
 
-        internal void OnPriorSolverInitialization()
+        internal void OnPriorSolverInitialization(float dt)
         {
             if (ds_priorSolverInit != null)
             {
-                ds_priorSolverInit(this);
+                ds_priorSolverInit(dt);
             }
         }
 
@@ -179,7 +179,7 @@ namespace RBPhys
         {
             if (ds_priorSolverIter != null)
             {
-                ds_priorSolverIter(this, iterationCount);
+                ds_priorSolverIter(iterationCount);
             }
         }
 
