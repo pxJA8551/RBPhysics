@@ -1290,9 +1290,9 @@ namespace RBPhys
                 Vector3 dirN = dir;
 
                 _va = dirN;
-                _wa = Vector3.Cross(col.rA, dirN).normalized;
+                _wa = Vector3.Cross(col.rA, dirN);
                 _vb = -dirN;
-                _wb = Vector3.Cross(col.rB, -dirN).normalized;
+                _wb = Vector3.Cross(col.rB, -dirN);
 
                 if (initBias)
                 {
