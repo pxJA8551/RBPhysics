@@ -130,14 +130,14 @@ namespace RBPhys
 
                 if (rb_a != null)
                 {
-                    k += rb_a.InverseMass;
-                    k += Vector3.Dot(_wa, Vector3.Scale(rb_a.InverseInertiaWs, _wa));
+                k += rb_a.InverseMass;
+                k += Vector3.Dot(_wa, Vector3.Scale(rb_a.InverseInertiaWs, _wa));
                 }
 
                 if (rb_b != null)
                 {
-                    k += rb_b.InverseMass;
-                    k += Vector3.Dot(_wb, Vector3.Scale(rb_b.InverseInertiaWs, _wb));
+                k += rb_b.InverseMass;
+                k += Vector3.Dot(_wb, Vector3.Scale(rb_b.InverseInertiaWs, _wb));
                 }
 
                 _effectiveMass = 1 / k;
@@ -158,16 +158,16 @@ namespace RBPhys
 
                 if (rb_a != null)
                 {
-                    v_a += rb_a.InverseMass * _va * linearLambda;
-                    av_a += Vector3.Scale(rb_a.InverseInertiaWs, _wa) * linearLambda;
-                    av_a += Vector3.Scale(rb_a.InverseInertiaWs, _va) * angularLambda;
+                v_a += rb_a.InverseMass * _va * linearLambda;
+                av_a += Vector3.Scale(rb_a.InverseInertiaWs, _wa) * linearLambda;
+                av_a += Vector3.Scale(rb_a.InverseInertiaWs, _va) * angularLambda;
                 }
 
                 if (rb_b != null)
                 {
-                    v_b += rb_b.InverseMass * _vb * linearLambda;
-                    av_b += Vector3.Scale(rb_b.InverseInertiaWs, _wb) * linearLambda;
-                    av_b += Vector3.Scale(rb_b.InverseInertiaWs, _vb) * angularLambda;
+                v_b += rb_b.InverseMass * _vb * linearLambda;
+                av_b += Vector3.Scale(rb_b.InverseInertiaWs, _wb) * linearLambda;
+                av_b += Vector3.Scale(rb_b.InverseInertiaWs, _vb) * angularLambda;
                 }
 
                 return (v_a, av_a, v_b, av_b);
