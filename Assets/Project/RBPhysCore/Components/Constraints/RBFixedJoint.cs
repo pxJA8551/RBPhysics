@@ -5,22 +5,22 @@ using UnityEngine.Assertions.Must;
 using UnityEngine.Audio;
 using UnityEngine.Rendering;
 using UnityEngine.Scripting;
+using UnityEngine.UIElements;
 
 namespace RBPhys
 {
     [RequireComponent(typeof(RBRigidbody))]
-    public class RBFixedJoint : MonoBehaviour
+    public class RBFixedJoint : MonoBehaviour, RBPhysCore.RBConstraints.IStdSolver
     {
         const float SOLVER_LINEAR_BETA = 0.25f;
         const float SOLVER_ANGULAR_BETA = 0.25f;
-        const float SOLVER_CONSTRAINT_SLOPE = 0.0001f;
 
         [SerializeField] public new RBRigidbody rigidbody;
         [SerializeField] public RBRigidbody pairRigidbody;
         [SerializeField] public Vector3 local_rb_contact;
         [SerializeField] public Vector3 local_rb_pair_contact;
-        [SerializeField] public Quaternion local_rb_contact_rot = Quaternion.identity;
-        [SerializeField] public Quaternion local_rb_pair_contact_rot = Quaternion.identity;
+        [SerializeField] public Vector3 local_rb_joint_dir;
+        [SerializeField] public Vector3 local_rb_pair_joint_dir;
 
         Jacobian _jN = new Jacobian();
         Jacobian _jT = new Jacobian();
@@ -28,18 +28,22 @@ namespace RBPhys
 
         private void Awake()
         {
-            rigidbody.ds_stdSolverInit += SolverInit;
-            rigidbody.ds_stdSolverIter += SolverIteration;
+            RBPhysCore.AddStdSolver(this);
         }
 
-        void SolverInit(float dt, bool syncInit)
+        private void OnDestroy()
         {
-            local_rb_contact_rot *= Quaternion.Euler(new Vector3(0.01f, 0, 0));
+            RBPhysCore.RemoveStdSolver(this);
+        }
+
+        public void StdSolverInit(float dt, bool isPrimaryInit)
+        {
+            //local_rb_contact_rot *= Quaternion.Euler(new Vector3(0.01f, 0, 0));
 
             Vector3 ws_rb_contact = rigidbody.Position + rigidbody.Rotation * local_rb_contact;
             Vector3 ws_rb_pair_contact = pairRigidbody != null ? pairRigidbody.Position + pairRigidbody.Rotation * local_rb_pair_contact : ws_rb_contact;
-            Quaternion ws_rb_contct_rot = rigidbody.Rotation * local_rb_contact_rot;
-            Quaternion ws_rb_pair_contct_rot = pairRigidbody != null ? pairRigidbody.Rotation * local_rb_pair_contact_rot : ws_rb_contct_rot;
+            Vector3 ws_jointDir = rigidbody.Rotation * (local_rb_joint_dir == Vector3.zero ? Vector3.up : local_rb_joint_dir);
+            Vector3 ws_jointDir_pair = pairRigidbody.Rotation * (local_rb_pair_joint_dir == Vector3.zero ? Vector3.up : local_rb_pair_joint_dir);
 
             Vector3 normal = ws_rb_pair_contact - ws_rb_contact;
             Vector3 tangent = Vector3.zero;
@@ -47,12 +51,12 @@ namespace RBPhys
 
             Vector3.OrthoNormalize(ref normal, ref tangent, ref binormal);
 
-            _jN.Init(rigidbody, pairRigidbody, ws_rb_contact, ws_rb_pair_contact, ws_rb_contct_rot, ws_rb_pair_contct_rot, normal, dt, !syncInit);
-            _jT.Init(rigidbody, pairRigidbody, ws_rb_contact, ws_rb_pair_contact, ws_rb_contct_rot, ws_rb_pair_contct_rot, tangent, dt, !syncInit);
-            _jB.Init(rigidbody, pairRigidbody, ws_rb_contact, ws_rb_pair_contact, ws_rb_contct_rot, ws_rb_pair_contct_rot, binormal, dt, !syncInit);
+            _jN.Init(rigidbody, pairRigidbody, ws_rb_contact, ws_rb_pair_contact, ws_jointDir, ws_jointDir_pair, normal, dt, isPrimaryInit);
+            _jT.Init(rigidbody, pairRigidbody, ws_rb_contact, ws_rb_pair_contact, ws_jointDir, ws_jointDir_pair, tangent, dt, isPrimaryInit);
+            _jB.Init(rigidbody, pairRigidbody, ws_rb_contact, ws_rb_pair_contact, ws_jointDir, ws_jointDir_pair, binormal, dt, isPrimaryInit);
         }
 
-        void SolverIteration(int iterCount)
+        public void StdSolverIteration(int iterCount)
         {
             Solve(out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b);
 
@@ -98,7 +102,7 @@ namespace RBPhys
             float _angularBias;
             float _effectiveMass;
 
-            internal void Init(RBRigidbody rb_a, RBRigidbody rb_b, Vector3 contactPoint_a, Vector3 contactPoint_b, Quaternion contactRot_a, Quaternion contactRot_b, Vector3 dir, float dt, bool initBias = true)
+            internal void Init(RBRigidbody rb_a, RBRigidbody rb_b, Vector3 contactPoint_a, Vector3 contactPoint_b, Vector3 jointDir_a, Vector3 jointDir_b, Vector3 dir, float dt, bool initBias = true)
             {
                 Vector3 rA = contactPoint_a - rb_a?.CenterOfGravityWorld ?? contactPoint_a;
                 Vector3 rB = contactPoint_b - rb_b?.CenterOfGravityWorld ?? contactPoint_b;
@@ -116,11 +120,8 @@ namespace RBPhys
 
                     Vector3 linearError = contactPoint_b - contactPoint_a;
                     _linearBias = -(SOLVER_LINEAR_BETA / dt) * Vector3.Dot(linearError, dirN);
-
-                    (Quaternion.Inverse(contactRot_a) * contactRot_b).ToAngleAxis(out float angle, out Vector3 axis);
-                    Debug.Log(angle);
+                    Quaternion.FromToRotation(jointDir_a, jointDir_b).ToAngleAxis(out float angle, out Vector3 axis);
                     angle = angle > 180 ? angle - 360 : angle;
-                    Debug.Log(angle);
                     Vector3 v = axis * angle * Mathf.Deg2Rad;
                     float angularError = Vector3.Dot(v, dirN);
                     _angularBias = -(SOLVER_ANGULAR_BETA / dt) * angularError;

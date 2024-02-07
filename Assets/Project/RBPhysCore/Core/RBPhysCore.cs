@@ -14,7 +14,7 @@ namespace RBPhys
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.DivideByZeroChecks, false)]
-    public static class RBPhysCore
+    public static partial class RBPhysCore
     {
         public const int CPU_STD_SOLVER_MAX_ITERATION = 5;
         public const int CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION = 3;
@@ -38,6 +38,10 @@ namespace RBPhys
         static List<RBCollider> _colRemoveQueue = new List<RBCollider>();
         static List<RBCollision> _collisions = new List<RBCollision>();
         static List<RBCollision> _collisionsInSolver = new List<RBCollision>();
+
+        static List<RBConstraints.IRBPhysObject> _physObjects = new List<RBConstraints.IRBPhysObject>();
+        static List<RBConstraints.IStdSolver> _stdSolversAsync = new List<RBConstraints.IStdSolver>();
+        static List<RBConstraints.IPriorSolver> _priorSolversAsync = new List<RBConstraints.IPriorSolver>();
 
         public static void AddRigidbody(RBRigidbody rb)
         {
@@ -79,22 +83,61 @@ namespace RBPhys
             _colRemoveQueue.Add(c);
         }
 
+        public static void AddStdSolver(RBConstraints.IStdSolver solver)
+        {
+            if (!_stdSolversAsync.Contains(solver))
+            {
+                _stdSolversAsync.Add(solver);
+            }
+        }
+
+        public static void RemoveStdSolver(RBConstraints.IStdSolver solver)
+        {
+            _stdSolversAsync.Remove(solver);
+        }
+
+        public static void AddPriorSolver(RBConstraints.IPriorSolver solver, bool asyncIteration = true)
+        {
+            if (!_priorSolversAsync.Contains(solver))
+            {
+                _priorSolversAsync.Add(solver);
+            }
+        }
+
+        public static void RemovePriorSolver(RBConstraints.IPriorSolver solver)
+        {
+            _priorSolversAsync.Remove(solver);
+        }
+
+        public static void AddPhysObject(RBConstraints.IRBPhysObject physObj, bool asyncIteration = true)
+        {
+            if (!_physObjects.Contains(physObj))
+            {
+                _physObjects.Add(physObj);
+            }
+        }
+
+        public static void RemovePriorSolver(RBConstraints.IRBPhysObject physObj)
+        {
+            _physObjects.Remove(physObj);
+        }
+
         public static void OpenPhysicsFrameWindow(float dt)
         {
             UpdateTransforms();
             UpdateExtTrajectories(dt);
             SortTrajectories();
 
-            for (int i = 0; i < _rigidbodies.Count; i++)
+            foreach (var p in _physObjects)
             {
-                _rigidbodies[i].BeforeSolver();
+                p.BeforeSolver();
             }
 
             SolveConstraints(dt);
 
-            for (int i = 0; i < _rigidbodies.Count; i++)
+            foreach (var p in _physObjects)
             {
-                _rigidbodies[i].AfterSolver();
+                p.AfterSolver();
             }
 
             foreach (RBRigidbody rb in _rigidbodies)
@@ -669,9 +712,9 @@ namespace RBPhys
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-RigidbodyPrepareSolve");
 
-            Parallel.For(0, _rigidbodies.Count, j =>
+            Parallel.For(0, _stdSolversAsync.Count, j =>
             {
-                _rigidbodies[j].OnStdSolverInitialization(dt, false);
+                _stdSolversAsync[j].StdSolverInit(dt, true);
             });
 
             foreach (RBCollision col in _collisionsInSolver)
@@ -703,20 +746,17 @@ namespace RBPhys
             {
                 for (int i = 0; i < CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION; i++)
                 {
-                    Profiler.BeginSample(name: "SolveCollisions");
+                    Profiler.BeginSample(name: "SolveConstraints");
+                    Parallel.ForEach(_stdSolversAsync, s =>
+                    {
+                        s.StdSolverIteration(iter);
+                    });
+                    Profiler.EndSample();
 
+                    Profiler.BeginSample(name: "SolveCollisions");
                     Parallel.For(0, _collisionsInSolver.Count, j =>
                     {
                         SolveCollisionPair(_collisionsInSolver[j]);
-                    });
-
-                    Profiler.EndSample();
-
-                    Profiler.BeginSample(name: "SolveConstraints");
-
-                    Parallel.For(0, _rigidbodies.Count, j =>
-                    {
-                        _rigidbodies[j].OnStdSolverIteration(iter);
                     });
                     Profiler.EndSample();
                 }
@@ -732,9 +772,9 @@ namespace RBPhys
                         UpdateTrajectoryPair(_collisionsInSolver[j], dt);
                     });
 
-                    Parallel.For(0, _rigidbodies.Count, j =>
+                    Parallel.ForEach(_stdSolversAsync, s =>
                     {
-                        _rigidbodies[j].OnStdSolverInitialization(dt, true);
+                        s.StdSolverInit(dt, false);
                     });
 
                     Profiler.EndSample();
@@ -748,16 +788,16 @@ namespace RBPhys
             _collisionsInSolver.Clear();
 
             Profiler.BeginSample(name: "Physics-PriorSolver");
-            Parallel.For(0, _rigidbodies.Count, j =>
+            Parallel.For(0, _priorSolversAsync.Count, j =>
             {
-                _rigidbodies[j].OnPriorSolverInitialization(dt);
+                _priorSolversAsync[j].PriorSolverInit(dt);
             });
 
             for (int iter = 0; iter < CPU_PRIOR_SOLVER_MAX_ITERATION; iter++)
             {
-                Parallel.For(0, _rigidbodies.Count, j =>
+                Parallel.For(0, _priorSolversAsync.Count, j =>
                 {
-                    _rigidbodies[j].OnPriorSolverIteration(iter);
+                    _priorSolversAsync[j].PriorSolverIteration(iter);
                 });
             }
             Profiler.EndSample();

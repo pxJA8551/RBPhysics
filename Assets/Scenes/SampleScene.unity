@@ -3427,7 +3427,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 858234696}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.67, y: 3.86, z: -7.03}
+  m_LocalPosition: {x: -3.67, y: 3.86, z: -5.13}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4403,8 +4403,8 @@ MonoBehaviour:
   pairRigidbody: {fileID: 858234697}
   local_rb_contact: {x: 0.3139174, y: 0, z: 0}
   local_rb_pair_contact: {x: -0.6, y: 0, z: 0}
-  local_rb_contact_rot: {x: 0, y: 0, z: 0, w: 1}
-  local_rb_pair_contact_rot: {x: 0.08715574, y: 0, z: 0, w: 0.9961947}
+  local_rb_joint_dir: {x: 0, y: 0, z: 0}
+  local_rb_pair_joint_dir: {x: 0, y: 0, z: 0}
 --- !u!1 &1129179358
 GameObject:
   m_ObjectHideFlags: 0

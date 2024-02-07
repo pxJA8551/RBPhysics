@@ -83,13 +83,6 @@ namespace RBPhys
         /// </summary>
         public delegate void PriorResolveDelegate(int iterationCount);
 
-        public BeforeSolverDelegate ds_beforeSolver;
-        public BeforeSolverDelegate ds_afterSolver;
-        public StdInitDelegate ds_stdSolverInit;
-        public StdResolveDelegate ds_stdSolverIter;
-        public PriorInitDelegate ds_priorSolverInit;
-        public PriorResolveDelegate ds_priorSolverIter;
-
         public Vector3 InverseInertiaWs
         {
             get
@@ -134,54 +127,6 @@ namespace RBPhys
         }
 
         private void FixedUpdate() { }
-
-        internal void BeforeSolver()
-        {
-            if (ds_beforeSolver != null)
-            {
-                ds_beforeSolver();
-            }
-        }
-
-        internal void AfterSolver()
-        {
-            if (ds_afterSolver != null)
-            {
-                ds_afterSolver();
-            }
-        }
-
-        internal void OnStdSolverInitialization(float dt, bool syncInit)
-        {
-            if (ds_stdSolverInit != null)
-            {
-                ds_stdSolverInit(dt, syncInit);
-            }
-        }
-
-        internal void OnStdSolverIteration(int iterationCount)
-        {
-            if (ds_stdSolverIter != null)
-            {
-                ds_stdSolverIter(iterationCount);
-            }
-        }
-
-        internal void OnPriorSolverInitialization(float dt)
-        {
-            if (ds_priorSolverInit != null)
-            {
-                ds_priorSolverInit(dt);
-            }
-        }
-
-        internal void OnPriorSolverIteration(int iterationCount)
-        {
-            if (ds_priorSolverIter != null)
-            {
-                ds_priorSolverIter(iterationCount);
-            }
-        }
 
         public RBRigidbody()
         {
