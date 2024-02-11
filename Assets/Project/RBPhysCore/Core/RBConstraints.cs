@@ -14,12 +14,6 @@ namespace RBPhys
                 void StdSolverIteration(int iterationCount) { }
             }
 
-            public interface IPriorSolver
-            {
-                void PriorSolverInit(float dt) { }
-                void PriorSolverIteration(int iterationCount) { }
-            }
-
             public interface IRBPhysObject
             {
                 void BeforeSolver() { }
