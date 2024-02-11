@@ -43,6 +43,8 @@ namespace RBPhys
         static List<RBConstraints.IStdSolver> _stdSolversAsync = new List<RBConstraints.IStdSolver>();
         static List<RBConstraints.IPriorSolver> _priorSolversAsync = new List<RBConstraints.IPriorSolver>();
 
+        static int[] _collisionIgnoreLayers = new int[32];
+
         public static void AddRigidbody(RBRigidbody rb)
         {
             _rigidbodies.Add(rb);
@@ -120,6 +122,22 @@ namespace RBPhys
         public static void RemovePriorSolver(RBConstraints.IRBPhysObject physObj)
         {
             _physObjects.Remove(physObj);
+        }
+
+        public static void SetCollisionOption(int layer_a, int layer_b, RBCollisionOption option)
+        {
+            switch (option)
+            {
+                case RBCollisionOption.Ignore:
+                    _collisionIgnoreLayers[layer_a] |= (1 << layer_b);
+                    _collisionIgnoreLayers[layer_b] |= (1 << layer_a);
+                    break;
+
+                case RBCollisionOption.Both:
+                    _collisionIgnoreLayers[layer_a] &= ~(1 << layer_b);
+                    _collisionIgnoreLayers[layer_b] &= ~(1 << layer_a);
+                    break;
+            }
         }
 
         public static void OpenPhysicsFrameWindow(float dt)
@@ -391,21 +409,24 @@ namespace RBPhys
                         {
                             RBTrajectory targetTraj = _trajectories_orderByXMin[j];
 
-                            if (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping)
+                            if ((_collisionIgnoreLayers[activeTraj.Layer] & (1 << targetTraj.Layer)) == 0)
                             {
-                                if (targetTraj.IsValidTrajectory)
+                                if (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping)
                                 {
-                                    float x_min_target = targetTraj.trajectoryAABB.MinX;
-                                    float x_max_target = targetTraj.trajectoryAABB.MaxX;
-
-                                    if (x_max < x_min_target)
+                                    if (targetTraj.IsValidTrajectory)
                                     {
-                                        break;
-                                    }
+                                        float x_min_target = targetTraj.trajectoryAABB.MinX;
+                                        float x_max_target = targetTraj.trajectoryAABB.MaxX;
 
-                                    if (activeTraj.trajectoryAABB.OverlapAABB(targetTraj.trajectoryAABB))
-                                    {
-                                        collidingTrajs.Add((activeTraj, targetTraj));
+                                        if (x_max < x_min_target)
+                                        {
+                                            break;
+                                        }
+
+                                        if (activeTraj.trajectoryAABB.OverlapAABB(targetTraj.trajectoryAABB))
+                                        {
+                                            collidingTrajs.Add((activeTraj, targetTraj));
+                                        }
                                     }
                                 }
                             }
@@ -1603,19 +1624,21 @@ namespace RBPhys
         public RBCollider Collider { get { return _collider; } }
         public RBCollider[] Colliders { get { return _colliders; } }
         public bool IsStaticOrSleeping { get { return Rigidbody?.isSleeping ?? true || IsStatic; } }
+        public int Layer { get { return _layer; } }
 
         bool _isValidTrajectory;
         RBRigidbody _rigidbody;
         bool _isStatic;
         RBCollider _collider;
         RBCollider[] _colliders;
+        int _layer;
 
         public RBTrajectory()
         {
             _isValidTrajectory = false;
         }
 
-        public RBTrajectory(RBRigidbody rigidbody, float dt)
+        public RBTrajectory(RBRigidbody rigidbody, int layer)
         {
             RBColliderAABB aabb = new RBColliderAABB();
 
@@ -1634,9 +1657,10 @@ namespace RBPhys
             _isValidTrajectory = true;
 
             _colliders = rigidbody.GetColliders();
+            _layer = layer;
         }
 
-        public RBTrajectory(RBCollider collider, float dt)
+        public RBTrajectory(RBCollider collider, int layer)
         {
             trajectoryAABB = collider.CalcAABB(collider.GameObjectPos, collider.GameObjectRot);
             _rigidbody = null;
@@ -1645,9 +1669,10 @@ namespace RBPhys
             _isValidTrajectory = true;
 
             _colliders = new RBCollider[] { collider };
+            _layer = layer;
         }
 
-        public void Update(RBRigidbody rigidbody, float dt)
+        public void Update(RBRigidbody rigidbody, int layer)
         {
             RBColliderAABB aabb = new RBColliderAABB();
 
@@ -1666,9 +1691,10 @@ namespace RBPhys
             _isValidTrajectory = true;
 
             _colliders = rigidbody.GetColliders();
+            _layer = layer;
         }
 
-        public void Update(RBCollider collider)
+        public void Update(RBCollider collider, int layer)
         {
             trajectoryAABB = collider.CalcAABB(collider.GameObjectPos, collider.GameObjectRot);
             _rigidbody = null;
@@ -1684,6 +1710,8 @@ namespace RBPhys
             {
                 _colliders[0] = collider;
             }
+
+            _layer = layer;
         }
 
         public void Update(RBCollider collider, Vector3 pos, Quaternion rot)

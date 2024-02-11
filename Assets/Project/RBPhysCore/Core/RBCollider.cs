@@ -88,7 +88,7 @@ namespace RBPhys
 
             _hasParentRigidbodyInFrame = _parent?.isActiveAndEnabled ?? false;
 
-            _expTrajectory.Update(this);
+            _expTrajectory.Update(this, gameObject.layer);
         }
 
         public void UpdateExpTrajectory(Vector3 rbPos, Quaternion rbRot, Vector3 intergratedPos, Quaternion intergratedRot)

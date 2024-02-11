@@ -53,36 +53,6 @@ namespace RBPhys
 
         RBTrajectory _expObjTrajectory;
 
-        /// <summary>
-        /// 標準・優先物理ソルバーの実行前
-        /// </summary>
-        public delegate void BeforeSolverDelegate();
-
-        /// <summary>
-        /// 標準・優先物理ソルバーを全て試行完了した後で実行
-        /// </summary>
-        public delegate void AfterSolverDelegate();
-
-        /// <summary>
-        /// 標準物理ソルバーの初期化
-        /// </summary>
-        public delegate void StdInitDelegate(float dt, bool syncInit);
-
-        /// <summary>
-        /// 標準物理ソルバー試行
-        /// </summary>
-        public delegate void StdResolveDelegate(int iterationCount);
-
-        /// <summary>
-        /// 優先物理ソルバーの初期化（標準物理ソルバーを全て試行完了した後で実行）
-        /// </summary>
-        public delegate void PriorInitDelegate(float dt);
-
-        /// <summary>
-        /// 優先物理ソルバー試行（標準物理ソルバーを全て試行完了した後で実行）
-        /// </summary>
-        public delegate void PriorResolveDelegate(int iterationCount);
-
         public Vector3 InverseInertiaWs
         {
             get
@@ -98,7 +68,12 @@ namespace RBPhys
             FindColliders();
             UpdateTransform();
             RecalculateInertiaTensor();
-            isSleeping = false;
+
+            if(!isSleeping || sleepGrace != 5)
+            {
+                isSleeping = false;
+                sleepGrace = 0;
+            }
         }
 
         void OnDestroy()
@@ -205,7 +180,7 @@ namespace RBPhys
                 }
             }
 
-            _expObjTrajectory.Update(this, dt);
+            _expObjTrajectory.Update(this, gameObject.layer);
         }
 
         internal void UpdateColliderExpTrajectory(float dt)

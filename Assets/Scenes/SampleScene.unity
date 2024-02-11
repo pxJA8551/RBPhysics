@@ -1019,8 +1019,8 @@ MonoBehaviour:
   mass: 10
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
-  isSleeping: 0
-  sleepGrace: 0
+  isSleeping: 1
+  sleepGrace: 5
   colliding:
   - {fileID: 0}
   - {fileID: 0}
@@ -3345,8 +3345,8 @@ MonoBehaviour:
   mass: 10
   inertiaTensor: {x: 0, y: 0, z: 0}
   inertiaTensorRotation: {x: 0, y: 0, z: 0, w: 0}
-  isSleeping: 0
-  sleepGrace: 0
+  isSleeping: 1
+  sleepGrace: 5
   colliding:
   - {fileID: 0}
   - {fileID: 0}
