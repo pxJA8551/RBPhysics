@@ -46,6 +46,8 @@ namespace RBPhysEditor
             EditorGUILayout.PropertyField(mass);
             sleepDefault = EditorGUILayout.Toggle("Sleep until interaction", sleepDefault);
 
+            EditorGUILayout.LabelField(string.Format("Sleep:{0}({1})", sleeping.boolValue ? "TRUE" : "FALSE", sleepGrace.intValue));
+
             if (sleepDefault)
             {
                 sleeping.boolValue = true;

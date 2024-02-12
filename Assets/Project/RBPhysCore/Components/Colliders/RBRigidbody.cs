@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Security.Policy;
 using System.Threading.Tasks;
 using UnityEngine;
 using static RBPhys.RBPhysUtil;
@@ -16,7 +15,8 @@ namespace RBPhys
         const float SLEEP_ANGVEL_MAX_SQRT = 0.3f * 0.3f;
         const int SLEEP_GRACE_FRAMES = 5;
 
-        public float mass;
+        public float mass = 1;
+
         [HideInInspector] public Vector3 inertiaTensor;
         [HideInInspector] public Quaternion inertiaTensorRotation;
 
@@ -229,6 +229,13 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void PhysAwakeForce()
+        {
+            isSleeping = false;
+            sleepGrace = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void PhysSleep()
         {
             _expVelocity = Vector3.zero;
@@ -249,6 +256,7 @@ namespace RBPhys
             }
             else
             {
+                PhysAwake();
                 sleepGrace = 0;
             }
         }
@@ -328,6 +336,13 @@ namespace RBPhys
             inertiaTensor = diagonalizedIt;
             inertiaTensorRotation = itRot;
             cg = it.CenterOfGravity;
+
+            if (float.IsNaN(inertiaTensor.x) || float.IsNaN(inertiaTensor.y) || float.IsNaN(inertiaTensor.z))
+            {
+                Debug.LogWarning("No collider found. Error initializing InertiaTensor/InertiaTensorRotation.");
+                inertiaTensor = Vector3.one;
+                inertiaTensorRotation = Quaternion.identity;
+            }
         }
     }
 }
