@@ -158,6 +158,327 @@ namespace RBPhys
             //OnClosePhysicsFrame��
         }
 
+        public struct RBColliderOverlapInfo
+        {
+            public Vector3 position;
+            public Vector3 normal;
+            public RBCollider collider;
+            public bool isValidOverlap;
+
+            internal RBColliderOverlapInfo(RBCollider c)
+            {
+                collider = c;
+                isValidOverlap = false;
+
+                position = Vector3.zero;
+                normal = Vector3.zero;
+            }
+
+            internal void SetOverlap(Vector3 p, Vector3 nN)
+            {
+                position = p;
+                normal = nN;
+
+                isValidOverlap = true;
+            }
+        }
+
+        public static RBColliderOverlapInfo LineCast(Vector3 p, Vector3 dir, float maxDist = 10)
+        {
+            List<RBColliderOverlapInfo> overlappings = new List<RBColliderOverlapInfo>();
+
+            Vector3 pEnd = p + dir * maxDist;
+            float xMin = Mathf.Min(p.x, pEnd.x);
+            float xMax = Mathf.Max(p.x, pEnd.x);
+
+            Vector3 pCenter = (p + pEnd) / 2f;
+            Quaternion pRot = Quaternion.FromToRotation(Vector3.forward, dir);
+            float pDist = Vector3.Distance(p, pEnd);
+
+            for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
+            {
+                var t = _trajectories_orderByXMin[i];
+                var f = _trajectories_xMin[i];
+
+                if (xMin < t.trajectoryAABB.MaxX)
+                {
+                    if (t.trajectoryAABB.OverlapAABB(new RBColliderAABB(pCenter, RBPhysUtil.V3Abs(pEnd - p))))
+                    {
+                        foreach (var c in t.Colliders)
+                        {
+                            overlappings.Add(new RBColliderOverlapInfo(c));
+                        }
+                    }
+                }
+
+                if (xMax < f)
+                {
+                    break;
+                }
+            }
+
+            Parallel.ForEach(overlappings, t =>
+            {
+                switch (t.collider.GeometryType)
+                {
+                    case RBGeometryType.OBB:
+                        //RBRaycast.RaycastOBB.CalcRayCollision(t.collider.CalcOBB(), p, dir);
+                        break;
+                    case RBGeometryType.Sphere:
+                        
+                        break;
+                    case RBGeometryType.Capsule:
+                        break;
+                }
+            });
+
+            float dMaxSqr = maxDist * maxDist;
+
+            RBColliderOverlapInfo ret = default;
+            float dMinSqr = -1;
+            foreach (var pp in overlappings)
+            {
+                float dSqr = (p - pp.position).sqrMagnitude;
+                if (dSqr < dMaxSqr && (dMinSqr == -1 || dSqr < dMinSqr))
+                {
+                    dMinSqr = dSqr;
+                    ret = pp;
+                }
+            }
+
+            return ret;
+        }
+
+        public static List<RBColliderOverlapInfo> LineOverlap(RBColliderLine line)
+        {
+            List<RBColliderOverlapInfo> overlappings = new List<RBColliderOverlapInfo>();
+
+            float xMin = Mathf.Min(line.pos_a.x, line.pos_b.x);
+            float xMax = Mathf.Max(line.pos_a.x, line.pos_b.x);
+
+            for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
+            {
+                var t = _trajectories_orderByXMin[i];
+                var f = _trajectories_xMin[i];
+
+                if (xMin < t.trajectoryAABB.MaxX)
+                {
+                    if (t.trajectoryAABB.OverlapAABB(new RBColliderAABB(line.Center, RBPhysUtil.V3Abs(line.pos_b - line.pos_a))))
+                    {
+                        foreach (var c in t.Colliders)
+                        {
+                            overlappings.Add(new RBColliderOverlapInfo(c));
+                        }
+                    }
+                }
+
+                if (xMax < f)
+                {
+                    break;
+                }
+            }
+
+            Parallel.ForEach(overlappings, t =>
+            {
+                switch (t.collider.GeometryType)
+                {
+                    case RBGeometryType.OBB:
+                        {
+                            var p = RBDetailCollision.DetailCollisionOBBLine.CalcDetailCollisionInfo(t.collider.CalcOBB(), line);
+                            if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
+                        }
+                        break;
+                    case RBGeometryType.Sphere:
+                        {
+                            var p = RBDetailCollision.DetailCollisionSphereLine.CalcDetailCollisionInfo(t.collider.CalcSphere(), line);
+                            if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
+                        }
+                        break;
+                    case RBGeometryType.Capsule:
+                        {
+                            var p = RBDetailCollision.DetailCollisionCapsuleLine.CalcDetailCollisionInfo(t.collider.CalcCapsule(), line);
+                            if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
+                        }
+                        break;
+                }
+            });
+
+            return overlappings;
+        }
+
+        public static List<RBColliderOverlapInfo> BoxOverlap(RBColliderOBB obb)
+        {
+            List<RBColliderOverlapInfo> overlappings = new List<RBColliderOverlapInfo>();
+
+            var fSize = obb.GetAxisSize(Vector3.right) / 2f;
+            float xMin = obb.pos.x - fSize;
+            float xMax = obb.pos.x + fSize;
+
+            for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
+            {
+                var t = _trajectories_orderByXMin[i];
+                var f = _trajectories_xMin[i];
+
+                if (xMin < t.trajectoryAABB.MaxX)
+                {
+                    if (t.trajectoryAABB.OverlapAABB(new RBColliderAABB(obb.Center, obb.size)))
+                    {
+                        foreach (var c in t.Colliders)
+                        {
+                            overlappings.Add(new RBColliderOverlapInfo(c));
+                        }
+                    }
+                }
+
+                if (xMax < f)
+                {
+                    break;
+                }
+            }
+
+            Parallel.ForEach(overlappings, t =>
+            {
+                switch (t.collider.GeometryType)
+                {
+                    case RBGeometryType.OBB:
+                        {
+                            var p = RBDetailCollision.DetailCollisionOBBOBB.CalcDetailCollisionInfo(t.collider.CalcOBB(), obb);
+                            if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
+                        }
+                        break;
+                    case RBGeometryType.Sphere:
+                        {
+                            var p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(obb, t.collider.CalcSphere());
+                            if (p.p != Vector3.zero) t.SetOverlap(p.pA, -p.p.normalized);
+                        }
+                        break;
+                    case RBGeometryType.Capsule:
+                        {
+                            var p = RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(obb, t.collider.CalcCapsule());
+                            if (p.p != Vector3.zero) t.SetOverlap(p.pA, -p.p.normalized);
+                        }
+                        break;
+                }
+            });
+
+            return overlappings;
+        }
+
+        public static List<RBColliderOverlapInfo> SphereOverlap(RBColliderSphere sphere)
+        {
+            List<RBColliderOverlapInfo> overlappings = new List<RBColliderOverlapInfo>();
+
+            float xMin = sphere.pos.x - sphere.radius;
+            float xMax = sphere.pos.x + sphere.radius;
+
+            for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
+            {
+                var t = _trajectories_orderByXMin[i];
+                var f = _trajectories_xMin[i];
+
+                if (xMin < t.trajectoryAABB.MaxX)
+                {
+                    if (t.trajectoryAABB.OverlapAABB(new RBColliderAABB(sphere.pos, new Vector3(sphere.radius, sphere.radius, sphere.radius) * 2)))
+                    {
+                        foreach (var c in t.Colliders)
+                        {
+                            overlappings.Add(new RBColliderOverlapInfo(c));
+                        }
+                    }
+                }
+
+                if (xMax < f)
+                {
+                    break;
+                }
+            }
+
+            Parallel.ForEach(overlappings, t =>
+            {
+                switch (t.collider.GeometryType)
+                {
+                    case RBGeometryType.OBB:
+                        {
+                            var p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(t.collider.CalcOBB(), sphere);
+                            if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
+                        }
+                        break;
+                    case RBGeometryType.Sphere:
+                        {
+                            var p = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfo(t.collider.CalcSphere(), sphere);
+                            if (p.p != Vector3.zero) t.SetOverlap(p.pA, p.p.normalized);
+                        }
+                        break;
+                    case RBGeometryType.Capsule:
+                        {
+                            var p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(sphere, t.collider.CalcCapsule());
+                            if (p.p != Vector3.zero) t.SetOverlap(p.pA, -p.p.normalized);
+                        }
+                        break;
+                }
+            });
+
+            return overlappings;
+        }
+
+        public static List<RBColliderOverlapInfo> CapsuleOverlap(RBColliderCapsule capsule)
+        {
+            List<RBColliderOverlapInfo> overlappings = new List<RBColliderOverlapInfo>();
+
+            var fSize = capsule.GetAxisSize(Vector3.right) / 2f;
+            float xMin = capsule.pos.x - fSize;
+            float xMax = capsule.pos.x + fSize;
+
+            for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
+            {
+                var t = _trajectories_orderByXMin[i];
+                var f = _trajectories_xMin[i];
+
+                if (xMin < t.trajectoryAABB.MaxX)
+                {
+                    if (t.trajectoryAABB.OverlapAABB(new RBColliderAABB(capsule.pos, new Vector3(fSize * 2, capsule.GetAxisSize(Vector3.up), capsule.GetAxisSize(Vector3.forward)))))
+                    {
+                        foreach (var c in t.Colliders)
+                        {
+                            overlappings.Add(new RBColliderOverlapInfo(c));
+                        }
+                    }
+                }
+
+                if (xMax < f)
+                {
+                    break;
+                }
+            }
+
+            Parallel.ForEach(overlappings, t =>
+            {
+                switch (t.collider.GeometryType)
+                {
+                    case RBGeometryType.OBB:
+                        {
+                            var p = RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(t.collider.CalcOBB(), capsule);
+                            if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
+                        }
+                        break;
+                    case RBGeometryType.Sphere:
+                        {
+                            var p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(t.collider.CalcSphere(), capsule);
+                            if (p.p != Vector3.zero) t.SetOverlap(p.pA, p.p.normalized);
+                        }
+                        break;
+                    case RBGeometryType.Capsule:
+                        {
+                            var p = RBDetailCollision.DetailCollisionCapsuleCapsule.CalcDetailCollisionInfo(t.collider.CalcCapsule(), capsule);
+                            if (p.p != Vector3.zero) t.SetOverlap(p.pA, p.p.normalized);
+                        }
+                        break;
+                }
+            });
+
+            return overlappings;
+        }
+
         public static void ClosePhysicsFrameWindow(float dt)
         {
             //FixedUpdate�I�����Ɏ��s
@@ -255,7 +576,6 @@ namespace RBPhys
             rb.collidingCount = 0;
         }
 
-        //こいつを並列化するとなんか遅くなるし物理挙動が乱れるので触らない
         static void UpdateColliderExtTrajectories(float dt)
         {
             Profiler.BeginSample(name: "Physics-CollisionResolution-UpdateRigidbodyTrajectory");
@@ -1578,12 +1898,61 @@ namespace RBPhys
             return (pos + rot * new Vector3(0, height / 2f, 0), pos - rot * new Vector3(0, height / 2f, 0));
         }
     }
+    
+    public struct RBColliderLine
+    {
+        public Vector3 pos_a;
+        public Vector3 pos_b;
+
+        public Vector3 Center { get { return (pos_b + pos_a) / 2f; } }
+        public Vector3 Direction { get { return (pos_b - pos_a).normalized; } }
+        public float Length { get { return (pos_b - pos_a).magnitude; } }
+        public float SqrLength { get { return (pos_b - pos_a).sqrMagnitude; } }
+
+        public RBColliderLine(Vector3 pos_a, Vector3 pos_b)
+        {
+            this.pos_a = pos_a;
+            this.pos_b = pos_b;
+        }
+        
+        public RBColliderLine(Vector3 pos, Vector3 dir, float length)
+        {
+            this.pos_a = pos;
+            this.pos_b = pos + dir.normalized * length;
+        }
+
+        public float GetAxisSize(Vector3 axisN)
+        {
+            return Mathf.Abs(Vector3.Dot(pos_b - pos_a, axisN));
+        }
+    }
+
+    public struct RBColliderTriangleMesh
+    {
+        public int[] indices;
+        public Vector3[] vertices;
+
+        public RBColliderTriangleMesh(Mesh m)
+        {
+            if (m.isReadable)
+            {
+                indices = m.GetIndices(0);
+                vertices = m.vertices;
+            }
+            else
+            {
+                throw new Exception("Mesh for TriangleMesh must have set R/W true");
+            }
+        }
+    }
 
     public enum RBGeometryType
     {
         OBB,
         Sphere,
-        Capsule
+        Capsule,
+        Line,
+        TriangleMesh
     }
 
     public class RBTrajectory
