@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using static RBPhys.RBPhysUtil;
 using static RBPhys.RBVectorUtil;
 
@@ -9,30 +10,30 @@ namespace RBPhys
 {
     public static partial class RBDetailCollision
     {
-        public static class DetailCollisionOBBCapsule
+        public static class DetailCollisionOBBLine
         {
             const float FACE_PARALLEL_DOT_EPSILON = 0.000001f;
 
-            public static Penetration CalcDetailCollisionInfo(RBColliderOBB obb_a, RBColliderCapsule capsule_b)
+            public static Penetration CalcDetailCollisionInfo(RBColliderOBB obb_a, RBColliderLine line_b)
             {
-                var r = CalcDetailCollision(obb_a, capsule_b);
+                var r = CalcDetailCollision(obb_a, line_b);
                 return new Penetration(r.p, r.pA, r.pB, default);
             }
 
-            public static (Vector3 p, Vector3 pA, Vector3 pB) CalcDetailCollision(RBColliderOBB obb_a, RBColliderCapsule capsule_b)
+            public static (Vector3 p, Vector3 pA, Vector3 pB) CalcDetailCollision(RBColliderOBB obb_a, RBColliderLine line_b)
             {
                 float pSqrMag;
                 Vector3 penetration;
                 Vector3 pA = Vector3.zero;
                 Vector3 pB = Vector3.zero;
 
-                Vector3 d = capsule_b.pos - obb_a.Center;
-                
+                Vector3 d = line_b.Center - obb_a.Center;
+
                 Vector3 aFwdN = obb_a.GetAxisForwardN();
                 Vector3 aRightN = obb_a.GetAxisRightN();
                 Vector3 aUpN = obb_a.GetAxisUpN();
 
-                Vector3 bUpN = capsule_b.GetHeightAxisN();
+                Vector3 bUpN = line_b.Direction;
 
                 Vector3 aFwd = aFwdN * obb_a.size.z;
                 Vector3 aRight = aRightN * obb_a.size.x;
@@ -43,7 +44,7 @@ namespace RBPhys
                     float dd = Vector3.Dot(d, aFwdN);
                     float prjL = Mathf.Abs(dd);
                     float rA = obb_a.size.z;
-                    float rB = capsule_b.GetAxisSize(aFwdN);
+                    float rB = line_b.GetAxisSize(aFwdN);
 
                     float dp = prjL * 2 - (rA + rB);
 
@@ -63,7 +64,7 @@ namespace RBPhys
                     float dd = Vector3.Dot(d, aRightN);
                     float prjL = Mathf.Abs(dd);
                     float rA = obb_a.size.x;
-                    float rB = capsule_b.GetAxisSize(aRightN);
+                    float rB = line_b.GetAxisSize(aRightN);
 
                     float dp = prjL * 2 - (rA + rB);
 
@@ -84,7 +85,7 @@ namespace RBPhys
                     float dd = Vector3.Dot(d, aUpN);
                     float prjL = Mathf.Abs(dd);
                     float rA = obb_a.size.y;
-                    float rB = capsule_b.GetAxisSize(aUpN);
+                    float rB = line_b.GetAxisSize(aUpN);
 
                     float dp = prjL * 2 - (rA + rB);
 
@@ -109,7 +110,7 @@ namespace RBPhys
                         float dd = Vector3.Dot(d, c);
                         float prjL = Mathf.Abs(dd);
                         float rA = obb_a.GetAxisSize(c);
-                        float rB = capsule_b.GetAxisSize(c);
+                        float rB = line_b.GetAxisSize(c);
 
                         float dp = prjL * 2 - (rA + rB);
 
@@ -135,7 +136,7 @@ namespace RBPhys
                         float dd = Vector3.Dot(d, c);
                         float prjL = Mathf.Abs(dd);
                         float rA = obb_a.GetAxisSize(c);
-                        float rB = capsule_b.GetAxisSize(c);
+                        float rB = line_b.GetAxisSize(c);
 
                         float dp = prjL * 2 - (rA + rB);
 
@@ -161,7 +162,7 @@ namespace RBPhys
                         float dd = Vector3.Dot(d, c);
                         float prjL = Mathf.Abs(dd);
                         float rA = obb_a.GetAxisSize(c);
-                        float rB = capsule_b.GetAxisSize(c);
+                        float rB = line_b.GetAxisSize(c);
 
                         float dp = prjL * 2 - (rA + rB);
 
@@ -213,19 +214,19 @@ namespace RBPhys
 
                     if (aPd == 0)
                     {
-                        var edge = capsule_b.GetEdge();
+                        (Vector3 begin, Vector3 end) edge = (line_b.pos_a, line_b.pos_b);
                         pB = ProjectPointToEdge(pA, edge.begin, edge.end);
                         return (penetration, pA, pB);
                     }
                     else if (aPd == 1)
                     {
-                        var edge = capsule_b.GetEdge();
+                        (Vector3 begin, Vector3 end) edge = (line_b.pos_a, line_b.pos_b);
                         CalcNearest(edge.begin, edge.end, pA + (fA1 + fA2) / 2f, pA - (fA1 + fA2) / 2f, out pA, out pB);
                         return (penetration, pA, pB);
                     }
                     else if (aPd == 2)
                     {
-                        var edge = capsule_b.GetEdge();
+                        (Vector3 begin, Vector3 end) edge = (line_b.pos_a, line_b.pos_b);
 
                         Vector3 rv1 = pA + fA1 + fA2;
                         Vector3 rv2 = pA - fA1 + fA2;
@@ -248,7 +249,7 @@ namespace RBPhys
                             Vector3 prjB = CalcNearestOnPlane(edge.begin, edge.end, nA, pA);
 
                             pA = ProjectPointToRect(prjB, rv1, rv2, rv3, rv4, pA, nA);
-                            pB = ProjectPointToEdge(pA, edge.begin, edge.end) - pDirN * capsule_b.radius;
+                            pB = ProjectPointToEdge(pA, edge.begin, edge.end);
                         }
 
                         return (penetration, pA, pB);

@@ -15,19 +15,24 @@ namespace RBPhys
     {
         RBRigidbody _parent;
 
-        public RBRigidbody ParentRigidbody { get { return (_parent?.isActiveAndEnabled ?? false) ? _parent : null; } }
+        public RBRigidbody ParentRigidbody { get { return _hasParentRigidbodyInFrame ? _parent : null; } }
         public abstract RBGeometryType GeometryType { get; }
 
         public Vector3 GameObjectPos { get; private set; }
         public Quaternion GameObjectRot { get; private set; }
 
-        [HideInInspector] public float beta = 0.7f;
+        [HideInInspector] public float beta = 0.5f;
         public float restitution = 0.5f; //îΩî≠åWêî
         public float friction = 0.5f; //ñÄéCåWêî
 
-        public RBTrajectory Trajectory { get { return _trajectory; } }
+        public RBTrajectory ExpTrajectory { get { return _expTrajectory; } }
 
-        RBTrajectory _trajectory;
+        RBTrajectory _expTrajectory;
+
+        Vector3 _expPos;
+        Quaternion _expRot;
+
+        bool _hasParentRigidbodyInFrame = false;
 
         void Awake()
         {
@@ -57,7 +62,7 @@ namespace RBPhys
 
         public RBCollider()
         {
-            _trajectory = new RBTrajectory();
+            _expTrajectory = new RBTrajectory();
         }
 
         public void SetParentRigidbody(RBRigidbody r)
@@ -77,7 +82,24 @@ namespace RBPhys
         {
             GameObjectPos = gameObject.transform.position;
             GameObjectRot = gameObject.transform.rotation;
-            _trajectory.Update(this);
+
+            _expPos = GameObjectPos;
+            _expRot = GameObjectRot;
+
+            _hasParentRigidbodyInFrame = _parent?.isActiveAndEnabled ?? false;
+
+            _expTrajectory.Update(this, gameObject.layer);
+        }
+
+        public void UpdateExpTrajectory(Vector3 rbPos, Quaternion rbRot, Vector3 intergratedPos, Quaternion intergratedRot)
+        {
+            Vector3 relPos = GameObjectPos - rbPos;
+            Quaternion relRot = GameObjectRot * Quaternion.Inverse(rbRot);
+
+            _expPos = intergratedPos + relPos;
+            _expRot = intergratedRot * relRot;
+
+            _expTrajectory.Update(this, _expPos, _expRot);
         }
 
         public abstract float CalcVolume();
@@ -111,6 +133,36 @@ namespace RBPhys
         public virtual Vector3 GetColliderCenter()
         {
             return GetColliderCenter(GameObjectPos, GameObjectRot);
+        }
+
+        public virtual RBColliderSphere CalcExpSphere()
+        {
+            return CalcSphere(_expPos, _expRot);
+        }
+
+        public virtual RBColliderAABB CalcExpAABB()
+        {
+            return CalcAABB(_expPos, _expRot);
+        }
+
+        public virtual RBColliderOBB CalcExpOBB()
+        {
+            return CalcOBB(_expPos, _expRot);
+        }
+
+        public virtual RBColliderCapsule CalcExpCapsule()
+        {
+            return CalcCapsule(_expPos, _expRot);
+        }
+
+        public Vector3 ExpToCurrent(Vector3 expPos)
+        {
+            return GameObjectPos + GameObjectRot * (Quaternion.Inverse(_expRot) * (expPos - _expPos));
+        }
+        
+        public Vector3 ExpToCurrentVector(Vector3 expVector)
+        {
+            return GameObjectRot * (Quaternion.Inverse(_expRot) * expVector);
         }
     }
 }
