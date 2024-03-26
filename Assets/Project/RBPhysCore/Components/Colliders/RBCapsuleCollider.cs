@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using UnityEditor;
 using UnityEngine;
 
 namespace RBPhys
@@ -16,10 +17,10 @@ namespace RBPhys
 
         public override RBGeometryType GeometryType { get { return GEOMETRY_TYPE; } }
 
-        Vector3 Center { get { return _center; } set { _center = value; } }
-        Quaternion LocalRot { get { return Quaternion.Euler(_rotationEuler); } set { _rotationEuler = value.eulerAngles; } }
-        float Radius { get { return _radius; } set { _radius = Mathf.Abs(value); } }
-        float Height { get { return _height; } set { _height = Mathf.Abs(value); } }
+        public Vector3 Center { get { return _center; } set { _center = value; } }
+        public Quaternion LocalRot { get { return Quaternion.Euler(_rotationEuler); } set { _rotationEuler = value.eulerAngles; } }
+        public float Radius { get { return _radius; } set { _radius = Mathf.Abs(value); } }
+        public float Height { get { return _height; } set { _height = Mathf.Abs(value); } }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override float CalcVolume()
@@ -74,6 +75,30 @@ namespace RBPhys
         public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot)
         {
             return new RBColliderCapsule(pos, rot * LocalRot, _radius, _height);
+        }
+
+        private void Reset()
+        {
+            AutoAlign();
+        }
+
+        public void AutoAlign()
+        {
+            GameObject g = gameObject;
+
+            if (g.TryGetComponent(out MeshRenderer mr))
+            {
+#if UNITY_EDITOR
+                Undo.RecordObject(this, "Aligned RBSphereCollider");
+#endif
+
+                Vector3 aabbSize = Vector3.Scale(mr.localBounds.size, gameObject.transform.lossyScale);
+                Vector3 aabbCenter = Vector3.Scale(mr.localBounds.center, gameObject.transform.lossyScale);
+
+                _radius = Mathf.Max(aabbSize.x, aabbSize.z) / 2f;
+                _height = Mathf.Max(aabbSize.y - _radius * 2, 0);
+                _center = aabbCenter;
+            }
         }
     }
 }

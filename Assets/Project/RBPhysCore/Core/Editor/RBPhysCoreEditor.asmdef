@@ -1,13 +1,15 @@
 {
-    "name": "RBPhysics",
+    "name": "RBPhysCoreEditor",
     "rootNamespace": "",
     "references": [
-        "GUID:fd6a64c3f6881e04aa84d7f507a64a3c"
+        "GUID:0ac923d18beabbe46b33cbd4590518d9"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": true,
+    "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
