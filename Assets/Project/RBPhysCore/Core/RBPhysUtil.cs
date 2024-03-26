@@ -153,6 +153,50 @@ namespace RBPhys
             return !(a_max < b_min || b_max < a_min);
         }
 
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool RangeOverlap(float a_x1, float a_x2, float b_x1, float b_x2, float c_x1, float c_x2, out float r_min, out float r_max, out int i_min, out int i_max)
+        {
+            float a_min = Mathf.Min(a_x1, a_x2);
+            float a_max = Mathf.Max(a_x1, a_x2);
+            float b_min = Mathf.Min(b_x1, b_x2);
+            float b_max = Mathf.Max(b_x1, b_x2);
+            float c_min = Mathf.Min(c_x1, c_x2);
+            float c_max = Mathf.Max(c_x1, c_x2);
+
+            r_min = a_min;
+            i_min = 0;
+
+            if (b_min > r_min)
+            {
+                r_min = b_min;
+                i_min = 1;
+            }
+
+            if (c_min > r_min)
+            {
+                r_min = c_min;
+                i_min = 2;
+            }
+
+            r_max = a_max;
+            i_max = 0;
+
+            if (b_max < r_max)
+            {
+                r_max = b_max;
+                i_max = 1;
+            }
+
+            if (c_max < r_max)
+            {
+                r_max = c_max;
+                i_max = 2;
+            }
+
+            return r_min <= r_max;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float GetOBBAxisSize(Vector3 size, Quaternion rot, Vector3 axis)
         {

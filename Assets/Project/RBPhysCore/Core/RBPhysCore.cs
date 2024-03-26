@@ -8,8 +8,6 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEditor;
 using Unity.IL2CPP.CompilerServices;
-using System.Security.Policy;
-using System.Security.Permissions;
 
 namespace RBPhys
 {
@@ -153,24 +151,64 @@ namespace RBPhys
                     rb.ExpVelocity += new Vector3(0, -9.81f, 0) * dt;
                 }
             }
-            
+
             TrySleepRigidbodies();
             TryAwakeRigidbodies();
 
             //OnClosePhysicsFrame��
         }
 
+        public struct RBColliderCastHitInfo
+        {
+            public Vector3 position;
+            public Vector3 normal;
+            public float dist;
+            public RBCollider collider;
+            public bool IsValidHit { get { return _isValidHit; } }
+            public PhysCastType type;
+
+            bool _isValidHit;
+
+            internal RBColliderCastHitInfo(RBCollider c)
+            {
+                collider = c;
+                _isValidHit = false;
+
+                position = Vector3.zero;
+                normal = Vector3.zero;
+                dist = -1;
+                type = 0;
+            }
+
+            internal void SetOverlap(Vector3 p, Vector3 nN, float dist)
+            {
+                position = p;
+                normal = nN;
+                this.dist = dist;
+
+                _isValidHit = true;
+            }
+
+            public enum PhysCastType
+            {
+                RayCast,
+                SphereCast
+            }
+        }
+
         public struct RBColliderOverlapInfo
         {
             public Vector3 position;
             public Vector3 normal;
             public RBCollider collider;
-            public bool isValidOverlap;
+            public bool IsValidOverlap { get { return _isValidOverlap; } }
+
+            bool _isValidOverlap;
 
             internal RBColliderOverlapInfo(RBCollider c)
             {
                 collider = c;
-                isValidOverlap = false;
+                _isValidOverlap = false;
 
                 position = Vector3.zero;
                 normal = Vector3.zero;
@@ -181,169 +219,22 @@ namespace RBPhys
                 position = p;
                 normal = nN;
 
-                isValidOverlap = true;
+                _isValidOverlap = true;
             }
         }
 
-        public static RBColliderOverlapInfo LineCast(Vector3 p, Vector3 dir, float maxDist = 10)
+        public static RBColliderCastHitInfo LineCast(Vector3 origin, Vector3 dir, float d)
         {
-            List<RBColliderOverlapInfo> overlappings = new List<RBColliderOverlapInfo>();
+            dir = dir.normalized;
 
-            Vector3 pEnd = p + dir * maxDist;
-            float xMin = Mathf.Min(p.x, pEnd.x);
-            float xMax = Mathf.Max(p.x, pEnd.x);
+            Vector3 pos_a = origin;
+            Vector3 pos_b = origin + dir * d;
+            Vector3 center = (pos_a + pos_b) / 2f;
 
-            Vector3 pCenter = (p + pEnd) / 2f;
-            Quaternion pRot = Quaternion.FromToRotation(Vector3.forward, dir);
-            float pDist = Vector3.Distance(p, pEnd);
+            List<RBColliderCastHitInfo> hitList = new List<RBColliderCastHitInfo>();
 
-            for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
-            {
-                var t = _trajectories_orderByXMin[i];
-                var f = _trajectories_xMin[i];
-
-                if (t.trajectoryAABB.MaxX < xMin)
-                {
-                    if(t.trajectoryAABB.OverlapAABB(new RBColliderAABB(pCenter, RBPhysUtil.V3Abs(pEnd - p))))
-                    {
-                        foreach (var c in t.Colliders)
-                        {
-                            overlappings.Add(new RBColliderOverlapInfo(c));
-                        }
-                    }
-                }
-
-                if (xMax < f)
-                {
-                    break;
-                }
-            }
-
-            Parallel.ForEach(overlappings, t =>
-            {
-                switch (t.collider.GeometryType)
-                {
-                    case RBGeometryType.OBB:
-                        //RBRaycast.RaycastOBB.CalcRayCollision(t.collider.CalcOBB(), p, dir);
-                        break;
-                    case RBGeometryType.Sphere:
-                        
-                        break;
-                    case RBGeometryType.Capsule:
-                        break;
-                }
-            });
-
-            float dMaxSqr = maxDist * maxDist;
-
-            RBColliderOverlapInfo ret = default;
-            float dMinSqr = -1;
-            foreach (var pp in overlappings)
-            {
-                float dSqr = (p - pp.position).sqrMagnitude;
-                if (dSqr < dMaxSqr && (dMinSqr == -1 || dSqr < dMinSqr))
-                {
-                    dMinSqr = dSqr;
-                    ret = pp;
-                }
-            }
-
-            return ret;
-        }
-
-        public static List<RBColliderOverlapInfo> LineOverlap(RBColliderLine line)
-        {
-            List<RBColliderOverlapInfo> overlappings = new List<RBColliderOverlapInfo>();
-
-            float xMin = Mathf.Min(line.pos_a.x, line.pos_b.x);
-            float xMax = Mathf.Max(line.pos_a.x, line.pos_b.x);
-
-            for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
-            {
-                var t = _trajectories_orderByXMin[i];
-                var f = _trajectories_xMin[i];
-
-                if (t.trajectoryAABB.MaxX < xMin)
-                {
-                    if (t.trajectoryAABB.OverlapAABB(new RBColliderAABB(line.Center, RBPhysUtil.V3Abs(line.pos_b - line.pos_a))))
-                    {
-                        foreach (var c in t.Colliders)
-                        {
-                            overlappings.Add(new RBColliderOverlapInfo(c));
-                        }
-                    }
-                }
-
-                if (xMax < f)
-                {
-                    break;
-                }
-            }
-
-            Parallel.ForEach(overlappings, t =>
-            {
-                switch (t.collider.GeometryType)
-                {
-                    case RBGeometryType.OBB:
-                        {
-                            var p = RBDetailCollision.DetailCollisionOBBLine.CalcDetailCollisionInfo(t.collider.CalcOBB(), line);
-                            if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
-                        }
-                        break;
-                    case RBGeometryType.Sphere:
-                        {
-                            var p = RBDetailCollision.DetailCollisionSphereLine.CalcDetailCollisionInfo(t.collider.CalcSphere(), line);
-                            if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
-                        }
-                        break;
-                    case RBGeometryType.Capsule:
-                        {
-                            var p = RBDetailCollision.DetailCollisionCapsuleLine.CalcDetailCollisionInfo(t.collider.CalcCapsule(), line);
-                            if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
-                        }
-                        break;
-                }
-            });
-
-            return overlappings;
-        }
-
-        public struct RBColliderOverlapInfo
-        {
-            public Vector3 position;
-            public Vector3 normal;
-            public RBCollider collider;
-            public bool isValidOverlap;
-
-            internal RBColliderOverlapInfo(RBCollider c)
-            {
-                collider = c;
-                isValidOverlap = false;
-
-                position = Vector3.zero;
-                normal = Vector3.zero;
-            }
-
-            internal void SetOverlap(Vector3 p, Vector3 nN)
-            {
-                position = p;
-                normal = nN;
-
-                isValidOverlap = true;
-            }
-        }
-
-        public static RBColliderOverlapInfo LineCast(Vector3 p, Vector3 dir, float maxDist = 10)
-        {
-            List<RBColliderOverlapInfo> overlappings = new List<RBColliderOverlapInfo>();
-
-            Vector3 pEnd = p + dir * maxDist;
-            float xMin = Mathf.Min(p.x, pEnd.x);
-            float xMax = Mathf.Max(p.x, pEnd.x);
-
-            Vector3 pCenter = (p + pEnd) / 2f;
-            Quaternion pRot = Quaternion.FromToRotation(Vector3.forward, dir);
-            float pDist = Vector3.Distance(p, pEnd);
+            float xMin = Mathf.Min(pos_a.x, pos_b.x);
+            float xMax = Mathf.Max(pos_a.x, pos_b.x);
 
             for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
             {
@@ -352,11 +243,11 @@ namespace RBPhys
 
                 if (xMin < t.trajectoryAABB.MaxX)
                 {
-                    if (t.trajectoryAABB.OverlapAABB(new RBColliderAABB(pCenter, RBPhysUtil.V3Abs(pEnd - p))))
+                    if (t.trajectoryAABB.OverlapAABB(new RBColliderAABB(center, RBPhysUtil.V3Abs(pos_b - pos_a))))
                     {
                         foreach (var c in t.Colliders)
                         {
-                            overlappings.Add(new RBColliderOverlapInfo(c));
+                            hitList.Add(new RBColliderCastHitInfo(c));
                         }
                     }
                 }
@@ -367,36 +258,44 @@ namespace RBPhys
                 }
             }
 
-            Parallel.ForEach(overlappings, t =>
+            Parallel.ForEach(hitList, t =>
             {
                 switch (t.collider.GeometryType)
                 {
                     case RBGeometryType.OBB:
-                        //RBRaycast.RaycastOBB.CalcRayCollision(t.collider.CalcOBB(), p, dir);
+                        {
+                            var info = RBRaycast.RaycastOBB.CalcRayCollision(t.collider.CalcOBB(), origin, dir, d);
+                        }
                         break;
                     case RBGeometryType.Sphere:
-                        
+                        {
+                            var info = RBRaycast.RaycastSphere.CalcRayCollision(t.collider.CalcSphere(), origin, dir, d);
+                        }
                         break;
                     case RBGeometryType.Capsule:
+                        {
+                            var info = RBRaycast.RaycastCaspule.CalcRayCollision(t.collider.CalcCapsule(), origin, dir, d);
+                        }
                         break;
                 }
             });
 
-            float dMaxSqr = maxDist * maxDist;
+            RBColliderCastHitInfo fMinOverlap = default;
 
-            RBColliderOverlapInfo ret = default;
-            float dMinSqr = -1;
-            foreach (var pp in overlappings)
+            foreach (var v in hitList)
             {
-                float dSqr = (p - pp.position).sqrMagnitude;
-                if (dSqr < dMaxSqr && (dMinSqr == -1 || dSqr < dMinSqr))
+                if (!fMinOverlap.IsValidHit || v.dist < fMinOverlap.dist)
                 {
-                    dMinSqr = dSqr;
-                    ret = pp;
+                    fMinOverlap = v;
                 }
             }
 
-            return ret;
+            return fMinOverlap;
+        }
+
+        public static RBColliderCastHitInfo SphereCast(RBColliderSphere sphere)
+        {
+            throw new NotImplementedException();
         }
 
         public static List<RBColliderOverlapInfo> LineOverlap(RBColliderLine line)
@@ -663,7 +562,7 @@ namespace RBPhys
             {
                 if (rb.isSleeping)
                 {
-                    for(int i = 0; i < rb.collidingCount; i++)
+                    for (int i = 0; i < rb.collidingCount; i++)
                     {
                         var c = rb.colliding[i];
                         if (c.ParentRigidbody != null && ((c.ParentRigidbody.isActiveAndEnabled && !c.ParentRigidbody.isSleeping) || !c.ParentRigidbody.isActiveAndEnabled))
@@ -1691,8 +1590,8 @@ namespace RBPhys
             Vector3 contactNormal = ContactNormal;
             Vector3 tangent = Vector3.zero;
             Vector3 bitangent = Vector3.zero;
-
             Vector3.OrthoNormalize(ref contactNormal, ref tangent, ref bitangent);
+
 
             _jN.Init(this, contactNormal, dt, initBias);
             _jT.Init(this, tangent, dt, initBias);
@@ -2048,7 +1947,7 @@ namespace RBPhys
             return (pos + rot * new Vector3(0, height / 2f, 0), pos - rot * new Vector3(0, height / 2f, 0));
         }
     }
-    
+
     public struct RBColliderLine
     {
         public Vector3 pos_a;
@@ -2064,7 +1963,7 @@ namespace RBPhys
             this.pos_a = pos_a;
             this.pos_b = pos_b;
         }
-        
+
         public RBColliderLine(Vector3 pos, Vector3 dir, float length)
         {
             this.pos_a = pos;
