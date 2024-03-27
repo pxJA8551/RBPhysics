@@ -1,9 +1,7 @@
 ﻿using RBPhys;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using UnityEngine;
-using UnityEngine.Assertions.Must;
 using static RBPhys.RBPhysCore;
 
 public static partial class RBRaycast
@@ -16,8 +14,6 @@ public static partial class RBRaycast
         {
             var edge = capsule.GetEdge();
             Vector3 d = edge.end - edge.begin;
-
-            Vector3 p = RBPhys.RBVectorUtil.ProjectPointToEdge(org, edge.begin, edge.end);
 
             var s1Info = RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.begin, capsule.radius), org, dirN, length);
             if (s1Info.IsValidHit && Vector3.Dot(d, s1Info.position - edge.begin) < 0)
@@ -79,7 +75,7 @@ public static partial class RBRaycast
                     Vector3 pos = org + dirN * t;
 
                     RBColliderCastHitInfo info = new RBColliderCastHitInfo();
-                    info.SetOverlap(pos, Vector3.ProjectOnPlane(pos - capsule.pos, d), t);
+                    info.SetHit(pos, Vector3.ProjectOnPlane(pos - capsule.pos, d).normalized, t);
 
                     return info;
                 }

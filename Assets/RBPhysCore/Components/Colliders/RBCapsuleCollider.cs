@@ -67,7 +67,7 @@ namespace RBPhys
         public (Vector3 begin, Vector3 end) GetEdge(Vector3 pos, Quaternion rot)
         {
             Quaternion r = rot * LocalRot;
-            Vector3 v = (r * new Vector3(0, _height / 2f, 0));
+            Vector3 v = r * new Vector3(0, _height / 2f, 0);
             return (pos + _center + v, pos + _center - v);
         }
 

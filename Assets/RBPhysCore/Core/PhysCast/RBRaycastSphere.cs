@@ -40,7 +40,7 @@ public static partial class RBRaycast
                     Vector3 pos = org + dirN * t;
 
                     RBColliderCastHitInfo info = new RBColliderCastHitInfo();
-                    info.SetOverlap(pos, (pos - sphere.pos) / sphere.radius, t);
+                    info.SetHit(pos, (pos - sphere.pos) / sphere.radius, t);
 
                     return info;
                 }

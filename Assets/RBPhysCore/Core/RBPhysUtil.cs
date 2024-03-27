@@ -41,6 +41,18 @@ namespace RBPhys
             return float.IsNaN(v.x) && float.IsNaN(v.y) && float.IsNaN(v.z);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsV3Sign101EqualAll(Vector3 v1, Vector3 v2)
+        {
+            return F32Sign101(v1.x) == F32Sign101(v2.x) && F32Sign101(v1.y) == F32Sign101(v2.y) && F32Sign101(v1.z) == F32Sign101(v2.z);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsV3Sign101EqualAny(Vector3 v1, Vector3 v2)
+        {
+            return F32Sign101(v1.x) == F32Sign101(v2.x) || F32Sign101(v1.y) == F32Sign101(v2.y) || F32Sign101(v1.z) == F32Sign101(v2.z);
+        }
+
         static float sqrt3Inv = 1 / Mathf.Sqrt(3);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -153,7 +165,6 @@ namespace RBPhys
             return !(a_max < b_min || b_max < a_min);
         }
 
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool RangeOverlap(float a_x1, float a_x2, float b_x1, float b_x2, float c_x1, float c_x2, out float r_min, out float r_max, out int i_min, out int i_max)
         {
@@ -195,6 +206,43 @@ namespace RBPhys
             }
 
             return r_min <= r_max;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool RangeOverlap(float a_x1, float a_x2, float b_x1, float b_x2, float c_x1, float c_x2, out float r)
+        {
+            float a_min = Mathf.Min(a_x1, a_x2);
+            float a_max = Mathf.Max(a_x1, a_x2);
+            float b_min = Mathf.Min(b_x1, b_x2);
+            float b_max = Mathf.Max(b_x1, b_x2);
+            float c_min = Mathf.Min(c_x1, c_x2);
+            float c_max = Mathf.Max(c_x1, c_x2);
+
+            r = a_min;
+
+            if (b_min > r)
+            {
+                r = b_min;
+            }
+
+            if (c_min > r)
+            {
+                r = c_min;
+            }
+
+            float r_max = a_max;
+
+            if (b_max < r_max)
+            {
+                r_max = b_max;
+            }
+
+            if (c_max < r_max)
+            {
+                r_max = c_max;
+            }
+
+            return r <= r_max;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

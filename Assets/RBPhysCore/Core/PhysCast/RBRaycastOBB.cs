@@ -48,7 +48,7 @@ public static partial class RBRaycast
                 if (inv) normal *= -1;
 
                 RBColliderCastHitInfo info = default;
-                info.SetOverlap(wsHitPoint, normal, t);
+                info.SetHit(wsHitPoint, normal, t);
                 return info;
             }
             else
