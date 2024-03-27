@@ -43,6 +43,16 @@ namespace RBPhys
 
         public float InverseMass { get { return 1 / mass; } }
 
+        public bool freezeXRotation { get { return _freezeXRotation; } set { _freezeXRotation = value; _invInertiaWsScale.x = value ? 1 : 0; } }
+        public bool freezeYRotation { get { return _freezeYRotation; } set { _freezeYRotation = value; _invInertiaWsScale.y = value ? 1 : 0; } }
+        public bool freezeZRotation { get { return _freezeZRotation; } set { _freezeZRotation = value; _invInertiaWsScale.z = value ? 1 : 0; } }
+
+        bool _freezeXRotation;
+        bool _freezeYRotation;
+        bool _freezeZRotation;
+
+        Vector3 _invInertiaWsScale = Vector3.one;
+
         public bool isSleeping = false;
         public int sleepGrace = 0;
 
@@ -59,7 +69,7 @@ namespace RBPhys
             {
                 Vector3 i = inertiaTensor;
                 Quaternion r = Rotation * inertiaTensorRotation;
-                return r * (Quaternion.Inverse(r) * V3Rcp(i));
+                return Vector3.Scale(r * (Quaternion.Inverse(r) * V3Rcp(i)), _invInertiaWsScale);
             }
         }
 
