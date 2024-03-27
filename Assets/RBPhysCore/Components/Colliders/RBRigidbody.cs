@@ -43,6 +43,16 @@ namespace RBPhys
 
         public float InverseMass { get { return 1 / mass; } }
 
+        public bool infInertiaTensorX { get { return _infInertiaTensorX; } set { _infInertiaTensorX = value; _invInertiaWsScale.x = value ? 1 : 0; } }
+        public bool infInertiaTensorY { get { return _infInertiaTensorY; } set { _infInertiaTensorY = value; _invInertiaWsScale.y = value ? 1 : 0; } }
+        public bool infInertiaTensorZ { get { return _infInertiaTensorZ; } set { _infInertiaTensorZ = value; _invInertiaWsScale.z = value ? 1 : 0; } }
+
+        bool _infInertiaTensorX;
+        bool _infInertiaTensorY;
+        bool _infInertiaTensorZ;
+
+        Vector3 _invInertiaWsScale = Vector3.one;
+
         public bool isSleeping = false;
         public int sleepGrace = 0;
 
@@ -59,7 +69,7 @@ namespace RBPhys
             {
                 Vector3 i = inertiaTensor;
                 Quaternion r = Rotation * inertiaTensorRotation;
-                return r * (Quaternion.Inverse(r) * V3Rcp(i));
+                return Vector3.Scale(r * (Quaternion.Inverse(r) * V3Rcp(i)), _invInertiaWsScale);
             }
         }
 
