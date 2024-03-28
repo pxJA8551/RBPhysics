@@ -53,6 +53,18 @@ namespace RBPhys
             return F32Sign101(v1.x) == F32Sign101(v2.x) || F32Sign101(v1.y) == F32Sign101(v2.y) || F32Sign101(v1.z) == F32Sign101(v2.z);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsV3Sign101EpsilonEqualAll(Vector3 v1, Vector3 v2, float epsilon = EPSILON_FLOAT32)
+        {
+            return F32Sign101Epsilon(v1.x, epsilon) == F32Sign101Epsilon(v2.x, epsilon) && F32Sign101Epsilon(v1.y, epsilon) == F32Sign101Epsilon(v2.y, epsilon) && F32Sign101Epsilon(v1.z, epsilon) == F32Sign101Epsilon(v2.z, epsilon);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsV3Sign101EpsilonEqualAny(Vector3 v1, Vector3 v2, float epsilon = EPSILON_FLOAT32)
+        {
+            return F32Sign101Epsilon(v1.x, epsilon) == F32Sign101Epsilon(v2.x, epsilon) || F32Sign101Epsilon(v1.y, epsilon) == F32Sign101Epsilon(v2.y, epsilon) || F32Sign101Epsilon(v1.z, epsilon) == F32Sign101Epsilon(v2.z, epsilon);
+        }
+
         static float sqrt3Inv = 1 / Mathf.Sqrt(3);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -150,7 +162,7 @@ namespace RBPhys
             float a_max = Mathf.Max(a_x1, a_x2);
             float b_min = Mathf.Min(b_x1, b_x2);
             float b_max = Mathf.Max(b_x1, b_x2);
-            
+
             return !(a_max < b_min || b_max < a_min);
         }
 

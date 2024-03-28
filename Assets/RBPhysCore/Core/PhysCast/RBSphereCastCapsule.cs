@@ -43,7 +43,7 @@ public static partial class RBSphereCast
                     return default;
                 }
 
-                float a = 1 - (dsv * dsv) / dsv;
+                float a = 1 - (dsv * dsv) / dss;
                 float b = dpv - (dps * dsv) / dss;
                 float c = dpp - (dps * dps) / dss - (capsule.radius * capsule.radius);
 
