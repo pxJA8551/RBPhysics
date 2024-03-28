@@ -8,7 +8,7 @@ public static partial class RBSphereCast
 {
     public static class SphereCastSphere
     {
-        public static RBColliderCastHitInfo CalcRayCollision(RBColliderSphere sphere, Vector3 org, Vector3 dirN, float length, float radius)
+        public static RBColliderCastHitInfo CalcSphereCollision(RBColliderSphere sphere, Vector3 org, Vector3 dirN, float length, float radius, bool allowNegativeDist)
         {
             Vector3 p = sphere.pos - org;
             float b = Vector3.Dot(dirN, p);
@@ -28,12 +28,12 @@ public static partial class RBSphereCast
 
             float t = t1;
 
-            if (!(t > 0 && t <= length) || (t2 > 0 && t2 <= length && t2 < t))
+            if (!((t > 0 || allowNegativeDist) && t <= length) || ((t2 > 0 || allowNegativeDist) && t2 <= length && t2 < t))
             {
                 t = t2;
             }
 
-            if (t > 0 && t <= length)
+            if ((t > 0 || allowNegativeDist) && t <= length)
             {
                 Vector3 pos = org + dirN * t;
                 Vector3 n = ((pos - sphere.pos) / sphere.radius).normalized;

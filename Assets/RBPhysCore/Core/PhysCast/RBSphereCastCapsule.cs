@@ -8,7 +8,7 @@ public static partial class RBSphereCast
 {
     public static class SphereCastCapsule
     {
-        public static RBColliderCastHitInfo CalcRayCollision(RBColliderCapsule capsule, Vector3 org, Vector3 dirN, float length, float radius)
+        public static RBColliderCastHitInfo CalcSphereCollision(RBColliderCapsule capsule, Vector3 org, Vector3 dirN, float length, float radius, bool allowNegativeDist)
         {
             capsule.radius += radius;
 
@@ -65,12 +65,12 @@ public static partial class RBSphereCast
 
                 float t = t1;
 
-                if (!(t > 0 && t <= length) || (t2 > 0 && t2 <= length && t2 < t))
+                if (!((t > 0 || allowNegativeDist) && t <= length) || ((t2 > 0 || allowNegativeDist) && t2 <= length && t2 < t))
                 {
                     t = t2;
                 }
 
-                if (t > 0 && t <= length)
+                if ((t > 0 || allowNegativeDist) && t <= length)
                 {
                     Vector3 pos = org + dirN * t;
                     Vector3 normal = Vector3.ProjectOnPlane(pos - capsule.pos, d).normalized;

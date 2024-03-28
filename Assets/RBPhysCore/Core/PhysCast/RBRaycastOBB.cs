@@ -40,12 +40,12 @@ public static partial class RBRaycast
             if (rayHit && t > 0 && t < length)
             {
                 Vector3 lsHitPoint = lsOrg + lsDirN * t;
-                Vector3 wsHitPoint = obb.rot * lsHitPoint;
+                Vector3 wsHitPoint = obb.pos + obb.rot * lsHitPoint;
 
                 Vector3 normal = obb.GetAxisRightN();
                 if (i_t == 1) normal = obb.GetAxisUpN();
                 if (i_t == 2) normal = obb.GetAxisForwardN();
-                if (inv) normal *= -1;
+                if (!inv) normal *= -1;
 
                 RBColliderCastHitInfo info = default;
                 info.SetHit(wsHitPoint, normal, t);

@@ -309,12 +309,12 @@ namespace RBPhys
             return fMinOverlap;
         }
 
-        public static RBColliderCastHitInfo SphereCast(Vector3 org, Vector3 dir, float length, float radius)
+        public static RBColliderCastHitInfo SphereCast(Vector3 org, Vector3 dir, float length, float radius, bool allowNegativeValue = true)
         {
-            return SphereCast(org, dir, length, radius, null);
+            return SphereCast(org, dir, length, radius, allowNegativeValue, null);
         }
 
-        public static RBColliderCastHitInfo SphereCast(Vector3 org, Vector3 dir, float length, float radius, params RBCollider[] cols)
+        public static RBColliderCastHitInfo SphereCast(Vector3 org, Vector3 dir, float length, float radius, bool allowNegativeValue = true, params RBCollider[] cols)
         {
             dir = dir.normalized;
 
@@ -360,21 +360,21 @@ namespace RBPhys
                 {
                     case RBGeometryType.OBB:
                         {
-                            var info = RBRaycast.RaycastOBB.CalcRayCollision(t.collider.CalcOBB(), org, dir, length);
+                            var info = RBSphereCast.SphereCastOBB.CalcSphereCollision(t.collider.CalcOBB(), org, dir, length, radius, allowNegativeValue);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.dist);
                             hitList[i] = t;
                         }
                         break;
                     case RBGeometryType.Sphere:
                         {
-                            var info = RBRaycast.RaycastSphere.CalcRayCollision(t.collider.CalcSphere(), org, dir, length);
+                            var info = RBSphereCast.SphereCastSphere.CalcSphereCollision(t.collider.CalcSphere(), org, dir, length, radius, allowNegativeValue);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.dist);
                             hitList[i] = t;
                         }
                         break;
                     case RBGeometryType.Capsule:
                         {
-                            var info = RBRaycast.RaycastCaspule.CalcRayCollision(t.collider.CalcCapsule(), org, dir, length);
+                            var info = RBSphereCast.SphereCastCapsule.CalcSphereCollision(t.collider.CalcCapsule(), org, dir, length, radius, allowNegativeValue);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.dist);
                             hitList[i] = t;
                         }

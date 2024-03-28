@@ -9,7 +9,7 @@ public static partial class RBSphereCast
 {
     public static class SphereCastOBB
     {
-        public static RBColliderCastHitInfo CalcRayCollision(RBColliderOBB obb, Vector3 org, Vector3 dirN, float length, float radius)
+        public static RBColliderCastHitInfo CalcSphereCollision(RBColliderOBB obb, Vector3 org, Vector3 dirN, float length, float radius, bool allowNegativeDist)
         {
             Quaternion toLsRot = Quaternion.Inverse(obb.rot);
             Quaternion toWsRot = obb.rot;
@@ -33,16 +33,16 @@ public static partial class RBSphereCast
 
             //face6 xn
             {
-                Vector3 f = new Vector3(0, eY, eZ);
+                Vector3 f = new Vector3(-radius, eY, eZ);
                 Vector3 xyzN = f - extents;
-                AABBPlaneRayOverlapXYZN(obb.pos + f, size, ls_org, ls_dirN, xyzN, ref hitPoints_t);
+                AABBPlaneRayOverlapXYZN(f, size, ls_org, ls_dirN, xyzN, ref hitPoints_t);
             }
 
             //face6 xp
             {
-                Vector3 f = new Vector3(obbX, eY, eZ);
+                Vector3 f = new Vector3(obbX + radius, eY, eZ);
                 Vector3 xyzN = f - extents;
-                if(AABBPlaneRayOverlapXYZN(obb.pos + f, size, ls_org, ls_dirN, xyzN, ref hitPoints_t))
+                if (AABBPlaneRayOverlapXYZN(f, size, ls_org, ls_dirN, xyzN, ref hitPoints_t))
                 {
                     if (hitPoints_t.Count == 2) goto L_RETURN;
                 }
@@ -50,9 +50,9 @@ public static partial class RBSphereCast
 
             //face6 yn
             {
-                Vector3 f = new Vector3(eX, 0, eZ);
+                Vector3 f = new Vector3(eX, -radius, eZ);
                 Vector3 xyzN = f - extents;
-                if (AABBPlaneRayOverlapXYZN(obb.pos + f, size, ls_org, ls_dirN, xyzN, ref hitPoints_t))
+                if (AABBPlaneRayOverlapXYZN(f, size, ls_org, ls_dirN, xyzN, ref hitPoints_t))
                 {
                     if (hitPoints_t.Count == 2) goto L_RETURN;
                 }
@@ -60,19 +60,20 @@ public static partial class RBSphereCast
 
             //face6 yp
             {
-                Vector3 f = new Vector3(eX, obbY, eZ);
+                Vector3 f = new Vector3(eX, obbY + radius, eZ);
                 Vector3 xyzN = f - extents;
-                if (AABBPlaneRayOverlapXYZN(obb.pos + f, size, ls_org, ls_dirN, xyzN, ref hitPoints_t))
+                if (AABBPlaneRayOverlapXYZN(f, size, ls_org, ls_dirN, xyzN, ref hitPoints_t))
                 {
+                    Debug.Log((f, size, ls_org, ls_dirN, xyzN, hitPoints_t.Count, hitPoints_t[1].pos, hitPoints_t[1].normal, hitPoints_t[1].t));
                     if (hitPoints_t.Count == 2) goto L_RETURN;
                 }
             }
 
             //face6 zn
             {
-                Vector3 f = new Vector3(eX, eY, 0);
+                Vector3 f = new Vector3(eX, eY, -radius);
                 Vector3 xyzN = f - extents;
-                if (AABBPlaneRayOverlapXYZN(obb.pos + f, size, ls_org, ls_dirN, xyzN, ref hitPoints_t))
+                if (AABBPlaneRayOverlapXYZN(f, size, ls_org, ls_dirN, xyzN, ref hitPoints_t))
                 {
                     if (hitPoints_t.Count == 2) goto L_RETURN;
                 }
@@ -80,9 +81,9 @@ public static partial class RBSphereCast
 
             //face6 zp
             {
-                Vector3 f = new Vector3(eX, eY, obbZ);
+                Vector3 f = new Vector3(eX, eY, obbZ + radius);
                 Vector3 xyzN = f - extents;
-                if (AABBPlaneRayOverlapXYZN(obb.pos + f, size, ls_org, ls_dirN, xyzN, ref hitPoints_t))
+                if (AABBPlaneRayOverlapXYZN(f, size, ls_org, ls_dirN, xyzN, ref hitPoints_t))
                 {
                     if (hitPoints_t.Count == 2) goto L_RETURN;
                 }
@@ -92,9 +93,9 @@ public static partial class RBSphereCast
             {
                 Vector3 f = new Vector3(0, 0, 0);
                 Vector3 xyzN = f - extents;
-                if (AABBOverlap(obb.pos + f, radius_size, ls_dirN, ls_org, xyzN))
+                if (AABBOverlap(f, radius_size, ls_dirN, ls_org, xyzN))
                 {
-                    if (SphereRayOverlapXYZN(obb.pos + f, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
+                    if (SphereRayOverlapXYZN(f, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
                     {
                         if (hitPoints_t.Count == 2) goto L_RETURN;
                     }
@@ -105,7 +106,7 @@ public static partial class RBSphereCast
             {
                 Vector3 f = new Vector3(obbX, 0, 0);
                 Vector3 xyzN = f - extents;
-                if (AABBOverlap(obb.pos + f, radius_size, ls_dirN, ls_org, xyzN))
+                if (AABBOverlap(f, radius_size, ls_dirN, ls_org, xyzN))
                 {
                     if (SphereRayOverlapXYZN(obb.pos + f, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
                     {
@@ -118,9 +119,9 @@ public static partial class RBSphereCast
             {
                 Vector3 f = new Vector3(0, obbY, 0);
                 Vector3 xyzN = f - extents;
-                if (AABBOverlap(obb.pos + f, radius_size, ls_dirN, ls_org, xyzN))
+                if (AABBOverlap(f, radius_size, ls_dirN, ls_org, xyzN))
                 {
-                    if (SphereRayOverlapXYZN(obb.pos + f, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
+                    if (SphereRayOverlapXYZN(f, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
                     {
                         if (hitPoints_t.Count == 2) goto L_RETURN;
                     }
@@ -131,9 +132,9 @@ public static partial class RBSphereCast
             {
                 Vector3 f = new Vector3(obbX, obbY, 0);
                 Vector3 xyzN = f - extents;
-                if (AABBOverlap(obb.pos + f, radius_size, ls_dirN, ls_org, xyzN))
+                if (AABBOverlap(f, radius_size, ls_dirN, ls_org, xyzN))
                 {
-                    if (SphereRayOverlapXYZN(obb.pos + f, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
+                    if (SphereRayOverlapXYZN(f, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
                     {
                         if (hitPoints_t.Count == 2) goto L_RETURN;
                     }
@@ -144,9 +145,9 @@ public static partial class RBSphereCast
             {
                 Vector3 f = new Vector3(0, 0, obbZ);
                 Vector3 xyzN = f - extents;
-                if (AABBOverlap(obb.pos + f, radius_size, ls_dirN, ls_org, xyzN))
+                if (AABBOverlap(f, radius_size, ls_dirN, ls_org, xyzN))
                 {
-                    if (SphereRayOverlapXYZN(obb.pos + f, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
+                    if (SphereRayOverlapXYZN(f, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
                     {
                         if (hitPoints_t.Count == 2) goto L_RETURN;
                     }
@@ -157,9 +158,9 @@ public static partial class RBSphereCast
             {
                 Vector3 f = new Vector3(obbX, 0, obbZ);
                 Vector3 xyzN = f - extents;
-                if (AABBOverlap(obb.pos + f, radius_size, ls_dirN, ls_org, xyzN))
+                if (AABBOverlap(f, radius_size, ls_dirN, ls_org, xyzN))
                 {
-                    if (SphereRayOverlapXYZN(obb.pos + f, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
+                    if (SphereRayOverlapXYZN(f, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
                     {
                         if (hitPoints_t.Count == 2) goto L_RETURN;
                     }
@@ -170,9 +171,9 @@ public static partial class RBSphereCast
             {
                 Vector3 f = new Vector3(0, obbY, obbZ);
                 Vector3 xyzN = f - extents;
-                if (AABBOverlap(obb.pos + f, radius_size, ls_dirN, ls_org, xyzN))
+                if (AABBOverlap(f, radius_size, ls_dirN, ls_org, xyzN))
                 {
-                    if (SphereRayOverlapXYZN(obb.pos + f, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
+                    if (SphereRayOverlapXYZN(f, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
                     {
                         if (hitPoints_t.Count == 2) goto L_RETURN;
                     }
@@ -183,9 +184,9 @@ public static partial class RBSphereCast
             {
                 Vector3 f = new Vector3(obbX, obbY, obbZ);
                 Vector3 xyzN = f - extents;
-                if (AABBOverlap(obb.pos + f, radius_size, ls_dirN, ls_org, xyzN))
+                if (AABBOverlap(f, radius_size, ls_dirN, ls_org, xyzN))
                 {
-                    if (SphereRayOverlapXYZN(obb.pos + f, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
+                    if (SphereRayOverlapXYZN(f, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
                     {
                         if (hitPoints_t.Count == 2) goto L_RETURN;
                     }
@@ -200,7 +201,7 @@ public static partial class RBSphereCast
                 Vector3 xyzN = f - extents;
                 Vector3 vp = radius_size;
                 vp.x = obbX;
-                Vector3 vcp = obb.pos + f;
+                Vector3 vcp = f;
                 if (AABBOverlap(vcp, vp, ls_dirN, ls_org, xyzN))
                 {
                     if (CylinderRayOverlapXYZN(vcp, obbX, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
@@ -216,7 +217,7 @@ public static partial class RBSphereCast
                 Vector3 xyzN = f - extents;
                 Vector3 vp = radius_size;
                 vp.x = obbX;
-                Vector3 vcp = obb.pos + f;
+                Vector3 vcp = f;
                 if (AABBOverlap(vcp, vp, ls_dirN, ls_org, xyzN))
                 {
                     if (CylinderRayOverlapXYZN(vcp, obbX, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
@@ -232,7 +233,7 @@ public static partial class RBSphereCast
                 Vector3 xyzN = f - extents;
                 Vector3 vp = radius_size;
                 vp.x = obbX;
-                Vector3 vcp = obb.pos + f;
+                Vector3 vcp = f;
                 if (AABBOverlap(vcp, vp, ls_dirN, ls_org, xyzN))
                 {
                     if (CylinderRayOverlapXYZN(vcp, obbX, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
@@ -248,7 +249,7 @@ public static partial class RBSphereCast
                 Vector3 xyzN = f - extents;
                 Vector3 vp = radius_size;
                 vp.x = obbX;
-                Vector3 vcp = obb.pos + f;
+                Vector3 vcp = f;
                 if (AABBOverlap(vcp, vp, ls_dirN, ls_org, xyzN))
                 {
                     if (CylinderRayOverlapXYZN(vcp, obbX, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
@@ -264,7 +265,7 @@ public static partial class RBSphereCast
                 Vector3 xyzN = f - extents;
                 Vector3 vp = radius_size;
                 vp.y = obbY;
-                Vector3 vcp = obb.pos + f;
+                Vector3 vcp = f;
                 if (AABBOverlap(vcp, vp, ls_dirN, ls_org, xyzN))
                 {
                     if (CylinderRayOverlapXYZN(vcp, obbX, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
@@ -280,7 +281,7 @@ public static partial class RBSphereCast
                 Vector3 xyzN = f - extents;
                 Vector3 vp = radius_size;
                 vp.x = obbY;
-                Vector3 vcp = obb.pos + f;
+                Vector3 vcp = f;
                 if (AABBOverlap(vcp, vp, ls_dirN, ls_org, xyzN))
                 {
                     if (CylinderRayOverlapXYZN(vcp, obbX, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
@@ -296,7 +297,7 @@ public static partial class RBSphereCast
                 Vector3 xyzN = f - extents;
                 Vector3 vp = radius_size;
                 vp.x = obbY;
-                Vector3 vcp = obb.pos + f;
+                Vector3 vcp = f;
                 if (AABBOverlap(vcp, vp, ls_dirN, ls_org, xyzN))
                 {
                     if (CylinderRayOverlapXYZN(vcp, obbX, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
@@ -312,7 +313,7 @@ public static partial class RBSphereCast
                 Vector3 xyzN = f - extents;
                 Vector3 vp = radius_size;
                 vp.x = obbY;
-                Vector3 vcp = obb.pos + f;
+                Vector3 vcp = f;
                 if (AABBOverlap(vcp, vp, ls_dirN, ls_org, xyzN))
                 {
                     if (CylinderRayOverlapXYZN(vcp, obbX, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
@@ -328,7 +329,7 @@ public static partial class RBSphereCast
                 Vector3 xyzN = f - extents;
                 Vector3 vp = radius_size;
                 vp.z = obbZ;
-                Vector3 vcp = obb.pos + f;
+                Vector3 vcp = f;
                 if (AABBOverlap(vcp, vp, ls_dirN, ls_org, xyzN))
                 {
                     if (CylinderRayOverlapXYZN(vcp, obbX, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
@@ -344,7 +345,7 @@ public static partial class RBSphereCast
                 Vector3 xyzN = f - extents;
                 Vector3 vp = radius_size;
                 vp.z = obbZ;
-                Vector3 vcp = obb.pos + f;
+                Vector3 vcp = f;
                 if (AABBOverlap(vcp, vp, ls_dirN, ls_org, xyzN))
                 {
                     if (CylinderRayOverlapXYZN(vcp, obbX, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
@@ -360,7 +361,7 @@ public static partial class RBSphereCast
                 Vector3 xyzN = f - extents;
                 Vector3 vp = radius_size;
                 vp.z = obbZ;
-                Vector3 vcp = obb.pos + f;
+                Vector3 vcp = f;
                 if (AABBOverlap(vcp, vp, ls_dirN, ls_org, xyzN))
                 {
                     if (CylinderRayOverlapXYZN(vcp, obbX, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
@@ -376,7 +377,7 @@ public static partial class RBSphereCast
                 Vector3 xyzN = f - extents;
                 Vector3 vp = radius_size;
                 vp.z = obbZ;
-                Vector3 vcp = obb.pos + f;
+                Vector3 vcp = f;
                 if (AABBOverlap(vcp, vp, ls_dirN, ls_org, xyzN))
                 {
                     if (CylinderRayOverlapXYZN(vcp, obbX, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t))
@@ -388,25 +389,25 @@ public static partial class RBSphereCast
 
             return default;
 
-            // GOTO RETURN LABEL ========================
+        // GOTO RETURN LABEL ========================
 
-            L_RETURN:
+        L_RETURN:
             {
-                bool pd1 = hitPoints_t[0].t > 0;
-                bool pd2 = hitPoints_t[0].t > 0;
-
                 if (hitPoints_t[1].t < hitPoints_t[0].t)
                 {
                     (hitPoints_t[0], hitPoints_t[1]) = (hitPoints_t[1], hitPoints_t[0]);
-                    (pd1, pd2) = (pd2, pd1);
                 }
+
+                bool pd1 = hitPoints_t[0].t > 0 || allowNegativeDist;
+                bool pd2 = hitPoints_t[1].t > 0 || allowNegativeDist;
 
                 if (pd1)
                 {
                     Vector3 ls_pos = hitPoints_t[0].pos + hitPoints_t[0].normal * radius;
                     Vector3 ls_normal = hitPoints_t[0].normal;
+                    ls_pos -= ls_normal * radius;
 
-                    Vector3 ws_pos = org + toWsRot * ls_pos;
+                    Vector3 ws_pos = obb.pos + toWsRot * ls_pos;
                     Vector3 ws_normal = toWsRot * ls_normal;
 
                     var info = new RBColliderCastHitInfo();
@@ -417,8 +418,9 @@ public static partial class RBSphereCast
                 {
                     Vector3 ls_pos = hitPoints_t[1].pos + hitPoints_t[1].normal * radius;
                     Vector3 ls_normal = hitPoints_t[1].normal;
+                    ls_pos -= ls_normal * radius;
 
-                    Vector3 ws_pos = org + toWsRot * ls_pos;
+                    Vector3 ws_pos = obb.pos + toWsRot * ls_pos;
                     Vector3 ws_normal = toWsRot * ls_normal;
 
                     var info = new RBColliderCastHitInfo();
@@ -693,12 +695,12 @@ public static partial class RBSphereCast
                 list.Add((t1, p1, n1));
                 return true;
             }
-            else if(!pd1 && pd2)
+            else if (!pd1 && pd2)
             {
                 list.Add((t2, p2, n2));
                 return true;
             }
-            else if(pd1 && pd2)
+            else if (pd1 && pd2)
             {
                 list.Add((t1, p1, n1));
                 list.Add((t2, p2, n2));
