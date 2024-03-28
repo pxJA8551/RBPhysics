@@ -225,6 +225,11 @@ namespace RBPhys
 
         public static RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d)
         {
+            return Raycast(org, dir, d, null);
+        }
+
+        public static RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d, params RBCollider[] cols)
+        {
             dir = dir.normalized;
 
             Vector3 pos_a = org;
@@ -247,7 +252,10 @@ namespace RBPhys
                     {
                         foreach (var c in t.Colliders)
                         {
-                            hitList.Add(new RBColliderCastHitInfo(c, RBColliderCastHitInfo.PhysCastType.Raycast));
+                            if (cols?.Contains(c) ?? true)
+                            {
+                                hitList.Add(new RBColliderCastHitInfo(c, RBColliderCastHitInfo.PhysCastType.Raycast));
+                            }
                         }
                     }
                 }
@@ -303,6 +311,11 @@ namespace RBPhys
 
         public static RBColliderCastHitInfo SphereCast(Vector3 org, Vector3 dir, float length, float radius)
         {
+            return SphereCast(org, dir, length, radius, null);
+        }
+
+        public static RBColliderCastHitInfo SphereCast(Vector3 org, Vector3 dir, float length, float radius, params RBCollider[] cols)
+        {
             dir = dir.normalized;
 
             Vector3 pos_a = org;
@@ -325,7 +338,10 @@ namespace RBPhys
                     {
                         foreach (var c in t.Colliders)
                         {
-                            hitList.Add(new RBColliderCastHitInfo(c, RBColliderCastHitInfo.PhysCastType.SphereCast));
+                            if (cols?.Contains(c) ?? true)
+                            {
+                                hitList.Add(new RBColliderCastHitInfo(c, RBColliderCastHitInfo.PhysCastType.SphereCast));
+                            }
                         }
                     }
                 }
