@@ -106,7 +106,7 @@ namespace RBPhys
             }
         }
 
-        public static void RemovePriorSolver(RBConstraints.IRBPhysObject physObj)
+        public static void RemovePhysObject(RBConstraints.IRBPhysObject physObj)
         {
             _physObjects.Remove(physObj);
         }
@@ -219,7 +219,6 @@ namespace RBPhys
             {
                 position = p;
                 normal = nN;
-
                 _isValidOverlap = true;
             }
         }
@@ -259,26 +258,31 @@ namespace RBPhys
                 }
             }
 
-            Parallel.ForEach(hitList, t =>
+            Parallel.For(0, hitList.Count, i =>
             {
+                var t = hitList[i];
+
                 switch (t.collider.GeometryType)
                 {
                     case RBGeometryType.OBB:
                         {
                             var info = RBRaycast.RaycastOBB.CalcRayCollision(t.collider.CalcOBB(), org, dir, d);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.dist);
+                            hitList[i] = t;
                         }
                         break;
                     case RBGeometryType.Sphere:
                         {
                             var info = RBRaycast.RaycastSphere.CalcRayCollision(t.collider.CalcSphere(), org, dir, d);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.dist);
+                            hitList[i] = t;
                         }
                         break;
                     case RBGeometryType.Capsule:
                         {
                             var info = RBRaycast.RaycastCaspule.CalcRayCollision(t.collider.CalcCapsule(), org, dir, d);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.dist);
+                            hitList[i] = t;
                         }
                         break;
                 }
@@ -332,29 +336,31 @@ namespace RBPhys
                 }
             }
 
-            Parallel.ForEach(hitList, t =>
+            Parallel.For(0, hitList.Count, i =>
             {
+                var t = hitList[i];
+
                 switch (t.collider.GeometryType)
                 {
                     case RBGeometryType.OBB:
                         {
                             var info = RBRaycast.RaycastOBB.CalcRayCollision(t.collider.CalcOBB(), org, dir, length);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.dist);
-                            info.collider = t.collider;
+                            hitList[i] = t;
                         }
                         break;
                     case RBGeometryType.Sphere:
                         {
                             var info = RBRaycast.RaycastSphere.CalcRayCollision(t.collider.CalcSphere(), org, dir, length);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.dist);
-                            info.collider = t.collider;
+                            hitList[i] = t;
                         }
                         break;
                     case RBGeometryType.Capsule:
                         {
                             var info = RBRaycast.RaycastCaspule.CalcRayCollision(t.collider.CalcCapsule(), org, dir, length);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.dist);
-                            info.collider = t.collider;
+                            hitList[i] = t;
                         }
                         break;
                 }
@@ -402,26 +408,31 @@ namespace RBPhys
                 }
             }
 
-            Parallel.ForEach(overlappings, t =>
+            Parallel.For(0, overlappings.Count, i =>
             {
+                var t = overlappings[i];
+
                 switch (t.collider.GeometryType)
                 {
                     case RBGeometryType.OBB:
                         {
                             var p = RBDetailCollision.DetailCollisionOBBLine.CalcDetailCollisionInfo(t.collider.CalcOBB(), line);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
+                            overlappings[i] = t;
                         }
                         break;
                     case RBGeometryType.Sphere:
                         {
                             var p = RBDetailCollision.DetailCollisionSphereLine.CalcDetailCollisionInfo(t.collider.CalcSphere(), line);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
+                            overlappings[i] = t;
                         }
                         break;
                     case RBGeometryType.Capsule:
                         {
                             var p = RBDetailCollision.DetailCollisionCapsuleLine.CalcDetailCollisionInfo(t.collider.CalcCapsule(), line);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
+                            overlappings[i] = t;
                         }
                         break;
                 }
@@ -460,26 +471,31 @@ namespace RBPhys
                 }
             }
 
-            Parallel.ForEach(overlappings, t =>
+            Parallel.For(0, overlappings.Count, i =>
             {
+                var t = overlappings[i];
+
                 switch (t.collider.GeometryType)
                 {
                     case RBGeometryType.OBB:
                         {
                             var p = RBDetailCollision.DetailCollisionOBBOBB.CalcDetailCollisionInfo(t.collider.CalcOBB(), obb);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
+                            overlappings[i] = t;
                         }
                         break;
                     case RBGeometryType.Sphere:
                         {
                             var p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(obb, t.collider.CalcSphere());
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, -p.p.normalized);
+                            overlappings[i] = t;
                         }
                         break;
                     case RBGeometryType.Capsule:
                         {
                             var p = RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(obb, t.collider.CalcCapsule());
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, -p.p.normalized);
+                            overlappings[i] = t;
                         }
                         break;
                 }
@@ -517,26 +533,31 @@ namespace RBPhys
                 }
             }
 
-            Parallel.ForEach(overlappings, t =>
+            Parallel.For(0, overlappings.Count, i =>
             {
+                var t = overlappings[i];
+
                 switch (t.collider.GeometryType)
                 {
                     case RBGeometryType.OBB:
                         {
                             var p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(t.collider.CalcOBB(), sphere);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
+                            overlappings[i] = t;
                         }
                         break;
                     case RBGeometryType.Sphere:
                         {
                             var p = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfo(t.collider.CalcSphere(), sphere);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, p.p.normalized);
+                            overlappings[i] = t;
                         }
                         break;
                     case RBGeometryType.Capsule:
                         {
                             var p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(sphere, t.collider.CalcCapsule());
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, -p.p.normalized);
+                            overlappings[i] = t;
                         }
                         break;
                 }
@@ -575,26 +596,31 @@ namespace RBPhys
                 }
             }
 
-            Parallel.ForEach(overlappings, t =>
+            Parallel.For(0, overlappings.Count, i =>
             {
+                var t = overlappings[i];
+
                 switch (t.collider.GeometryType)
                 {
                     case RBGeometryType.OBB:
                         {
                             var p = RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(t.collider.CalcOBB(), capsule);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
+                            overlappings[i] = t;
                         }
                         break;
                     case RBGeometryType.Sphere:
                         {
                             var p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(t.collider.CalcSphere(), capsule);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, p.p.normalized);
+                            overlappings[i] = t;
                         }
                         break;
                     case RBGeometryType.Capsule:
                         {
                             var p = RBDetailCollision.DetailCollisionCapsuleCapsule.CalcDetailCollisionInfo(t.collider.CalcCapsule(), capsule);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, p.p.normalized);
+                            overlappings[i] = t;
                         }
                         break;
                 }
