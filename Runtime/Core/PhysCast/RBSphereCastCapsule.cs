@@ -15,19 +15,18 @@ public static partial class RBSphereCast
             var edge = capsule.GetEdge();
             Vector3 d = edge.end - edge.begin;
 
-            var s1Info = RBRaycast.RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.begin, pRadius), org, dirN, length);
+            var s1Info = RBRaycast.RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.begin, pRadius), org, dirN, length, allowNegativeDist);
             if (s1Info.IsValidHit && Vector3.Dot(d, s1Info.position - edge.begin) < 0)
             {
                 return s1Info;
             }
 
-            var s2Info = RBRaycast.RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.end, pRadius), org, dirN, length);
+            var s2Info = RBRaycast.RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.end, pRadius), org, dirN, length, allowNegativeDist);
             if (s2Info.IsValidHit && Vector3.Dot(-d, s1Info.position - edge.end) < 0)
             {
                 return s2Info;
             }
 
-            if (Vector3.Dot(edge.begin - edge.end, s1Info.position - edge.begin) > 0 && Vector3.Dot(edge.end - edge.begin, s1Info.position - edge.end) > 0)
             {
                 Vector3 ep1 = edge.begin - org;
                 Vector3 ep2 = (edge.end - org) - ep1;

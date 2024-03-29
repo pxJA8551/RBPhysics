@@ -403,7 +403,7 @@ public static partial class RBSphereCast
 
                 if (pd1)
                 {
-                    Vector3 ls_pos = hitPoints_t[0].pos + hitPoints_t[0].normal * radius;
+                    Vector3 ls_pos = hitPoints_t[0].pos;
                     Vector3 ls_normal = hitPoints_t[0].normal;
                     ls_pos -= ls_normal * radius;
 
@@ -416,7 +416,7 @@ public static partial class RBSphereCast
                 }
                 if (pd2)
                 {
-                    Vector3 ls_pos = hitPoints_t[1].pos + hitPoints_t[1].normal * radius;
+                    Vector3 ls_pos = hitPoints_t[1].pos;
                     Vector3 ls_normal = hitPoints_t[1].normal;
                     ls_pos -= ls_normal * radius;
 
