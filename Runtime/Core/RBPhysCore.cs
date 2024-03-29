@@ -2259,10 +2259,11 @@ namespace RBPhys
         public override RBGeometryType GeometryType { get { return _type; } }
 
         RBGeometryType _type;
-        RBColliderOBB obb;
-        RBColliderSphere sphere;
-        RBColliderCapsule capsule;
-        RBColliderLine line;
+
+        public RBColliderOBB obb;
+        public RBColliderSphere sphere;
+        public RBColliderCapsule capsule;
+        public RBColliderLine line;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBStaticCollider(RBColliderOBB c)
