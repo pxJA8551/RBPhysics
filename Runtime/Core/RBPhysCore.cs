@@ -2279,7 +2279,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetCollider(RBColliderSphere c)
         {
-            _type = RBGeometryType.OBB;
+            _type = RBGeometryType.Sphere;
 
             obb = default;
             sphere = c;
@@ -2290,7 +2290,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetCollider(RBColliderCapsule c)
         {
-            _type = RBGeometryType.OBB;
+            _type = RBGeometryType.Capsule;
 
             obb = default;
             sphere = default;
@@ -2301,7 +2301,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetCollider(RBColliderLine c)
         {
-            _type = RBGeometryType.OBB;
+            _type = RBGeometryType.Line;
 
             obb = default;
             sphere = default;
