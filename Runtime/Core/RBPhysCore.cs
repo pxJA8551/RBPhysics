@@ -2249,9 +2249,9 @@ namespace RBPhys
 
         public void TryPhysAwake()
         {
-            if (Rigidbody != null)
+            if (_rigidbody != null)
             {
-                Rigidbody.PhysAwake();
+                _rigidbody.PhysAwake();
             }
         }
 
@@ -2592,7 +2592,7 @@ namespace RBPhys
                                 return default;
                             }
 
-                            return new RBColliderCapsule(sphere.pos, Quaternion.identitys sphere.radius, 0);
+                            return new RBColliderCapsule(sphere.pos, Quaternion.identity, sphere.radius, 0); 
                         }
 
                     case RBGeometryType.Capsule:
