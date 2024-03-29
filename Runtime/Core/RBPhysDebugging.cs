@@ -1,3 +1,5 @@
+#define RBPHYS_DEBUG_ASSERTION
+
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -22,95 +24,95 @@ namespace RBPhys
 #endif
         }
 
-        public static void IsV3NormalAssert(Vector3 v)
+        public static void IsV3ValidAssert(Vector3 v)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            Debug.Assert(RBPhysUtil.IsV3NormalAll(v), "Invalid vector3 detected. vec3 val =" + v);
+            Debug.Assert(RBPhysUtil.IsV3ValidAll(v), "Invalid vector3 detected. vec3 val =" + v);
 #endif
         }
 
-        public static void IsV3NormalAssert(Vector3 v, string message)
+        public static void IsV3ValidAssert(Vector3 v, string message)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            Debug.Assert(RBPhysUtil.IsV3NormalAll(v), message);
+            Debug.Assert(RBPhysUtil.IsV3ValidAll(v), message);
 #endif
         }
 
-        public static void IsV2NormalAssert(Vector2 v)
+        public static void IsV2ValidAssert(Vector2 v)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            bool isNormal = float.IsNormal(v.x) && float.IsNormal(v.y);
-            Debug.Assert(isNormal, "Iinvalid vector2 detected. vec2 val =" + v);
+            bool isValid = RBPhysUtil.IsF32Valid(v.x) && RBPhysUtil.IsF32Valid(v.y);
+            Debug.Assert(isValid, "Iinvalid vector2 detected. vec2 val =" + v);
 #endif
         }
 
-        public static void IsV2NormalAssert(Vector2 v, string message)
+        public static void IsV2ValidAssert(Vector2 v, string message)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            bool isNormal = float.IsNormal(v.x) && float.IsNormal(v.y);
-            Debug.Assert(isNormal, message);
+            bool isValid = RBPhysUtil.IsF32Valid(v.x) && RBPhysUtil.IsF32Valid(v.y);
+            Debug.Assert(isValid, message);
 #endif
         }
 
-        public static void IsF32NormalAssert(float v)
+        public static void IsF32ValidAssert(float v)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            Debug.Assert(float.IsNormal(v), "Invalid float detected. f32 val =" + v);
+            Debug.Assert(RBPhysUtil.IsF32Valid(v), "Invalid float detected. f32 val =" + v);
 #endif
         }
 
-        public static void IsF32NormalAssert(float v, string message)
+        public static void IsF32ValidAssert(float v, string message)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            Debug.Assert(float.IsNaN(v), message);
+            Debug.Assert(RBPhysUtil.IsF32Valid(v), message);
 #endif
         }
 
-        public static void IsPenetrationNormalAssert(RBDetailCollision.Penetration p)
+        public static void IsPenetrationValidAssert(RBDetailCollision.Penetration p)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            bool isNormal = RBPhysUtil.IsV3NormalAll(p.p) && RBPhysUtil.IsV3NormalAll(p.pA) && RBPhysUtil.IsV3NormalAll(p.pB);
-            Debug.Assert(isNormal, "Invalid penetration info detected. p(p, pA, pB) val =" + (p.p, p.pA, p.pB));
+            bool isValid = RBPhysUtil.IsV3ValidAll(p.p) && RBPhysUtil.IsV3ValidAll(p.pA) && RBPhysUtil.IsV3ValidAll(p.pB);
+            Debug.Assert(isValid, "Invalid penetration info detected. p(p, pA, pB) val =" + (p.p, p.pA, p.pB));
 #endif
         }
 
-        public static void IsPenetrationNormalAssert(RBDetailCollision.Penetration p, string message)
+        public static void IsPenetrationValidAssert(RBDetailCollision.Penetration p, string message)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            bool isNormal = RBPhysUtil.IsV3NormalAll(p.p) && RBPhysUtil.IsV3NormalAll(p.pA) && RBPhysUtil.IsV3NormalAll(p.pB);
-            Debug.Assert(isNormal, message);
+            bool isValid = RBPhysUtil.IsV3ValidAll(p.p) && RBPhysUtil.IsV3ValidAll(p.pA) && RBPhysUtil.IsV3ValidAll(p.pB);
+            Debug.Assert(isValid, message);
 #endif
         }
 
-        public static void IsCastHitNormalAssert(RBColliderCastHitInfo c)
+        public static void IsCastHitValidAssert(RBColliderCastHitInfo c)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            bool isNormal = RBPhysUtil.IsV3NormalAll(c.position) && RBPhysUtil.IsV3NormalAll(c.normal) && float.IsNormal(c.length);
-            Debug.Assert(isNormal, "Invalid cast hit info detected. p(pos, normal, length) val =" + (c.position, c.normal, c.length));
+            bool isValid = RBPhysUtil.IsV3ValidAll(c.position) && RBPhysUtil.IsV3ValidAll(c.normal) && RBPhysUtil.IsF32Valid(c.length);
+            Debug.Assert(isValid, "Invalid cast hit info detected. p(pos, normal, length) val =" + (c.position, c.normal, c.length));
 #endif
         }
 
-        public static void IsCastHitNormalAssert(RBColliderCastHitInfo c, string message)
+        public static void IsCastHitValidAssert(RBColliderCastHitInfo c, string message)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            bool isNormal = RBPhysUtil.IsV3NormalAll(c.position) && RBPhysUtil.IsV3NormalAll(c.normal) && float.IsNormal(c.length);
-            Debug.Assert(isNormal, message);
+            bool isValid = RBPhysUtil.IsV3ValidAll(c.position) && RBPhysUtil.IsV3ValidAll(c.normal) && RBPhysUtil.IsF32Valid(c.length);
+            Debug.Assert(isValid, message);
 #endif
         }
 
-        public static void IsOverlapNormalAssert(RBColliderOverlapInfo c)
+        public static void IsOverlapValidAssert(RBColliderOverlapInfo c)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            bool isNormal = RBPhysUtil.IsV3NormalAll(c.position) && RBPhysUtil.IsV3NormalAll(c.normal);
-            Debug.Assert(isNormal, "Invalid overlap info detected. p(pos, normal) val =" + (c.position, c.normal));
+            bool isValid = RBPhysUtil.IsV3ValidAll(c.position) && RBPhysUtil.IsV3ValidAll(c.normal);
+            Debug.Assert(isValid, "Invalid overlap info detected. p(pos, Valid) val =" + (c.position, c.normal));
 #endif
         }
 
-        public static void IsOverlapNormalAssert(RBColliderOverlapInfo c, string message)
+        public static void IsOverlapValidAssert(RBColliderOverlapInfo c, string message)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            bool isNormal = RBPhysUtil.IsV3NormalAll(c.position) && RBPhysUtil.IsV3NormalAll(c.normal);
-            Debug.Assert(isNormal, message);
+            bool isValid = RBPhysUtil.IsV3ValidAll(c.position) && RBPhysUtil.IsV3ValidAll(c.normal);
+            Debug.Assert(isValid, message);
 #endif
         }
     }

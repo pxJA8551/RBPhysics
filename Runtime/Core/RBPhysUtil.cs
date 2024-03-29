@@ -42,15 +42,21 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsV3NormalAll(Vector3 v)
+        public static bool IsF32Valid(float v)
         {
-            return float.IsNormal(v.x) && float.IsNormal(v.y) && float.IsNormal(v.z);
+            return float.IsFinite(v) && !float.IsNaN(v);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsV3NormalAny(Vector3 v)
+        public static bool IsV3ValidAll(Vector3 v)
         {
-            return float.IsNormal(v.x) || float.IsNormal(v.y) || float.IsNormal(v.z);
+            return IsF32Valid(v.x) && IsF32Valid(v.y) && IsF32Valid(v.z);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsV3ValidAny(Vector3 v)
+        {
+            return IsF32Valid(v.x) || IsF32Valid(v.y) || IsF32Valid(v.z);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
