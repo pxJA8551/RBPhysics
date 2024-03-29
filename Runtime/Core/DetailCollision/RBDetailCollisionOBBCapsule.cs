@@ -27,7 +27,7 @@ namespace RBPhys
                 Vector3 pB = Vector3.zero;
 
                 Vector3 d = capsule_b.pos - obb_a.Center;
-                
+
                 Vector3 aFwdN = obb_a.GetAxisForwardN();
                 Vector3 aRightN = obb_a.GetAxisRightN();
                 Vector3 aUpN = obb_a.GetAxisUpN();

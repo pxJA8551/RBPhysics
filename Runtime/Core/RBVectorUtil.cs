@@ -19,6 +19,11 @@ namespace RBPhys
         public static Vector3 ProjectPointToEdge(Vector3 p, Vector3 begin, Vector3 end)
         {
             float dn = (end - begin).magnitude;
+            if (dn == 0)
+            {
+                return begin;
+            }
+
             Vector3 dirN = (end - begin) / dn;
             return begin + dirN * Mathf.Clamp(Vector3.Dot(p - begin, dirN), 0, dn);
         }
@@ -27,6 +32,12 @@ namespace RBPhys
         public static Vector3 ProjectPointToEdge(Vector3 p, Vector3 begin, Vector3 end, out bool outsideEdge)
         {
             float dn = (end - begin).magnitude;
+            if (dn == 0)
+            {
+                outsideEdge = true;
+                return begin;
+            }
+
             Vector3 dirN = (end - begin) / dn;
             float dd = Vector3.Dot(p - begin, dirN);
             outsideEdge = dd < 0 || dn < dd;
@@ -43,11 +54,11 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsInRect(Vector3 p, Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 n)
         {
-            if (Vector3.Dot(Vector3.Cross(p - a, b - p), n) >= 0 && Vector3.Dot(Vector3.Cross(p - b, c - p), n) >= 0 && Vector3.Dot(Vector3.Cross(p - c, d - p), n) >= 0 && Vector3.Dot(Vector3.Cross(p - d, a - p), n) >= 0) 
+            if (Vector3.Dot(Vector3.Cross(p - a, b - p), n) >= 0 && Vector3.Dot(Vector3.Cross(p - b, c - p), n) >= 0 && Vector3.Dot(Vector3.Cross(p - c, d - p), n) >= 0 && Vector3.Dot(Vector3.Cross(p - d, a - p), n) >= 0)
             {
                 return true;
             }
-            else if(Vector3.Dot(Vector3.Cross(p - a, b - p), n) <= 0 && Vector3.Dot(Vector3.Cross(p - b, c - p), n) <= 0 && Vector3.Dot(Vector3.Cross(p - c, d - p), n) <= 0 && Vector3.Dot(Vector3.Cross(p - d, a - p), n) <= 0)
+            else if (Vector3.Dot(Vector3.Cross(p - a, b - p), n) <= 0 && Vector3.Dot(Vector3.Cross(p - b, c - p), n) <= 0 && Vector3.Dot(Vector3.Cross(p - c, d - p), n) <= 0 && Vector3.Dot(Vector3.Cross(p - d, a - p), n) <= 0)
             {
                 return true;
             }
@@ -206,6 +217,12 @@ namespace RBPhys
         {
             Vector3 dirN = edgeEnd - edgeBegin;
             float dirL = dirN.magnitude;
+
+            if (dirL == 0)
+            {
+                return edgeBegin;
+            }
+
             dirN = dirN / dirL;
 
             Vector3 prjBegin = planeCenter + Vector3.ProjectOnPlane(edgeBegin - planeCenter, planeNormal);
@@ -213,7 +230,7 @@ namespace RBPhys
             float dc = Vector3.Dot(pd, dirN);
             float ff = 1 / dc;
 
-            if(0 <= ff && ff <= dirL)
+            if (0 <= ff && ff <= dirL)
             {
                 return edgeBegin + (dirN * Mathf.Clamp(ff, 0, dirL));
             }
