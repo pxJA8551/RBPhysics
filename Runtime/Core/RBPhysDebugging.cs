@@ -104,7 +104,7 @@ namespace RBPhys
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
             bool isValid = RBPhysUtil.IsV3ValidAll(c.position) && RBPhysUtil.IsV3ValidAll(c.normal);
-            Debug.Assert(isValid, "Invalid overlap info detected. p(pos, Valid) val =" + (c.position, c.normal));
+            Debug.Assert(isValid, "Invalid overlap info detected. p(pos, normal) val =" + (c.position, c.normal));
 #endif
         }
 

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 using UnityEngine.VFX;
 
@@ -145,8 +146,10 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void CalcNearest(Vector3 beginA, Vector3 endA, Vector3 beginB, Vector3 endB, out Vector3 nearestA, out Vector3 nearestB)
+        public static void CalcNearest(Vector3 beginA, Vector3 endA, Vector3 beginB, Vector3 endB, out Vector3 nearestA, out Vector3 nearestB, out bool parallel)
         {
+            parallel = false;
+
             float ebA = (endA - beginA).magnitude;
             float ebB = (endB - beginB).magnitude;
             Vector3 dirAN = ebA > 0 ? (endA - beginA) / ebA : Vector3.zero;
@@ -154,6 +157,14 @@ namespace RBPhys
 
             float dotAB = Vector3.Dot(dirAN, dirBN);
             float div = 1 - dotAB * dotAB;
+
+            if (div == 0)
+            {
+                nearestA = RBPhysUtil.V3NaN;
+                nearestB = RBPhysUtil.V3NaN;
+                parallel = true;
+                return;
+            }
 
             Vector3 aToB = (beginB - beginA);
 

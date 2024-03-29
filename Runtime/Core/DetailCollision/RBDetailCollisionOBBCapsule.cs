@@ -220,7 +220,7 @@ namespace RBPhys
                     else if (aPd == 1)
                     {
                         var edge = capsule_b.GetEdge();
-                        CalcNearest(edge.begin, edge.end, pA + (fA1 + fA2) / 2f, pA - (fA1 + fA2) / 2f, out pA, out pB);
+                        CalcNearest(edge.begin, edge.end, pA + (fA1 + fA2) / 2f, pA - (fA1 + fA2) / 2f, out pA, out pB, out _);
                         return (penetration, pA, pB);
                     }
                     else if (aPd == 2)

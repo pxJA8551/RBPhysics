@@ -22,7 +22,22 @@ namespace RBPhys
                 var edge_a = capsule_a.GetEdge();
                 var edge_b = capsule_b.GetEdge();
 
-                CalcNearest(edge_a.begin, edge_a.end, edge_b.begin, edge_b.end, out Vector3 peA, out Vector3 peB);
+                CalcNearest(edge_a.begin, edge_a.end, edge_b.begin, edge_b.end, out Vector3 peA, out Vector3 peB, out bool parallel);
+
+                if (parallel)
+                {
+                    Vector3 ppA = (edge_a.begin + edge_a.end) / 2f;
+                    Vector3 ppB = (edge_b.begin + edge_b.end) / 2f;
+                    Vector3 pCenter = ppA + ppB;
+                    Vector3 prA = ProjectPointToLine(pCenter, edge_a.begin, edge_a.end);
+                    Vector3 prB = ProjectPointToLine(pCenter, edge_b.begin, edge_b.end);
+
+                    Vector3 vd = (prB - prA);
+                    float vdL = vd.magnitude;
+                    vd /= vdL;
+
+                    return (vd * (vdL - (capsule_a.radius + capsule_b.radius)), prA, prB);
+                }
 
                 Vector3 pDirN = peB - peA;
                 float pDirL = pDirN.magnitude;

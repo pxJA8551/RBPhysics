@@ -221,7 +221,7 @@ namespace RBPhys
                     else if (aPd == 1)
                     {
                         (Vector3 begin, Vector3 end) edge = (line_b.pos_a, line_b.pos_b);
-                        CalcNearest(edge.begin, edge.end, pA + (fA1 + fA2) / 2f, pA - (fA1 + fA2) / 2f, out pA, out pB);
+                        CalcNearest(edge.begin, edge.end, pA + (fA1 + fA2) / 2f, pA - (fA1 + fA2) / 2f, out pA, out pB, out _);
                         return (penetration, pA, pB);
                     }
                     else if (aPd == 2)

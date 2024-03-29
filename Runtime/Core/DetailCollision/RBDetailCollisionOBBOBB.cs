@@ -520,7 +520,7 @@ namespace RBPhys
                     }
                     else if (aPd == 1 && bPd == 1)
                     {
-                        CalcNearest(aDp + (fA1 + fA2), aDp - (fA1 + fA2), bDp + (fB1 + fB2), bDp - (fB1 + fB2), out aDp, out bDp);
+                        CalcNearest(aDp + (fA1 + fA2), aDp - (fA1 + fA2), bDp + (fB1 + fB2), bDp - (fB1 + fB2), out aDp, out bDp, out _);
                         return new Penetration(penetration, aDp, bDp, info);
                     }
                     else if (aPd == 1)
@@ -1106,7 +1106,7 @@ namespace RBPhys
                     }
                     else if (aPd == 1 && bPd == 1)
                     {
-                        CalcNearest(aDp + (fA1 + fA2), aDp - (fA1 + fA2), bDp + (fB1 + fB2), bDp - (fB1 + fB2), out aDp, out bDp);
+                        CalcNearest(aDp + (fA1 + fA2), aDp - (fA1 + fA2), bDp + (fB1 + fB2), bDp - (fB1 + fB2), out aDp, out bDp, out _);
                         return (penetration, aDp, bDp);
                     }
                     else if (aPd == 1)
