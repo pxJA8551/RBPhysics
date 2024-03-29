@@ -8,8 +8,6 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEditor;
 using Unity.IL2CPP.CompilerServices;
-using static UnityEngine.UI.Image;
-using System.Diagnostics.Eventing.Reader;
 
 namespace RBPhys
 {
