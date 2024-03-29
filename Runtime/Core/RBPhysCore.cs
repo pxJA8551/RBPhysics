@@ -9,6 +9,7 @@ using UnityEngine.Profiling;
 using UnityEditor;
 using Unity.IL2CPP.CompilerServices;
 using static UnityEngine.UI.Image;
+using System.Diagnostics.Eventing.Reader;
 
 namespace RBPhys
 {
@@ -1842,7 +1843,7 @@ namespace RBPhys
 
     public struct RBColliderAABB
     {
-        public bool isValidAABB;
+        public bool isValidAABB { get { return _isValidAABB; } }
         public Vector3 Center { get; private set; }
         public Vector3 Size { get; private set; }
         public Vector3 Extents { get { return Size / 2f; } }
@@ -1857,9 +1858,11 @@ namespace RBPhys
         Vector3 _min;
         Vector3 _max;
 
+        bool _isValidAABB;
+
         public RBColliderAABB(Vector3 center, Vector3 size)
         {
-            isValidAABB = true;
+            _isValidAABB = true;
             this.Center = center;
             this.Size = RBPhysUtil.V3Abs(size);
 
@@ -1872,7 +1875,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Encapsulate(Vector3 point)
         {
-            if (isValidAABB)
+            if (_isValidAABB)
             {
                 if (!ContainsPoint(point))
                 {
@@ -1892,7 +1895,7 @@ namespace RBPhys
             {
                 Center = point;
                 Size = Vector3.zero;
-                isValidAABB = true;
+                _isValidAABB = true;
 
                 _min = Center;
                 _max = Center;
@@ -1904,9 +1907,9 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Encapsulate(RBColliderAABB aabb)
         {
-            if (aabb.isValidAABB)
+            if (aabb._isValidAABB)
             {
-                if (isValidAABB)
+                if (_isValidAABB)
                 {
                     Vector3 res_min = Vector3.Min(Min, aabb.Min);
                     Vector3 res_max = Vector3.Max(Max, aabb.Max);
@@ -1923,7 +1926,7 @@ namespace RBPhys
                 {
                     Center = aabb.Center;
                     Size = aabb.Size;
-                    isValidAABB = true;
+                    _isValidAABB = true;
 
                     _min = Center - Size / 2;
                     _max = Center + Size / 2;
@@ -1936,13 +1939,13 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ContainsPoint(Vector3 point)
         {
-            return isValidAABB && RBPhysUtil.IsV3Less(Min, point) && RBPhysUtil.IsV3Less(point, Max);
+            return _isValidAABB && RBPhysUtil.IsV3Less(Min, point) && RBPhysUtil.IsV3Less(point, Max);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool OverlapAABB(RBColliderAABB ext)
         {
-            if (isValidAABB && ext.isValidAABB)
+            if (_isValidAABB && ext._isValidAABB)
             {
                 if (!RBPhysUtil.RangeOverlap(Min.x, Max.x, ext.Min.x, ext.Max.x)) return false;
                 if (!RBPhysUtil.RangeOverlap(Min.y, Max.y, ext.Min.y, ext.Max.y)) return false;
@@ -1959,7 +1962,7 @@ namespace RBPhys
         {
             float e = epsilon / 2f;
 
-            if (isValidAABB && ext.isValidAABB)
+            if (_isValidAABB && ext._isValidAABB)
             {
                 if (!RBPhysUtil.RangeOverlap(Min.x, Max.x, ext.Min.x, ext.Max.x, e)) return false;
                 if (!RBPhysUtil.RangeOverlap(Min.y, Max.y, ext.Min.y, ext.Max.y, e)) return false;
@@ -1977,7 +1980,7 @@ namespace RBPhys
         public Vector3 pos;
         public Quaternion rot;
         public Vector3 size;
-        public bool isValidOBB;
+        public readonly bool isValidOBB;
 
         Vector3 _center;
 
@@ -2024,7 +2027,7 @@ namespace RBPhys
     {
         public Vector3 pos;
         public float radius;
-        public bool isValidSphere;
+        public readonly bool isValidSphere;
 
         public RBColliderSphere(Vector3 pos, float radius)
         {
@@ -2040,7 +2043,7 @@ namespace RBPhys
         public Quaternion rot;
         public float radius;
         public float height;
-        public bool isValidCapsule;
+        public readonly bool isValidCapsule;
 
         public RBColliderCapsule(Vector3 pos, Quaternion rot, float radius, float height)
         {
@@ -2071,6 +2074,7 @@ namespace RBPhys
     {
         public Vector3 pos_a;
         public Vector3 pos_b;
+        public readonly bool isValidLine;
 
         public Vector3 Center { get { return (pos_b + pos_a) / 2f; } }
         public Vector3 Direction { get { return (pos_b - pos_a).normalized; } }
@@ -2081,12 +2085,14 @@ namespace RBPhys
         {
             this.pos_a = pos_a;
             this.pos_b = pos_b;
+            isValidLine = true;
         }
 
         public RBColliderLine(Vector3 pos, Vector3 dir, float length)
         {
             this.pos_a = pos;
             this.pos_b = pos + dir.normalized * length;
+            isValidLine = true;
         }
 
         public float GetAxisSize(Vector3 axisN)
@@ -2247,6 +2253,374 @@ namespace RBPhys
             {
                 Rigidbody.PhysAwake();
             }
+        }
+
+        public class RBStaticCollider : RBCollider
+        {
+            public override RBGeometryType GeometryType { get { return _type; } }
+
+            RBGeometryType _type;
+            RBColliderOBB obb;
+            RBColliderSphere sphere;
+            RBColliderCapsule capsule;
+            RBColliderLine line;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public RBStaticCollider(RBColliderOBB c)
+            {
+                _type = RBGeometryType.OBB;
+
+                obb = c;
+                sphere = default;
+                capsule = default;
+                line = default;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public RBStaticCollider(RBColliderSphere c)
+            {
+                _type = RBGeometryType.OBB;
+
+                obb = default;
+                sphere = c;
+                capsule = default;
+                line = default;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public RBStaticCollider(RBColliderCapsule c)
+            {
+                _type = RBGeometryType.OBB;
+
+                obb = default;
+                sphere = default;
+                capsule = c;
+                line = default;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public RBStaticCollider(RBColliderLine c)
+            {
+                _type = RBGeometryType.OBB;
+
+                obb = default;
+                sphere = default;
+                capsule = default;
+                line = c;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public override float CalcVolume()
+            {
+                switch (_type)
+                {
+                    case RBGeometryType.OBB:
+                        {
+                            return obb.isValidOBB ? Mathf.Abs(obb.size.x * obb.size.y * obb.size.z) : 0;
+                        }
+
+                    case RBGeometryType.Sphere:
+                        {
+                            return sphere.isValidSphere ? Mathf.Abs(sphere.radius * sphere.radius * sphere.radius * Mathf.PI * 4f / 3f) : 0;
+                        }
+
+                    case RBGeometryType.Capsule:
+                        {
+                            if (!capsule.isValidCapsule)
+                            {
+                                return 0;
+                            }
+
+                            float vSphere = Mathf.Abs(capsule.radius * capsule.radius * capsule.radius * Mathf.PI * 4f / 3f);
+                            float vCylinder = Mathf.Abs(capsule.radius * capsule.radius * Mathf.PI * capsule.height);
+
+                            return vSphere + vCylinder;
+                        }
+
+                    case RBGeometryType.Line:
+                        {
+                            return 0;
+                        }
+                }
+
+                return 0;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public override Vector3 GetColliderCenter(Vector3 pos, Quaternion rot)
+            {
+                switch (_type)
+                {
+                    case RBGeometryType.OBB:
+                        {
+                            if (!obb.isValidOBB)
+                            {
+                                return default;
+                            }
+
+                            return obb.Center;
+                        }
+
+                    case RBGeometryType.Sphere:
+                        {
+                            if (!sphere.isValidSphere)
+                            {
+                                return default;
+                            }
+
+                            return sphere.pos;
+                        }
+
+                    case RBGeometryType.Capsule:
+                        {
+                            if (!capsule.isValidCapsule)
+                            {
+                                return default;
+                            }
+
+                            return capsule.pos;
+                        }
+
+                    case RBGeometryType.Line:
+                        {
+                            if (!line.isValidLine)
+                            {
+                                return default;
+                            }
+
+                            return (line.pos_a + line.pos_b) / 2f;
+                        }
+                }
+
+                return default;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot)
+            {
+                // ignore pos and rot
+
+                switch (_type)
+                {
+                    case RBGeometryType.OBB:
+                        {
+                            if (!obb.isValidOBB)
+                            {
+                                return default;
+                            }
+
+                            float size_prjX = obb.GetAxisSize(Vector3.right);
+                            float size_prjY = obb.GetAxisSize(Vector3.up);
+                            float size_prjZ = obb.GetAxisSize(Vector3.forward);
+
+                            RBColliderAABB aabb = new RBColliderAABB(obb.Center, new Vector3(size_prjX, size_prjY, size_prjZ));
+                            return aabb;
+                        }
+
+                    case RBGeometryType.Sphere:
+                        {
+                            if (!sphere.isValidSphere)
+                            {
+                                return default;
+                            }
+
+                            RBColliderAABB aabb = new RBColliderAABB(sphere.pos, Vector3.one * sphere.radius * 2);
+                            return aabb;
+                        }
+
+                    case RBGeometryType.Capsule:
+                        {
+                            if (!capsule.isValidCapsule)
+                            {
+                                return default;
+                            }
+
+                            var p = capsule.GetEdge();
+                            Vector3 r = Vector3.one * capsule.radius;
+                            Vector3 min = Vector3.Min(p.begin, p.end) - r;
+                            Vector3 max = Vector3.Max(p.begin, p.end) + r;
+
+                            RBColliderAABB aabb = new RBColliderAABB((min + max) / 2f, max - min);
+                            return aabb;
+                        }
+
+                    case RBGeometryType.Line:
+                        {
+                            if (!line.isValidLine)
+                            {
+                                return default;
+                            }
+
+                            (Vector3 begin, Vector3 end) p = (line.pos_a, line.pos_b);
+                            Vector3 min = Vector3.Min(p.begin, p.end);
+                            Vector3 max = Vector3.Max(p.begin, p.end);
+
+                            RBColliderAABB aabb = new RBColliderAABB((min + max) / 2f, max - min);
+                            return aabb;
+                        }
+                }
+
+                return default;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot)
+            {
+                // ignore pos and rot
+                switch (_type)
+                {
+                    case RBGeometryType.OBB:
+                        {
+                            if (!obb.isValidOBB)
+                            {
+                                return default;
+                            }
+
+                            return obb;
+                        }
+
+                    case RBGeometryType.Sphere:
+                        {
+                            if (!sphere.isValidSphere)
+                            {
+                                return default;
+                            }
+
+                            Vector3 extents = Vector3.one * sphere.radius;
+                            return new RBColliderOBB(sphere.pos - extents, Quaternion.identity, extents * 2);
+                        }
+
+                    case RBGeometryType.Capsule:
+                        {
+                            if (!capsule.isValidCapsule)
+                            {
+                                return default;
+                            }
+
+                            Vector3 extents = new Vector3(capsule.radius * 2, capsule.height, capsule.radius * 2);
+
+                            return new RBColliderOBB(capsule.pos - extents, capsule.rot, extents * 2f);
+                        }
+
+                    case RBGeometryType.Line:
+                        {
+                            if (!line.isValidLine)
+                            {
+                                return default;
+                            }
+
+                            Quaternion obbRot = Quaternion.FromToRotation(Vector3.up, line.Direction);
+                            return new RBColliderOBB((line.pos_a + line.pos_b) / 2f, obbRot, new Vector3(0, 0, line.Length));
+                        }
+                }
+
+                return default;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot)
+            {
+                // ignore pos and rot
+                switch (_type)
+                {
+                    case RBGeometryType.OBB:
+                        {
+                            if (!obb.isValidOBB)
+                            {
+                                return default;
+                            }
+
+                            float r = Mathf.Max(obb.size.x, obb.size.y, obb.size.z) / 2f;
+                            return new RBColliderSphere(obb.pos + Vector3.one * r, r);
+                        }
+
+                    case RBGeometryType.Sphere:
+                        {
+                            if (!sphere.isValidSphere)
+                            {
+                                return default;
+                            }
+
+                            return sphere;
+                        }
+
+                    case RBGeometryType.Capsule:
+                        {
+                            if (!capsule.isValidCapsule)
+                            {
+                                return default;
+                            }
+
+                            return new RBColliderSphere(capsule.pos, capsule.height / 2f + capsule.radius);
+                        }
+
+                    case RBGeometryType.Line:
+                        {
+                            if (!line.isValidLine)
+                            {
+                                return default;
+                            }
+
+                            return new RBColliderSphere(line.Center, line.Length / 2f);
+                        }
+                }
+
+                return default;
+            }
+
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot)
+            {
+                // ignore pos and rot
+                switch (_type)
+                {
+                    case RBGeometryType.OBB:
+                        {
+                            if (!obb.isValidOBB)
+                            {
+                                return default;
+                            }
+
+                            throw new System.NotImplementedException();
+                        }
+
+                    case RBGeometryType.Sphere:
+                        {
+                            if (!sphere.isValidSphere)
+                            {
+                                return default;
+                            }
+
+                            return new RBColliderCapsule(sphere.pos, Quaternion.identitys sphere.radius, 0);
+                        }
+
+                    case RBGeometryType.Capsule:
+                        {
+                            if (!capsule.isValidCapsule)
+                            {
+                                return default;
+                            }
+
+                            return capsule;
+                        }
+
+                    case RBGeometryType.Line:
+                        {
+                            if (!line.isValidLine)
+                            {
+                                return default;
+                            }
+
+                            Quaternion capsuleRot = Quaternion.FromToRotation(Vector3.up, line.Direction);
+                            return new RBColliderCapsule(line.Center, capsuleRot, 0, line.Length);
+                        }
+                }
+
+                return default;
+            }
+
+
         }
     }
 }

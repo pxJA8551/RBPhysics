@@ -54,7 +54,8 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot)
         {
-            return new RBColliderOBB(pos + _center, rot * LocalRot, new Vector3(_radius * 2, _height, _radius * 2));
+            Vector3 extents = new Vector3(_radius * 2, _height, _radius * 2);
+            return new RBColliderOBB(pos + _center - extents, rot * LocalRot, extents * 2f);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -80,15 +80,15 @@ namespace RBPhys
 
         public void UpdateTransform()
         {
-            GameObjectPos = gameObject.transform.position;
-            GameObjectRot = gameObject.transform.rotation;
+            GameObjectPos = gameObject?.transform.position ?? Vector3.zero;
+            GameObjectRot = gameObject?.transform.rotation ?? Quaternion.identity;
 
             _expPos = GameObjectPos;
             _expRot = GameObjectRot;
 
             _hasParentRigidbodyInFrame = _parent?.isActiveAndEnabled ?? false;
 
-            _expTrajectory.Update(this, gameObject.layer);
+            _expTrajectory.Update(this, gameObject?.layer ?? 0);
         }
 
         public void UpdateExpTrajectory(Vector3 rbPos, Quaternion rbRot, Vector3 intergratedPos, Quaternion intergratedRot)
