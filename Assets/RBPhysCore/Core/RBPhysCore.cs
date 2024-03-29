@@ -167,12 +167,14 @@ namespace RBPhys
             public RBCollider collider;
             public bool IsValidHit { get { return _isValidHit; } }
             public PhysCastType type;
+            public RBTrajectory trajectory;
 
             bool _isValidHit;
 
-            internal RBColliderCastHitInfo(RBCollider c, PhysCastType type)
+            internal RBColliderCastHitInfo(RBCollider c, RBTrajectory t, PhysCastType type)
             {
                 collider = c;
+                trajectory = t;
                 _isValidHit = false;
 
                 position = Vector3.zero;
@@ -254,7 +256,7 @@ namespace RBPhys
                         {
                             if (!(cols?.Contains(c)) ?? true)
                             {
-                                hitList.Add(new RBColliderCastHitInfo(c, RBColliderCastHitInfo.PhysCastType.Raycast));
+                                hitList.Add(new RBColliderCastHitInfo(c, t, RBColliderCastHitInfo.PhysCastType.Raycast));
                             }
                         }
                     }
@@ -340,7 +342,7 @@ namespace RBPhys
                         {
                             if (!(cols?.Contains(c)) ?? true)
                             {
-                                hitList.Add(new RBColliderCastHitInfo(c, RBColliderCastHitInfo.PhysCastType.SphereCast));
+                                hitList.Add(new RBColliderCastHitInfo(c, t, RBColliderCastHitInfo.PhysCastType.SphereCast));
                             }
                         }
                     }
