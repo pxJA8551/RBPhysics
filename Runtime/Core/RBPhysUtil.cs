@@ -42,6 +42,18 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsV3NormalAll(Vector3 v)
+        {
+            return float.IsNormal(v.x) && float.IsNormal(v.y) && float.IsNormal(v.z);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsV3NormalAny(Vector3 v)
+        {
+            return float.IsNormal(v.x) || float.IsNormal(v.y) || float.IsNormal(v.z);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsV3Sign101EqualAll(Vector3 v1, Vector3 v2)
         {
             return F32Sign101(v1.x) == F32Sign101(v2.x) && F32Sign101(v1.y) == F32Sign101(v2.y) && F32Sign101(v1.z) == F32Sign101(v2.z);

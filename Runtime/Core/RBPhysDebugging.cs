@@ -22,95 +22,95 @@ namespace RBPhys
 #endif
         }
 
-        public static void V3NaNAssert(Vector3 v)
+        public static void IsV3NormalAssert(Vector3 v)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            Debug.Assert(RBPhysUtil.IsV3NanAny(v), "vector3 is NaN");
+            Debug.Assert(RBPhysUtil.IsV3NormalAll(v), "Invalid vector3 detected. vec3 val =" + v);
 #endif
         }
 
-        public static void V3NaNAssert(Vector3 v, string message)
+        public static void IsV3NormalAssert(Vector3 v, string message)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            Debug.Assert(RBPhysUtil.IsV3NanAny(v), message);
+            Debug.Assert(RBPhysUtil.IsV3NormalAll(v), message);
 #endif
         }
 
-        public static void V2NaNAssert(Vector2 v)
+        public static void IsV2NormalAssert(Vector2 v)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            bool isNaN = float.IsNaN(v.x) || float.IsNaN(v.y);
-            Debug.Assert(isNaN, "vector2 is NaN");
+            bool isNormal = float.IsNormal(v.x) && float.IsNormal(v.y);
+            Debug.Assert(isNormal, "Iinvalid vector2 detected. vec2 val =" + v);
 #endif
         }
 
-        public static void V2NaNAssert(Vector2 v, string message)
+        public static void IsV2NormalAssert(Vector2 v, string message)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            bool isNaN = float.IsNaN(v.x) || float.IsNaN(v.y);
-            Debug.Assert(isNaN, message);
+            bool isNormal = float.IsNormal(v.x) && float.IsNormal(v.y);
+            Debug.Assert(isNormal, message);
 #endif
         }
 
-        public static void F32NaNAssert(float v)
+        public static void IsF32NormalAssert(float v)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            Debug.Assert(float.IsNaN(v), "float is nan");
+            Debug.Assert(float.IsNormal(v), "Invalid float detected. f32 val =" + v);
 #endif
         }
 
-        public static void F32NaNAssert(float v, string message)
+        public static void IsF32NormalAssert(float v, string message)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
             Debug.Assert(float.IsNaN(v), message);
 #endif
         }
 
-        public static void PenetrationNaNAssert(RBDetailCollision.Penetration p)
+        public static void IsPenetrationNormalAssert(RBDetailCollision.Penetration p)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            bool isNaN = RBPhysUtil.IsV3NanAny(p.p) || RBPhysUtil.IsV3NanAny(p.pA) || RBPhysUtil.IsV3NanAny(p.pB);
-            Debug.Assert(isNaN, "Penetration info contains NaN vector3 value");
+            bool isNormal = RBPhysUtil.IsV3NormalAll(p.p) && RBPhysUtil.IsV3NormalAll(p.pA) && RBPhysUtil.IsV3NormalAll(p.pB);
+            Debug.Assert(isNormal, "Invalid penetration info detected. p(p, pA, pB) val =" + (p.p, p.pA, p.pB));
 #endif
         }
 
-        public static void PenetrationNaNAssert(RBDetailCollision.Penetration p, string message)
+        public static void IsPenetrationNormalAssert(RBDetailCollision.Penetration p, string message)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            bool isNaN = RBPhysUtil.IsV3NanAny(p.p) || RBPhysUtil.IsV3NanAny(p.pA) || RBPhysUtil.IsV3NanAny(p.pB);
-            Debug.Assert(isNaN, message);
+            bool isNormal = RBPhysUtil.IsV3NormalAll(p.p) && RBPhysUtil.IsV3NormalAll(p.pA) && RBPhysUtil.IsV3NormalAll(p.pB);
+            Debug.Assert(isNormal, message);
 #endif
         }
 
-        public static void CastHitNaNAssert(RBColliderCastHitInfo c)
+        public static void IsCastHitNormalAssert(RBColliderCastHitInfo c)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            bool isNaN = RBPhysUtil.IsV3NanAny(c.position) || RBPhysUtil.IsV3NanAny(c.normal) || float.IsNaN(c.dist);
-            Debug.Assert(isNaN, "RBColliderCastHitInfo contains NaN value");
+            bool isNormal = RBPhysUtil.IsV3NormalAll(c.position) && RBPhysUtil.IsV3NormalAll(c.normal) && float.IsNormal(c.length);
+            Debug.Assert(isNormal, "Invalid cast hit info detected. p(pos, normal, length) val =" + (c.position, c.normal, c.length));
 #endif
         }
 
-        public static void CastHitNaNAssert(RBColliderCastHitInfo c, string message)
+        public static void IsCastHitNormalAssert(RBColliderCastHitInfo c, string message)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            bool isNaN = RBPhysUtil.IsV3NanAny(c.position) || RBPhysUtil.IsV3NanAny(c.normal) || float.IsNaN(c.dist);
-            Debug.Assert(isNaN, message);
+            bool isNormal = RBPhysUtil.IsV3NormalAll(c.position) && RBPhysUtil.IsV3NormalAll(c.normal) && float.IsNormal(c.length);
+            Debug.Assert(isNormal, message);
 #endif
         }
 
-        public static void OverlapNaNAssert(RBColliderOverlapInfo c)
+        public static void IsOverlapNormalAssert(RBColliderOverlapInfo c)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            bool isNaN = RBPhysUtil.IsV3NanAny(c.position) || RBPhysUtil.IsV3NanAny(c.normal);
-            Debug.Assert(isNaN, "RBColliderOverlapInfo contains NaN value");
+            bool isNormal = RBPhysUtil.IsV3NormalAll(c.position) && RBPhysUtil.IsV3NormalAll(c.normal);
+            Debug.Assert(isNormal, "Invalid overlap info detected. p(pos, normal) val =" + (c.position, c.normal));
 #endif
         }
 
-        public static void OverlapNaNAssert(RBColliderOverlapInfo c, string message)
+        public static void IsOverlapNormalAssert(RBColliderOverlapInfo c, string message)
         {
 #if UNITY_EDITOR || RBPHYS_DEBUG_ASSERTION
-            bool isNaN = RBPhysUtil.IsV3NanAny(c.position) || RBPhysUtil.IsV3NanAny(c.normal);
-            Debug.Assert(isNaN, message);
+            bool isNormal = RBPhysUtil.IsV3NormalAll(c.position) && RBPhysUtil.IsV3NormalAll(c.normal);
+            Debug.Assert(isNormal, message);
 #endif
         }
     }
