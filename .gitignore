@@ -12,6 +12,7 @@
 /[Tt]est[Bb]uild/
 /[Tt]est[Bb]ld/
 /[Bb]ld/
+/[Pp]ackages/
 /Assets/TestModel
 
 # MemoryCaptures can get excessive in size.
