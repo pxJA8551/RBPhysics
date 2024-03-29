@@ -218,13 +218,10 @@ public static partial class RBSphereCast
                 Vector3 vp = radius_size;
                 vp.x = obbX;
                 Vector3 vcp = f;
-                Debug.Log((vcp, vp, ls_dirN, ls_org, xyzN));
                 if (AABBOverlap(vcp, vp, ls_org, ls_dirN, xyzN))
                 {
-                    Debug.Log("v");
                     if (CylinderRayOverlapXYZN(vcp, obbX, radius, ls_org, ls_dirN, xyzN, ref hitPoints_t, allowNegativeDist))
                     {
-                        Debug.Log("v2");
                         if (hitPoints_t.Count == 2) goto L_RETURN;
                     }
                 }
