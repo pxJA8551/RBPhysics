@@ -10,18 +10,18 @@ public static partial class RBSphereCast
     {
         public static RBColliderCastHitInfo CalcSphereCollision(RBColliderCapsule capsule, Vector3 org, Vector3 dirN, float length, float radius, bool allowNegativeDist)
         {
-            capsule.radius += radius;
+            float pRadius = capsule.radius + radius;
 
             var edge = capsule.GetEdge();
             Vector3 d = edge.end - edge.begin;
 
-            var s1Info = RBRaycast.RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.begin, capsule.radius), org, dirN, length);
+            var s1Info = RBRaycast.RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.begin, pRadius), org, dirN, length);
             if (s1Info.IsValidHit && Vector3.Dot(d, s1Info.position - edge.begin) < 0)
             {
                 return s1Info;
             }
 
-            var s2Info = RBRaycast.RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.end, capsule.radius), org, dirN, length);
+            var s2Info = RBRaycast.RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.end, pRadius), org, dirN, length);
             if (s2Info.IsValidHit && Vector3.Dot(-d, s1Info.position - edge.end) < 0)
             {
                 return s2Info;
@@ -45,7 +45,7 @@ public static partial class RBSphereCast
 
                 float a = 1 - (dsv * dsv) / dss;
                 float b = dpv - (dps * dsv) / dss;
-                float c = dpp - (dps * dps) / dss - (capsule.radius * capsule.radius);
+                float c = dpp - (dps * dps) / dss - (pRadius * pRadius);
 
                 if (a == 0)
                 {
