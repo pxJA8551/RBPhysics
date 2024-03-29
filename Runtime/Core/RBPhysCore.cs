@@ -277,7 +277,7 @@ namespace RBPhys
                         {
                             var info = RBRaycast.RaycastOBB.CalcRayCollision(t.collider.CalcOBB(), org, dir, d);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length);
-                            RBPhysDebugging.IsCastHitNormalAssert(t);
+                            RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
                         }
                         break;
@@ -285,7 +285,7 @@ namespace RBPhys
                         {
                             var info = RBRaycast.RaycastSphere.CalcRayCollision(t.collider.CalcSphere(), org, dir, d);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length);
-                            RBPhysDebugging.IsCastHitNormalAssert(t);
+                            RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
                         }
                         break;
@@ -293,7 +293,7 @@ namespace RBPhys
                         {
                             var info = RBRaycast.RaycastCaspule.CalcRayCollision(t.collider.CalcCapsule(), org, dir, d);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length);
-                            RBPhysDebugging.IsCastHitNormalAssert(t);
+                            RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
                         }
                         break;
@@ -366,7 +366,7 @@ namespace RBPhys
                         {
                             var info = RBSphereCast.SphereCastOBB.CalcSphereCollision(t.collider.CalcOBB(), org, dir, length, radius, allowNegativeValue);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length);
-                            RBPhysDebugging.IsCastHitNormalAssert(t);
+                            RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
                         }
                         break;
@@ -374,7 +374,7 @@ namespace RBPhys
                         {
                             var info = RBSphereCast.SphereCastSphere.CalcSphereCollision(t.collider.CalcSphere(), org, dir, length, radius, allowNegativeValue);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length);
-                            RBPhysDebugging.IsCastHitNormalAssert(t);
+                            RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
                         }
                         break;
@@ -382,7 +382,7 @@ namespace RBPhys
                         {
                             var info = RBSphereCast.SphereCastCapsule.CalcSphereCollision(t.collider.CalcCapsule(), org, dir, length, radius, allowNegativeValue);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length);
-                            RBPhysDebugging.IsCastHitNormalAssert(t);
+                            RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
                         }
                         break;
@@ -441,7 +441,7 @@ namespace RBPhys
                         {
                             var p = RBDetailCollision.DetailCollisionOBBLine.CalcDetailCollisionInfo(t.collider.CalcOBB(), line);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
-                            RBPhysDebugging.IsOverlapNormalAssert(t);
+                            RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
                         }
                         break;
@@ -449,7 +449,7 @@ namespace RBPhys
                         {
                             var p = RBDetailCollision.DetailCollisionSphereLine.CalcDetailCollisionInfo(t.collider.CalcSphere(), line);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
-                            RBPhysDebugging.IsOverlapNormalAssert(t);
+                            RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
                         }
                         break;
@@ -457,7 +457,7 @@ namespace RBPhys
                         {
                             var p = RBDetailCollision.DetailCollisionCapsuleLine.CalcDetailCollisionInfo(t.collider.CalcCapsule(), line);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
-                            RBPhysDebugging.IsOverlapNormalAssert(t);
+                            RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
                         }
                         break;
@@ -507,7 +507,7 @@ namespace RBPhys
                         {
                             var p = RBDetailCollision.DetailCollisionOBBOBB.CalcDetailCollisionInfo(t.collider.CalcOBB(), obb);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
-                            RBPhysDebugging.IsOverlapNormalAssert(t);
+                            RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
                         }
                         break;
@@ -515,7 +515,7 @@ namespace RBPhys
                         {
                             var p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(obb, t.collider.CalcSphere());
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, -p.p.normalized);
-                            RBPhysDebugging.IsOverlapNormalAssert(t);
+                            RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
                         }
                         break;
@@ -523,7 +523,7 @@ namespace RBPhys
                         {
                             var p = RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(obb, t.collider.CalcCapsule());
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, -p.p.normalized);
-                            RBPhysDebugging.IsOverlapNormalAssert(t);
+                            RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
                         }
                         break;
@@ -572,7 +572,7 @@ namespace RBPhys
                         {
                             var p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(t.collider.CalcOBB(), sphere);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
-                            RBPhysDebugging.IsOverlapNormalAssert(t);
+                            RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
                         }
                         break;
@@ -580,7 +580,7 @@ namespace RBPhys
                         {
                             var p = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfo(t.collider.CalcSphere(), sphere);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, p.p.normalized);
-                            RBPhysDebugging.IsOverlapNormalAssert(t);
+                            RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
                         }
                         break;
@@ -588,7 +588,7 @@ namespace RBPhys
                         {
                             var p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(sphere, t.collider.CalcCapsule());
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, -p.p.normalized);
-                            RBPhysDebugging.IsOverlapNormalAssert(t);
+                            RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
                         }
                         break;
@@ -638,7 +638,7 @@ namespace RBPhys
                         {
                             var p = RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(t.collider.CalcOBB(), capsule);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
-                            RBPhysDebugging.IsOverlapNormalAssert(t);
+                            RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
                         }
                         break;
@@ -646,7 +646,7 @@ namespace RBPhys
                         {
                             var p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(t.collider.CalcSphere(), capsule);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, p.p.normalized);
-                            RBPhysDebugging.IsOverlapNormalAssert(t);
+                            RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
                         }
                         break;
@@ -654,7 +654,7 @@ namespace RBPhys
                         {
                             var p = RBDetailCollision.DetailCollisionCapsuleCapsule.CalcDetailCollisionInfo(t.collider.CalcCapsule(), capsule);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, p.p.normalized);
-                            RBPhysDebugging.IsOverlapNormalAssert(t);
+                            RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
                         }
                         break;
@@ -999,7 +999,7 @@ namespace RBPhys
 
                 if (pair.p.p != Vector3.zero)
                 {
-                    RBPhysDebugging.IsPenetrationNormalAssert(pair.p);
+                    RBPhysDebugging.IsPenetrationValidAssert(pair.p);
 
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
@@ -1039,7 +1039,7 @@ namespace RBPhys
 
                 if (pair.p.p != Vector3.zero)
                 {
-                    RBPhysDebugging.IsPenetrationNormalAssert(pair.p);
+                    RBPhysDebugging.IsPenetrationValidAssert(pair.p);
 
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
@@ -1079,7 +1079,7 @@ namespace RBPhys
 
                 if (pair.p.p != Vector3.zero)
                 {
-                    RBPhysDebugging.IsPenetrationNormalAssert(pair.p);
+                    RBPhysDebugging.IsPenetrationValidAssert(pair.p);
 
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
@@ -1119,7 +1119,7 @@ namespace RBPhys
 
                 if (pair.p.p != Vector3.zero)
                 {
-                    RBPhysDebugging.IsPenetrationNormalAssert(pair.p);
+                    RBPhysDebugging.IsPenetrationValidAssert(pair.p);
 
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
@@ -1159,7 +1159,7 @@ namespace RBPhys
 
                 if (pair.p.p != Vector3.zero)
                 {
-                    RBPhysDebugging.IsPenetrationNormalAssert(pair.p);
+                    RBPhysDebugging.IsPenetrationValidAssert(pair.p);
 
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
@@ -1199,7 +1199,7 @@ namespace RBPhys
 
                 if (pair.p.p != Vector3.zero)
                 {
-                    RBPhysDebugging.IsPenetrationNormalAssert(pair.p);
+                    RBPhysDebugging.IsPenetrationValidAssert(pair.p);
 
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
