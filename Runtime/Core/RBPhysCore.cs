@@ -26,6 +26,8 @@ namespace RBPhys
         public static float cpu_solver_abort_veladd_sqrt = CPU_SOLVER_ABORT_VELADD_SQRT;
         public static float cpu_solver_abort_angveladd_sqrt = CPU_SOLVER_ABORT_ANGVELADD_SQRT;
 
+        public static Vector3 gravityAcceleration = new Vector3(0, -9.81f, 0);
+
         static List<RBRigidbody> _rigidbodies = new List<RBRigidbody>();
         static List<RBCollider> _colliders = new List<RBCollider>();
 
@@ -146,9 +148,9 @@ namespace RBPhys
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                if (!rb.isSleeping)
+                if (!rb.isSleeping && rb.useGravity)
                 {
-                    rb.ExpVelocity += new Vector3(0, -9.81f, 0) * dt;
+                    rb.ExpVelocity += gravityAcceleration * dt;
                 }
             }
 

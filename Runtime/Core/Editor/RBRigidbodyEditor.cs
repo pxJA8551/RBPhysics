@@ -17,6 +17,7 @@ namespace RBPhysEditor
         SerializedProperty mass;
         SerializedProperty sleeping;
         SerializedProperty sleepGrace;
+        SerializedProperty useGravity;
 
         bool sleepDefault;
 
@@ -28,6 +29,7 @@ namespace RBPhysEditor
             mass = serializedObject.FindProperty("mass");
             sleeping = serializedObject.FindProperty("isSleeping");
             sleepGrace = serializedObject.FindProperty("sleepGrace");
+            useGravity = serializedObject.FindProperty("useGravity");
         }
 
         public override void OnInspectorGUI()
@@ -44,6 +46,7 @@ namespace RBPhysEditor
             }
 
             EditorGUILayout.PropertyField(mass);
+            EditorGUILayout.PropertyField(useGravity);
             sleepDefault = EditorGUILayout.Toggle("Sleep until interaction", sleepDefault);
 
             EditorGUILayout.LabelField(string.Format("Sleep:{0}({1})", sleeping.boolValue ? "TRUE" : "FALSE", sleepGrace.intValue));

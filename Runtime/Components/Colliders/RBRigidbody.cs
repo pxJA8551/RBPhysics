@@ -55,6 +55,7 @@ namespace RBPhys
 
         public bool isSleeping = false;
         public int sleepGrace = 0;
+        public bool useGravity = true;
 
         [HideInInspector] public RBCollider[] colliding = new RBCollider[2];
         [HideInInspector] public int collidingCount = 0;
