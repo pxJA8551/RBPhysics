@@ -27,7 +27,6 @@ public static partial class RBRaycast
                 return s2Info;
             }
 
-            if (Vector3.Dot(edge.begin - edge.end, s1Info.position - edge.begin) > 0 && Vector3.Dot(edge.end - edge.begin, s1Info.position - edge.end) > 0)
             {
                 Vector3 ep1 = edge.begin - org;
                 Vector3 ep2 = (edge.end - org) - ep1;
