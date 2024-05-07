@@ -306,7 +306,7 @@ namespace RBPhys
 
             foreach (var v in hitList)
             {
-                if (!fMinOverlap.IsValidHit || v.length < fMinOverlap.length)
+                if (!fMinOverlap.IsValidHit || (v.IsValidHit && v.length < fMinOverlap.length))
                 {
                     fMinOverlap = v;
                 }
@@ -395,7 +395,7 @@ namespace RBPhys
 
             foreach (var v in hitList)
             {
-                if (!fMinOverlap.IsValidHit || v.length < fMinOverlap.length)
+                if (!fMinOverlap.IsValidHit || (v.IsValidHit && v.length < fMinOverlap.length))
                 {
                     fMinOverlap = v;
                 }
