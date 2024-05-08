@@ -255,7 +255,7 @@ namespace RBPhys
                     {
                         foreach (var c in t.Colliders)
                         {
-                            if (c.gameObject.activeInHierarchy && c.enabled)
+                            if (c.gameObject.activeInHierarchy && c.enabled && !c.IgnoreCollision)
                             {
                                 if (!(cols?.Contains(c)) ?? true)
                                 {
@@ -347,7 +347,7 @@ namespace RBPhys
                     {
                         foreach (var c in t.Colliders)
                         {
-                            if (c.gameObject.activeInHierarchy && c.enabled)
+                            if (c.gameObject.activeInHierarchy && c.enabled && !c.IgnoreCollision)
                             {
                                 if (!(cols?.Contains(c)) ?? true)
                                 {
@@ -1475,7 +1475,7 @@ namespace RBPhys
             {
                 var collider_a = trajAABB_a[i];
 
-                if (collider_a.collider.isActiveAndEnabled)
+                if (collider_a.collider.isActiveAndEnabled && !collider_a.collider.IgnoreCollision)
                 {
                     float a_x_min = collider_a.aabb.MinX;
                     float a_x_max = collider_a.aabb.MaxX;
@@ -1486,7 +1486,7 @@ namespace RBPhys
                         float b_x_min = collider_b.aabb.MinX;
                         float b_x_max = collider_b.aabb.MaxX;
 
-                        if (collider_b.collider.isActiveAndEnabled)
+                        if (collider_b.collider.isActiveAndEnabled && !collider_b.collider.IgnoreCollision)
                         {
                             Vector3 cg = traj_a.IsStatic ? traj_b.IsStatic ? Vector3.zero : traj_b.Rigidbody.CenterOfGravityWorld : traj_a.Rigidbody.CenterOfGravityWorld;
 
@@ -2195,7 +2195,7 @@ namespace RBPhys
 
             foreach (RBCollider c in rigidbody.GetColliders())
             {
-                if (c.isActiveAndEnabled)
+                if (c.isActiveAndEnabled && !c.IgnoreCollision)
                 {
                     aabb.Encapsulate(c.ExpTrajectory.trajectoryAABB);
                 }
@@ -2229,7 +2229,7 @@ namespace RBPhys
 
             foreach (RBCollider c in rigidbody.GetColliders())
             {
-                if (c.isActiveAndEnabled)
+                if (c.isActiveAndEnabled && !c.IgnoreCollision)
                 {
                     aabb.Encapsulate(c.ExpTrajectory.trajectoryAABB);
                 }

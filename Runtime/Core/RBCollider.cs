@@ -27,12 +27,26 @@ namespace RBPhys
 
         public RBTrajectory ExpTrajectory { get { return _expTrajectory; } }
 
+        public bool IgnoreCollision { get { return _stackVal_ignoreCollision_ifGreaterThanZero > 0; } }
+
+        int _stackVal_ignoreCollision_ifGreaterThanZero = 0;
+
         RBTrajectory _expTrajectory;
 
         Vector3 _expPos;
         Quaternion _expRot;
 
         bool _hasParentRigidbodyInFrame = false;
+
+        public void SetIgnoreCollision()
+        {
+            _stackVal_ignoreCollision_ifGreaterThanZero++;
+        }
+
+        public void SetDecrIgnoreCollision()
+        {
+            _stackVal_ignoreCollision_ifGreaterThanZero--;
+        }
 
         void Awake()
         {
