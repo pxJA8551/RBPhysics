@@ -8,6 +8,8 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEditor;
 using Unity.IL2CPP.CompilerServices;
+using System.Reflection;
+using UnityEngine.Rendering;
 
 namespace RBPhys
 {
@@ -283,7 +285,7 @@ namespace RBPhys
                 {
                     case RBGeometryType.OBB:
                         {
-                            var info = RBRaycast.RaycastOBB.CalcRayCollision(t.collider.CalcOBB(), org, dir, d);
+                            var info = RBRaycast.RaycastOBB.CalcRayCollision(t.collider.CalcOBB(), org, dir, d, allowBackFaceCollision);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
@@ -291,7 +293,7 @@ namespace RBPhys
                         break;
                     case RBGeometryType.Sphere:
                         {
-                            var info = RBRaycast.RaycastSphere.CalcRayCollision(t.collider.CalcSphere(), org, dir, d);
+                            var info = RBRaycast.RaycastSphere.CalcRayCollision(t.collider.CalcSphere(), org, dir, d, allowBackFaceCollision);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
@@ -299,7 +301,7 @@ namespace RBPhys
                         break;
                     case RBGeometryType.Capsule:
                         {
-                            var info = RBRaycast.RaycastCaspule.CalcRayCollision(t.collider.CalcCapsule(), org, dir, d);
+                            var info = RBRaycast.RaycastCaspule.CalcRayCollision(t.collider.CalcCapsule(), org, dir, d, allowBackFaceCollision);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
@@ -2187,6 +2189,8 @@ namespace RBPhys
         RBCollider[] _colliders;
         int _layer;
 
+        PerRBTrajectoryCachedComponent[] _cachedComponents;
+
         public RBTrajectory()
         {
             _isValidTrajectory = false;
@@ -2291,6 +2295,85 @@ namespace RBPhys
             if (_rigidbody != null)
             {
                 _rigidbody.PhysAwake();
+            }
+        }
+
+        //PerRBTrajectoryInitializingComponentCaching
+        public void CacheComponents(GameObject gameObject)
+        {
+            Component[] components = gameObject.GetComponents<Component>();
+            List<PerRBTrajectoryCachedComponent> cachedComponents = new List<PerRBTrajectoryCachedComponent>();
+
+            foreach (var c in components)
+            {
+                Type cType = c.GetType();
+                if (cType.GetCustomAttributes(typeof(PerRBTrajectoryInitializingComponentCaching)) != null)
+                {
+                    cachedComponents.Add(new PerRBTrajectoryCachedComponent(c, cType));
+                }
+            }
+
+            this._cachedComponents = cachedComponents.ToArray();
+        }
+
+        public T GetCachedComponent<T>() where T : Component
+        {
+            if (_cachedComponents != null)
+            {
+                return _cachedComponents.FirstOrDefault(item => item?.type == typeof(T)) as T;
+            }
+
+            return null;
+        }
+
+        public List<T> GetCachedComponents<T>() where T : Component
+        {
+            List<T> ret = new List<T>();
+
+            if (_cachedComponents != null)
+            {
+                foreach (var c in _cachedComponents)
+                {
+                    if (c?.type == typeof(T))
+                    {
+                        ret.Add(c as T);
+                    }
+                }
+            }
+
+            return ret;
+        }
+
+        public void GetCachedComponents<T>(ref List<T> components) where T : Component
+        {
+            components.Clear();
+
+            if (_cachedComponents != null)
+            {
+                foreach (var c in _cachedComponents)
+                {
+                    if (c?.type == typeof(T))
+                    {
+                        components.Add(c as T);
+                    }
+                }
+            }
+        }
+
+        class PerRBTrajectoryCachedComponent
+        {
+            internal Component component;
+            internal Type type;
+
+            internal PerRBTrajectoryCachedComponent(Component c, Type type)
+            {
+                component = c;
+                this.type = type;
+            }
+
+            internal Component GetObject()
+            {
+                return component;
             }
         }
     }
