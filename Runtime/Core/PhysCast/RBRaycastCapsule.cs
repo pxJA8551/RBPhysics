@@ -10,18 +10,18 @@ public static partial class RBRaycast
     {
         //http://marupeke296.com/COL_3D_No26_RayToCapsule.html
 
-        public static RBColliderCastHitInfo CalcRayCollision(RBColliderCapsule capsule, Vector3 org, Vector3 dirN, float length, bool allowNegativeValue = false)
+        public static RBColliderCastHitInfo CalcRayCollision(RBColliderCapsule capsule, Vector3 org, Vector3 dirN, float length, bool allowBackFaceCollision = false)
         {
             var edge = capsule.GetEdge();
             Vector3 d = edge.end - edge.begin;
 
-            var s1Info = RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.begin, capsule.radius), org, dirN, length, allowNegativeValue);
+            var s1Info = RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.begin, capsule.radius), org, dirN, length, allowBackFaceCollision);
             if (s1Info.IsValidHit && Vector3.Dot(d, s1Info.position - edge.begin) < 0)
             {
                 return s1Info;
             }
 
-            var s2Info = RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.end, capsule.radius), org, dirN, length, allowNegativeValue);
+            var s2Info = RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.end, capsule.radius), org, dirN, length, allowBackFaceCollision);
             if (s2Info.IsValidHit && Vector3.Dot(-d, s1Info.position - edge.end) < 0)
             {
                 return s2Info;
@@ -62,14 +62,19 @@ public static partial class RBRaycast
                 float t1 = (b - s) / a;
                 float t2 = (b + s) / a;
 
+                if (!allowBackFaceCollision && (t1 < 0))
+                {
+                    return default;
+                }
+
                 float t = t1;
 
-                if (!((t > 0 || allowNegativeValue) && t <= length) || ((t2 > 0 || allowNegativeValue) && t2 <= length && t2 < t))
+                if (!(t > 0 && t <= length) || (t2 > 0 && t2 <= length && t2 < t))
                 {
                     t = t2;
                 }
 
-                if ((t > 0 || allowNegativeValue) && t <= length)
+                if ((t > 0) && t <= length)
                 {
                     Vector3 pos = org + dirN * t;
 

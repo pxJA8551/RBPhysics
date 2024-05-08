@@ -8,7 +8,7 @@ public static partial class RBRaycast
 {
     public static class RaycastSphere
     {
-        public static RBColliderCastHitInfo CalcRayCollision(RBColliderSphere sphere, Vector3 org, Vector3 dirN, float length, bool allowNegativeValue = false)
+        public static RBColliderCastHitInfo CalcRayCollision(RBColliderSphere sphere, Vector3 org, Vector3 dirN, float length, bool allowBackFaceCollision = false)
         {
             Vector3 p = sphere.pos - org;
             float b = Vector3.Dot(dirN, p);
@@ -30,12 +30,17 @@ public static partial class RBRaycast
             {
                 float t = t1;
 
-                if (!((t > 0 || allowNegativeValue) && t <= length) || ((t2 > 0 || allowNegativeValue) && t2 <= length && t2 < t))
+                if (!allowBackFaceCollision && (t1 < 0))
+                {
+                    return default;
+                }
+
+                if (!(t > 0 && t <= length) || (t2 > 0 && t2 <= length && t2 < t))
                 {
                     t = t2;
                 }
 
-                if ((t > 0 || allowNegativeValue) && t <= length)
+                if (t > 0 && t <= length)
                 {
                     Vector3 pos = org + dirN * t;
 

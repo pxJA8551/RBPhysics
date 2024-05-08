@@ -255,9 +255,12 @@ namespace RBPhys
                     {
                         foreach (var c in t.Colliders)
                         {
-                            if (!(cols?.Contains(c)) ?? true)
+                            if (c.gameObject.activeInHierarchy && c.enabled)
                             {
-                                hitList.Add(new RBColliderCastHitInfo(c, t, RBColliderCastHitInfo.PhysCastType.Raycast));
+                                if (!(cols?.Contains(c)) ?? true)
+                                {
+                                    hitList.Add(new RBColliderCastHitInfo(c, t, RBColliderCastHitInfo.PhysCastType.Raycast));
+                                }
                             }
                         }
                     }
@@ -344,9 +347,12 @@ namespace RBPhys
                     {
                         foreach (var c in t.Colliders)
                         {
-                            if (!(cols?.Contains(c)) ?? true)
+                            if (c.gameObject.activeInHierarchy && c.enabled)
                             {
-                                hitList.Add(new RBColliderCastHitInfo(c, t, RBColliderCastHitInfo.PhysCastType.SphereCast));
+                                if (!(cols?.Contains(c)) ?? true)
+                                {
+                                    hitList.Add(new RBColliderCastHitInfo(c, t, RBColliderCastHitInfo.PhysCastType.SphereCast));
+                                }
                             }
                         }
                     }
