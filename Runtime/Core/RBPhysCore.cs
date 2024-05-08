@@ -169,6 +169,7 @@ namespace RBPhys
             public bool IsValidHit { get { return _isValidHit; } }
             public PhysCastType type;
             public RBTrajectory trajectory;
+            public bool backFaceCollision;
 
             bool _isValidHit;
 
@@ -177,6 +178,7 @@ namespace RBPhys
                 collider = c;
                 trajectory = t;
                 _isValidHit = false;
+                backFaceCollision = false;
 
                 position = Vector3.zero;
                 normal = Vector3.zero;
@@ -184,11 +186,12 @@ namespace RBPhys
                 this.type = type;
             }
 
-            internal void SetHit(Vector3 p, Vector3 nN, float dist)
+            internal void SetHit(Vector3 p, Vector3 nN, float dist, bool backFaceCollision = false)
             {
                 position = p;
                 normal = nN;
                 this.length = dist;
+                this.backFaceCollision = backFaceCollision;
 
                 _isValidHit = true;
             }
@@ -226,12 +229,12 @@ namespace RBPhys
             }
         }
 
-        public static RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d)
+        public static RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d, bool allowBackFaceCollision = false)
         {
-            return Raycast(org, dir, d, null);
+            return Raycast(org, dir, d, allowBackFaceCollision, null);
         }
 
-        public static RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d, params RBCollider[] cols)
+        public static RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d, bool allowBackFaceCollision = false, params RBCollider[] cols)
         {
             dir = dir.normalized;
 
@@ -281,7 +284,7 @@ namespace RBPhys
                     case RBGeometryType.OBB:
                         {
                             var info = RBRaycast.RaycastOBB.CalcRayCollision(t.collider.CalcOBB(), org, dir, d);
-                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length);
+                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
                         }
@@ -289,7 +292,7 @@ namespace RBPhys
                     case RBGeometryType.Sphere:
                         {
                             var info = RBRaycast.RaycastSphere.CalcRayCollision(t.collider.CalcSphere(), org, dir, d);
-                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length);
+                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
                         }
@@ -297,7 +300,7 @@ namespace RBPhys
                     case RBGeometryType.Capsule:
                         {
                             var info = RBRaycast.RaycastCaspule.CalcRayCollision(t.collider.CalcCapsule(), org, dir, d);
-                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length);
+                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
                         }
@@ -373,7 +376,7 @@ namespace RBPhys
                     case RBGeometryType.OBB:
                         {
                             var info = RBSphereCast.SphereCastOBB.CalcSphereCollision(t.collider.CalcOBB(), org, dir, length, radius, allowNegativeValue);
-                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length);
+                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
                         }
@@ -381,7 +384,7 @@ namespace RBPhys
                     case RBGeometryType.Sphere:
                         {
                             var info = RBSphereCast.SphereCastSphere.CalcSphereCollision(t.collider.CalcSphere(), org, dir, length, radius, allowNegativeValue);
-                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length);
+                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
                         }
@@ -389,7 +392,7 @@ namespace RBPhys
                     case RBGeometryType.Capsule:
                         {
                             var info = RBSphereCast.SphereCastCapsule.CalcSphereCollision(t.collider.CalcCapsule(), org, dir, length, radius, allowNegativeValue);
-                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length);
+                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
                         }

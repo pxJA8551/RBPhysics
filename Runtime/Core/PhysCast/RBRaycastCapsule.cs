@@ -79,7 +79,7 @@ public static partial class RBRaycast
                     Vector3 pos = org + dirN * t;
 
                     RBColliderCastHitInfo info = new RBColliderCastHitInfo();
-                    info.SetHit(pos, Vector3.ProjectOnPlane(pos - capsule.pos, d).normalized, t);
+                    info.SetHit(pos, Vector3.ProjectOnPlane(pos - capsule.pos, d).normalized, t, t1 < 0);
 
                     return info;
                 }

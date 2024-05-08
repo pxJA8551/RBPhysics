@@ -53,7 +53,7 @@ public static partial class RBRaycast
                 if (!inv) normal *= -1;
 
                 RBColliderCastHitInfo info = default;
-                info.SetHit(wsHitPoint, normal, t);
+                info.SetHit(wsHitPoint, normal, t, t_min < 0);
                 return info;
             }
             else
