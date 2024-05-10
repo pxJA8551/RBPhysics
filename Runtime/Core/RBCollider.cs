@@ -51,7 +51,6 @@ namespace RBPhys
         void Awake()
         {
             UpdateTransform();
-            _expTrajectory.CacheComponents(gameObject);
         }
 
         void OnDestroy()
