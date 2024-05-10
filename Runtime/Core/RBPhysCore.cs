@@ -1667,6 +1667,9 @@ namespace RBPhys
         public bool IsSleeping_a { get { return rigidbody_a?.isSleeping ?? true; } }
         public bool IsSleeping_b { get { return rigidbody_b?.isSleeping ?? true; } }
 
+        public float CollisionLambdaMultiplier_a { get { return rigidbody_a?.collisionLambdaMultiplier ?? 1; } }
+        public float CollisionLambdaMultiplier_b { get { return rigidbody_b?.collisionLambdaMultiplier ?? 1; } }
+
         Vector3 _contactNormal;
 
         public RBCollision(RBTrajectory traj_a, RBCollider col_a, RBTrajectory traj_b, RBCollider col_b, Vector3 penetration)
@@ -1907,6 +1910,9 @@ namespace RBPhys
                 }
 
                 lambda = _totalLambda - oldTotalLambda;
+
+                float collisionLambdaMult = col.CollisionLambdaMultiplier_a * col.CollisionLambdaMultiplier_b;
+                lambda *= collisionLambdaMult;
 
                 vAdd_a += col.InverseMass_a * _va * lambda;
                 avAdd_a += Vector3.Scale(col.InverseInertiaWs_a, _wa) * lambda;

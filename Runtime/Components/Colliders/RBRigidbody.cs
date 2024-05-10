@@ -20,6 +20,8 @@ namespace RBPhys
         [HideInInspector] public Vector3 inertiaTensor;
         [HideInInspector] public Quaternion inertiaTensorRotation;
 
+        [HideInInspector] public float collisionLambdaMultiplier = 1;
+
         Vector3 _centerOfGravity;
 
         Vector3 _velocity;
@@ -59,6 +61,8 @@ namespace RBPhys
 
         [HideInInspector] public RBCollider[] colliding = new RBCollider[2];
         [HideInInspector] public int collidingCount = 0;
+
+        float _collisionLambdaMultiplier;
 
         public RBTrajectory ExpObjectTrajectory { get { return _expObjTrajectory; } }
 
