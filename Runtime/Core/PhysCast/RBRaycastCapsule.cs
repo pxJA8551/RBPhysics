@@ -10,18 +10,18 @@ public static partial class RBRaycast
     {
         //http://marupeke296.com/COL_3D_No26_RayToCapsule.html
 
-        public static RBColliderCastHitInfo CalcRayCollision(RBColliderCapsule capsule, Vector3 org, Vector3 dirN, float length, bool allowBackFaceCollision = false)
+        public static RBColliderCastHitInfo CalcRayCollision(RBColliderCapsule capsule, Vector3 org, Vector3 dirN, float length, bool ignoreBackFaceCollision = true)
         {
             var edge = capsule.GetEdge();
             Vector3 d = edge.end - edge.begin;
 
-            var s1Info = RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.begin, capsule.radius), org, dirN, length, allowBackFaceCollision);
+            var s1Info = RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.begin, capsule.radius), org, dirN, length, ignoreBackFaceCollision);
             if (s1Info.IsValidHit && Vector3.Dot(d, s1Info.position - edge.begin) < 0)
             {
                 return s1Info;
             }
 
-            var s2Info = RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.end, capsule.radius), org, dirN, length, allowBackFaceCollision);
+            var s2Info = RaycastSphere.CalcRayCollision(new RBColliderSphere(edge.end, capsule.radius), org, dirN, length, ignoreBackFaceCollision);
             if (s2Info.IsValidHit && Vector3.Dot(-d, s1Info.position - edge.end) < 0)
             {
                 return s2Info;
@@ -62,7 +62,7 @@ public static partial class RBRaycast
                 float t1 = (b - s) / a;
                 float t2 = (b + s) / a;
 
-                if (!allowBackFaceCollision && (t1 < 0))
+                if (ignoreBackFaceCollision && (t1 < 0))
                 {
                     return default;
                 }

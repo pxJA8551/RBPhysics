@@ -8,7 +8,7 @@ public static partial class RBRaycast
 {
     public static class RaycastOBB
     {
-        public static RBColliderCastHitInfo CalcRayCollision(RBColliderOBB obb, Vector3 org, Vector3 dirN, float length, bool allowBackFaceCollision = false)
+        public static RBColliderCastHitInfo CalcRayCollision(RBColliderOBB obb, Vector3 org, Vector3 dirN, float length, bool ignoreBackFaceCollision = true)
         {
             Quaternion toLsRot = Quaternion.Inverse(obb.rot);
 
@@ -30,7 +30,7 @@ public static partial class RBRaycast
             float i_t = i_min;
             bool inv = true;
 
-            if (!allowBackFaceCollision && (t_min < 0))
+            if (ignoreBackFaceCollision && (t_min < 0))
             {
                 return default;
             }

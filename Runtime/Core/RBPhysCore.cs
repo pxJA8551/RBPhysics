@@ -231,12 +231,36 @@ namespace RBPhys
             }
         }
 
-        public static RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d, bool allowBackFaceCollision = false)
+        public static RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d, bool ignoreBackFaceCollision = true)
         {
-            return Raycast(org, dir, d, allowBackFaceCollision, null);
+            return Raycast(org, dir, d, null, null, ignoreBackFaceCollision);
         }
 
-        public static RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d, bool allowBackFaceCollision = false, params RBCollider[] cols)
+        public static RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d, List<RBCollider> ignoreCols, List<RBTrajectory> ignoreTrajs, bool ignoreBackFaceCollision = true)
+        {
+            var hitList = RaycastAll(org, dir, d, ignoreCols, ignoreTrajs, ignoreBackFaceCollision);
+
+            RBColliderCastHitInfo fMinOverlap = default;
+
+            foreach (var v in hitList)
+            {
+                if (!fMinOverlap.IsValidHit || (v.IsValidHit && v.length < fMinOverlap.length))
+                {
+                    fMinOverlap = v;
+                }
+            }
+
+            return fMinOverlap;
+        }
+
+        public static List<RBColliderCastHitInfo> RaycastAll(Vector3 org, Vector3 dir, float d, List<RBCollider> ignoreCols, List<RBTrajectory> ignoreTrajs, bool ignoreBackFaceCollision = true)
+        {
+            var hitList = new List<RBColliderCastHitInfo>();
+            RaycastAll(org, dir, d, ignoreCols, ignoreTrajs, ref hitList, ignoreBackFaceCollision);
+            return hitList;
+        }
+
+        public static void RaycastAll(Vector3 org, Vector3 dir, float d, List<RBCollider> ignoreCols, List<RBTrajectory> ignoreTrajs, ref List<RBColliderCastHitInfo> hitInfos, bool ignoreBackFaceCollision = true)
         {
             dir = dir.normalized;
 
@@ -244,15 +268,29 @@ namespace RBPhys
             Vector3 pos_b = org + dir * d;
             Vector3 center = (pos_a + pos_b) / 2f;
 
-            List<RBColliderCastHitInfo> hitList = new List<RBColliderCastHitInfo>();
+            if (hitInfos == null)
+            {
+                hitInfos = new List<RBColliderCastHitInfo>();
+            }
+
+            hitInfos.Clear();
+            var hitList = hitInfos;
 
             float xMin = Mathf.Min(pos_a.x, pos_b.x);
             float xMax = Mathf.Max(pos_a.x, pos_b.x);
+
+            bool selectTrajs = ignoreTrajs != null;
+            bool selectCols = ignoreCols != null;
 
             for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
             {
                 var t = _trajectories_orderByXMin[i];
                 var f = _trajectories_xMin[i];
+
+                if (selectTrajs && ignoreTrajs.Contains(t))
+                {
+                    continue;
+                }
 
                 if (xMin < t.trajectoryAABB.MaxX)
                 {
@@ -262,7 +300,7 @@ namespace RBPhys
                         {
                             if (c.gameObject.activeInHierarchy && c.enabled && !c.IgnoreCollision)
                             {
-                                if (!(cols?.Contains(c)) ?? true)
+                                if (!(selectCols && ignoreCols.Contains(c)))
                                 {
                                     hitList.Add(new RBColliderCastHitInfo(c, t, RBColliderCastHitInfo.PhysCastType.Raycast));
                                 }
@@ -285,7 +323,7 @@ namespace RBPhys
                 {
                     case RBGeometryType.OBB:
                         {
-                            var info = RBRaycast.RaycastOBB.CalcRayCollision(t.collider.CalcOBB(), org, dir, d, allowBackFaceCollision);
+                            var info = RBRaycast.RaycastOBB.CalcRayCollision(t.collider.CalcOBB(), org, dir, d, ignoreBackFaceCollision);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
@@ -293,7 +331,7 @@ namespace RBPhys
                         break;
                     case RBGeometryType.Sphere:
                         {
-                            var info = RBRaycast.RaycastSphere.CalcRayCollision(t.collider.CalcSphere(), org, dir, d, allowBackFaceCollision);
+                            var info = RBRaycast.RaycastSphere.CalcRayCollision(t.collider.CalcSphere(), org, dir, d, ignoreBackFaceCollision);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
@@ -301,7 +339,7 @@ namespace RBPhys
                         break;
                     case RBGeometryType.Capsule:
                         {
-                            var info = RBRaycast.RaycastCaspule.CalcRayCollision(t.collider.CalcCapsule(), org, dir, d, allowBackFaceCollision);
+                            var info = RBRaycast.RaycastCaspule.CalcRayCollision(t.collider.CalcCapsule(), org, dir, d, ignoreBackFaceCollision);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
@@ -309,26 +347,14 @@ namespace RBPhys
                         break;
                 }
             });
-
-            RBColliderCastHitInfo fMinOverlap = default;
-
-            foreach (var v in hitList)
-            {
-                if (!fMinOverlap.IsValidHit || (v.IsValidHit && v.length < fMinOverlap.length))
-                {
-                    fMinOverlap = v;
-                }
-            }
-
-            return fMinOverlap;
         }
 
         public static RBColliderCastHitInfo SphereCast(Vector3 org, Vector3 dir, float length, float radius, bool allowNegativeValue = true)
         {
-            return SphereCast(org, dir, length, radius, allowNegativeValue, null);
+            return SphereCast(org, dir, length, radius, null, null, allowNegativeValue);
         }
 
-        public static RBColliderCastHitInfo SphereCast(Vector3 org, Vector3 dir, float length, float radius, bool allowNegativeValue = true, params RBCollider[] cols)
+        public static RBColliderCastHitInfo SphereCast(Vector3 org, Vector3 dir, float length, float radius, RBCollider[] ignoreCols, RBTrajectory[] ignoreTrajs, bool allowNegativeValue = true)
         {
             dir = dir.normalized;
 
@@ -341,10 +367,18 @@ namespace RBPhys
             float xMin = Mathf.Min(pos_a.x, pos_b.x);
             float xMax = Mathf.Max(pos_a.x, pos_b.x);
 
+            bool selectTrajs = ignoreTrajs != null;
+            bool selectCols = ignoreCols != null;
+
             for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
             {
                 var t = _trajectories_orderByXMin[i];
                 var f = _trajectories_xMin[i];
+
+                if (selectTrajs && ignoreTrajs.Contains(t))
+                {
+                    continue;
+                }
 
                 if (xMin < t.trajectoryAABB.MaxX)
                 {
@@ -354,7 +388,7 @@ namespace RBPhys
                         {
                             if (c.gameObject.activeInHierarchy && c.enabled && !c.IgnoreCollision)
                             {
-                                if (!(cols?.Contains(c)) ?? true)
+                                if (!(selectCols && ignoreCols.Contains(c)))
                                 {
                                     hitList.Add(new RBColliderCastHitInfo(c, t, RBColliderCastHitInfo.PhysCastType.SphereCast));
                                 }
