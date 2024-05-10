@@ -21,8 +21,8 @@ public static partial class RBRaycast
             float t_y_min = -lsOrg.y / lsDirN.y;
             float t_y_max = (obb.size.y - lsOrg.y) / lsDirN.y;
 
-            float t_z_min = -lsOrg.y / lsDirN.y;
-            float t_z_max = (obb.size.y - lsOrg.y) / lsDirN.y;
+            float t_z_min = -lsOrg.z / lsDirN.z;
+            float t_z_max = (obb.size.z - lsOrg.z) / lsDirN.z;
 
             bool rayHit = RBPhysUtil.RangeOverlap(t_x_min, t_x_max, t_y_min, t_y_max, t_z_min, t_z_max, out float t_min, out float t_max, out int i_min, out int i_max);
 
