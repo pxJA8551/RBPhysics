@@ -2360,6 +2360,59 @@ namespace RBPhys
             }
         }
 
+        public T GetCachedComponentWithInterface<T>() where T : class
+        {
+            if (_cachedComponents != null)
+            {
+                foreach (var c in _cachedComponents)
+                {
+                    var ct = (c as T);
+                    if (ct != null)
+                    {
+                        return ct;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public List<T> GetCachedComponentsWithInterface<T>() where T : class
+        {
+            List<T> ret = new List<T>();
+
+            if (_cachedComponents != null)
+            {
+                foreach (var c in _cachedComponents)
+                {
+                    var ct = (c as T);
+                    if (ct != null)
+                    {
+                        ret.Add(ct);
+                    }
+                }
+            }
+
+            return ret;
+        }
+
+        public void GetCachedComponentsWithInterface<T>(ref List<T> components) where T : class
+        {
+            components.Clear();
+
+            if (_cachedComponents != null)
+            {
+                foreach (var c in _cachedComponents)
+                {
+                    var ct = (c as T);
+                    if (ct != null)
+                    {
+                        components.Add(ct);
+                    }
+                }
+            }
+        }
+
         class PerRBTrajectoryCachedComponent
         {
             internal Component component;

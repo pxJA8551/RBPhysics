@@ -85,6 +85,8 @@ namespace RBPhys
                 isSleeping = false;
                 sleepGrace = 0;
             }
+
+            _expObjTrajectory.CacheComponents(gameObject);
         }
 
         void OnDestroy()
