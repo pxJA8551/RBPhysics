@@ -347,6 +347,8 @@ namespace RBPhys
                         break;
                 }
             });
+
+            hitInfos = hitInfos.Where(item => item.IsValidHit).OrderBy(item => item.length).ToList();
         }
 
         public static RBColliderCastHitInfo SphereCast(Vector3 org, Vector3 dir, float length, float radius, bool allowNegativeValue = true)
