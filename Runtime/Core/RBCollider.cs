@@ -21,9 +21,9 @@ namespace RBPhys
         public Vector3 GameObjectPos { get; private set; }
         public Quaternion GameObjectRot { get; private set; }
 
-        [HideInInspector] public float beta = 0.5f;
-        public float restitution = 0.5f; //”½”­ŒW”
-        public float friction = 0.5f; //–€CŒW”
+        [NonSerialized] public float beta = 0.75f;
+        [NonSerialized] public float restitution = 0.35f; //”½”­ŒW”
+        [NonSerialized] public float friction = 0.75f; //–€CŒW”
 
         public RBTrajectory ExpTrajectory { get { return _expTrajectory; } }
 
@@ -173,7 +173,7 @@ namespace RBPhys
         {
             return GameObjectPos + GameObjectRot * (Quaternion.Inverse(_expRot) * (expPos - _expPos));
         }
-        
+
         public Vector3 ExpToCurrentVector(Vector3 expVector)
         {
             return GameObjectRot * (Quaternion.Inverse(_expRot) * expVector);

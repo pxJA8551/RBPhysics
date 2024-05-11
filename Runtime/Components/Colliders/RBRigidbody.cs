@@ -17,10 +17,10 @@ namespace RBPhys
 
         public float mass = 1;
 
-        [HideInInspector] public Vector3 inertiaTensor;
-        [HideInInspector] public Quaternion inertiaTensorRotation;
+        [NonSerialized] public Vector3 inertiaTensor;
+        [NonSerialized] public Quaternion inertiaTensorRotation;
 
-        [HideInInspector] public float collisionLambdaMultiplier = 1;
+        [NonSerialized] public float collisionLambdaMultiplier = 1;
 
         Vector3 _centerOfGravity;
 
@@ -59,8 +59,8 @@ namespace RBPhys
         public int sleepGrace = 0;
         public bool useGravity = true;
 
-        [HideInInspector] public RBCollider[] colliding = new RBCollider[2];
-        [HideInInspector] public int collidingCount = 0;
+        [NonSerialized] public RBCollider[] colliding = new RBCollider[2];
+        [NonSerialized] public int collidingCount = 0;
 
         public RBTrajectory ExpObjectTrajectory { get { return _expObjTrajectory; } }
 
@@ -81,7 +81,6 @@ namespace RBPhys
             FindColliders();
             UpdateTransform();
             RecalculateInertiaTensor();
-            collisionLambdaMultiplier = 1;
 
             if (!isSleeping || sleepGrace != 5)
             {
@@ -201,7 +200,7 @@ namespace RBPhys
         {
             (Vector3 pos, Quaternion rot) r = GetIntergrated(dt);
 
-            for(int i = 0; i < _colliders.Length; i++)
+            for (int i = 0; i < _colliders.Length; i++)
             {
                 _colliders[i].UpdateExpTrajectory(Position, Rotation, r.pos, r.rot);
             }
@@ -263,7 +262,7 @@ namespace RBPhys
         {
             if (IsExpUnderSleepLevel())
             {
-                if (sleepGrace < SLEEP_GRACE_FRAMES) 
+                if (sleepGrace < SLEEP_GRACE_FRAMES)
                 {
                     sleepGrace++;
                 }
