@@ -76,7 +76,7 @@ namespace RBPhys
                 {
                     float dd = Vector3.Dot(d, aRightN);
                     float prjL = Mathf.Abs(dd);
-                    float rA = Mathf.Abs(obb_a.size.z);
+                    float rA = Mathf.Abs(obb_a.size.x);
                     float rB = obb_b.GetAxisSize(aRightN);
 
                     float dp = prjL * 2 - (rA + rB);
@@ -691,7 +691,7 @@ namespace RBPhys
                 {
                     float dd = Vector3.Dot(d, aRightN);
                     float prjL = Mathf.Abs(dd);
-                    float rA = Mathf.Abs(obb_a.size.z);
+                    float rA = Mathf.Abs(obb_a.size.x);
                     float rB = obb_b.GetAxisSize(aRightN);
 
                     float dp = prjL * 2 - (rA + rB);

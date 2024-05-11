@@ -11,7 +11,7 @@ namespace RBPhys
 {
     public class RBRigidbody : MonoBehaviour
     {
-        const float SLEEP_VEL_MAX_SQRT = 0.1f * 0.1f;
+        const float SLEEP_VEL_MAX_SQRT = 0.03f * 0.03f;
         const float SLEEP_ANGVEL_MAX_SQRT = 0.3f * 0.3f;
         const int SLEEP_GRACE_FRAMES = 5;
 
@@ -61,8 +61,6 @@ namespace RBPhys
 
         [HideInInspector] public RBCollider[] colliding = new RBCollider[2];
         [HideInInspector] public int collidingCount = 0;
-
-        float _collisionLambdaMultiplier;
 
         public RBTrajectory ExpObjectTrajectory { get { return _expObjTrajectory; } }
 

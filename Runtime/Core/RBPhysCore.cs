@@ -1912,12 +1912,12 @@ namespace RBPhys
                 lambda = _totalLambda - oldTotalLambda;
 
                 float collisionLambdaMult = col.CollisionLambdaMultiplier_a * col.CollisionLambdaMultiplier_b;
-                lambda *= collisionLambdaMult;
 
-                vAdd_a += col.InverseMass_a * _va * lambda;
-                avAdd_a += Vector3.Scale(col.InverseInertiaWs_a, _wa) * lambda;
-                vAdd_b += col.InverseMass_b * _vb * lambda;
-                avAdd_b += Vector3.Scale(col.InverseInertiaWs_b, _wb) * lambda;
+                float lambdaM = lambda * collisionLambdaMult;
+                vAdd_a += col.InverseMass_a * _va * lambdaM;
+                avAdd_a += Vector3.Scale(col.InverseInertiaWs_a, _wa) * lambdaM;
+                vAdd_b += col.InverseMass_b * _vb * lambdaM;
+                avAdd_b += Vector3.Scale(col.InverseInertiaWs_b, _wb) * lambdaM;
 
                 return (vAdd_a, avAdd_a, vAdd_b, avAdd_b);
             }
