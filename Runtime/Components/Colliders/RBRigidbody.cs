@@ -81,8 +81,9 @@ namespace RBPhys
             FindColliders();
             UpdateTransform();
             RecalculateInertiaTensor();
+            collisionLambdaMultiplier = 1;
 
-            if(!isSleeping || sleepGrace != 5)
+            if (!isSleeping || sleepGrace != 5)
             {
                 isSleeping = false;
                 sleepGrace = 0;
