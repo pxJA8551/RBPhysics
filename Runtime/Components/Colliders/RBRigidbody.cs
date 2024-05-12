@@ -157,7 +157,7 @@ namespace RBPhys
         {
             foreach (var c in _colliders)
             {
-                c.colliderSizeMultiplier = Mathf.Min(c.colliderSizeMultiplier, multiplier);
+                c.colliderSizeMultiplier = multiplier;
             }
         }
 
@@ -165,7 +165,7 @@ namespace RBPhys
         {
             foreach (var c in _colliders)
             {
-                c.colliderSizeMultiplier = Mathf.Min(c.colliderSizeMultiplier, multiplier);
+                c.colliderSizeMultiplier = multiplier;
                 c.colliderSizeMultiplierRigidbody = this;
             }
         }
