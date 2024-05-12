@@ -22,6 +22,9 @@ namespace RBPhys
 
         public RBTrajectory ExpTrajectory { get { return _expTrajectory; } }
 
+        [NonSerialized] public float colliderSizeMultiplier = 1f;
+        [NonSerialized] public RBRigidbody colliderSizeMultiplierRigidbody;
+
         public bool IgnoreCollision { get { return _stackVal_ignoreCollision_ifGreaterThanZero > 0; } }
 
         int _stackVal_ignoreCollision_ifGreaterThanZero = 0;
@@ -112,6 +115,7 @@ namespace RBPhys
         }
 
         public abstract float CalcVolume();
+        public abstract float CalcUnscaledVolume();
         public abstract RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot);
         public abstract RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot);
         public abstract RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot);

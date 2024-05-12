@@ -20,8 +20,6 @@ namespace RBPhys
         [NonSerialized] public Vector3 inertiaTensor;
         [NonSerialized] public Quaternion inertiaTensorRotation;
 
-        [NonSerialized] public float collisionLambdaMultiplier = 1;
-
         Vector3 _centerOfGravity;
 
         Vector3 _velocity;
@@ -153,6 +151,23 @@ namespace RBPhys
         public RBCollider[] GetColliders()
         {
             return _colliders;
+        }
+
+        public void SetColliderSizeMultiplier(float multiplier)
+        {
+            foreach (var c in _colliders)
+            {
+                c.colliderSizeMultiplier = multiplier;
+            }
+        }
+
+        public void SetColliderSizeMultiplierWithOffset(float multiplier)
+        {
+            foreach (var c in _colliders)
+            {
+                c.colliderSizeMultiplier = multiplier;
+                c.colliderSizeMultiplierRigidbody = this;
+            }
         }
 
         internal void ApplyTransform(float dt)
