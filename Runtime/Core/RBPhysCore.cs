@@ -20,8 +20,9 @@ namespace RBPhys
     {
         public const int CPU_STD_SOLVER_MAX_ITERATION = 3;
         public const int CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION = 2;
-        public const float CPU_SOLVER_ABORT_VELADD_SQRT = 0.01f * 0.01f;
-        public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0.05f * 0.05f;
+        public const float CPU_SOLVER_ABORT_VELADD_SQRT = 0;
+        public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = 0;
+        public const float COLLISION_AS_CONTINUOUS_FRAMES = 3;
 
         public static int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
         public static int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
@@ -1052,6 +1053,8 @@ namespace RBPhys
 
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
+                    rbc?.ClearCACCount();
+
                     if (isInverted && rbc != null)
                     {
                         rbc.SwapTo(pair.Item1, pair.Item2);
@@ -1091,6 +1094,8 @@ namespace RBPhys
                     RBPhysDebugging.IsPenetrationValidAssert(pair.p);
 
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
+
+                    rbc?.ClearCACCount();
 
                     if (isInverted && rbc != null)
                     {
@@ -1132,6 +1137,8 @@ namespace RBPhys
 
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
+                    rbc?.ClearCACCount();
+
                     if (isInverted && rbc != null)
                     {
                         rbc.SwapTo(pair.Item1, pair.Item2);
@@ -1171,6 +1178,8 @@ namespace RBPhys
                     RBPhysDebugging.IsPenetrationValidAssert(pair.p);
 
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
+
+                    rbc?.ClearCACCount();
 
                     if (isInverted && rbc != null)
                     {
@@ -1212,6 +1221,8 @@ namespace RBPhys
 
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
+                    rbc?.ClearCACCount();
+
                     if (isInverted && rbc != null)
                     {
                         rbc.SwapTo(pair.Item1, pair.Item2);
@@ -1251,6 +1262,8 @@ namespace RBPhys
                     RBPhysDebugging.IsPenetrationValidAssert(pair.p);
 
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
+
+                    rbc?.ClearCACCount();
 
                     if (isInverted && rbc != null)
                     {
@@ -1314,6 +1327,8 @@ namespace RBPhys
             }
             Profiler.EndSample();
 
+            float dt2 = dt;
+
             Profiler.BeginSample(name: "Physics-CollisionResolution-SolveCollisions/StdSolver");
             for (int iter = 0; iter < cpu_std_solver_max_iter; iter++)
             {
@@ -1339,16 +1354,16 @@ namespace RBPhys
                 {
                     Profiler.BeginSample(name: "UpdateTrajectories");
 
-                    UpdateColliderExtTrajectories(dt);
+                    UpdateColliderExtTrajectories(dt2);
 
                     Parallel.For(0, _collisionsInSolver.Count, j =>
                     {
-                        UpdateTrajectoryPair(_collisionsInSolver[j], dt);
+                        UpdateTrajectoryPair(_collisionsInSolver[j], dt2);
                     });
 
                     Parallel.ForEach(_stdSolversAsync, s =>
                     {
-                        s.StdSolverInit(dt, false);
+                        s.StdSolverInit(dt2, false);
                     });
 
                     Profiler.EndSample();
@@ -1357,9 +1372,11 @@ namespace RBPhys
 
             Profiler.EndSample();
 
-            _collisions.Clear();
+            _collisions.RemoveAll(item => item.cacCount > COLLISION_AS_CONTINUOUS_FRAMES);
             _collisions.AddRange(_collisionsInSolver);
             _collisionsInSolver.Clear();
+            _collisions.ForEach(item => item.IncrCACCount());
+            _collisions = _collisions.Distinct().ToList();
         }
 
         static bool RecalculateCollision(RBCollider col_a, RBCollider col_b, RBDetailCollision.DetailCollisionInfo info, out Vector3 p, out Vector3 pA, out Vector3 pB)
@@ -1372,6 +1389,8 @@ namespace RBPhys
                 {
                     //OBB-OBB衝突
                     (p, pA, pB) = RBDetailCollision.DetailCollisionOBBOBB.CalcDetailCollisionLighter(col_a.CalcExpOBB(), col_b.CalcExpOBB(), info);
+                    var info2 = RBDetailCollision.DetailCollisionOBBOBB.CalcDetailCollisionInfo(col_a.CalcExpOBB(), col_b.CalcExpOBB());
+                    (p, pA, pB) = (info2.p, info2.pA, info2.pB);
                     return true;
                 }
                 else if (col_a.GeometryType == RBGeometryType.OBB && col_b.GeometryType == RBGeometryType.Sphere)
@@ -1645,6 +1664,7 @@ namespace RBPhys
         public RBDetailCollision.DetailCollisionInfo info;
 
         public bool skipInSolver;
+        public int cacCount = 0;
 
         Jacobian _jN = new Jacobian(Jacobian.Type.Normal); //Normal
         Jacobian _jT = new Jacobian(Jacobian.Type.Tangent); //Tangent
@@ -1785,6 +1805,16 @@ namespace RBPhys
             skipInSolver = false;
         }
 
+        public void IncrCACCount()
+        {
+            cacCount++;
+        }
+
+        public void ClearCACCount()
+        {
+            cacCount = 0;
+        }
+
         public void InitVelocityConstraint(float dt, bool initBias = true)
         {
             Vector3 contactNormal = ContactNormal;
@@ -1865,6 +1895,8 @@ namespace RBPhys
                 {
                     _bias = 0;
                     _totalLambda = 0;
+                    _ie = 0;
+                    _eLast = -1;
                 }
 
                 if (_type == Type.Normal)
@@ -1880,26 +1912,23 @@ namespace RBPhys
                     relVel -= col.ExpVelocity_b;
                     relVel -= Vector3.Cross(col.ExpAngularVelocity_b, col.rB);
 
-                    if (initBias)
+                    float e = Mathf.Max(0, col.penetration.magnitude - COLLISION_ERROR_SLOP);
+
+                    if (_eLast < 0)
                     {
-                        float e = Mathf.Max(0, col.penetration.magnitude - COLLISION_ERROR_SLOP);
-
-                        if (_eLast < 0)
-                        {
-                            _eLast = e;
-                        }
-
-                        float closingVelocity = Vector3.Dot(relVel, dirN);
-
-                        float vp = -(e / dt) * cr_kp;
-                        _ie += (e + _eLast) * dt / 2;
-                        float vi = _ie * cr_ki;
-                        float vd = ((e - _eLast) / dt) * cr_kd;
-
-                        _bias = vp + vi + vd + (restitution * closingVelocity * dt);
-
                         _eLast = e;
                     }
+
+                    float closingVelocity = Vector3.Dot(relVel, dirN);
+
+                    float vp = -(e / dt) * cr_kp;
+                    _ie += (e + _eLast) * dt / 2;
+                    float vi = _ie * cr_ki;
+                    float vd = ((e - _eLast) / dt) * cr_kd;
+
+                    _bias = vp + vi + vd + (restitution * closingVelocity );
+
+                    _eLast = e;
                 }
 
                 float k = 0;

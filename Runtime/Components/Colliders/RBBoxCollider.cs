@@ -56,7 +56,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override Vector3 GetColliderCenter(Vector3 pos, Quaternion rot)
         {
-            return Center;
+            return pos + rot * Center;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
