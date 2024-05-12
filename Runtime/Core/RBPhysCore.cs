@@ -1792,7 +1792,6 @@ namespace RBPhys
             Vector3 bitangent = Vector3.zero;
             Vector3.OrthoNormalize(ref contactNormal, ref tangent, ref bitangent);
 
-
             _jN.Init(this, contactNormal, dt, initBias);
             _jT.Init(this, tangent, dt, initBias);
             _jB.Init(this, bitangent, dt, initBias);
@@ -1827,6 +1826,9 @@ namespace RBPhys
             float _totalLambda;
             float _effectiveMass;
 
+            float _eLast;
+            float _ie;
+
             public enum Type
             {
                 Normal,
@@ -1845,6 +1847,9 @@ namespace RBPhys
                 _bias = 0;
                 _totalLambda = 0;
                 _effectiveMass = 0;
+
+                _eLast = -1;
+                _ie = 0;
             }
 
             public void Init(RBCollision col, Vector3 dir, float dt, bool initBias = true)
@@ -1864,7 +1869,10 @@ namespace RBPhys
 
                 if (_type == Type.Normal)
                 {
-                    float beta = col.collider_a.beta * col.collider_b.beta;
+                    float cr_kp = (col.collider_a.cr_kp + col.collider_b.cr_kp) / 2f;
+                    float cr_ki = (col.collider_a.cr_ki + col.collider_b.cr_ki) / 2f;
+                    float cr_kd = (col.collider_a.cr_kd + col.collider_b.cr_kd) / 2f;
+
                     float restitution = col.collider_a.restitution * col.collider_b.restitution;
                     Vector3 relVel = Vector3.zero;
                     relVel += col.ExpVelocity_a;
@@ -1874,8 +1882,23 @@ namespace RBPhys
 
                     if (initBias)
                     {
+                        float e = Mathf.Max(0, col.penetration.magnitude - COLLISION_ERROR_SLOP);
+
+                        if (_eLast < 0)
+                        {
+                            _eLast = e;
+                        }
+
                         float closingVelocity = Vector3.Dot(relVel, dirN);
-                        _bias = -(beta / dt) * Mathf.Max(0, col.penetration.magnitude - COLLISION_ERROR_SLOP) + restitution * closingVelocity;
+
+                        float vp = -(e / dt) * cr_kp;
+                        _ie += (e + _eLast) * dt / 2;
+                        float vi = _ie * cr_ki;
+                        float vd = ((e - _eLast) / dt) * cr_kd;
+
+                        _bias = vp + vi + vd + (restitution * closingVelocity * dt);
+
+                        _eLast = e;
                     }
                 }
 
