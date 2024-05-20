@@ -177,16 +177,20 @@ namespace RBPhys
         {
             if (timeScaleMode == TimeScaleMode.Prograde)
             {
-                _velocity = Vector3.ClampMagnitude(_expVelocity, Mathf.Max(0, _expVelocity.magnitude - drag));
-                _angularVelocity = Vector3.ClampMagnitude(_expAngularVelocity, Mathf.Max(0, _expAngularVelocity.magnitude - angularDrag));
+                float vm = _expVelocity.magnitude;
+                float avm = _expVelocity.magnitude;
+                _velocity = (_expVelocity / vm) * Mathf.Max(0, vm - drag);
+                _angularVelocity = (_angularVelocity / avm) * Mathf.Max(0, avm - angularDrag);
 
                 transform.position = _position + (_velocity * dt);
                 transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
             }
             else
             {
-                _velocity *= (_velocity.magnitude + drag);
-                _angularVelocity *= (_expAngularVelocity.magnitude + angularDrag);
+                float vm = _expVelocity.magnitude;
+                float avm = _expVelocity.magnitude;
+                _velocity = (_expVelocity / vm) * Mathf.Max(0, vm + drag);
+                _angularVelocity = (_angularVelocity / avm) * Mathf.Max(0, avm + angularDrag);
 
                 transform.position = _position + (_velocity * -dt);
                 transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * -dt, _angularVelocity.normalized) * _rotation;

@@ -32,8 +32,8 @@ namespace RBPhysEditor
             sleeping = serializedObject.FindProperty("isSleeping");
             sleepGrace = serializedObject.FindProperty("sleepGrace");
             useGravity = serializedObject.FindProperty("useGravity");
-            useGravity = serializedObject.FindProperty("drag");
-            useGravity = serializedObject.FindProperty("angularDrag");
+            drag = serializedObject.FindProperty("drag");
+            angularDrag = serializedObject.FindProperty("angularDrag");
         }
 
         public override void OnInspectorGUI()

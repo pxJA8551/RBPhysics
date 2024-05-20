@@ -157,9 +157,13 @@ namespace RBPhys
             {
                 if (!rb.isSleeping && rb.useGravity)
                 {
-                    if (timeScaleMode != TimeScaleMode.Freeze)
+                    if (timeScaleMode == TimeScaleMode.Prograde)
                     {
                         rb.ExpVelocity += gravityAcceleration * dt;
+                    }
+                    else if (timeScaleMode == TimeScaleMode.Retrograde)
+                    {
+                        rb.ExpVelocity -= gravityAcceleration * dt;
                     }
                 }
             }
@@ -1980,7 +1984,7 @@ namespace RBPhys
                         friction = (friction != 0) ? 1 / friction : 0;
 
                         float maxFriction = friction * col._jN._totalLambda;
-                        _totalLambda = -Mathf.Clamp(_totalLambda + lambda, -maxFriction, maxFriction);
+                        _totalLambda = Mathf.Clamp(_totalLambda - lambda, -maxFriction, maxFriction);
                     }
                     else if (tMode == TimeScaleMode.Freeze)
                     {
