@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using UnityEngine;
+using static RBPhys.RBPhysCore;
 using static RBPhys.RBPhysUtil;
 
 namespace RBPhys
@@ -16,6 +17,8 @@ namespace RBPhys
         const int SLEEP_GRACE_FRAMES = 6;
 
         public float mass = 1;
+        public float drag = 0.03f;
+        public float angularDrag = 0.07f;
 
         [NonSerialized] public Vector3 inertiaTensor;
         [NonSerialized] public Quaternion inertiaTensorRotation;
@@ -172,11 +175,22 @@ namespace RBPhys
 
         internal void ApplyTransform(float dt)
         {
-            _velocity = Vector3.ClampMagnitude(_expVelocity, Mathf.Max(0, _expVelocity.magnitude - 0.03f));
-            _angularVelocity = Vector3.ClampMagnitude(_expAngularVelocity, Mathf.Max(0, _expAngularVelocity.magnitude - 0.07f));
+            if (timeScaleMode == TimeScaleMode.Prograde)
+            {
+                _velocity = Vector3.ClampMagnitude(_expVelocity, Mathf.Max(0, _expVelocity.magnitude - drag));
+                _angularVelocity = Vector3.ClampMagnitude(_expAngularVelocity, Mathf.Max(0, _expAngularVelocity.magnitude - angularDrag));
 
-            transform.position = _position + (_velocity * dt);
-            transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
+                transform.position = _position + (_velocity * dt);
+                transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
+            }
+            else
+            {
+                _velocity *= (_velocity.magnitude + drag);
+                _angularVelocity *= (_expAngularVelocity.magnitude + angularDrag);
+
+                transform.position = _position + (_velocity * -dt);
+                transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * -dt, _angularVelocity.normalized) * _rotation;
+            }
 
             UpdateTransform();
             UpdateExpTrajectory(dt);
@@ -223,7 +237,18 @@ namespace RBPhys
 
         public (Vector3 pos, Quaternion rot) GetIntergrated(float dt)
         {
-            return (_position + _expVelocity * dt, Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * dt, _expAngularVelocity.normalized) * _rotation);
+            if (timeScaleMode == TimeScaleMode.Prograde)
+            {
+                return (_position + _expVelocity * dt, Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * dt, _expAngularVelocity.normalized) * _rotation);
+            }
+            else if (timeScaleMode == TimeScaleMode.Retrograde)
+            {
+                return (_position + _expVelocity * -dt, Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * -dt, _expAngularVelocity.normalized) * _rotation);
+            }
+            else
+            {
+                return (_position, _rotation);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

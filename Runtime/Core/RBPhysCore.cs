@@ -33,6 +33,8 @@ namespace RBPhys
 
         public static Vector3 gravityAcceleration = new Vector3(0, -9.81f, 0);
 
+        public static TimeScaleMode timeScaleMode = TimeScaleMode.Prograde;
+
         static List<RBRigidbody> _rigidbodies = new List<RBRigidbody>();
         static List<RBCollider> _colliders = new List<RBCollider>();
 
@@ -155,7 +157,14 @@ namespace RBPhys
             {
                 if (!rb.isSleeping && rb.useGravity)
                 {
-                    rb.ExpVelocity += gravityAcceleration * dt;
+                    if (timeScaleMode == TimeScaleMode.Prograde)
+                    {
+                        rb.ExpVelocity += gravityAcceleration * dt;
+                    }
+                    else if (timeScaleMode == TimeScaleMode.Retrograde)
+                    {
+                        rb.ExpVelocity -= gravityAcceleration * dt;
+                    }
                 }
             }
 
@@ -1072,7 +1081,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt);
+                    rbc.InitVelocityConstraint(dt, timeScaleMode);
                     rbc.info = pair.p.info;
 
                     _obb_obb_cols[i] = (default, default, default, rbc);
@@ -1114,7 +1123,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt);
+                    rbc.InitVelocityConstraint(dt, timeScaleMode);
                     rbc.info = pair.p.info;
 
                     _obb_sphere_cols[i] = (default, default, default, rbc);
@@ -1156,7 +1165,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt);
+                    rbc.InitVelocityConstraint(dt, timeScaleMode);
                     rbc.info = pair.p.info;
 
                     _sphere_sphere_cols[i] = (default, default, default, rbc);
@@ -1198,7 +1207,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt);
+                    rbc.InitVelocityConstraint(dt, timeScaleMode);
                     rbc.info = pair.p.info;
 
                     _obb_capsule_cols[i] = (default, default, default, rbc);
@@ -1240,7 +1249,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt);
+                    rbc.InitVelocityConstraint(dt, timeScaleMode);
                     rbc.info = pair.p.info;
 
                     _sphere_capsule_cols[i] = (default, default, default, rbc);
@@ -1282,7 +1291,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt);
+                    rbc.InitVelocityConstraint(dt, timeScaleMode);
                     rbc.info = pair.p.info;
 
                     _capsule_capsule_cols[i] = (default, default, default, rbc);
@@ -1499,7 +1508,7 @@ namespace RBPhys
                 pA = col.collider_a.ExpToCurrent(pA);
                 pB = col.collider_b.ExpToCurrent(pB);
                 col.Update(p, pA, pB);
-                col.InitVelocityConstraint(dt, false);
+                col.InitVelocityConstraint(dt, timeScaleMode, false);
             }
             else
             {
@@ -1632,7 +1641,7 @@ namespace RBPhys
 
         static (Vector3 velAdd_a, Vector3 angVelAdd_a, Vector3 velAdd_b, Vector3 angVelAdd_b) SolveCollision(RBCollision col)
         {
-            col.SolveVelocityConstraints(out Vector3 velocityAdd_a, out Vector3 angularVelocityAdd_a, out Vector3 velocityAdd_b, out Vector3 angularVelocityAdd_b);
+            col.SolveVelocityConstraints(out Vector3 velocityAdd_a, out Vector3 angularVelocityAdd_a, out Vector3 velocityAdd_b, out Vector3 angularVelocityAdd_b, timeScaleMode);
             return (velocityAdd_a, angularVelocityAdd_a, velocityAdd_b, angularVelocityAdd_b);
         }
 
@@ -1812,28 +1821,28 @@ namespace RBPhys
             cacCount = 0;
         }
 
-        public void InitVelocityConstraint(float dt, bool initBias = true)
+        public void InitVelocityConstraint(float dt, TimeScaleMode tMode, bool initBias = true)
         {
             Vector3 contactNormal = ContactNormal;
             Vector3 tangent = Vector3.zero;
             Vector3 bitangent = Vector3.zero;
             Vector3.OrthoNormalize(ref contactNormal, ref tangent, ref bitangent);
 
-            _jN.Init(this, contactNormal, dt, initBias);
-            _jT.Init(this, tangent, dt, initBias);
-            _jB.Init(this, bitangent, dt, initBias);
+            _jN.Init(this, contactNormal, dt, tMode, initBias);
+            _jT.Init(this, tangent, dt, tMode, initBias);
+            _jB.Init(this, bitangent, dt, tMode, initBias);
         }
 
-        public void SolveVelocityConstraints(out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b)
+        public void SolveVelocityConstraints(out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b, TimeScaleMode tMode)
         {
             vAdd_a = Vector3.zero;
             avAdd_a = Vector3.zero;
             vAdd_b = Vector3.zero;
             avAdd_b = Vector3.zero;
 
-            (vAdd_a, avAdd_a, vAdd_b, avAdd_b) = _jN.Resolve(this, vAdd_a, avAdd_a, vAdd_b, avAdd_b);
-            (vAdd_a, avAdd_a, vAdd_b, avAdd_b) = _jT.Resolve(this, vAdd_a, avAdd_a, vAdd_b, avAdd_b);
-            (vAdd_a, avAdd_a, vAdd_b, avAdd_b) = _jB.Resolve(this, vAdd_a, avAdd_a, vAdd_b, avAdd_b);
+            (vAdd_a, avAdd_a, vAdd_b, avAdd_b) = _jN.Resolve(this, vAdd_a, avAdd_a, vAdd_b, avAdd_b, tMode);
+            (vAdd_a, avAdd_a, vAdd_b, avAdd_b) = _jT.Resolve(this, vAdd_a, avAdd_a, vAdd_b, avAdd_b, tMode);
+            (vAdd_a, avAdd_a, vAdd_b, avAdd_b) = _jB.Resolve(this, vAdd_a, avAdd_a, vAdd_b, avAdd_b, tMode);
         }
 
         const float COLLISION_ERROR_SLOP = 0.005f;
@@ -1879,7 +1888,7 @@ namespace RBPhys
                 _ie = 0;
             }
 
-            public void Init(RBCollision col, Vector3 dir, float dt, bool initBias = true)
+            public void Init(RBCollision col, Vector3 dir, float dt, TimeScaleMode tMode, bool initBias = true)
             {
                 Vector3 dirN = dir;
 
@@ -1903,6 +1912,16 @@ namespace RBPhys
                     float cr_kd = (col.collider_a.cr_kd + col.collider_b.cr_kd) / 2f;
 
                     float restitution = col.collider_a.restitution * col.collider_b.restitution;
+
+                    if (tMode == TimeScaleMode.Retrograde)
+                    {
+                        restitution = (restitution != 0) ? 1 / restitution : 0;
+                    }
+                    else if (tMode == TimeScaleMode.Freeze)
+                    {
+                        restitution = 0;
+                    }
+
                     Vector3 relVel = Vector3.zero;
                     relVel += col.ExpVelocity_a;
                     relVel += Vector3.Cross(col.ExpAngularVelocity_a, col.rA);
@@ -1936,7 +1955,7 @@ namespace RBPhys
                 _effectiveMass = 1 / k;
             }
 
-            public (Vector3, Vector3, Vector3, Vector3) Resolve(RBCollision col, Vector3 vAdd_a, Vector3 avAdd_a, Vector3 vAdd_b, Vector3 avAdd_b)
+            public (Vector3, Vector3, Vector3, Vector3) Resolve(RBCollision col, Vector3 vAdd_a, Vector3 avAdd_a, Vector3 vAdd_b, Vector3 avAdd_b, TimeScaleMode tMode)
             {
                 float jv = 0;
                 jv += Vector3.Dot(_va, col.ExpVelocity_a);
@@ -1954,8 +1973,18 @@ namespace RBPhys
                 else if (_type == Type.Tangent)
                 {
                     float friction = col.collider_a.friction * col.collider_b.friction;
-                    float maxFriction = friction * col._jN._totalLambda;
-                    _totalLambda = Mathf.Clamp(_totalLambda + lambda, -maxFriction, maxFriction);
+
+                    if (tMode == TimeScaleMode.Retrograde)
+                    {
+                        friction = (friction != 0) ? 1 / friction : 0;
+
+                        float maxFriction = friction * col._jN._totalLambda;
+                        _totalLambda = -Mathf.Clamp(_totalLambda + lambda, -maxFriction, maxFriction);
+                    }
+                    else if (tMode == TimeScaleMode.Freeze)
+                    {
+                        _totalLambda = 0;
+                    }
                 }
 
                 lambda = _totalLambda - oldTotalLambda;
@@ -2383,5 +2412,12 @@ namespace RBPhys
                 _rigidbody.PhysAwake();
             }
         }
+    }
+
+    public enum TimeScaleMode
+    {
+        Prograde = 0,
+        Retrograde = 1,
+        Freeze = 2
     }
 }
