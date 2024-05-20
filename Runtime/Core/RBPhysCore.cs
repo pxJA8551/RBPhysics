@@ -42,15 +42,19 @@ namespace RBPhys
 
             set
             {
-                _timeScaleMode = value;
-                Parallel.ForEach(_rigidbodies, rb =>
+                if ((int)_timeScaleMode + (int)value == 1)
                 {
-                    if (rb != null)
+                    Parallel.ForEach(_rigidbodies, rb =>
                     {
-                        rb.ExpVelocity *= -1;
-                        rb.ExpAngularVelocity *= -1;
-                    }
-                });
+                        if (rb != null)
+                        {
+                            rb.ExpVelocity *= -1;
+                            rb.ExpAngularVelocity *= -1;
+                        }
+                    });
+                }
+
+                _timeScaleMode = value;
             }
         }
 
