@@ -15,6 +15,8 @@ namespace RBPhysEditor
     public class RBRigidbodyEditor : Editor
     {
         SerializedProperty mass;
+        SerializedProperty drag;
+        SerializedProperty angularDrag;
         SerializedProperty sleeping;
         SerializedProperty sleepGrace;
         SerializedProperty useGravity;
@@ -30,6 +32,8 @@ namespace RBPhysEditor
             sleeping = serializedObject.FindProperty("isSleeping");
             sleepGrace = serializedObject.FindProperty("sleepGrace");
             useGravity = serializedObject.FindProperty("useGravity");
+            useGravity = serializedObject.FindProperty("drag");
+            useGravity = serializedObject.FindProperty("angularDrag");
         }
 
         public override void OnInspectorGUI()
@@ -46,6 +50,8 @@ namespace RBPhysEditor
             }
 
             EditorGUILayout.PropertyField(mass);
+            EditorGUILayout.PropertyField(drag);
+            EditorGUILayout.PropertyField(angularDrag);
             EditorGUILayout.PropertyField(useGravity);
             sleepDefault = EditorGUILayout.Toggle("Sleep until interaction", sleepDefault);
 
