@@ -175,15 +175,12 @@ namespace RBPhys
 
         internal void ApplyTransform(float dt)
         {
-            if (timeScaleMode == TimeScaleMode.Prograde)
+            if (PhysTimeScaleMode == TimeScaleMode.Prograde)
             {
                 float vm = _expVelocity.magnitude;
                 float avm = _expVelocity.magnitude;
                 _velocity = (_expVelocity / vm) * Mathf.Max(0, vm - drag);
                 _angularVelocity = (_angularVelocity / avm) * Mathf.Max(0, avm - angularDrag);
-
-                transform.position = _position + (_velocity * dt);
-                transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
             }
             else
             {
@@ -191,10 +188,10 @@ namespace RBPhys
                 float avm = _expVelocity.magnitude;
                 _velocity = (_expVelocity / vm) * Mathf.Max(0, vm + drag);
                 _angularVelocity = (_angularVelocity / avm) * Mathf.Max(0, avm + angularDrag);
-
-                transform.position = _position + (_velocity * -dt);
-                transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * -dt, _angularVelocity.normalized) * _rotation;
             }
+
+            transform.position = _position + (_velocity * dt);
+            transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
 
             UpdateTransform();
             UpdateExpTrajectory(dt);
@@ -241,17 +238,13 @@ namespace RBPhys
 
         public (Vector3 pos, Quaternion rot) GetIntergrated(float dt)
         {
-            if (timeScaleMode == TimeScaleMode.Prograde)
+            if (PhysTimeScaleMode == TimeScaleMode.Freeze)
             {
-                return (_position + _expVelocity * dt, Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * dt, _expAngularVelocity.normalized) * _rotation);
-            }
-            else if (timeScaleMode == TimeScaleMode.Retrograde)
-            {
-                return (_position + _expVelocity * -dt, Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * -dt, _expAngularVelocity.normalized) * _rotation);
+                return (_position, _rotation);
             }
             else
             {
-                return (_position, _rotation);
+                return (_position + _expVelocity * dt, Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * dt, _expAngularVelocity.normalized) * _rotation);
             }
         }
 

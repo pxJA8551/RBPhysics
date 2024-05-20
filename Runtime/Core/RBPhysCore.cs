@@ -33,7 +33,28 @@ namespace RBPhys
 
         public static Vector3 gravityAcceleration = new Vector3(0, -9.81f, 0);
 
-        public static TimeScaleMode timeScaleMode = TimeScaleMode.Prograde;
+        public static TimeScaleMode PhysTimeScaleMode
+        {
+            get
+            {
+                return _timeScaleMode;
+            }
+
+            set
+            {
+                _timeScaleMode = value;
+                Parallel.ForEach(_rigidbodies, rb =>
+                {
+                    if (rb != null)
+                    {
+                        rb.ExpVelocity *= -1;
+                        rb.ExpAngularVelocity *= -1;
+                    }
+                });
+            }
+        }
+
+        static TimeScaleMode _timeScaleMode = TimeScaleMode.Prograde;
 
         static List<RBRigidbody> _rigidbodies = new List<RBRigidbody>();
         static List<RBCollider> _colliders = new List<RBCollider>();
@@ -157,13 +178,9 @@ namespace RBPhys
             {
                 if (!rb.isSleeping && rb.useGravity)
                 {
-                    if (timeScaleMode == TimeScaleMode.Prograde)
+                    if (_timeScaleMode != TimeScaleMode.Freeze)
                     {
                         rb.ExpVelocity += gravityAcceleration * dt;
-                    }
-                    else if (timeScaleMode == TimeScaleMode.Retrograde)
-                    {
-                        rb.ExpVelocity -= gravityAcceleration * dt;
                     }
                 }
             }
@@ -1081,7 +1098,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt, timeScaleMode);
+                    rbc.InitVelocityConstraint(dt, _timeScaleMode);
                     rbc.info = pair.p.info;
 
                     _obb_obb_cols[i] = (default, default, default, rbc);
@@ -1123,7 +1140,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt, timeScaleMode);
+                    rbc.InitVelocityConstraint(dt, _timeScaleMode);
                     rbc.info = pair.p.info;
 
                     _obb_sphere_cols[i] = (default, default, default, rbc);
@@ -1165,7 +1182,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt, timeScaleMode);
+                    rbc.InitVelocityConstraint(dt, _timeScaleMode);
                     rbc.info = pair.p.info;
 
                     _sphere_sphere_cols[i] = (default, default, default, rbc);
@@ -1207,7 +1224,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt, timeScaleMode);
+                    rbc.InitVelocityConstraint(dt, _timeScaleMode);
                     rbc.info = pair.p.info;
 
                     _obb_capsule_cols[i] = (default, default, default, rbc);
@@ -1249,7 +1266,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt, timeScaleMode);
+                    rbc.InitVelocityConstraint(dt, _timeScaleMode);
                     rbc.info = pair.p.info;
 
                     _sphere_capsule_cols[i] = (default, default, default, rbc);
@@ -1291,7 +1308,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt, timeScaleMode);
+                    rbc.InitVelocityConstraint(dt, _timeScaleMode);
                     rbc.info = pair.p.info;
 
                     _capsule_capsule_cols[i] = (default, default, default, rbc);
@@ -1508,7 +1525,7 @@ namespace RBPhys
                 pA = col.collider_a.ExpToCurrent(pA);
                 pB = col.collider_b.ExpToCurrent(pB);
                 col.Update(p, pA, pB);
-                col.InitVelocityConstraint(dt, timeScaleMode, false);
+                col.InitVelocityConstraint(dt, _timeScaleMode, false);
             }
             else
             {
@@ -1641,7 +1658,7 @@ namespace RBPhys
 
         static (Vector3 velAdd_a, Vector3 angVelAdd_a, Vector3 velAdd_b, Vector3 angVelAdd_b) SolveCollision(RBCollision col)
         {
-            col.SolveVelocityConstraints(out Vector3 velocityAdd_a, out Vector3 angularVelocityAdd_a, out Vector3 velocityAdd_b, out Vector3 angularVelocityAdd_b, timeScaleMode);
+            col.SolveVelocityConstraints(out Vector3 velocityAdd_a, out Vector3 angularVelocityAdd_a, out Vector3 velocityAdd_b, out Vector3 angularVelocityAdd_b, _timeScaleMode);
             return (velocityAdd_a, angularVelocityAdd_a, velocityAdd_b, angularVelocityAdd_b);
         }
 
