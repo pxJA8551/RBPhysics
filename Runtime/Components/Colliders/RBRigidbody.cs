@@ -179,15 +179,15 @@ namespace RBPhys
             {
                 float vm = _expVelocity.magnitude;
                 float avm = _expAngularVelocity.magnitude;
-                _velocity = (_expVelocity / vm) * Mathf.Max(0, vm - drag);
-                _angularVelocity = (_expAngularVelocity / avm) * Mathf.Max(0, avm - angularDrag);
+                _velocity = (vm > 0 ? (_expVelocity / vm) : Vector3.zero) * Mathf.Max(0, vm - drag);
+                _angularVelocity = (avm > 0 ? (_expAngularVelocity / avm) : Vector3.zero) * Mathf.Max(0, avm - angularDrag);
             }
             else
             {
                 float vm = _expVelocity.magnitude;
                 float avm = _expAngularVelocity.magnitude;
-                _velocity = (_expVelocity / vm) * Mathf.Max(0, vm + drag);
-                _angularVelocity = (_expAngularVelocity / avm) * Mathf.Max(0, avm + angularDrag);
+                _velocity = (vm > 0 ? (_expVelocity / vm) : Vector3.zero) * Mathf.Max(0, vm + drag);
+                _angularVelocity = (avm > 0 ? (_expAngularVelocity / avm) : Vector3.zero) * Mathf.Max(0, avm + angularDrag);
             }
 
             transform.position = _position + (_velocity * dt);
@@ -299,6 +299,9 @@ namespace RBPhys
         {
             if (IsExpUnderSleepLevel())
             {
+                _expVelocity = Vector3.zero;
+                _expAngularVelocity = Vector3.zero;
+
                 if (sleepGrace < SLEEP_GRACE_FRAMES)
                 {
                     sleepGrace++;

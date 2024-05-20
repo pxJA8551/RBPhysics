@@ -1994,15 +1994,14 @@ namespace RBPhys
                 else if (_type == Type.Tangent)
                 {
                     float friction = col.collider_a.friction * col.collider_b.friction;
+                    float maxFriction = friction * col._jN._totalLambda;
 
                     if (tMode == TimeScaleMode.Prograde)
                     {
-                        float maxFriction = friction * col._jN._totalLambda;
                         _totalLambda = Mathf.Clamp(_totalLambda + lambda, -maxFriction, maxFriction);
                     }
                     else if (tMode == TimeScaleMode.Retrograde)
                     {
-                        float maxFriction = friction * col._jN._totalLambda;
                         _totalLambda = Mathf.Clamp(_totalLambda - lambda, -maxFriction, maxFriction);
                     }
                     else if (tMode == TimeScaleMode.Freeze)
