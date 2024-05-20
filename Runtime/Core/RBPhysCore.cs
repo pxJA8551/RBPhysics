@@ -1391,8 +1391,6 @@ namespace RBPhys
                 {
                     //OBB-OBB衝突
                     (p, pA, pB) = RBDetailCollision.DetailCollisionOBBOBB.CalcDetailCollisionLighter(col_a.CalcExpOBB(), col_b.CalcExpOBB(), info);
-                    var info2 = RBDetailCollision.DetailCollisionOBBOBB.CalcDetailCollisionInfo(col_a.CalcExpOBB(), col_b.CalcExpOBB());
-                    (p, pA, pB) = (info2.p, info2.pA, info2.pB);
                     return true;
                 }
                 else if (col_a.GeometryType == RBGeometryType.OBB && col_b.GeometryType == RBGeometryType.Sphere)
@@ -1911,7 +1909,7 @@ namespace RBPhys
                     relVel -= col.ExpVelocity_b;
                     relVel -= Vector3.Cross(col.ExpAngularVelocity_b, col.rB);
 
-                    float e = Mathf.Max(0, col.penetration.magnitude - COLLISION_ERROR_SLOP);
+                    float e = -Mathf.Max(0, col.penetration.magnitude - COLLISION_ERROR_SLOP);
 
                     if (_eLast < 0)
                     {
@@ -1920,7 +1918,7 @@ namespace RBPhys
 
                     float closingVelocity = Vector3.Dot(relVel, dirN);
 
-                    float vp = -(e / dt) * cr_kp;
+                    float vp = (e / dt) * cr_kp;
                     _ie += (e + _eLast) * dt / 2;
                     float vi = _ie * cr_ki;
                     float vd = ((e - _eLast) / dt) * cr_kd;
