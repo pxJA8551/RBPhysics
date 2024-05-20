@@ -2002,8 +2002,6 @@ namespace RBPhys
                     }
                     else if (tMode == TimeScaleMode.Retrograde)
                     {
-                        friction = (friction != 0) ? 1 / friction : 0;
-
                         float maxFriction = friction * col._jN._totalLambda;
                         _totalLambda = Mathf.Clamp(_totalLambda - lambda, -maxFriction, maxFriction);
                     }

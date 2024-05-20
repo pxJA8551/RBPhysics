@@ -178,16 +178,16 @@ namespace RBPhys
             if (PhysTimeScaleMode == TimeScaleMode.Prograde)
             {
                 float vm = _expVelocity.magnitude;
-                float avm = _expVelocity.magnitude;
+                float avm = _expAngularVelocity.magnitude;
                 _velocity = (_expVelocity / vm) * Mathf.Max(0, vm - drag);
-                _angularVelocity = (_angularVelocity / avm) * Mathf.Max(0, avm - angularDrag);
+                _angularVelocity = (_expAngularVelocity / avm) * Mathf.Max(0, avm - angularDrag);
             }
             else
             {
                 float vm = _expVelocity.magnitude;
-                float avm = _expVelocity.magnitude;
+                float avm = _expAngularVelocity.magnitude;
                 _velocity = (_expVelocity / vm) * Mathf.Max(0, vm + drag);
-                _angularVelocity = (_angularVelocity / avm) * Mathf.Max(0, avm + angularDrag);
+                _angularVelocity = (_expAngularVelocity / avm) * Mathf.Max(0, avm + angularDrag);
             }
 
             transform.position = _position + (_velocity * dt);
