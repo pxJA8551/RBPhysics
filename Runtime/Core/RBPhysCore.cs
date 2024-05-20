@@ -157,13 +157,9 @@ namespace RBPhys
             {
                 if (!rb.isSleeping && rb.useGravity)
                 {
-                    if (timeScaleMode == TimeScaleMode.Prograde)
+                    if (timeScaleMode != TimeScaleMode.Freeze)
                     {
                         rb.ExpVelocity += gravityAcceleration * dt;
-                    }
-                    else if (timeScaleMode == TimeScaleMode.Retrograde)
-                    {
-                        rb.ExpVelocity -= gravityAcceleration * dt;
                     }
                 }
             }
