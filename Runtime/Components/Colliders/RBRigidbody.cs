@@ -23,9 +23,9 @@ namespace RBPhys
         [NonSerialized] public Vector3 inertiaTensor;
         [NonSerialized] public Quaternion inertiaTensorRotation;
 
-        public bool IgnoreRigidbody { get { return _stackVal_ignoreRigidbody_ifGreaterThanZero > 0; } }
+        public bool IgnoreVelocity { get { return _stackVal_ignoreVelocity_ifGreaterThanZero > 0; } }
 
-        int _stackVal_ignoreRigidbody_ifGreaterThanZero = 0;
+        int _stackVal_ignoreVelocity_ifGreaterThanZero = 0;
 
         Vector3 _centerOfGravity;
 
@@ -70,6 +70,8 @@ namespace RBPhys
         public RBTrajectory ExpObjectTrajectory { get { return _expObjTrajectory; } }
 
         RBTrajectory _expObjTrajectory;
+
+        List<RBConstraints.IRBOnCollision> collisionCallbacks = new List<RBConstraints.IRBOnCollision>();
 
         public Vector3 InverseInertiaWs
         {
@@ -177,19 +179,19 @@ namespace RBPhys
             }
         }
 
-        public void SetIgnoreRigidbody()
+        public void SetIgnoreVelocity()
         {
-            _stackVal_ignoreRigidbody_ifGreaterThanZero++;
+            _stackVal_ignoreVelocity_ifGreaterThanZero++;
         }
 
-        public void SetDecrIgnoreRigidbody()
+        public void SetDecrIgnoreVelocity()
         {
-            _stackVal_ignoreRigidbody_ifGreaterThanZero--;
+            _stackVal_ignoreVelocity_ifGreaterThanZero--;
         }
 
         internal void ApplyTransform(float dt)
         {
-            if (!IgnoreRigidbody)
+            if (!IgnoreVelocity)
             {
                 if (PhysTimeScaleMode == TimeScaleMode.Prograde)
                 {
@@ -251,6 +253,29 @@ namespace RBPhys
             {
                 _colliders[i].UpdateExpTrajectory(Position, Rotation, r.pos, r.rot);
             }
+        }
+
+        internal void OnCollision(RBCollider collider)
+        {
+            foreach (var c in collisionCallbacks)
+            {
+                c?.OnCollision(collider);
+            }
+
+            foreach (var c in _colliders)
+            {
+                c?.OnCollision(collider);
+            }
+        }
+
+        public void AddCollisionCallback(RBConstraints.IRBOnCollision c)
+        {
+            collisionCallbacks.Add(c);
+        }
+
+        public void RemoveCollisionCallback(RBConstraints.IRBOnCollision c)
+        {
+            collisionCallbacks.Remove(c);
         }
 
         public (Vector3 pos, Quaternion rot) GetIntergrated(float dt)

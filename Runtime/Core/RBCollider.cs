@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using static RBPhys.RBPhysCore;
 
 namespace RBPhys
 {
@@ -35,6 +37,8 @@ namespace RBPhys
         Quaternion _expRot;
 
         bool _hasParentRigidbodyInFrame = false;
+
+        List<RBConstraints.IRBOnCollision> collisionCallbacks = new List<RBConstraints.IRBOnCollision>();
 
         public void SetIgnoreCollision()
         {
@@ -112,6 +116,24 @@ namespace RBPhys
             _expRot = intergratedRot * relRot;
 
             _expTrajectory.Update(this, _expPos, _expRot);
+        }
+
+        internal void OnCollision(RBCollider collider)
+        {
+            foreach (var c in collisionCallbacks)
+            {
+                c?.OnCollision(collider);
+            }
+        }
+
+        public void AddCollisionCallback(RBConstraints.IRBOnCollision c)
+        {
+            collisionCallbacks.Add(c);
+        }
+
+        public void RemoveCollisionCallback(RBConstraints.IRBOnCollision c)
+        {
+            collisionCallbacks.Remove(c);
         }
 
         public abstract float CalcVolume();

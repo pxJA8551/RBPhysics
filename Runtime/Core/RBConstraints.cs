@@ -19,6 +19,11 @@ namespace RBPhys
                 void BeforeSolver() { }
                 void AfterSolver() { }
             }
+
+            public interface IRBOnCollision
+            {
+                void OnCollision(RBCollider rbCollider);
+            }
         }
     }
 }

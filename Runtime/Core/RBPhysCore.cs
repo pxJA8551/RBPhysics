@@ -173,7 +173,7 @@ namespace RBPhys
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                if (!rb.isSleeping && rb.useGravity && !rb.IgnoreRigidbody)
+                if (!rb.isSleeping && rb.useGravity && !rb.IgnoreVelocity)
                 {
                     if (_timeScaleMode != TimeScaleMode.Freeze)
                     {
@@ -973,7 +973,7 @@ namespace RBPhys
                 {
                     RBTrajectory activeTraj = _trajectories_orderByXMin[i];
 
-                    if (activeTraj.IsValidTrajectory && !(activeTraj.Rigidbody?.IgnoreRigidbody ?? false))
+                    if (activeTraj.IsValidTrajectory)
                     {
                         float x_min = activeTraj.trajectoryAABB.MinX;
                         float x_max = activeTraj.trajectoryAABB.MaxX;
@@ -986,7 +986,7 @@ namespace RBPhys
                             {
                                 if (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping)
                                 {
-                                    if (targetTraj.IsValidTrajectory && !(targetTraj.Rigidbody?.IgnoreRigidbody ?? false))
+                                    if (targetTraj.IsValidTrajectory)
                                     {
                                         float x_min_target = targetTraj.trajectoryAABB.MinX;
                                         float x_max_target = targetTraj.trajectoryAABB.MaxX;
@@ -1097,6 +1097,11 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p);
                     }
 
+                    rbc.rigidbody_a?.OnCollision(pair.Item2);
+                    rbc.collider_a?.OnCollision(pair.Item2);
+                    rbc.rigidbody_b?.OnCollision(pair.Item1);
+                    rbc.collider_b?.OnCollision(pair.Item1);
+
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
@@ -1111,7 +1116,7 @@ namespace RBPhys
 
             foreach (var c in _obb_obb_cols)
             {
-                if (c.col != null)
+                if (c.col != null && !(c.col.rigidbody_a?.IgnoreVelocity ?? false) && !(c.col.rigidbody_b?.IgnoreVelocity ?? false))
                 {
                     _collisionsInSolver.Add(c.col);
                 }
@@ -1139,6 +1144,11 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p);
                     }
 
+                    rbc.rigidbody_a?.OnCollision(pair.Item2);
+                    rbc.collider_a?.OnCollision(pair.Item2);
+                    rbc.rigidbody_b?.OnCollision(pair.Item1);
+                    rbc.collider_b?.OnCollision(pair.Item1);
+
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
@@ -1153,7 +1163,7 @@ namespace RBPhys
 
             foreach (var c in _obb_sphere_cols)
             {
-                if (c.col != null)
+                if (c.col != null && !(c.col.rigidbody_a?.IgnoreVelocity ?? false) && !(c.col.rigidbody_b?.IgnoreVelocity ?? false))
                 {
                     _collisionsInSolver.Add(c.col);
                 }
@@ -1181,6 +1191,11 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p);
                     }
 
+                    rbc.rigidbody_a?.OnCollision(pair.Item2);
+                    rbc.collider_a?.OnCollision(pair.Item2);
+                    rbc.rigidbody_b?.OnCollision(pair.Item1);
+                    rbc.collider_b?.OnCollision(pair.Item1);
+
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
@@ -1195,7 +1210,7 @@ namespace RBPhys
 
             foreach (var c in _sphere_sphere_cols)
             {
-                if (c.col != null)
+                if (c.col != null && !(c.col.rigidbody_a?.IgnoreVelocity ?? false) && !(c.col.rigidbody_b?.IgnoreVelocity ?? false))
                 {
                     _collisionsInSolver.Add(c.col);
                 }
@@ -1223,6 +1238,11 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p);
                     }
 
+                    rbc.rigidbody_a?.OnCollision(pair.Item2);
+                    rbc.collider_a?.OnCollision(pair.Item2);
+                    rbc.rigidbody_b?.OnCollision(pair.Item1);
+                    rbc.collider_b?.OnCollision(pair.Item1);
+
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
@@ -1237,7 +1257,7 @@ namespace RBPhys
 
             foreach (var c in _obb_capsule_cols)
             {
-                if (c.col != null)
+                if (c.col != null && !(c.col.rigidbody_a?.IgnoreVelocity ?? false) && !(c.col.rigidbody_b?.IgnoreVelocity ?? false))
                 {
                     _collisionsInSolver.Add(c.col);
                 }
@@ -1265,6 +1285,11 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p);
                     }
 
+                    rbc.rigidbody_a?.OnCollision(pair.Item2);
+                    rbc.collider_a?.OnCollision(pair.Item2);
+                    rbc.rigidbody_b?.OnCollision(pair.Item1);
+                    rbc.collider_b?.OnCollision(pair.Item1);
+
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
@@ -1279,7 +1304,7 @@ namespace RBPhys
 
             foreach (var c in _sphere_capsule_cols)
             {
-                if (c.col != null)
+                if (c.col != null && !(c.col.rigidbody_a?.IgnoreVelocity ?? false) && !(c.col.rigidbody_b?.IgnoreVelocity ?? false))
                 {
                     _collisionsInSolver.Add(c.col);
                 }
@@ -1307,6 +1332,11 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p);
                     }
 
+                    rbc.rigidbody_a?.OnCollision(pair.Item2);
+                    rbc.collider_a?.OnCollision(pair.Item2);
+                    rbc.rigidbody_b?.OnCollision(pair.Item1);
+                    rbc.collider_b?.OnCollision(pair.Item1);
+
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
@@ -1321,7 +1351,7 @@ namespace RBPhys
 
             foreach (var c in _capsule_capsule_cols)
             {
-                if (c.col != null)
+                if (c.col != null && !(c.col.rigidbody_a?.IgnoreVelocity ?? false) && !(c.col.rigidbody_b?.IgnoreVelocity ?? false))
                 {
                     _collisionsInSolver.Add(c.col);
                 }
