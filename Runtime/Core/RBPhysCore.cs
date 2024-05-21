@@ -173,7 +173,7 @@ namespace RBPhys
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                if (!rb.isSleeping && rb.useGravity && rb.IgnoreRigidbody)
+                if (!rb.isSleeping && rb.useGravity && !rb.IgnoreRigidbody)
                 {
                     if (_timeScaleMode != TimeScaleMode.Freeze)
                     {
