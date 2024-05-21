@@ -171,22 +171,22 @@ namespace RBPhys
                 p.BeforeSolver();
             }
 
-            SolveConstraints(dt);
-
-            foreach (var p in _physObjects)
-            {
-                p.AfterSolver();
-            }
-
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                if (!rb.isSleeping && rb.useGravity)
+                if (!rb.isSleeping && rb.useGravity && rb.IgnoreRigidbody)
                 {
                     if (_timeScaleMode != TimeScaleMode.Freeze)
                     {
                         rb.ExpVelocity += gravityAcceleration * dt;
                     }
                 }
+            }
+
+            SolveConstraints(dt);
+
+            foreach (var p in _physObjects)
+            {
+                p.AfterSolver();
             }
 
             TrySleepRigidbodies();
@@ -973,7 +973,7 @@ namespace RBPhys
                 {
                     RBTrajectory activeTraj = _trajectories_orderByXMin[i];
 
-                    if (activeTraj.IsValidTrajectory)
+                    if (activeTraj.IsValidTrajectory && !(activeTraj.Rigidbody?.IgnoreRigidbody ?? false))
                     {
                         float x_min = activeTraj.trajectoryAABB.MinX;
                         float x_max = activeTraj.trajectoryAABB.MaxX;
@@ -986,7 +986,7 @@ namespace RBPhys
                             {
                                 if (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping)
                                 {
-                                    if (targetTraj.IsValidTrajectory)
+                                    if (targetTraj.IsValidTrajectory && !(targetTraj.Rigidbody?.IgnoreRigidbody ?? false))
                                     {
                                         float x_min_target = targetTraj.trajectoryAABB.MinX;
                                         float x_max_target = targetTraj.trajectoryAABB.MaxX;
@@ -1926,6 +1926,13 @@ namespace RBPhys
                     _eLast = -1;
                 }
 
+                float k = 0;
+                k += col.InverseMass_a;
+                k += Vector3.Dot(_wa, Vector3.Scale(col.InverseInertiaWs_a, _wa));
+                k += col.InverseMass_b;
+                k += Vector3.Dot(_wb, Vector3.Scale(col.InverseInertiaWs_b, _wb));
+                _effectiveMass = 1 / k;
+
                 if (_type == Type.Normal)
                 {
                     float cr_kp = (col.collider_a.cr_kp + col.collider_b.cr_kp) / 2f;
@@ -1963,17 +1970,10 @@ namespace RBPhys
                     float vi = _ie * cr_ki;
                     float vd = ((e - _eLast) / dt) * cr_kd;
 
-                    _bias = vp + vi + vd + (restitution * closingVelocity);
+                    _bias = Mathf.Min(restitution * closingVelocity, vp + vi + vd);
 
                     _eLast = e;
                 }
-
-                float k = 0;
-                k += col.InverseMass_a;
-                k += Vector3.Dot(_wa, Vector3.Scale(col.InverseInertiaWs_a, _wa));
-                k += col.InverseMass_b;
-                k += Vector3.Dot(_wb, Vector3.Scale(col.InverseInertiaWs_b, _wb));
-                _effectiveMass = 1 / k;
             }
 
             public (Vector3, Vector3, Vector3, Vector3) Resolve(RBCollision col, Vector3 vAdd_a, Vector3 avAdd_a, Vector3 vAdd_b, Vector3 avAdd_b, TimeScaleMode tMode)

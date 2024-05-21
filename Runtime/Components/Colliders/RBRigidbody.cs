@@ -23,6 +23,10 @@ namespace RBPhys
         [NonSerialized] public Vector3 inertiaTensor;
         [NonSerialized] public Quaternion inertiaTensorRotation;
 
+        public bool IgnoreRigidbody { get { return _stackVal_ignoreRigidbody_ifGreaterThanZero > 0; } }
+
+        int _stackVal_ignoreRigidbody_ifGreaterThanZero = 0;
+
         Vector3 _centerOfGravity;
 
         Vector3 _velocity;
@@ -173,25 +177,38 @@ namespace RBPhys
             }
         }
 
+        public void SetIgnoreRigidbody()
+        {
+            _stackVal_ignoreRigidbody_ifGreaterThanZero++;
+        }
+
+        public void SetDecrIgnoreRigidbody()
+        {
+            _stackVal_ignoreRigidbody_ifGreaterThanZero--;
+        }
+
         internal void ApplyTransform(float dt)
         {
-            if (PhysTimeScaleMode == TimeScaleMode.Prograde)
+            if (!IgnoreRigidbody)
             {
-                float vm = _expVelocity.magnitude;
-                float avm = _expAngularVelocity.magnitude;
-                _velocity = (vm > 0 ? (_expVelocity / vm) : Vector3.zero) * Mathf.Max(0, vm - drag);
-                _angularVelocity = (avm > 0 ? (_expAngularVelocity / avm) : Vector3.zero) * Mathf.Max(0, avm - angularDrag);
-            }
-            else
-            {
-                float vm = _expVelocity.magnitude;
-                float avm = _expAngularVelocity.magnitude;
-                _velocity = (vm > 0 ? (_expVelocity / vm) : Vector3.zero) * Mathf.Max(0, vm + drag);
-                _angularVelocity = (avm > 0 ? (_expAngularVelocity / avm) : Vector3.zero) * Mathf.Max(0, avm + angularDrag);
-            }
+                if (PhysTimeScaleMode == TimeScaleMode.Prograde)
+                {
+                    float vm = _expVelocity.magnitude;
+                    float avm = _expAngularVelocity.magnitude;
+                    _velocity = (vm > 0 ? (_expVelocity / vm) : Vector3.zero) * Mathf.Max(0, vm - drag);
+                    _angularVelocity = (avm > 0 ? (_expAngularVelocity / avm) : Vector3.zero) * Mathf.Max(0, avm - angularDrag);
+                }
+                else
+                {
+                    float vm = _expVelocity.magnitude;
+                    float avm = _expAngularVelocity.magnitude;
+                    _velocity = (vm > 0 ? (_expVelocity / vm) : Vector3.zero) * Mathf.Max(0, vm + drag);
+                    _angularVelocity = (avm > 0 ? (_expAngularVelocity / avm) : Vector3.zero) * Mathf.Max(0, avm + angularDrag);
+                }
 
-            transform.position = _position + (_velocity * dt);
-            transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
+                transform.position = _position + (_velocity * dt);
+                transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
+            }
 
             UpdateTransform();
             UpdateExpTrajectory(dt);
