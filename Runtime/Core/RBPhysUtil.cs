@@ -119,6 +119,12 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsQuaternionEpsilonEqual(Quaternion a, Quaternion b, float epsilon = EPSILON_FLOAT32)
+        {
+            return IsF32EpsilonEqual(a.x, b.x, epsilon) && IsF32EpsilonEqual(a.y, b.y, epsilon) && IsF32EpsilonEqual(a.z, b.z, epsilon) && IsF32EpsilonEqual(a.w, b.w, epsilon);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsV3DotEpsilonEqual(Vector3 a, Vector3 b, float dotEqualTo, float epsilon = EPSILON_FLOAT32)
         {
             return IsF32EpsilonEqual(Vector3.Dot(a, b), dotEqualTo, epsilon);

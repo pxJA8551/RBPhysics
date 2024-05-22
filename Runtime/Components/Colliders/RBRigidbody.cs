@@ -73,6 +73,13 @@ namespace RBPhys
 
         List<RBConstraints.IRBOnCollision> collisionCallbacks = new List<RBConstraints.IRBOnCollision>();
 
+        public List<IRBRetrogradeValidator> validators = new List<IRBRetrogradeValidator>();
+
+        public void AddVaidator(IRBRetrogradeValidator validator)
+        {
+            validators.Add(validator);
+        }
+
         public Vector3 InverseInertiaWs
         {
             get
@@ -218,6 +225,8 @@ namespace RBPhys
 
         internal void UpdateTransform(bool updateColliders = true)
         {
+            validators.Clear();
+
             Position = transform.position;
             Rotation = transform.rotation;
 
