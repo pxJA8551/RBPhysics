@@ -118,11 +118,11 @@ namespace RBPhys
             _expTrajectory.Update(this, _expPos, _expRot);
         }
 
-        internal void OnCollision(RBCollider collider)
+        internal void OnCollision(RBTrajectory traj)
         {
             foreach (var c in collisionCallbacks)
             {
-                c?.OnCollision(collider);
+                c?.OnCollision(traj);
             }
         }
 

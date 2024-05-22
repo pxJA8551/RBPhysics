@@ -255,16 +255,16 @@ namespace RBPhys
             }
         }
 
-        internal void OnCollision(RBCollider collider)
+        internal void OnCollision(RBTrajectory traj)
         {
             foreach (var c in collisionCallbacks)
             {
-                c?.OnCollision(collider);
+                c?.OnCollision(traj);
             }
 
             foreach (var c in _colliders)
             {
-                c?.OnCollision(collider);
+                c?.OnCollision(traj);
             }
         }
 
