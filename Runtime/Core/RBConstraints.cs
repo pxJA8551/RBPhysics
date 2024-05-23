@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -28,6 +29,20 @@ namespace RBPhys
             public interface IRBPhysStateValidator
             {
                 bool Validate();
+                Guid ValidatorPublisher { get; }
+            }
+
+            public abstract class RBPhysStateValidator : IRBPhysStateValidator
+            {
+                public abstract bool Validate();
+                public Guid ValidatorPublisher { get { return _validatorPublisherGuid; } }
+
+                readonly Guid _validatorPublisherGuid;
+
+                public RBPhysStateValidator(Guid guid)
+                {
+                    _validatorPublisherGuid = guid;
+                }
             }
         }
     }
