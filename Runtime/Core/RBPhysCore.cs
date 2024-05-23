@@ -75,7 +75,7 @@ namespace RBPhys
         static List<RBCollision> _collisionsInSolver = new List<RBCollision>();
 
         static List<RBConstraints.IRBPhysObject> _physObjects = new List<RBConstraints.IRBPhysObject>();
-        static List<RBConstraints.IRBPhysObject> _physLateObjects = new List<RBConstraints.IRBPhysObject>();
+        static List<RBConstraints.IRBPhysObject> _physValidatorObjects = new List<RBConstraints.IRBPhysObject>();
         static List<RBConstraints.IStdSolver> _stdSolversAsync = new List<RBConstraints.IStdSolver>();
 
         static int[] _collisionIgnoreLayers = new int[32];
@@ -146,17 +146,17 @@ namespace RBPhys
             _physObjects.Remove(physObj);
         }
 
-        public static void AddPhysLateObject(RBConstraints.IRBPhysObject physObj, bool asyncIteration = true)
+        public static void AddPhysValidatorObject(RBConstraints.IRBPhysObject physObj, bool asyncIteration = true)
         {
-            if (!_physLateObjects.Contains(physObj))
+            if (!_physValidatorObjects.Contains(physObj))
             {
-                _physLateObjects.Add(physObj);
+                _physValidatorObjects.Add(physObj);
             }
         }
 
-        public static void RemovePhysLateObject(RBConstraints.IRBPhysObject physObj)
+        public static void RemovePhysValidatorObject(RBConstraints.IRBPhysObject physObj)
         {
-            _physLateObjects.Remove(physObj);
+            _physValidatorObjects.Remove(physObj);
         }
 
         public static void SetCollisionOption(int layer_a, int layer_b, RBCollisionOption option)
@@ -177,12 +177,14 @@ namespace RBPhys
 
         public static void OpenPhysicsFrameWindow(float dt)
         {
-            foreach (var p in _physObjects)
+            foreach (var p in _physValidatorObjects)
             {
                 p.BeforeSolver();
             }
 
-            foreach (var p in _physLateObjects)
+            ClearValidators();
+
+            foreach (var p in _physObjects)
             {
                 p.BeforeSolver();
             }
@@ -214,7 +216,7 @@ namespace RBPhys
                 rb.AfterSolverValidatorUpdate(dt);
             }
 
-            foreach (var p in _physLateObjects)
+            foreach (var p in _physValidatorObjects)
             {
                 p.AfterSolver();
             }
@@ -1803,8 +1805,6 @@ namespace RBPhys
 
                     if (!RBPhysUtil.IsV3EpsilonEqual(pos, c.GameObjectPos)) return false;
                     if (!RBPhysUtil.IsQuaternionEpsilonEqual(rot, c.GameObjectRot)) return false;
-                    if (!RBPhysUtil.IsV3EpsilonEqual(vel, Vector3.zero)) return false;
-                    if (!RBPhysUtil.IsV3EpsilonEqual(angVel, Vector3.zero)) return false;
                     if (!RBPhysUtil.IsF32EpsilonInfEqual(mass, float.PositiveInfinity)) return false;
                     if (!RBPhysUtil.IsV3EpsilonInfEqual(inertiaTensor, Vector3.positiveInfinity)) return false;
                     if (!RBPhysUtil.IsQuaternionEpsilonEqual(inertiaTensorRotation, Quaternion.identity)) return false;
@@ -1818,20 +1818,8 @@ namespace RBPhys
                 {
                     var r = traj.Rigidbody;
 
-                    float df = 0;
-                    if (RBPhysCore.PhysTimeScaleMode == TimeScaleMode.Prograde)
-                    {
-                        df = 1;
-                    }
-                    else if (RBPhysCore.PhysTimeScaleMode == TimeScaleMode.Retrograde)
-                    {
-                        df = -1;
-                    }
-
                     if (!RBPhysUtil.IsV3EpsilonEqual(pos, r.Position)) return false;
                     if (!RBPhysUtil.IsQuaternionEpsilonEqual(rot, r.Rotation)) return false;
-                    if (!RBPhysUtil.IsV3EpsilonEqual(vel, r.ExpVelocity * df)) return false;
-                    if (!RBPhysUtil.IsV3EpsilonEqual(angVel, r.ExpAngularVelocity * df)) return false;
                     if (!RBPhysUtil.IsF32EpsilonInfEqual(mass, r.mass)) return false;
                     if (!RBPhysUtil.IsV3EpsilonInfEqual(inertiaTensor, r.inertiaTensor * r.inertiaTensorMultiplier)) return false;
                     if (!RBPhysUtil.IsQuaternionEpsilonEqual(inertiaTensorRotation, r.inertiaTensorRotation)) return false;
@@ -1857,21 +1845,9 @@ namespace RBPhys
         {
             this.traj = traj;
 
-            float df = 0;
-            if (RBPhysCore.PhysTimeScaleMode == TimeScaleMode.Prograde)
-            {
-                df = 1;
-            }
-            else if (RBPhysCore.PhysTimeScaleMode == TimeScaleMode.Retrograde)
-            {
-                df = -1;
-            }
-
             bool s = traj.IsStatic;
             pos = s ? traj.Collider.GameObjectPos : traj.Rigidbody.Position;
             rot = s ? traj.Collider.GameObjectRot : traj.Rigidbody.Rotation;
-            vel = s ? Vector3.zero : traj.Rigidbody.ExpVelocity * df;
-            angVel = s ? Vector3.zero : traj.Rigidbody.ExpAngularVelocity * df;
             mass = s ? float.PositiveInfinity : traj.Rigidbody.mass;
             inertiaTensor = s ? Vector3.positiveInfinity : traj.Rigidbody.inertiaTensor * traj.Rigidbody.inertiaTensorMultiplier;
             inertiaTensorRotation = s ? Quaternion.identity : traj.Rigidbody.inertiaTensorRotation;
@@ -1880,8 +1856,6 @@ namespace RBPhys
         public RBTrajectory traj;
         public Vector3 pos;
         public Quaternion rot;
-        public Vector3 vel;
-        public Vector3 angVel;
         public float mass;
         public Vector3 inertiaTensor;
         public Quaternion inertiaTensorRotation;

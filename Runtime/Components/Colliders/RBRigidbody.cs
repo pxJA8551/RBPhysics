@@ -246,8 +246,6 @@ namespace RBPhys
 
         internal void UpdateTransform(bool updateColliders = true)
         {
-            validators.Clear();
-
             Position = transform.position;
             Rotation = transform.rotation;
 
