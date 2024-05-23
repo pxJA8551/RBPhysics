@@ -206,13 +206,13 @@ namespace RBPhys
             _stackVal_ignoreVelocity_ifGreaterThanZero--;
         }
 
-        internal void AfterSolverValidatorUpdate()
+        internal void AfterSolverValidatorUpdate(float dt)
         {
             foreach (var v in validators)
             {
                 if (v != null)
                 {
-                    v.UpdateAfterSolver();
+                    v.UpdateAfterSolver(dt);
                 }
             }
         }

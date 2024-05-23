@@ -204,14 +204,14 @@ namespace RBPhys
 
             SolveConstraints(dt);
 
-            foreach (RBRigidbody rb in _rigidbodies)
-            {
-                rb.AfterSolverValidatorUpdate();
-            }
-
             foreach (var p in _physObjects)
             {
                 p.AfterSolver();
+            }
+
+            foreach (RBRigidbody rb in _rigidbodies)
+            {
+                rb.AfterSolverValidatorUpdate(dt);
             }
 
             foreach (var p in _physLateObjects)
@@ -1135,8 +1135,8 @@ namespace RBPhys
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
 
-                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
-                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
+                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2, dt));
+                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1, dt));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1188,8 +1188,8 @@ namespace RBPhys
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
 
-                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
-                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
+                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2, dt));
+                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1, dt));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1241,8 +1241,8 @@ namespace RBPhys
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
 
-                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
-                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
+                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2, dt));
+                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1, dt));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1294,8 +1294,8 @@ namespace RBPhys
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
 
-                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
-                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
+                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2, dt));
+                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1, dt));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1347,8 +1347,8 @@ namespace RBPhys
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
 
-                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
-                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
+                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2, dt));
+                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1, dt));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1775,7 +1775,7 @@ namespace RBPhys
             return false;
         }
 
-        public override void UpdateAfterSolver() { }
+        public override void UpdateAfterSolver(float dt) { }
     }
 
     public class RBCollisionValidator : RBPhysCore.RBConstraints.RBPhysStateValidator
@@ -1835,21 +1835,20 @@ namespace RBPhys
             return false;
         }
 
-        public override void UpdateAfterSolver()
+        public override void UpdateAfterSolver(float dt)
         {
-            Setup(traj);
+            Setup(traj, dt);
         }
 
-        public RBCollisionValidator(RBTrajectory traj) : base(traj?.trajectoryGuid ?? Guid.Empty)
+        public RBCollisionValidator(RBTrajectory traj, float dt) : base(traj?.trajectoryGuid ?? Guid.Empty)
         {
-            Setup(traj);
+            Setup(traj, dt);
         }
 
-        void Setup(RBTrajectory traj)
+        void Setup(RBTrajectory traj, float dt)
         {
             this.traj = traj;
 
-            float dt = Time.fixedDeltaTime;
             float df = 0;
             if (RBPhysCore.PhysTimeScaleMode == TimeScaleMode.Prograde)
             {

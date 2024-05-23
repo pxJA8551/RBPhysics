@@ -29,14 +29,14 @@ namespace RBPhys
             public interface IRBPhysStateValidator
             {
                 bool Validate();
-                void UpdateAfterSolver();
+                void UpdateAfterSolver(float dt);
                 Guid ValidatorPublisher { get; }
             }
 
             public abstract class RBPhysStateValidator : IRBPhysStateValidator
             {
                 public abstract bool Validate();
-                public abstract void UpdateAfterSolver();
+                public abstract void UpdateAfterSolver(float dt);
 
                 public Guid ValidatorPublisher { get { return _validatorPublisherGuid; } }
 
