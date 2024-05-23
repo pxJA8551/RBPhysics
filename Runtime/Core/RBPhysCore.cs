@@ -177,10 +177,6 @@ namespace RBPhys
 
         public static void OpenPhysicsFrameWindow(float dt)
         {
-            UpdateTransforms();
-            UpdateExtTrajectories(dt);
-            SortTrajectories();
-
             foreach (var p in _physObjects)
             {
                 p.BeforeSolver();
@@ -208,6 +204,10 @@ namespace RBPhys
             {
                 p.AfterSolver();
             }
+
+            UpdateTransforms();
+            UpdateExtTrajectories(dt);
+            SortTrajectories();
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
@@ -846,6 +846,14 @@ namespace RBPhys
                 }
             }
             Profiler.EndSample();
+        }
+
+        static void ClearValidators()
+        {
+            foreach (RBRigidbody rb in _rigidbodies)
+            {
+                rb.ClearValidators();
+            }
         }
 
         static void ClearCollisions()
@@ -1787,7 +1795,7 @@ namespace RBPhys
                 return false;
             }
 
-            if (traj.IsStatic) 
+            if (traj.IsStatic)
             {
                 if (traj.Collider != null)
                 {
@@ -1854,14 +1862,14 @@ namespace RBPhys
             {
                 df = 1;
             }
-            else if(RBPhysCore.PhysTimeScaleMode == TimeScaleMode.Retrograde)
+            else if (RBPhysCore.PhysTimeScaleMode == TimeScaleMode.Retrograde)
             {
                 df = -1;
             }
 
-            bool s = traj.IsStatic; 
-            pos = s ? traj.Collider.GameObjectPos : (traj.Rigidbody.Position + traj.Rigidbody.ExpVelocity * dt);
-            rot = s ? traj.Collider.GameObjectRot : (Quaternion.AngleAxis(traj.Rigidbody.ExpAngularVelocity.magnitude * Mathf.Rad2Deg * dt, traj.Rigidbody.ExpAngularVelocity.normalized) * traj.Rigidbody.Rotation);
+            bool s = traj.IsStatic;
+            pos = s ? traj.Collider.GameObjectPos : traj.Rigidbody.Position;
+            rot = s ? traj.Collider.GameObjectRot : traj.Rigidbody.Rotation;
             vel = s ? Vector3.zero : traj.Rigidbody.ExpVelocity * df;
             angVel = s ? Vector3.zero : traj.Rigidbody.ExpAngularVelocity * df;
             mass = s ? float.PositiveInfinity : traj.Rigidbody.mass;
@@ -1921,7 +1929,7 @@ namespace RBPhys
         public Vector3 ExpAngularVelocity_b { get { return rigidbody_b?.ExpAngularVelocity ?? Vector3.zero; } }
         public float InverseMass_b { get { return rigidbody_b?.InverseMass ?? 0; } }
         public Vector3 InverseInertiaWs_b { get { return rigidbody_b?.InverseInertiaWs ?? Vector3.zero; } }
-        
+
         public bool IsSleeping_a { get { return rigidbody_a?.isSleeping ?? true; } }
         public bool IsSleeping_b { get { return rigidbody_b?.isSleeping ?? true; } }
 
@@ -2049,7 +2057,7 @@ namespace RBPhys
         {
             cacCount = 0;
         }
-        
+
         public void InitVelocityConstraint(float dt, TimeScaleMode tMode, bool initBias = true)
         {
             Vector3 contactNormal = ContactNormal;
