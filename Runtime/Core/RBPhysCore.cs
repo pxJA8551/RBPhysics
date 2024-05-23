@@ -1756,7 +1756,7 @@ namespace RBPhys
                     if (!RBPhysUtil.IsV3EpsilonEqual(vel, Vector3.zero)) return false;
                     if (!RBPhysUtil.IsV3EpsilonEqual(angVel, Vector3.zero)) return false;
                     if (!RBPhysUtil.IsF32EpsilonEqual(mass, float.PositiveInfinity)) return false;
-                    if (!RBPhysUtil.IsV3EpsilonEqual(inertiaTensor, Vector3.zero)) return false;
+                    if (!RBPhysUtil.IsV3EpsilonEqual(inertiaTensor, Vector3.positiveInfinity)) return false;
                     if (!RBPhysUtil.IsQuaternionEpsilonEqual(inertiaTensorRotation, Quaternion.identity)) return false;
 
                     return true;
