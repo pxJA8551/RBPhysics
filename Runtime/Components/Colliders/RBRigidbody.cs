@@ -74,8 +74,6 @@ namespace RBPhys
         List<RBConstraints.IRBOnCollision> collisionCallbacks = new List<RBConstraints.IRBOnCollision>();
 
         public List<RBConstraints.RBPhysStateValidator> validators = new List<RBConstraints.RBPhysStateValidator>();
-        public List<RBConstraints.RBPhysStateValidator> validatorsOld { get { return _validatorsOld; } }
-        List<RBConstraints.RBPhysStateValidator> _validatorsOld = new List<RBConstraints.RBPhysStateValidator>();
 
         public void AddVaidator(RBConstraints.RBPhysStateValidator validator)
         {
@@ -227,7 +225,6 @@ namespace RBPhys
 
         internal void UpdateTransform(bool updateColliders = true)
         {
-            _validatorsOld = validators.ToList();
             validators.Clear();
 
             Position = transform.position;
