@@ -1736,6 +1736,17 @@ namespace RBPhys
         }
     }
 
+    public class RBEmptyValidator : RBPhysCore.RBConstraints.RBPhysStateValidator
+    {
+        public RBEmptyValidator() : base(Guid.Empty) { }
+        public RBEmptyValidator(Guid guid) : base(guid) { }
+
+        public override bool Validate()
+        {
+            return false;
+        }
+    }
+
     public class RBCollisionValidator : RBPhysCore.RBConstraints.RBPhysStateValidator
     {
         public override bool Validate()
