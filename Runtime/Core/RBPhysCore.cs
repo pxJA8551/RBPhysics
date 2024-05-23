@@ -143,7 +143,7 @@ namespace RBPhys
             _physObjects.Remove(physObj);
         }
 
-        public static void AddPhysValidatorObject(RBConstraints.IRBPhysObject physObj, bool asyncIteration = true)
+        public static void AddPhysValidatorObject(RBConstraints.IRBPhysObject physObj)
         {
             if (!_physValidatorObjects.Contains(physObj))
             {
