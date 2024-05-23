@@ -15,6 +15,7 @@ namespace RBPhysEditor
     public class RBRigidbodyEditor : Editor
     {
         SerializedProperty mass;
+        SerializedProperty inertiaTensorMultiplier;
         SerializedProperty drag;
         SerializedProperty angularDrag;
         SerializedProperty sleeping;
@@ -29,6 +30,7 @@ namespace RBPhysEditor
         private void OnEnable()
         {
             mass = serializedObject.FindProperty("mass");
+            inertiaTensorMultiplier = serializedObject.FindProperty("inertiaTensorMultiplier");
             sleeping = serializedObject.FindProperty("isSleeping");
             sleepGrace = serializedObject.FindProperty("sleepGrace");
             useGravity = serializedObject.FindProperty("useGravity");
@@ -50,6 +52,7 @@ namespace RBPhysEditor
             }
 
             EditorGUILayout.PropertyField(mass);
+            EditorGUILayout.PropertyField(inertiaTensorMultiplier);
             EditorGUILayout.PropertyField(drag);
             EditorGUILayout.PropertyField(angularDrag);
             EditorGUILayout.PropertyField(useGravity);

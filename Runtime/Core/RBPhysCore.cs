@@ -1773,7 +1773,7 @@ namespace RBPhys
                     if (!RBPhysUtil.IsV3EpsilonEqual(vel, r.Velocity)) return false;
                     if (!RBPhysUtil.IsV3EpsilonEqual(angVel, r.AngularVelocity)) return false;
                     if (!RBPhysUtil.IsF32EpsilonInfEqual(mass, r.mass)) return false;
-                    if (!RBPhysUtil.IsV3EpsilonInfEqual(inertiaTensor, r.inertiaTensor)) return false;
+                    if (!RBPhysUtil.IsV3EpsilonInfEqual(inertiaTensor, r.inertiaTensor * r.inertiaTensorMultiplier)) return false;
                     if (!RBPhysUtil.IsQuaternionEpsilonEqual(inertiaTensorRotation, r.inertiaTensorRotation)) return false;
 
                     return true;
@@ -1793,7 +1793,7 @@ namespace RBPhys
             vel = s ? Vector3.zero : traj.Rigidbody.Velocity;
             angVel = s ? Vector3.zero : traj.Rigidbody.AngularVelocity;
             mass = s ? float.PositiveInfinity : traj.Rigidbody.mass;
-            inertiaTensor = s ? Vector3.positiveInfinity : traj.Rigidbody.inertiaTensor;
+            inertiaTensor = s ? Vector3.positiveInfinity : traj.Rigidbody.inertiaTensor * traj.Rigidbody.inertiaTensorMultiplier;
             inertiaTensorRotation = s ? Quaternion.identity : traj.Rigidbody.inertiaTensorRotation;
         }
 
