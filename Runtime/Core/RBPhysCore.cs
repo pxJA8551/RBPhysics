@@ -1736,9 +1736,9 @@ namespace RBPhys
         }
     }
 
-    public class RBCollisionValidator : RBPhysCore.RBConstraints.IRBPhysStateValidator
+    public class RBCollisionValidator : RBPhysCore.RBConstraints.RBPhysStateValidator
     {
-        public bool Validate()
+        public override bool Validate()
         {
             if (traj == null)
             {
@@ -1783,7 +1783,7 @@ namespace RBPhys
             return false;
         }
 
-        public RBCollisionValidator(RBTrajectory traj)
+        public RBCollisionValidator(RBTrajectory traj) : base(traj.trajectoryGuid)
         {
             this.traj = traj;
             
@@ -2449,6 +2449,7 @@ namespace RBPhys
     public class RBTrajectory
     {
         public RBColliderAABB trajectoryAABB;
+        public readonly Guid trajectoryGuid;
 
         public bool IsValidTrajectory { get { return _isValidTrajectory; } }
         public RBRigidbody Rigidbody { get { return _rigidbody; } }
@@ -2468,6 +2469,7 @@ namespace RBPhys
         public RBTrajectory()
         {
             _isValidTrajectory = false;
+            trajectoryGuid = Guid.NewGuid();
         }
 
         public RBTrajectory(RBRigidbody rigidbody, int layer)
@@ -2490,6 +2492,8 @@ namespace RBPhys
 
             _colliders = rigidbody.GetColliders();
             _layer = layer;
+
+            trajectoryGuid = Guid.NewGuid();
         }
 
         public RBTrajectory(RBCollider collider, int layer)
@@ -2502,6 +2506,8 @@ namespace RBPhys
 
             _colliders = new RBCollider[] { collider };
             _layer = layer;
+
+            trajectoryGuid = Guid.NewGuid();
         }
 
         public void Update(RBRigidbody rigidbody, int layer)
