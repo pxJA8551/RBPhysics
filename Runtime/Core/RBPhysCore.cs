@@ -1736,7 +1736,7 @@ namespace RBPhys
         }
     }
 
-    public class RBCollisionValidator : RBPhysCore.RBConstraints.IRBPhysLoggerStateValidator
+    public class RBCollisionValidator : RBPhysCore.RBConstraints.IRBPhysStateValidator
     {
         public bool Validate()
         {

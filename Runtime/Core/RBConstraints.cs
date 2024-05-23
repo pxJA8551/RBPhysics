@@ -25,12 +25,7 @@ namespace RBPhys
                 void OnCollision(RBTrajectory traj);
             }
 
-            public interface IRBPhysLogger
-            {
-                void AddLog(IRBPhysLoggerStateValidator validator);
-            }
-
-            public interface IRBPhysLoggerStateValidator
+            public interface IRBPhysStateValidator
             {
                 bool Validate();
             }
