@@ -73,9 +73,9 @@ namespace RBPhys
 
         List<RBConstraints.IRBOnCollision> collisionCallbacks = new List<RBConstraints.IRBOnCollision>();
 
-        public List<IRBRetrogradeValidator> validators = new List<IRBRetrogradeValidator>();
+        public List<RBConstraints.IRBPhysLoggerStateValidator> validators = new List<RBConstraints.IRBPhysLoggerStateValidator>();
 
-        public void AddVaidator(IRBRetrogradeValidator validator)
+        public void AddVaidator(RBConstraints.IRBPhysLoggerStateValidator validator)
         {
             validators.Add(validator);
         }

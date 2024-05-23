@@ -1736,38 +1736,64 @@ namespace RBPhys
         }
     }
 
-    public interface IRBRetrogradeValidator
-    {
-        public bool Validate();
-    }
-
-    public class RBCollisionValidator : IRBRetrogradeValidator
+    public class RBCollisionValidator : RBPhysCore.RBConstraints.IRBPhysLoggerStateValidator
     {
         public bool Validate()
         {
-            bool s = traj.IsStatic;
-            if (!RBPhysUtil.IsV3EpsilonEqual(pos, s ? traj.Collider.GameObjectPos : traj.Rigidbody.Position)) return false;            
-            if (!RBPhysUtil.IsQuaternionEpsilonEqual(rot, s ? traj.Collider.GameObjectRot : traj.Rigidbody.Rotation)) return false;
-            if (!RBPhysUtil.IsV3EpsilonEqual(vel, s ? Vector3.zero : traj.Rigidbody.Velocity)) return false;
-            if (!RBPhysUtil.IsV3EpsilonEqual(angVel, s ? Vector3.zero : traj.Rigidbody.AngularVelocity)) return false;
-            if (!RBPhysUtil.IsF32EpsilonEqual(mass, s ? 0 : traj.Rigidbody.mass)) return false;
-            if (!RBPhysUtil.IsV3EpsilonEqual(inertiaTensor, s ? Vector3.zero : traj.Rigidbody.inertiaTensor)) return false;
-            if (!RBPhysUtil.IsQuaternionEpsilonEqual(inertiaTensorRotation, s ? Quaternion.identity : traj.Rigidbody.inertiaTensorRotation)) return false;
+            if (traj == null)
+            {
+                return false;
+            }
 
-            return true;
+            if (traj.IsStatic) 
+            {
+                if (traj.Collider != null)
+                {
+                    var c = traj.Collider;
+
+                    if (!RBPhysUtil.IsV3EpsilonEqual(pos, c.GameObjectPos)) return false;
+                    if (!RBPhysUtil.IsQuaternionEpsilonEqual(rot, c.GameObjectRot)) return false;
+                    if (!RBPhysUtil.IsV3EpsilonEqual(vel, Vector3.zero)) return false;
+                    if (!RBPhysUtil.IsV3EpsilonEqual(angVel, Vector3.zero)) return false;
+                    if (!RBPhysUtil.IsF32EpsilonEqual(mass, float.PositiveInfinity)) return false;
+                    if (!RBPhysUtil.IsV3EpsilonEqual(inertiaTensor, Vector3.zero)) return false;
+                    if (!RBPhysUtil.IsQuaternionEpsilonEqual(inertiaTensorRotation, Quaternion.identity)) return false;
+
+                    return true;
+                }
+            }
+            else
+            {
+                if (traj.Rigidbody != null)
+                {
+                    var r = traj.Rigidbody;
+
+                    if (!RBPhysUtil.IsV3EpsilonEqual(pos, r.Position)) return false;
+                    if (!RBPhysUtil.IsQuaternionEpsilonEqual(rot, r.Rotation)) return false;
+                    if (!RBPhysUtil.IsV3EpsilonEqual(vel, r.Velocity)) return false;
+                    if (!RBPhysUtil.IsV3EpsilonEqual(angVel, r.AngularVelocity)) return false;
+                    if (!RBPhysUtil.IsF32EpsilonEqual(mass, r.mass)) return false;
+                    if (!RBPhysUtil.IsV3EpsilonEqual(inertiaTensor, r.inertiaTensor)) return false;
+                    if (!RBPhysUtil.IsQuaternionEpsilonEqual(inertiaTensorRotation, r.inertiaTensorRotation)) return false;
+
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public RBCollisionValidator(RBTrajectory traj)
         {
             this.traj = traj;
-
+            
             bool s = traj.IsStatic;
             pos = s ? traj.Collider.GameObjectPos : traj.Rigidbody.Position;
             rot = s ? traj.Collider.GameObjectRot : traj.Rigidbody.Rotation;
             vel = s ? Vector3.zero : traj.Rigidbody.Velocity;
             angVel = s ? Vector3.zero : traj.Rigidbody.AngularVelocity;
-            mass = s ? 0 : traj.Rigidbody.mass;
-            inertiaTensor = s ? Vector3.zero : traj.Rigidbody.inertiaTensor;
+            mass = s ? float.PositiveInfinity : traj.Rigidbody.mass;
+            inertiaTensor = s ? Vector3.positiveInfinity : traj.Rigidbody.inertiaTensor;
             inertiaTensorRotation = s ? Quaternion.identity : traj.Rigidbody.inertiaTensorRotation;
         }
 
