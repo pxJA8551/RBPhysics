@@ -23,11 +23,14 @@ namespace RBPhys
         public const float CPU_SOLVER_ABORT_VELADD_SQRT = .005f * .005f;
         public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = .015f * .015f;
         public const float COLLISION_AS_CONTINUOUS_FRAMES = 3;
+        public const float RETROGATE_PHYS_RESTITUTION_MULTIPLIER = .23f;
 
         public static int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
         public static int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
         public static float cpu_solver_abort_veladd_sqrt = CPU_SOLVER_ABORT_VELADD_SQRT;
         public static float cpu_solver_abort_angveladd_sqrt = CPU_SOLVER_ABORT_ANGVELADD_SQRT;
+
+        public static float retrogate_phys_restitution_multiplier = RETROGATE_PHYS_RESTITUTION_MULTIPLIER;
 
         public static Vector3 gravityAcceleration = new Vector3(0, -9.81f, 0);
 
@@ -2131,6 +2134,7 @@ namespace RBPhys
                     if (tMode == TimeScaleMode.Retrograde)
                     {
                         restitution = (restitution != 0) ? 1 / restitution : 0;
+                        restitution *= RBPhysCore.retrogate_phys_restitution_multiplier;
                     }
                     else if (tMode == TimeScaleMode.Freeze)
                     {
