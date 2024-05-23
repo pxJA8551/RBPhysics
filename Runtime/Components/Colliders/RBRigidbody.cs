@@ -228,7 +228,7 @@ namespace RBPhys
                     _velocity = (vm > 0 ? (_expVelocity / vm) : Vector3.zero) * Mathf.Max(0, vm - drag);
                     _angularVelocity = (avm > 0 ? (_expAngularVelocity / avm) : Vector3.zero) * Mathf.Max(0, avm - angularDrag);
                 }
-                else
+                else if (PhysTimeScaleMode == TimeScaleMode.Retrograde)
                 {
                     float vm = _expVelocity.magnitude;
                     float avm = _expAngularVelocity.magnitude;
