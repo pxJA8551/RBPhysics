@@ -190,6 +190,11 @@ namespace RBPhys
                 p.AfterSolver();
             }
 
+            foreach (RBRigidbody rb in _rigidbodies)
+            {
+                rb.AfterSolverValidatorUpdate();
+            }
+
             TrySleepRigidbodies();
             TryAwakeRigidbodies();
 

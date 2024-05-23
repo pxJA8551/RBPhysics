@@ -29,6 +29,7 @@ namespace RBPhys
             public interface IRBPhysStateValidator
             {
                 bool Validate();
+                void UpdateAfterSolver();
                 Guid ValidatorPublisher { get; }
             }
 

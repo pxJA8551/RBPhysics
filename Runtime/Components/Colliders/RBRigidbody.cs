@@ -206,6 +206,17 @@ namespace RBPhys
             _stackVal_ignoreVelocity_ifGreaterThanZero--;
         }
 
+        internal void AfterSolverValidatorUpdate()
+        {
+            foreach (var v in validators)
+            {
+                if (v != null)
+                {
+                    v.UpdateAfterSolver();
+                }
+            }
+        }
+
         internal void ApplyTransform(float dt)
         {
             if (!IgnoreVelocity)
