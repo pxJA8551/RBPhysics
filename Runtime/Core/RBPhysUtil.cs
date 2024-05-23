@@ -119,6 +119,12 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsV3EpsilonInfEqual(Vector3 a, Vector3 b, float epsilon = EPSILON_FLOAT32)
+        {
+            return IsF32EpsilonInfEqual(a.x, b.x, epsilon) && IsF32EpsilonInfEqual(a.y, b.y, epsilon) && IsF32EpsilonInfEqual(a.z, b.z, epsilon);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsQuaternionEpsilonEqual(Quaternion a, Quaternion b, float epsilon = EPSILON_FLOAT32)
         {
             return IsF32EpsilonEqual(a.x, b.x, epsilon) && IsF32EpsilonEqual(a.y, b.y, epsilon) && IsF32EpsilonEqual(a.z, b.z, epsilon) && IsF32EpsilonEqual(a.w, b.w, epsilon);
@@ -143,9 +149,21 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsF32EpsilonInfEqual(float a, float b, float epsilon = EPSILON_FLOAT32)
+        {
+            return Mathf.Abs(a - b) <= epsilon || (float.IsInfinity(a) && float.IsInfinity(b) && (a < 0 == b < 0));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsF32AbsEpsilonEqual(float value, float valueAbsEqualTo, float epsilon = EPSILON_FLOAT32)
         {
             return Mathf.Abs(Mathf.Abs(value) - valueAbsEqualTo) <= epsilon;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsF32AbsEpsilonInfEqual(float value, float valueAbsEqualTo, float epsilon = EPSILON_FLOAT32)
+        {
+            return Mathf.Abs(Mathf.Abs(value) - valueAbsEqualTo) <= epsilon || (float.IsInfinity(value) && float.IsInfinity(valueAbsEqualTo));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
