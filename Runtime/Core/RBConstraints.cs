@@ -35,6 +35,8 @@ namespace RBPhys
             public abstract class RBPhysStateValidator : IRBPhysStateValidator
             {
                 public abstract bool Validate();
+                public abstract void UpdateAfterSolver();
+
                 public Guid ValidatorPublisher { get { return _validatorPublisherGuid; } }
 
                 readonly Guid _validatorPublisherGuid;

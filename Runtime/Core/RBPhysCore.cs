@@ -1745,6 +1745,8 @@ namespace RBPhys
         {
             return false;
         }
+
+        public override void UpdateAfterSolver() { }
     }
 
     public class RBCollisionValidator : RBPhysCore.RBConstraints.RBPhysStateValidator
@@ -1794,10 +1796,20 @@ namespace RBPhys
             return false;
         }
 
+        public override void UpdateAfterSolver()
+        {
+            Setup(traj);
+        }
+
         public RBCollisionValidator(RBTrajectory traj) : base(traj.trajectoryGuid)
         {
+            Setup(traj);
+        }
+
+        void Setup(RBTrajectory traj)
+        {
             this.traj = traj;
-            
+
             bool s = traj.IsStatic;
             pos = s ? traj.Collider.GameObjectPos : traj.Rigidbody.Position;
             rot = s ? traj.Collider.GameObjectRot : traj.Rigidbody.Rotation;
