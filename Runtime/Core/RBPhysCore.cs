@@ -1755,8 +1755,8 @@ namespace RBPhys
                     if (!RBPhysUtil.IsQuaternionEpsilonEqual(rot, c.GameObjectRot)) return false;
                     if (!RBPhysUtil.IsV3EpsilonEqual(vel, Vector3.zero)) return false;
                     if (!RBPhysUtil.IsV3EpsilonEqual(angVel, Vector3.zero)) return false;
-                    if (!RBPhysUtil.IsF32EpsilonEqual(mass, float.PositiveInfinity)) return false;
-                    if (!RBPhysUtil.IsV3EpsilonEqual(inertiaTensor, Vector3.positiveInfinity)) return false;
+                    if (!RBPhysUtil.IsF32EpsilonInfEqual(mass, float.PositiveInfinity)) return false;
+                    if (!RBPhysUtil.IsV3EpsilonInfEqual(inertiaTensor, Vector3.positiveInfinity)) return false;
                     if (!RBPhysUtil.IsQuaternionEpsilonEqual(inertiaTensorRotation, Quaternion.identity)) return false;
 
                     return true;
@@ -1772,8 +1772,8 @@ namespace RBPhys
                     if (!RBPhysUtil.IsQuaternionEpsilonEqual(rot, r.Rotation)) return false;
                     if (!RBPhysUtil.IsV3EpsilonEqual(vel, r.Velocity)) return false;
                     if (!RBPhysUtil.IsV3EpsilonEqual(angVel, r.AngularVelocity)) return false;
-                    if (!RBPhysUtil.IsF32EpsilonEqual(mass, r.mass)) return false;
-                    if (!RBPhysUtil.IsV3EpsilonEqual(inertiaTensor, r.inertiaTensor)) return false;
+                    if (!RBPhysUtil.IsF32EpsilonInfEqual(mass, r.mass)) return false;
+                    if (!RBPhysUtil.IsV3EpsilonInfEqual(inertiaTensor, r.inertiaTensor)) return false;
                     if (!RBPhysUtil.IsQuaternionEpsilonEqual(inertiaTensorRotation, r.inertiaTensorRotation)) return false;
 
                     return true;
