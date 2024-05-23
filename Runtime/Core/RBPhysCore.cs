@@ -185,14 +185,14 @@ namespace RBPhys
 
             SolveConstraints(dt);
 
-            foreach (var p in _physObjects)
-            {
-                p.AfterSolver();
-            }
-
             foreach (RBRigidbody rb in _rigidbodies)
             {
                 rb.AfterSolverValidatorUpdate();
+            }
+
+            foreach (var p in _physObjects)
+            {
+                p.AfterSolver();
             }
 
             TrySleepRigidbodies();
