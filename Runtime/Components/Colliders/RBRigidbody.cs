@@ -408,6 +408,18 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3 CalcExpPos(float dt)
+        {
+            return _position + _expVelocity * dt;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Quaternion CalcExpRot(float dt)
+        {
+            return Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * dt, _expAngularVelocity.normalized) * _rotation;
+        }
+
         public void RecalculateInertiaTensor()
         {
             ComputeMassAndInertia(_colliders, out inertiaTensor, out inertiaTensorRotation, out _centerOfGravity);
