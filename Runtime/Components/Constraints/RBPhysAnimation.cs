@@ -53,8 +53,6 @@ namespace RBPhys
 
         public void Awake()
         {
-            PlayAnimation();
-
             rbRigidbody = GetComponent<RBRigidbody>();
 
             if (_baseAnimationClip != null)
@@ -64,6 +62,11 @@ namespace RBPhys
 
             RBPhysCore.AddStdSolver(this);
             RBPhysCore.AddPhysObject(this);
+
+            if (playing)
+            {
+                PlayAnimation();
+            }
         }
 
         public AnimationClip RecontructAnimationClip(AnimationClip baseAnimation)
@@ -139,16 +142,33 @@ namespace RBPhys
 
             ctrlTime += Time.fixedDeltaTime * ctrlSpeed;
 
-            if (enablePhysicallyProcedualAnim) 
+            if (enablePhysicallyProcedualAnim)
             {
-                _lsBasePos = parentTransform?.InverseTransformPoint(rbRigidbody.Position) ?? rbRigidbody.Position;
-                _lsBaseRot = Quaternion.Inverse(parentTransform?.localRotation ?? Quaternion.identity) * rbRigidbody.Rotation;
-
+                SetBasePos();
                 SampleApplyTRSAnimation(ctrlTime, Time.fixedDeltaTime, _lsBasePos, _lsBaseRot);
+            }
+            else
+            {
+                SetBasePos();
+                SampleSetTRSAnimation(ctrlTime, _lsBasePos, _lsBaseRot);
             }
 
             _solverTime = Time.time;
             LinkAnimationTime();
+        }
+
+        void SetBasePos()
+        {
+            if (parentTransform != null)
+            {
+                _lsBasePos = parentTransform.InverseTransformPoint(rbRigidbody.Position);
+                _lsBaseRot = Quaternion.Inverse(parentTransform.rotation) * rbRigidbody.Rotation;
+            }
+            else
+            {
+                _lsBasePos = rbRigidbody.Position;
+                _lsBaseRot = rbRigidbody.Rotation;
+            }
         }
 
         void AddLinkedAnimationTime(float add)
@@ -207,11 +227,16 @@ namespace RBPhys
 
         public void AfterSolver()
         {
-            _ctrlTimeDeltaP = (ctrlTime - _ctrlTimeLast) / (Time.fixedDeltaTime * ctrlSpeed);
+            _ctrlTimeDeltaP = Mathf.Clamp01((ctrlTime - _ctrlTimeLast) / (Time.fixedDeltaTime * ctrlSpeed));
 
             if (enablePhysicallyProcedualAnim)
             {
                 SampleApplyTRSAnimation(ctrlTime, Time.fixedDeltaTime, _lsBasePos, _lsBaseRot);
+            }
+            else
+            {
+                transform.position = _targetWsPos;
+                transform.rotation = _targetWsRot;
             }
         }
 
@@ -308,7 +333,7 @@ namespace RBPhys
                     {
                         float t = Mathf.Clamp(intergradeTime - delta, 0, trsCurve.length);
                         float lambda_anim = CalcAnimLambda(t, invMass, invInertiaTensor, out Vector3 dPos, out Vector3 dRot);
-                        
+
                         Vector3 evalVDirN = dPos.normalized;
                         Vector3 evalAVDirN = dRot.normalized;
 
@@ -387,21 +412,6 @@ namespace RBPhys
             wsRot = lsRot;
         }
 
-        void LsToWs(Vector3 lsPos, Quaternion lsRot, Vector3 lsScale, out Vector3 wsPos, out Quaternion wsRot, out Vector3 wsScale)
-        {
-            if (_useParentTransform)
-            {
-                wsPos = _parentTransformPos + _parentTransformRot * Vector3.Scale(_parentTransformScale, lsPos);
-                wsRot = _parentTransformRot * lsRot;
-                wsScale = Vector3.Scale(_parentTransformScale, lsScale);
-                return;
-            }
-
-            wsPos = lsPos;
-            wsRot = lsRot;
-            wsScale = lsScale;
-        }
-
         void CalcDPos(Vector3 pos, Quaternion rot, out Vector3 dPos, out Vector3 dRot)
         {
             dPos = pos - rbRigidbody.Position;
@@ -422,21 +432,29 @@ namespace RBPhys
 
         void CalcTRSAnimFrame(float time)
         {
-            _lsBasePos = parentTransform?.InverseTransformPoint(rbRigidbody.Position) ?? rbRigidbody.Position;
-            _lsBaseRot = Quaternion.Inverse(parentTransform?.localRotation ?? Quaternion.identity) * rbRigidbody.Rotation;
-            Vector3 lsBaseScale = Vector3.Scale(RBPhysUtil.V3Rcp(parentTransform?.lossyScale ?? Vector3.one), _parentTransformRot * transform.lossyScale);
+            SetBasePos();
+            Vector3 lsBaseScale;
+
+            if (parentTransform != null)
+            {
+                lsBaseScale = transform.localScale;
+            }
+            else
+            {
+                lsBaseScale = transform.localScale;
+            }
 
             trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, lsBaseScale, out Vector3 lsPos, out Quaternion lsRot, out Vector3 lsScale);
-            LsToWs(lsPos, lsRot, lsScale, out Vector3 wsPos, out Quaternion wsRot, out Vector3 wsScale);
+            LsToWs(lsPos, lsRot, out Vector3 wsPos, out Quaternion wsRot);
 
             transform.position = wsPos;
             transform.rotation = wsRot;
-            transform.localScale = wsScale;
+            transform.localScale = lsScale;
         }
 
         private void LateUpdate()
         {
-            float interpDelta = Time.time - _solverTime;
+            float interpDelta = _solverTime != 0 ? (Time.time - _solverTime) : 0;
             float time = interp ? (ctrlTime + (interpDelta * (velocityInterp ? _ctrlTimeDeltaP : 1)) * interpMultiplier) : ctrlTime;
 
             if (!enablePhysicallyProcedualAnim)
@@ -529,7 +547,7 @@ namespace RBPhys
 
             public void SampleTRSAnimation(float time, Vector3 pos, Quaternion rot, out Vector3 lsPos, out Quaternion lsRot)
             {
-                var rEuler = rot.eulerAngles;
+                var r = rot.eulerAngles;
 
                 lsPos = pos;
 
@@ -537,16 +555,17 @@ namespace RBPhys
                 lsPos.y = curve_lsPos_y?.Evaluate(time) ?? lsPos.y;
                 lsPos.z = curve_lsPos_z?.Evaluate(time) ?? lsPos.z;
 
-                rEuler.x = curve_lsRotEuler_x?.Evaluate(time) ?? rEuler.x;
-                rEuler.y = curve_lsRotEuler_y?.Evaluate(time) ?? rEuler.y;
-                rEuler.z = curve_lsRotEuler_z?.Evaluate(time) ?? rEuler.z;
+                r.x = curve_lsRotEuler_x?.Evaluate(time) ?? r.x;
+                r.y = curve_lsRotEuler_y?.Evaluate(time) ?? r.y;
+                r.z = curve_lsRotEuler_z?.Evaluate(time) ?? r.z;
 
-                lsRot = Quaternion.Euler(rEuler);
+                lsRot = new Quaternion();
+                lsRot.Set(r.x, r.y, r.z, 1);
             }
 
             public void SampleTRSAnimation(float time, Vector3 pos, Quaternion rot, Vector3 scale, out Vector3 lsPos, out Quaternion lsRot, out Vector3 lsScale)
             {
-                var rEuler = rot.eulerAngles;
+                Vector3 r = new Vector3(rot.x, rot.y, rot.z);
 
                 lsPos = pos;
                 lsScale = scale;
@@ -555,15 +574,16 @@ namespace RBPhys
                 lsPos.y = curve_lsPos_y?.Evaluate(time) ?? lsPos.y;
                 lsPos.z = curve_lsPos_z?.Evaluate(time) ?? lsPos.z;
 
-                rEuler.x = curve_lsRotEuler_x?.Evaluate(time) ?? rEuler.x;
-                rEuler.y = curve_lsRotEuler_y?.Evaluate(time) ?? rEuler.y;
-                rEuler.z = curve_lsRotEuler_z?.Evaluate(time) ?? rEuler.z;
+                r.x = curve_lsRotEuler_x?.Evaluate(time) ?? r.x;
+                r.y = curve_lsRotEuler_y?.Evaluate(time) ?? r.y;
+                r.z = curve_lsRotEuler_z?.Evaluate(time) ?? r.z;
 
                 lsScale.x = curve_lsScale_x?.Evaluate(time) ?? lsScale.x;
                 lsScale.y = curve_lsScale_y?.Evaluate(time) ?? lsScale.y;
                 lsScale.z = curve_lsScale_z?.Evaluate(time) ?? lsScale.z;
 
-                lsRot = Quaternion.Euler(rEuler);
+                lsRot = new Quaternion();
+                lsRot.Set(r.x, r.y, r.z, 1);
             }
         }
     }
