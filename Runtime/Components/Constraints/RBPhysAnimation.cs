@@ -76,19 +76,22 @@ namespace RBPhys
 
             trsCurve.length = anim.length;
 
-            EditorCurveBinding[] curves = AnimationUtility.GetCurveBindings(anim);
-            List<(EditorCurveBinding, AnimationCurve)> setCurves = new List<(EditorCurveBinding, AnimationCurve)>();
+            AnimationClipCurveData[] curves = AnimationUtility.GetAllCurves(anim);
+            List<AnimationClipCurveData> setCurves = new List<AnimationClipCurveData>();
 
             foreach (var c in curves)
             {
-                if (!trsCurve.TrySetCurve(anim, c))
+                if (!trsCurve.TrySetCurve(c))
                 {
-                    setCurves.Add((c, AnimationUtility.GetEditorCurve(anim, c)));
+                    setCurves.Add(c);
                 }
             }
 
             anim.ClearCurves();
-            AnimationUtility.SetEditorCurves(anim, setCurves.Select(item => item.Item1).ToArray(), setCurves.Select(item => item.Item2).ToArray());
+            foreach (var c in setCurves)
+            {
+                anim.SetCurve(c.path, c.type, c.propertyName, c.curve);
+            }
 
             if (!trsCurve.Validate())
             {
@@ -552,50 +555,50 @@ namespace RBPhys
                 return true;
             }
 
-            public bool TrySetCurve(AnimationClip clip, EditorCurveBinding c)
+            public bool TrySetCurve(AnimationClipCurveData c)
             {
-                if (c.type == typeof(Transform) && c.path == "")
+                if (c != null && c.curve != null &&  c.type == typeof(Transform) && c.path == "")
                 {
                     switch (c.propertyName)
                     {
                         case "m_LocalPosition.x":
-                            curve_lsPos_x = AnimationUtility.GetEditorCurve(clip, c);
+                            curve_lsPos_x = new AnimationCurve(c.curve.keys);
                             return true;
 
                         case "m_LocalPosition.y":
-                            curve_lsPos_y = AnimationUtility.GetEditorCurve(clip, c);
+                            curve_lsPos_y = new AnimationCurve(c.curve.keys);
                             return true;
 
                         case "m_LocalPosition.z":
-                            curve_lsPos_z = AnimationUtility.GetEditorCurve(clip, c);
+                            curve_lsPos_z = new AnimationCurve(c.curve.keys);
                             return true;
 
                         case "m_LocalRotation.x":
-                            curve_lsRotEuler_x = AnimationUtility.GetEditorCurve(clip, c);
+                            curve_lsRotEuler_x = new AnimationCurve(c.curve.keys);
                             return true;
 
                         case "m_LocalRotation.y":
-                            curve_lsRotEuler_y = AnimationUtility.GetEditorCurve(clip, c);
+                            curve_lsRotEuler_y = new AnimationCurve(c.curve.keys);
                             return true;
 
                         case "m_LocalRotation.z":
-                            curve_lsRotEuler_z = AnimationUtility.GetEditorCurve(clip, c);
+                            curve_lsRotEuler_z = new AnimationCurve(c.curve.keys);
                             return true;
 
                         case "m_LocalRotation.w":
-                            curve_lsRotEuler_w = AnimationUtility.GetEditorCurve(clip, c);
+                            curve_lsRotEuler_w = new AnimationCurve(c.curve.keys);
                             return true;
 
                         case "m_LocalScale.x":
-                            curve_lsScale_x = AnimationUtility.GetEditorCurve(clip, c);
+                            curve_lsScale_x = new AnimationCurve(c.curve.keys);
                             return true;
 
                         case "m_LocalScale.y":
-                            curve_lsScale_y = AnimationUtility.GetEditorCurve(clip, c);
+                            curve_lsScale_y = new AnimationCurve(c.curve.keys);
                             return true;
 
                         case "m_LocalScale.z":
-                            curve_lsScale_z = AnimationUtility.GetEditorCurve(clip, c);
+                            curve_lsScale_z = new AnimationCurve(c.curve.keys);
                             return true;
                     }
                 }
