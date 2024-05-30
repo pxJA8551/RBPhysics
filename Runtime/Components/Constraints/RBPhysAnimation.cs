@@ -32,6 +32,7 @@ namespace RBPhys
         [NonSerialized] public float ctrlTime = 0;
         [NonSerialized] public float ctrlSpeed = 0;
         [HideInInspector] public RBPhysAnimationLinker linker;
+        [SerializeField] Type animationType;
 
         TRSAnimationCurve trsCurve = new TRSAnimationCurve();
 
@@ -272,7 +273,7 @@ namespace RBPhys
 
         void SampleSetTRSAnimation(float time, Vector3 basePos, Quaternion baseRot)
         {
-            trsCurve.SampleTRSAnimation(time, basePos, baseRot, out Vector3 targetLsPos, out Quaternion targetLsRot);
+            trsCurve.SampleTRSAnimation(time, basePos, baseRot, animationType, out Vector3 targetLsPos, out Quaternion targetLsRot);
             LsToWs(targetLsPos, targetLsRot, out _targetWsPos, out _targetWsRot);
         }
 
@@ -392,7 +393,7 @@ namespace RBPhys
 
         float CalcAnimLambda(float time, float invMass, Vector3 invInertiaTensor, out Vector3 dPos, out Vector3 dRot)
         {
-            trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, out Vector3 intgTargetPos, out Quaternion intgTargetRot);
+            trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, animationType, out Vector3 intgTargetPos, out Quaternion intgTargetRot);
             LsToWs(intgTargetPos, intgTargetRot, out Vector3 intgTargetPosWs, out Quaternion intgTargetRotWs);
             CalcDPosTarget(intgTargetPosWs, intgTargetRotWs, out dPos, out dRot);
 
@@ -449,7 +450,7 @@ namespace RBPhys
                 lsBaseScale = transform.localScale;
             }
 
-            trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, lsBaseScale, out Vector3 lsPos, out Quaternion lsRot, out Vector3 lsScale);
+            trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, lsBaseScale, animationType, out Vector3 lsPos, out Quaternion lsRot, out Vector3 lsScale);
             LsToWs(lsPos, lsRot, out Vector3 wsPos, out Quaternion wsRot);
 
             transform.position = wsPos;
@@ -483,7 +484,7 @@ namespace RBPhys
 
         public float CalcLinkedAnimLambda(float time, float linkedInvMass, Vector3 linkedInvInertiaTensorWs)
         {
-            trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, out Vector3 intgTargetPos, out Quaternion intgTargetRot);
+            trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, animationType, out Vector3 intgTargetPos, out Quaternion intgTargetRot);
             LsToWs(intgTargetPos, intgTargetRot, out Vector3 intgTargetPosWs, out Quaternion intgTargetRotWs);
             CalcDPosTarget(intgTargetPosWs, intgTargetRotWs, out Vector3 dPos, out Vector3 dRot);
 
@@ -602,40 +603,69 @@ namespace RBPhys
                 return false;
             }
 
-            public void SampleTRSAnimation(float time, Vector3 pos, Quaternion rot, out Vector3 lsPos, out Quaternion lsRot)
+            public void SampleTRSAnimation(float time, Vector3 pos, Quaternion rot, Type animType, out Vector3 lsPos, out Quaternion lsRot)
             {
+                float cTime = EvaluateTime(time, animType);
+
                 lsPos = pos;
                 lsRot = rot;
 
-                lsPos.x = curve_lsPos_x?.Evaluate(time) ?? lsPos.x;
-                lsPos.y = curve_lsPos_y?.Evaluate(time) ?? lsPos.y;
-                lsPos.z = curve_lsPos_z?.Evaluate(time) ?? lsPos.z;
+                lsPos.x = curve_lsPos_x?.Evaluate(cTime) ?? lsPos.x;
+                lsPos.y = curve_lsPos_y?.Evaluate(cTime) ?? lsPos.y;
+                lsPos.z = curve_lsPos_z?.Evaluate(cTime) ?? lsPos.z;
 
-                lsRot.x = curve_lsRotEuler_x?.Evaluate(time) ?? lsRot.x;
-                lsRot.y = curve_lsRotEuler_y?.Evaluate(time) ?? lsRot.y;
-                lsRot.z = curve_lsRotEuler_z?.Evaluate(time) ?? lsRot.z;
-                lsRot.w = curve_lsRotEuler_w?.Evaluate(time) ?? lsRot.w;
+                lsRot.x = curve_lsRotEuler_x?.Evaluate(cTime) ?? lsRot.x;
+                lsRot.y = curve_lsRotEuler_y?.Evaluate(cTime) ?? lsRot.y;
+                lsRot.z = curve_lsRotEuler_z?.Evaluate(cTime) ?? lsRot.z;
+                lsRot.w = curve_lsRotEuler_w?.Evaluate(cTime) ?? lsRot.w;
             }
 
-            public void SampleTRSAnimation(float time, Vector3 pos, Quaternion rot, Vector3 scale, out Vector3 lsPos, out Quaternion lsRot, out Vector3 lsScale)
+            public void SampleTRSAnimation(float time, Vector3 pos, Quaternion rot, Vector3 scale, Type animType, out Vector3 lsPos, out Quaternion lsRot, out Vector3 lsScale)
             {
+                float cTime = EvaluateTime(time, animType);
+
                 lsPos = pos;
                 lsScale = scale;
                 lsRot = rot;
 
-                lsPos.x = curve_lsPos_x?.Evaluate(time) ?? lsPos.x;
-                lsPos.y = curve_lsPos_y?.Evaluate(time) ?? lsPos.y;
-                lsPos.z = curve_lsPos_z?.Evaluate(time) ?? lsPos.z;
+                lsPos.x = curve_lsPos_x?.Evaluate(cTime) ?? lsPos.x;
+                lsPos.y = curve_lsPos_y?.Evaluate(cTime) ?? lsPos.y;
+                lsPos.z = curve_lsPos_z?.Evaluate(cTime) ?? lsPos.z;
 
-                lsRot.x = curve_lsRotEuler_x?.Evaluate(time) ?? lsRot.x;
-                lsRot.y = curve_lsRotEuler_y?.Evaluate(time) ?? lsRot.y;
-                lsRot.z = curve_lsRotEuler_z?.Evaluate(time) ?? lsRot.z;
-                lsRot.w = curve_lsRotEuler_w?.Evaluate(time) ?? lsRot.w;
+                lsRot.x = curve_lsRotEuler_x?.Evaluate(cTime) ?? lsRot.x;
+                lsRot.y = curve_lsRotEuler_y?.Evaluate(cTime) ?? lsRot.y;
+                lsRot.z = curve_lsRotEuler_z?.Evaluate(cTime) ?? lsRot.z;
+                lsRot.w = curve_lsRotEuler_w?.Evaluate(cTime) ?? lsRot.w;
 
-                lsScale.x = curve_lsScale_x?.Evaluate(time) ?? lsScale.x;
-                lsScale.y = curve_lsScale_y?.Evaluate(time) ?? lsScale.y;
-                lsScale.z = curve_lsScale_z?.Evaluate(time) ?? lsScale.z;
+                lsScale.x = curve_lsScale_x?.Evaluate(cTime) ?? lsScale.x;
+                lsScale.y = curve_lsScale_y?.Evaluate(cTime) ?? lsScale.y;
+                lsScale.z = curve_lsScale_z?.Evaluate(cTime) ?? lsScale.z;
             }
+
+            public float EvaluateTime(float t, Type animType)
+            {
+                switch (animType)
+                {
+                    case Type.Once:
+                        return Mathf.Clamp(t, 0, length);
+
+                    case Type.Loop:
+                        return Mathf.Clamp(t % length, 0, length);
+
+                    case Type.Ping_Pong:
+                        float f = (length * 2);
+                        return Mathf.Clamp(length - Mathf.Abs((t % f) - length), 0, length);
+                }
+
+                return t;
+            }
+        }
+
+        enum Type
+        {
+            Once,
+            Loop,
+            Ping_Pong
         }
     }
 }
