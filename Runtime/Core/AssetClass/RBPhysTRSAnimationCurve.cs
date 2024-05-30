@@ -230,13 +230,13 @@ namespace RBPhys
             lsRot.w = GetFloatValue(curve_lsRotQuat_w, cTime, lsRot.w);
 
             lsScale.x = GetFloatValue(curve_lsScale_x, cTime, lsScale.x);
-            lsScale.y = GetFloatValue(curve_lsScale_x, cTime, lsScale.y);
-            lsScale.z = GetFloatValue(curve_lsScale_x, cTime, lsScale.z);
+            lsScale.y = GetFloatValue(curve_lsScale_y, cTime, lsScale.y);
+            lsScale.z = GetFloatValue(curve_lsScale_z, cTime, lsScale.z);
         }
 
         float GetFloatValue(AnimationCurve curve, float time, float v)
         {
-            if (curve != null && 0 <= time && time <= curve.length)
+            if (curve != null && curve.length > 0) // curve.length = keys.Length ‚Ç‚¤‚µ‚Ä
             {
                 return curve.Evaluate(time);
             }
