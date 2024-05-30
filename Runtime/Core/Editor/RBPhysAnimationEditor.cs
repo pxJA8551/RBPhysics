@@ -218,6 +218,7 @@ namespace RBPhys
         {
             trsCurve = CreateInstance<RBPhysTRSAnimationCurve>();
             animClip = AnimationClip.Instantiate(baseAnimation);
+            animClip.name = baseAnimation.name;
 
             trsCurve.length = animClip.length;
 
