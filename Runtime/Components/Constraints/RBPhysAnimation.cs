@@ -89,7 +89,7 @@ namespace RBPhys
             anim.ClearCurves();
             AnimationUtility.SetEditorCurves(anim, setCurves.Select(item => item.Item1).ToArray(), setCurves.Select(item => item.Item2).ToArray());
 
-            if (trsCurve.Validate())
+            if (!trsCurve.Validate())
             {
                 Debug.LogWarning("RBPhysAnimation -- Validation falied.");
             }
