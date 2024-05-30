@@ -53,7 +53,7 @@ namespace RBPhys
             {
                 var anim = linkedAnimations[i];
 
-                if (anim?.enablePhysicallyProcedualAnim ?? false)
+                if (anim?.enablePhysProceduralAnimation ?? false)
                 {
                     float tOffset = linkedTOffsets.ElementAtOrDefault(i);
 
@@ -70,7 +70,7 @@ namespace RBPhys
 
                 for (int i = 0; i < linkedAnimations.Length; i++)
                 {
-                    if (linkedAnimations[i]?.enablePhysicallyProcedualAnim ?? false)
+                    if (linkedAnimations[i]?.enablePhysProceduralAnimation ?? false)
                     {
                         float tOffset = linkedTOffsets.ElementAtOrDefault(i);
                         linkedAnimations[i].ctrlTime += Mathf.Lerp((timeSum + tOffset) - linkedAnimations[i].ctrlTime, 0, linkIsolation);
@@ -83,7 +83,7 @@ namespace RBPhys
         {
             for (int i = 0; i < linkedAnimations.Length; i++)
             {
-                if (linkedAnimations[i]?.enablePhysicallyProcedualAnim ?? false)
+                if (linkedAnimations[i]?.enablePhysProceduralAnimation ?? false)
                 {
                     linkedAnimations[i].ctrlTime += add;
                 }
@@ -98,7 +98,7 @@ namespace RBPhys
             {
                 var anim = linkedAnimations[i];
 
-                if (anim?.enablePhysicallyProcedualAnim ?? false)
+                if (anim?.enablePhysProceduralAnimation ?? false)
                 {
                     invMassSum += anim.GetInvMass();
                 }
@@ -115,7 +115,7 @@ namespace RBPhys
             {
                 var anim = linkedAnimations[i];
 
-                if (anim?.enablePhysicallyProcedualAnim ?? false)
+                if (anim?.enablePhysProceduralAnimation ?? false)
                 {
                     invInertiaTensorWs += anim.GetInvInertiaTensorWs();
                 }
@@ -134,7 +134,7 @@ namespace RBPhys
             {
                 var anim = linkedAnimations[i];
 
-                if (anim?.enablePhysicallyProcedualAnim ?? false)
+                if (anim?.enablePhysProceduralAnimation ?? false)
                 {
                     float tOffset = linkedTOffsets.ElementAtOrDefault(i);
                     float tIsolation = anim.ctrlTime + Mathf.Lerp((time + tOffset) - anim.ctrlTime, 0, linkIsolation);

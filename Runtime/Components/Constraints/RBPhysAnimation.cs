@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 
 namespace RBPhys
@@ -13,28 +12,15 @@ namespace RBPhys
         const int PHYS_ANIM_INTERGRADE = 1;
         const float PHYS_ANIM_RESOLUTION_BETA = 1f;
 
-        public AnimationClip BaseAnimationClip
-        {
-            get
-            {
-                return _baseAnimationClip;
-            }
+        public AnimationClip baseAnimationClip;
 
-            set
-            {
-                _baseAnimationClip = value;
-                animationClip = RecontructAnimationClip(_baseAnimationClip);
-            }
-        }
+        public AnimationClip animationClip;
+        public RBPhysTRSAnimationCurve trsCurve;
 
-        [SerializeField] AnimationClip _baseAnimationClip;
-        [HideInInspector] public AnimationClip animationClip;
         [NonSerialized] public float ctrlTime = 0;
         [NonSerialized] public float ctrlSpeed = 0;
         [HideInInspector] public RBPhysAnimationLinker linker;
-        [SerializeField] Type animationType;
-
-        TRSAnimationCurve trsCurve = new TRSAnimationCurve();
+        [SerializeField] RBPhysAnimationType animationType;
 
         [SerializeField] public Transform parentTransform;
         bool _useParentTransform;
@@ -44,7 +30,7 @@ namespace RBPhys
 
         public RBRigidbody rbRigidbody;
         public bool playing;
-        public bool enablePhysicallyProcedualAnim = true;
+        public bool enablePhysProceduralAnimation = true;
 
         public bool interp = true;
         public bool velocityInterp = true;
@@ -56,11 +42,6 @@ namespace RBPhys
         {
             rbRigidbody = GetComponent<RBRigidbody>();
 
-            if (_baseAnimationClip != null)
-            {
-                animationClip = RecontructAnimationClip(_baseAnimationClip);
-            }
-
             RBPhysCore.AddStdSolver(this);
             RBPhysCore.AddPhysObject(this);
 
@@ -68,37 +49,6 @@ namespace RBPhys
             {
                 PlayAnimation();
             }
-        }
-
-        public AnimationClip RecontructAnimationClip(AnimationClip baseAnimation)
-        {
-            var anim = Instantiate(baseAnimation);
-
-            trsCurve.length = anim.length;
-
-            AnimationClipCurveData[] curves = AnimationUtility.GetAllCurves(anim);
-            List<AnimationClipCurveData> setCurves = new List<AnimationClipCurveData>();
-
-            foreach (var c in curves)
-            {
-                if (!trsCurve.TrySetCurve(c))
-                {
-                    setCurves.Add(c);
-                }
-            }
-
-            anim.ClearCurves();
-            foreach (var c in setCurves)
-            {
-                anim.SetCurve(c.path, c.type, c.propertyName, c.curve);
-            }
-
-            if (!trsCurve.Validate())
-            {
-                Debug.LogWarning("RBPhysAnimation -- Validation falied.");
-            }
-
-            return anim;
         }
 
         public void PlayAnimation()
@@ -151,7 +101,7 @@ namespace RBPhys
 
             ctrlTime += Time.fixedDeltaTime * ctrlSpeed;
 
-            if (enablePhysicallyProcedualAnim)
+            if (enablePhysProceduralAnimation && trsCurve != null)
             {
                 SetBasePos();
                 SampleApplyTRSAnimation(ctrlTime, Time.fixedDeltaTime, _lsBasePos, _lsBaseRot);
@@ -238,7 +188,7 @@ namespace RBPhys
         {
             _ctrlTimeDeltaP = Mathf.Clamp01((ctrlTime - _ctrlTimeLast) / (Time.fixedDeltaTime * ctrlSpeed));
 
-            if (enablePhysicallyProcedualAnim)
+            if (enablePhysProceduralAnimation && trsCurve != null)
             {
                 SampleApplyTRSAnimation(ctrlTime, Time.fixedDeltaTime, _lsBasePos, _lsBaseRot);
             }
@@ -256,7 +206,7 @@ namespace RBPhys
 
         public void StdSolverIteration(int iterationCount)
         {
-            if (enablePhysicallyProcedualAnim)
+            if (enablePhysProceduralAnimation && trsCurve != null)
             {
                 SampleSetTRSAnimation(ctrlTime, _lsBasePos, _lsBaseRot);
 
@@ -466,12 +416,12 @@ namespace RBPhys
             float interpDelta = _solverTime != 0 ? (Time.time - _solverTime) : 0;
             float time = interp ? (ctrlTime + (interpDelta * (velocityInterp ? _ctrlTimeDeltaP : 1)) * interpMultiplier) : ctrlTime;
 
-            if (!enablePhysicallyProcedualAnim)
+            if (!enablePhysProceduralAnimation)
             {
                 time = interp ? (ctrlTime + interpDelta * interpMultiplier) : ctrlTime;
             }
 
-            if (animationClip != null)
+            if (animationClip != null && trsCurve != null)
             {
                 animationClip.SampleAnimation(gameObject, time);
             }
@@ -493,182 +443,12 @@ namespace RBPhys
 
             return (dPos.magnitude / _solverDeltaTime) / linkedInvMass + Vector3.Scale((dRot / _solverDeltaTime), RBPhysUtil.V3Rcp(linkedInvInertiaTensorWs)).magnitude;
         }
+    }
 
-        class TRSAnimationCurve
-        {
-            public AnimationCurve curve_lsPos_x;
-            public AnimationCurve curve_lsPos_y;
-            public AnimationCurve curve_lsPos_z;
-            public AnimationCurve curve_lsRotEuler_x;
-            public AnimationCurve curve_lsRotEuler_y;
-            public AnimationCurve curve_lsRotEuler_z;
-            public AnimationCurve curve_lsRotEuler_w;
-            public AnimationCurve curve_lsScale_x;
-            public AnimationCurve curve_lsScale_y;
-            public AnimationCurve curve_lsScale_z;
-            public float length;
-
-            public bool Validate()
-            {
-                if (curve_lsPos_x == null)
-                {
-                    Debug.LogWarning("RBPhysAnimation.TRSAnimationCurve -- Validation falied. No LS_POS_X data found.");
-                    return false;
-                }
-
-                if (curve_lsPos_y == null)
-                {
-                    Debug.LogWarning("RBPhysAnimation.TRSAnimationCurve -- Validation falied. No LS_POS_Y data found.");
-                    return false;
-                }
-
-                if (curve_lsPos_z == null)
-                {
-                    Debug.LogWarning("RBPhysAnimation.TRSAnimationCurve -- Validation falied. No LS_POS_Z data found.");
-                    return false;
-                }
-
-                if (curve_lsRotEuler_x == null)
-                {
-                    Debug.LogWarning("RBPhysAnimation.TRSAnimationCurve -- Validation falied. No LS_ROT_X data found.");
-                    return false;
-                }
-
-                if (curve_lsRotEuler_y == null)
-                {
-                    Debug.LogWarning("RBPhysAnimation.TRSAnimationCurve -- Validation falied. No LS_ROT_Y data found.");
-                    return false;
-                }
-
-                if (curve_lsRotEuler_z == null)
-                {
-                    Debug.LogWarning("RBPhysAnimation.TRSAnimationCurve -- Validation falied. No LS_ROT_Z data found.");
-                    return false;
-                }
-
-                if (curve_lsRotEuler_w == null)
-                {
-                    Debug.LogWarning("RBPhysAnimation.TRSAnimationCurve -- Validation falied. No LS_ROT_W data found.");
-                    return false;
-                }
-
-                return true;
-            }
-
-            public bool TrySetCurve(AnimationClipCurveData c)
-            {
-                if (c != null && c.curve != null &&  c.type == typeof(Transform) && c.path == "")
-                {
-                    switch (c.propertyName)
-                    {
-                        case "m_LocalPosition.x":
-                            curve_lsPos_x = new AnimationCurve(c.curve.keys);
-                            return true;
-
-                        case "m_LocalPosition.y":
-                            curve_lsPos_y = new AnimationCurve(c.curve.keys);
-                            return true;
-
-                        case "m_LocalPosition.z":
-                            curve_lsPos_z = new AnimationCurve(c.curve.keys);
-                            return true;
-
-                        case "m_LocalRotation.x":
-                            curve_lsRotEuler_x = new AnimationCurve(c.curve.keys);
-                            return true;
-
-                        case "m_LocalRotation.y":
-                            curve_lsRotEuler_y = new AnimationCurve(c.curve.keys);
-                            return true;
-
-                        case "m_LocalRotation.z":
-                            curve_lsRotEuler_z = new AnimationCurve(c.curve.keys);
-                            return true;
-
-                        case "m_LocalRotation.w":
-                            curve_lsRotEuler_w = new AnimationCurve(c.curve.keys);
-                            return true;
-
-                        case "m_LocalScale.x":
-                            curve_lsScale_x = new AnimationCurve(c.curve.keys);
-                            return true;
-
-                        case "m_LocalScale.y":
-                            curve_lsScale_y = new AnimationCurve(c.curve.keys);
-                            return true;
-
-                        case "m_LocalScale.z":
-                            curve_lsScale_z = new AnimationCurve(c.curve.keys);
-                            return true;
-                    }
-                }
-
-                return false;
-            }
-
-            public void SampleTRSAnimation(float time, Vector3 pos, Quaternion rot, Type animType, out Vector3 lsPos, out Quaternion lsRot)
-            {
-                float cTime = EvaluateTime(time, animType);
-
-                lsPos = pos;
-                lsRot = rot;
-
-                lsPos.x = curve_lsPos_x?.Evaluate(cTime) ?? lsPos.x;
-                lsPos.y = curve_lsPos_y?.Evaluate(cTime) ?? lsPos.y;
-                lsPos.z = curve_lsPos_z?.Evaluate(cTime) ?? lsPos.z;
-
-                lsRot.x = curve_lsRotEuler_x?.Evaluate(cTime) ?? lsRot.x;
-                lsRot.y = curve_lsRotEuler_y?.Evaluate(cTime) ?? lsRot.y;
-                lsRot.z = curve_lsRotEuler_z?.Evaluate(cTime) ?? lsRot.z;
-                lsRot.w = curve_lsRotEuler_w?.Evaluate(cTime) ?? lsRot.w;
-            }
-
-            public void SampleTRSAnimation(float time, Vector3 pos, Quaternion rot, Vector3 scale, Type animType, out Vector3 lsPos, out Quaternion lsRot, out Vector3 lsScale)
-            {
-                float cTime = EvaluateTime(time, animType);
-
-                lsPos = pos;
-                lsScale = scale;
-                lsRot = rot;
-
-                lsPos.x = curve_lsPos_x?.Evaluate(cTime) ?? lsPos.x;
-                lsPos.y = curve_lsPos_y?.Evaluate(cTime) ?? lsPos.y;
-                lsPos.z = curve_lsPos_z?.Evaluate(cTime) ?? lsPos.z;
-
-                lsRot.x = curve_lsRotEuler_x?.Evaluate(cTime) ?? lsRot.x;
-                lsRot.y = curve_lsRotEuler_y?.Evaluate(cTime) ?? lsRot.y;
-                lsRot.z = curve_lsRotEuler_z?.Evaluate(cTime) ?? lsRot.z;
-                lsRot.w = curve_lsRotEuler_w?.Evaluate(cTime) ?? lsRot.w;
-
-                lsScale.x = curve_lsScale_x?.Evaluate(cTime) ?? lsScale.x;
-                lsScale.y = curve_lsScale_y?.Evaluate(cTime) ?? lsScale.y;
-                lsScale.z = curve_lsScale_z?.Evaluate(cTime) ?? lsScale.z;
-            }
-
-            public float EvaluateTime(float t, Type animType)
-            {
-                switch (animType)
-                {
-                    case Type.Once:
-                        return Mathf.Clamp(t, 0, length);
-
-                    case Type.Loop:
-                        return Mathf.Clamp(t % length, 0, length);
-
-                    case Type.Ping_Pong:
-                        float f = (length * 2);
-                        return Mathf.Clamp(length - Mathf.Abs((t % f) - length), 0, length);
-                }
-
-                return t;
-            }
-        }
-
-        enum Type
-        {
-            Once,
-            Loop,
-            Ping_Pong
-        }
+    public enum RBPhysAnimationType
+    {
+        Once,
+        Loop,
+        Ping_Pong
     }
 }
