@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -22,6 +23,20 @@ namespace RBPhys
         public AnimationCurve curve_lsScale_y;
         public AnimationCurve curve_lsScale_z;
         public float length;
+
+        public void Initialize()
+        {
+            curve_lsPos_x = null;
+            curve_lsPos_y = null;
+            curve_lsPos_z = null;
+            curve_lsRotQuat_x = null;
+            curve_lsRotQuat_y = null;
+            curve_lsRotQuat_z = null;
+            curve_lsRotQuat_w = null;
+            curve_lsScale_x = null;
+            curve_lsScale_y = null;
+            curve_lsScale_z = null;
+        }
 
         public bool Validate(bool noLog = false)
         {
@@ -187,14 +202,14 @@ namespace RBPhys
             lsPos = pos;
             lsRot = rot;
 
-            lsPos.x = curve_lsPos_x?.Evaluate(cTime) ?? lsPos.x;
-            lsPos.y = curve_lsPos_y?.Evaluate(cTime) ?? lsPos.y;
-            lsPos.z = curve_lsPos_z?.Evaluate(cTime) ?? lsPos.z;
+            lsPos.x = GetFloatValue(curve_lsPos_x, cTime, lsPos.x);
+            lsPos.y = GetFloatValue(curve_lsPos_y, cTime, lsPos.y);
+            lsPos.z = GetFloatValue(curve_lsPos_z, cTime, lsPos.z);
 
-            lsRot.x = curve_lsRotQuat_x?.Evaluate(cTime) ?? lsRot.x;
-            lsRot.y = curve_lsRotQuat_y?.Evaluate(cTime) ?? lsRot.y;
-            lsRot.z = curve_lsRotQuat_z?.Evaluate(cTime) ?? lsRot.z;
-            lsRot.w = curve_lsRotQuat_w?.Evaluate(cTime) ?? lsRot.w;
+            lsRot.x = GetFloatValue(curve_lsRotQuat_x, cTime, lsRot.x);
+            lsRot.y = GetFloatValue(curve_lsRotQuat_y, cTime, lsRot.y);
+            lsRot.z = GetFloatValue(curve_lsRotQuat_z, cTime, lsRot.z);
+            lsRot.w = GetFloatValue(curve_lsRotQuat_w, cTime, lsRot.w);
         }
 
         public void SampleTRSAnimation(float time, Vector3 pos, Quaternion rot, Vector3 scale, RBPhysAnimationType animType, out Vector3 lsPos, out Quaternion lsRot, out Vector3 lsScale)
@@ -202,21 +217,33 @@ namespace RBPhys
             float cTime = EvaluateTime(time, animType);
 
             lsPos = pos;
-            lsScale = scale;
             lsRot = rot;
+            lsScale = scale;
 
-            lsPos.x = curve_lsPos_x?.Evaluate(cTime) ?? lsPos.x;
-            lsPos.y = curve_lsPos_y?.Evaluate(cTime) ?? lsPos.y;
-            lsPos.z = curve_lsPos_z?.Evaluate(cTime) ?? lsPos.z;
+            lsPos.x = GetFloatValue(curve_lsPos_x, cTime, lsPos.x);
+            lsPos.y = GetFloatValue(curve_lsPos_y, cTime, lsPos.y);
+            lsPos.z = GetFloatValue(curve_lsPos_z, cTime, lsPos.z);
 
-            lsRot.x = curve_lsRotQuat_x?.Evaluate(cTime) ?? lsRot.x;
-            lsRot.y = curve_lsRotQuat_y?.Evaluate(cTime) ?? lsRot.y;
-            lsRot.z = curve_lsRotQuat_z?.Evaluate(cTime) ?? lsRot.z;
-            lsRot.w = curve_lsRotQuat_w?.Evaluate(cTime) ?? lsRot.w;
+            lsRot.x = GetFloatValue(curve_lsRotQuat_x, cTime, lsRot.x);
+            lsRot.y = GetFloatValue(curve_lsRotQuat_y, cTime, lsRot.y);
+            lsRot.z = GetFloatValue(curve_lsRotQuat_z, cTime, lsRot.z);
+            lsRot.w = GetFloatValue(curve_lsRotQuat_w, cTime, lsRot.w);
 
-            lsScale.x = curve_lsScale_x?.Evaluate(cTime) ?? lsScale.x;
-            lsScale.y = curve_lsScale_y?.Evaluate(cTime) ?? lsScale.y;
-            lsScale.z = curve_lsScale_z?.Evaluate(cTime) ?? lsScale.z;
+            lsScale.x = GetFloatValue(curve_lsScale_x, cTime, lsScale.x);
+            lsScale.y = GetFloatValue(curve_lsScale_x, cTime, lsScale.y);
+            lsScale.z = GetFloatValue(curve_lsScale_x, cTime, lsScale.z);
+        }
+
+        float GetFloatValue(AnimationCurve curve, float time, float v)
+        {
+            if (curve != null && 0 <= time && time <= curve.length)
+            {
+                return curve.Evaluate(time);
+            }
+            else
+            {
+                return v;
+            }
         }
 
         public float EvaluateTime(float t, RBPhysAnimationType animType)

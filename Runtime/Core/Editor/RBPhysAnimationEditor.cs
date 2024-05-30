@@ -203,6 +203,7 @@ namespace RBPhys
             EditorCurveBinding[] curves = AnimationUtility.GetCurveBindings(anim);
 
             var trsCurve = CreateInstance<RBPhysTRSAnimationCurve>();
+
             foreach (var c in curves)
             {
                 if (trsCurve.TrySetCurve(anim, c))
@@ -217,6 +218,7 @@ namespace RBPhys
         void RecontructAnimationClip(AnimationClip baseAnimation, out AnimationClip animClip, out RBPhysTRSAnimationCurve trsCurve)
         {
             trsCurve = CreateInstance<RBPhysTRSAnimationCurve>();
+
             animClip = AnimationClip.Instantiate(baseAnimation);
             animClip.name = baseAnimation.name;
 

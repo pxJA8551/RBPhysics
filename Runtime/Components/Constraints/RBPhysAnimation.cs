@@ -391,6 +391,7 @@ namespace RBPhys
             angleDeg = angleDeg > 180 ? angleDeg - 360 : angleDeg;
             dRot = axis * (angleDeg * Mathf.Deg2Rad);
         }
+
         void CalcTRSAnimFrame(float time)
         {
             SetBasePos();
