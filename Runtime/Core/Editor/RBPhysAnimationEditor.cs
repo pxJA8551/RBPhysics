@@ -150,23 +150,25 @@ namespace RBPhys
         void ConvertAnim(AnimationClip baseAnimClip, RBPhysTRSAnimationCurve baseTrsCurve)
         {
             RecontructAnimationClip(baseAnimClip, out AnimationClip animClip, out RBPhysTRSAnimationCurve trsCurve);
-            SaveAnimClip(animClip, baseAnimClip);
-            SaveTRSCurve(trsCurve, baseTrsCurve);
+            SaveAnimClip(animClip, baseAnimClip, baseAnimClip.name);
+            SaveTRSCurve(trsCurve, baseTrsCurve, baseAnimClip.name);
         }
 
         void ConvertBaseAnim(AnimationClip baseAnim, AnimationClip baseAnimClip, RBPhysTRSAnimationCurve baseTrsCurve)
         {
             RecontructAnimationClip(baseAnim, out AnimationClip animClip, out RBPhysTRSAnimationCurve trsCurve);
-            SaveAnimClip(animClip, baseAnimClip);
-            SaveTRSCurve(trsCurve, baseTrsCurve);
+            SaveAnimClip(animClip, baseAnimClip, baseAnimClip.name);
+            SaveTRSCurve(trsCurve, baseTrsCurve, baseAnimClip.name);
 
             animationClip.objectReferenceValue = animClip;
             this.trsCurve.objectReferenceValue = trsCurve;
         }
 
-        void SaveAnimClip(AnimationClip anim, AnimationClip baseAnim)
+        void SaveAnimClip(AnimationClip anim, AnimationClip baseAnim, string baseName)
         {
             bool b = baseAnim != null;
+
+            anim.name = baseName + "_cv";
 
             string path = b ? AssetDatabase.GetAssetPath(baseAnim) : ""; // : application.datapath
             string savePath = EditorUtility.SaveFilePanelInProject(path, b ? baseAnim.name : "animClip", "", "");
@@ -179,9 +181,11 @@ namespace RBPhys
             }
         }
 
-        void SaveTRSCurve(RBPhysTRSAnimationCurve trsCurve, RBPhysTRSAnimationCurve baseTrsCurve)
+        void SaveTRSCurve(RBPhysTRSAnimationCurve trsCurve, RBPhysTRSAnimationCurve baseTrsCurve, string baseName)
         {
             bool b = baseTrsCurve != null;
+
+            trsCurve.name = baseName + "_cv_trs";
 
             string path = b ? AssetDatabase.GetAssetPath(baseTrsCurve) : ""; // : application.datapath
             string savePath = EditorUtility.SaveFilePanelInProject(path, b ? baseTrsCurve.name : "animClip", "", "");

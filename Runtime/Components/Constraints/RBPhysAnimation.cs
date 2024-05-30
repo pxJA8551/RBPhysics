@@ -101,15 +101,18 @@ namespace RBPhys
 
             ctrlTime += Time.fixedDeltaTime * ctrlSpeed;
 
-            if (enablePhysProceduralAnimation && trsCurve != null)
+            if (trsCurve != null)
             {
-                SetBasePos();
-                SampleApplyTRSAnimation(ctrlTime, Time.fixedDeltaTime, _lsBasePos, _lsBaseRot);
-            }
-            else
-            {
-                SetBasePos();
-                SampleSetTRSAnimation(ctrlTime, _lsBasePos, _lsBaseRot);
+                if (enablePhysProceduralAnimation)
+                {
+                    SetBasePos();
+                    SampleApplyTRSAnimation(ctrlTime, Time.fixedDeltaTime, _lsBasePos, _lsBaseRot);
+                }
+                else
+                {
+                    SetBasePos();
+                    SampleSetTRSAnimation(ctrlTime, _lsBasePos, _lsBaseRot);
+                }
             }
 
             _solverTime = Time.time;
@@ -388,7 +391,6 @@ namespace RBPhys
             angleDeg = angleDeg > 180 ? angleDeg - 360 : angleDeg;
             dRot = axis * (angleDeg * Mathf.Deg2Rad);
         }
-
         void CalcTRSAnimFrame(float time)
         {
             SetBasePos();
@@ -403,12 +405,15 @@ namespace RBPhys
                 lsBaseScale = transform.localScale;
             }
 
-            trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, lsBaseScale, animationType, out Vector3 lsPos, out Quaternion lsRot, out Vector3 lsScale);
-            LsToWs(lsPos, lsRot, out Vector3 wsPos, out Quaternion wsRot);
+            if (trsCurve != null)
+            {
+                trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, lsBaseScale, animationType, out Vector3 lsPos, out Quaternion lsRot, out Vector3 lsScale);
+                LsToWs(lsPos, lsRot, out Vector3 wsPos, out Quaternion wsRot);
 
-            transform.position = wsPos;
-            transform.rotation = wsRot;
-            transform.localScale = lsScale;
+                transform.position = wsPos;
+                transform.rotation = wsRot;
+                transform.localScale = lsScale;
+            }
         }
 
         private void LateUpdate()
