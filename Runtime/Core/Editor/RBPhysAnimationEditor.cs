@@ -157,8 +157,8 @@ namespace RBPhys
         void ConvertBaseAnim(AnimationClip baseAnim, AnimationClip baseAnimClip, RBPhysTRSAnimationCurve baseTrsCurve)
         {
             RecontructAnimationClip(baseAnim, out AnimationClip animClip, out RBPhysTRSAnimationCurve trsCurve);
-            SaveAnimClip(animClip, baseAnimClip, baseAnimClip.name);
-            SaveTRSCurve(trsCurve, baseTrsCurve, baseAnimClip.name);
+            SaveAnimClip(animClip, baseAnimClip, baseAnim.name);
+            SaveTRSCurve(trsCurve, baseTrsCurve, baseAnim.name);
 
             animationClip.objectReferenceValue = animClip;
             this.trsCurve.objectReferenceValue = trsCurve;
