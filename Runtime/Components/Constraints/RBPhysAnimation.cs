@@ -89,6 +89,11 @@ namespace RBPhys
             anim.ClearCurves();
             AnimationUtility.SetEditorCurves(anim, setCurves.Select(item => item.Item1).ToArray(), setCurves.Select(item => item.Item2).ToArray());
 
+            if (trsCurve.Validate())
+            {
+                Debug.LogWarning("RBPhysAnimation -- Validation falied.");
+            }
+
             return anim;
         }
 
@@ -161,13 +166,13 @@ namespace RBPhys
         {
             if (parentTransform != null)
             {
-                _lsBasePos = parentTransform.InverseTransformPoint(rbRigidbody.Position);
-                _lsBaseRot = Quaternion.Inverse(parentTransform.rotation) * rbRigidbody.Rotation;
+                _lsBasePos = parentTransform.InverseTransformPoint(transform.position);
+                _lsBaseRot = Quaternion.Inverse(parentTransform.rotation) * transform.rotation;
             }
             else
             {
-                _lsBasePos = rbRigidbody.Position;
-                _lsBaseRot = rbRigidbody.Rotation;
+                _lsBasePos = transform.position;
+                _lsBaseRot = transform.rotation;
             }
         }
 
@@ -235,8 +240,8 @@ namespace RBPhys
             }
             else
             {
-                transform.position = _targetWsPos;
-                transform.rotation = _targetWsRot;
+                rbRigidbody.Position = _targetWsPos;
+                rbRigidbody.Rotation = _targetWsRot;
             }
         }
 
@@ -493,10 +498,58 @@ namespace RBPhys
             public AnimationCurve curve_lsRotEuler_x;
             public AnimationCurve curve_lsRotEuler_y;
             public AnimationCurve curve_lsRotEuler_z;
+            public AnimationCurve curve_lsRotEuler_w;
             public AnimationCurve curve_lsScale_x;
             public AnimationCurve curve_lsScale_y;
             public AnimationCurve curve_lsScale_z;
             public float length;
+
+            public bool Validate()
+            {
+                if (curve_lsPos_x == null)
+                {
+                    Debug.LogWarning("RBPhysAnimation.TRSAnimationCurve -- Validation falied. No LS_POS_X data found.");
+                    return false;
+                }
+
+                if (curve_lsPos_y == null)
+                {
+                    Debug.LogWarning("RBPhysAnimation.TRSAnimationCurve -- Validation falied. No LS_POS_Y data found.");
+                    return false;
+                }
+
+                if (curve_lsPos_z == null)
+                {
+                    Debug.LogWarning("RBPhysAnimation.TRSAnimationCurve -- Validation falied. No LS_POS_Z data found.");
+                    return false;
+                }
+
+                if (curve_lsRotEuler_x == null)
+                {
+                    Debug.LogWarning("RBPhysAnimation.TRSAnimationCurve -- Validation falied. No LS_ROT_X data found.");
+                    return false;
+                }
+
+                if (curve_lsRotEuler_y == null)
+                {
+                    Debug.LogWarning("RBPhysAnimation.TRSAnimationCurve -- Validation falied. No LS_ROT_Y data found.");
+                    return false;
+                }
+
+                if (curve_lsRotEuler_z == null)
+                {
+                    Debug.LogWarning("RBPhysAnimation.TRSAnimationCurve -- Validation falied. No LS_ROT_Z data found.");
+                    return false;
+                }
+
+                if (curve_lsRotEuler_w == null)
+                {
+                    Debug.LogWarning("RBPhysAnimation.TRSAnimationCurve -- Validation falied. No LS_ROT_W data found.");
+                    return false;
+                }
+
+                return true;
+            }
 
             public bool TrySetCurve(AnimationClip clip, EditorCurveBinding c)
             {
@@ -528,6 +581,10 @@ namespace RBPhys
                             curve_lsRotEuler_z = AnimationUtility.GetEditorCurve(clip, c);
                             return true;
 
+                        case "m_LocalRotation.w":
+                            curve_lsRotEuler_w = AnimationUtility.GetEditorCurve(clip, c);
+                            return true;
+
                         case "m_LocalScale.x":
                             curve_lsScale_x = AnimationUtility.GetEditorCurve(clip, c);
                             return true;
@@ -547,43 +604,37 @@ namespace RBPhys
 
             public void SampleTRSAnimation(float time, Vector3 pos, Quaternion rot, out Vector3 lsPos, out Quaternion lsRot)
             {
-                var r = rot.eulerAngles;
-
                 lsPos = pos;
+                lsRot = rot;
 
                 lsPos.x = curve_lsPos_x?.Evaluate(time) ?? lsPos.x;
                 lsPos.y = curve_lsPos_y?.Evaluate(time) ?? lsPos.y;
                 lsPos.z = curve_lsPos_z?.Evaluate(time) ?? lsPos.z;
 
-                r.x = curve_lsRotEuler_x?.Evaluate(time) ?? r.x;
-                r.y = curve_lsRotEuler_y?.Evaluate(time) ?? r.y;
-                r.z = curve_lsRotEuler_z?.Evaluate(time) ?? r.z;
-
-                lsRot = new Quaternion();
-                lsRot.Set(r.x, r.y, r.z, 1);
+                lsRot.x = curve_lsRotEuler_x?.Evaluate(time) ?? lsRot.x;
+                lsRot.y = curve_lsRotEuler_y?.Evaluate(time) ?? lsRot.y;
+                lsRot.z = curve_lsRotEuler_z?.Evaluate(time) ?? lsRot.z;
+                lsRot.w = curve_lsRotEuler_w?.Evaluate(time) ?? lsRot.w;
             }
 
             public void SampleTRSAnimation(float time, Vector3 pos, Quaternion rot, Vector3 scale, out Vector3 lsPos, out Quaternion lsRot, out Vector3 lsScale)
             {
-                Vector3 r = new Vector3(rot.x, rot.y, rot.z);
-
                 lsPos = pos;
                 lsScale = scale;
+                lsRot = rot;
 
                 lsPos.x = curve_lsPos_x?.Evaluate(time) ?? lsPos.x;
                 lsPos.y = curve_lsPos_y?.Evaluate(time) ?? lsPos.y;
                 lsPos.z = curve_lsPos_z?.Evaluate(time) ?? lsPos.z;
 
-                r.x = curve_lsRotEuler_x?.Evaluate(time) ?? r.x;
-                r.y = curve_lsRotEuler_y?.Evaluate(time) ?? r.y;
-                r.z = curve_lsRotEuler_z?.Evaluate(time) ?? r.z;
+                lsRot.x = curve_lsRotEuler_x?.Evaluate(time) ?? lsRot.x;
+                lsRot.y = curve_lsRotEuler_y?.Evaluate(time) ?? lsRot.y;
+                lsRot.z = curve_lsRotEuler_z?.Evaluate(time) ?? lsRot.z;
+                lsRot.w = curve_lsRotEuler_w?.Evaluate(time) ?? lsRot.w;
 
                 lsScale.x = curve_lsScale_x?.Evaluate(time) ?? lsScale.x;
                 lsScale.y = curve_lsScale_y?.Evaluate(time) ?? lsScale.y;
                 lsScale.z = curve_lsScale_z?.Evaluate(time) ?? lsScale.z;
-
-                lsRot = new Quaternion();
-                lsRot.Set(r.x, r.y, r.z, 1);
             }
         }
     }
