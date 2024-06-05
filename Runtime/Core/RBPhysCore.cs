@@ -2250,14 +2250,7 @@ namespace RBPhys
                     float friction = col.collider_a.friction * col.collider_b.friction;
                     float maxFriction = friction * col._jN._totalLambda;
 
-                    if (tMode == TimeScaleMode.Prograde)
-                    {
-                        _totalLambda = Mathf.Clamp(_totalLambda + lambda, -maxFriction, maxFriction);
-                    }
-                    else if (tMode == TimeScaleMode.Retrograde)
-                    {
-                        _totalLambda = Mathf.Clamp(_totalLambda - lambda, -maxFriction, maxFriction);
-                    }
+                    _totalLambda = Mathf.Clamp(_totalLambda + lambda, -maxFriction, maxFriction);
                 }
 
                 lambda = _totalLambda - oldTotalLambda;
