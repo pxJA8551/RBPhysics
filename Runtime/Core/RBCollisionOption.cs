@@ -9,4 +9,10 @@ namespace RBPhys
         Both,
         Ignore
     }
+
+    public enum RBCollisionLayerOption
+    {
+        IgnorePhyscast = 1,
+        Trigger = 2
+    }
 }

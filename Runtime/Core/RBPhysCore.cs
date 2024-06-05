@@ -79,6 +79,7 @@ namespace RBPhys
         static List<RBConstraints.IStdSolver> _stdSolversAsync = new List<RBConstraints.IStdSolver>();
 
         static int[] _collisionIgnoreLayers = new int[32];
+        static RBCollisionLayerOption[] _layerOptions = new RBCollisionLayerOption[32];
 
         public static void AddRigidbody(RBRigidbody rb)
         {
@@ -173,6 +174,23 @@ namespace RBPhys
                     _collisionIgnoreLayers[layer_b] &= ~(1 << layer_a);
                     break;
             }
+        }
+
+        public static void SetCollisionLayerOption(int layer, RBCollisionLayerOption option)
+        {
+            _layerOptions[layer] = option;
+        }
+
+        public static bool IsTriggerLayer(int layer)
+        {
+            int p = (int)_layerOptions[layer];
+            return (p & 1) == 1;
+        }
+
+        public static bool IsIgnorePhysCastLayer(int layer)
+        {
+            int p = (int)_layerOptions[layer];
+            return (p & 2) == 1;
         }
 
         public static void OpenPhysicsFrameWindow(float dt)
@@ -433,7 +451,7 @@ namespace RBPhys
                 }
             });
 
-            hitInfos = hitInfos.Where(item => item.IsValidHit).OrderBy(item => item.length).ToList();
+            hitInfos = hitInfos.Where(item => item.IsValidHit).Where(item => !IsIgnorePhysCastLayer(item.trajectory.Layer)).OrderBy(item => item.length).ToList();
         }
 
         public static RBColliderCastHitInfo SphereCast(Vector3 org, Vector3 dir, float length, float radius, bool allowNegativeValue = true)
@@ -524,6 +542,8 @@ namespace RBPhys
             });
 
             RBColliderCastHitInfo fMinOverlap = default;
+
+            hitList = hitList.Where(item => !IsIgnorePhysCastLayer(item.trajectory.Layer)).ToList();
 
             foreach (var v in hitList)
             {
@@ -1152,13 +1172,13 @@ namespace RBPhys
                         rbc.SwapTo(pair.Item1, pair.Item2);
                     }
 
-                    if (rbc == null)
-                    {
-                        rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p);
-                    }
-
                     var traj1 = pair.Item1.ParentRigidbody?.ExpObjectTrajectory ?? pair.Item1.ExpTrajectory;
                     var traj2 = pair.Item2.ParentRigidbody?.ExpObjectTrajectory ?? pair.Item2.ExpTrajectory;
+
+                    if (rbc == null)
+                    {
+                        rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
+                    }
 
                     rbc.rigidbody_a?.OnCollision(traj2);
                     rbc.collider_a?.OnCollision(traj2);
@@ -1205,13 +1225,13 @@ namespace RBPhys
                         rbc.SwapTo(pair.Item1, pair.Item2);
                     }
 
-                    if (rbc == null)
-                    {
-                        rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p);
-                    }
-
                     var traj1 = pair.Item1.ParentRigidbody?.ExpObjectTrajectory ?? pair.Item1.ExpTrajectory;
                     var traj2 = pair.Item2.ParentRigidbody?.ExpObjectTrajectory ?? pair.Item2.ExpTrajectory;
+
+                    if (rbc == null)
+                    {
+                        rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
+                    }
 
                     rbc.rigidbody_a?.OnCollision(traj2);
                     rbc.collider_a?.OnCollision(traj2);
@@ -1258,13 +1278,13 @@ namespace RBPhys
                         rbc.SwapTo(pair.Item1, pair.Item2);
                     }
 
-                    if (rbc == null)
-                    {
-                        rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p);
-                    }
-
                     var traj1 = pair.Item1.ParentRigidbody?.ExpObjectTrajectory ?? pair.Item1.ExpTrajectory;
                     var traj2 = pair.Item2.ParentRigidbody?.ExpObjectTrajectory ?? pair.Item2.ExpTrajectory;
+
+                    if (rbc == null)
+                    {
+                        rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
+                    }
 
                     rbc.rigidbody_a?.OnCollision(traj2);
                     rbc.collider_a?.OnCollision(traj2);
@@ -1311,13 +1331,13 @@ namespace RBPhys
                         rbc.SwapTo(pair.Item1, pair.Item2);
                     }
 
-                    if (rbc == null)
-                    {
-                        rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p);
-                    }
-
                     var traj1 = pair.Item1.ParentRigidbody?.ExpObjectTrajectory ?? pair.Item1.ExpTrajectory;
                     var traj2 = pair.Item2.ParentRigidbody?.ExpObjectTrajectory ?? pair.Item2.ExpTrajectory;
+
+                    if (rbc == null)
+                    {
+                        rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
+                    }
 
                     rbc.rigidbody_a?.OnCollision(traj2);
                     rbc.collider_a?.OnCollision(traj2);
@@ -1364,13 +1384,13 @@ namespace RBPhys
                         rbc.SwapTo(pair.Item1, pair.Item2);
                     }
 
-                    if (rbc == null)
-                    {
-                        rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p);
-                    }
-
                     var traj1 = pair.Item1.ParentRigidbody?.ExpObjectTrajectory ?? pair.Item1.ExpTrajectory;
                     var traj2 = pair.Item2.ParentRigidbody?.ExpObjectTrajectory ?? pair.Item2.ExpTrajectory;
+
+                    if (rbc == null)
+                    {
+                        rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
+                    }
 
                     rbc.rigidbody_a?.OnCollision(traj2);
                     rbc.collider_a?.OnCollision(traj2);
@@ -1417,13 +1437,13 @@ namespace RBPhys
                         rbc.SwapTo(pair.Item1, pair.Item2);
                     }
 
-                    if (rbc == null)
-                    {
-                        rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p);
-                    }
-
                     var traj1 = pair.Item1.ParentRigidbody?.ExpObjectTrajectory ?? pair.Item1.ExpTrajectory;
                     var traj2 = pair.Item2.ParentRigidbody?.ExpObjectTrajectory ?? pair.Item2.ExpTrajectory;
+
+                    if (rbc == null)
+                    {
+                        rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
+                    }
 
                     rbc.rigidbody_a?.OnCollision(traj2);
                     rbc.collider_a?.OnCollision(traj2);
@@ -1483,7 +1503,7 @@ namespace RBPhys
             }
             Profiler.EndSample();
 
-            float dt2 = dt;
+            _collisionsInSolver.RemoveAll(item => IsTriggerLayer(item.layer_a) || IsTriggerLayer(item.layer_b));
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-SolveCollisions/StdSolver");
             for (int iter = 0; iter < cpu_std_solver_max_iter; iter++)
@@ -1510,16 +1530,16 @@ namespace RBPhys
                 {
                     Profiler.BeginSample(name: "UpdateTrajectories");
 
-                    UpdateColliderExtTrajectories(dt2);
+                    UpdateColliderExtTrajectories(dt);
 
                     Parallel.For(0, _collisionsInSolver.Count, j =>
                     {
-                        UpdateTrajectoryPair(_collisionsInSolver[j], dt2);
+                        UpdateTrajectoryPair(_collisionsInSolver[j], dt);
                     });
 
                     Parallel.ForEach(_stdSolversAsync, s =>
                     {
-                        s.StdSolverInit(dt2, false);
+                        s.StdSolverInit(dt, false);
                     });
 
                     Profiler.EndSample();
@@ -1910,6 +1930,9 @@ namespace RBPhys
         public RBCollider collider_b;
         public RBRigidbody rigidbody_b;
 
+        public int layer_a;
+        public int layer_b;
+
         public Vector3 cg_a;
         public Vector3 cg_b;
         public Vector3 aNearest;
@@ -1958,9 +1981,12 @@ namespace RBPhys
 
             this.penetration = penetration;
             _contactNormal = (traj_b.IsStatic ? Vector3.zero : traj_b.Rigidbody.Velocity) - (traj_a.IsStatic ? Vector3.zero : traj_a.Rigidbody.Velocity);
+
+            layer_a = traj_a.Layer;
+            layer_b = traj_b.Layer;
         }
 
-        public RBCollision(RBCollider col_a, RBCollider col_b, Vector3 penetration)
+        public RBCollision(RBCollider col_a, RBCollider col_b, Vector3 penetration, int layer_a, int layer_b)
         {
             collider_a = col_a;
             rigidbody_a = col_a.ParentRigidbody;
@@ -1972,6 +1998,9 @@ namespace RBPhys
 
             this.penetration = penetration;
             _contactNormal = penetration.normalized;
+
+            this.layer_a = layer_a;
+            this.layer_b = layer_b;
         }
 
         public bool ObjectEquals(RBCollision col)
