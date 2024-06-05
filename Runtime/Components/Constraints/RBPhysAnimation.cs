@@ -36,7 +36,7 @@ namespace RBPhys
         public bool velocityInterp = true;
         public float interpMultiplier = 1.0f;
 
-        public float AnimationLength { get { return animationClip?.length ?? -1; } }
+        public float AnimationLength { get { return Mathf.Max(animationClip?.length ?? -1, trsCurve?.length ?? -1); } } 
 
         public void Awake()
         {
