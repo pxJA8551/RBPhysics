@@ -23,10 +23,10 @@ namespace RBPhys
         public const float CPU_SOLVER_ABORT_VELADD_SQRT = .005f * .005f;
         public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = .002f * .002f;
         public const float COLLISION_AS_CONTINUOUS_FRAMES = 3;
-        public const float RETROGRADE_PHYS_RESTITUTION_MULTIPLIER = .35f;
+        public const float RETROGRADE_PHYS_RESTITUTION_MULTIPLIER = .361f;
         public const float RETROGRADE_PHYS_RESTITUTION_MIN = 1.001f;
 
-        public const float RETROGRADE_PHYS_FRICTION_MULTIPLIER = .4f;
+        public const float RETROGRADE_PHYS_FRICTION_MULTIPLIER = .35f;
 
         public static int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
         public static int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
@@ -2231,7 +2231,7 @@ namespace RBPhys
                     float vd = ((e - _eLast) / dt) * cr_kd;
 
                     _bias = vp + vi + vd;
-                    if(initBias) _restitutionBias = restitution * closingVelocity;
+                    _restitutionBias = restitution * closingVelocity;
 
                     _eLast = e;
                 }
@@ -2247,8 +2247,6 @@ namespace RBPhys
 
                 float lambda = _effectiveMass * (-(jv + Mathf.Min(_bias, _restitutionBias)));
                 float oldTotalLambda = _totalLambda;
-
-                _restitutionBias = 0;
 
                 if (_type == Type.Normal)
                 {
