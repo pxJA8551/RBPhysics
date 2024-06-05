@@ -190,7 +190,7 @@ namespace RBPhys
         public static bool IsTriggerLayer(int layer)
         {
             int p = (int)_layerOptions[layer];
-            return (p & 2) == 1;
+            return (p & 2) == 2;
         }
 
         public static void OpenPhysicsFrameWindow(float dt)
