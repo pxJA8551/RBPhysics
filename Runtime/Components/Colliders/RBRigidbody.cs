@@ -313,14 +313,7 @@ namespace RBPhys
 
         public (Vector3 pos, Quaternion rot) GetIntergrated(float dt)
         {
-            if (PhysTimeScaleMode == TimeScaleMode.Freeze)
-            {
-                return (_position, _rotation);
-            }
-            else
-            {
-                return (_position + _expVelocity * dt, Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * dt, _expAngularVelocity.normalized) * _rotation);
-            }
+            return (_position + _expVelocity * dt, Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * dt, _expAngularVelocity.normalized) * _rotation);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
