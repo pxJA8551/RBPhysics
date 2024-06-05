@@ -23,14 +23,16 @@ namespace RBPhys
         public const float CPU_SOLVER_ABORT_VELADD_SQRT = .005f * .005f;
         public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = .002f * .002f;
         public const float COLLISION_AS_CONTINUOUS_FRAMES = 3;
-        public const float RETROGATE_PHYS_RESTITUTION_MULTIPLIER = .35f;
+        public const float RETROGRADE_PHYS_RESTITUTION_MULTIPLIER = .35f;
+        public const float RETROGRADE_PHYS_RESTITUTION_MIN = 1.001f;
 
         public static int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
         public static int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
         public static float cpu_solver_abort_veladd_sqrt = CPU_SOLVER_ABORT_VELADD_SQRT;
         public static float cpu_solver_abort_angveladd_sqrt = CPU_SOLVER_ABORT_ANGVELADD_SQRT;
 
-        public static float retrogate_phys_restitution_multiplier = RETROGATE_PHYS_RESTITUTION_MULTIPLIER;
+        public static float retrograde_phys_restitution_multiplier = RETROGRADE_PHYS_RESTITUTION_MULTIPLIER;
+        public static float retrograde_phys_restitution_min = RETROGRADE_PHYS_RESTITUTION_MIN;
 
         public static Vector3 gravityAcceleration = new Vector3(0, -9.81f, 0);
 
@@ -212,10 +214,7 @@ namespace RBPhys
             {
                 if (!rb.isSleeping && rb.useGravity && !rb.IgnoreVelocity)
                 {
-                    if (_timeScaleMode != TimeScaleMode.Freeze)
-                    {
-                        rb.ExpVelocity += gravityAcceleration * dt;
-                    }
+                    rb.ExpVelocity += gravityAcceleration * dt;
                 }
             }
 
@@ -2196,15 +2195,12 @@ namespace RBPhys
                     float cr_kd = (col.collider_a.cr_kd + col.collider_b.cr_kd) / 2f;
 
                     float restitution = col.collider_a.restitution * col.collider_b.restitution;
-
+                    
                     if (tMode == TimeScaleMode.Retrograde)
                     {
                         restitution = (restitution != 0) ? 1 / restitution : 0;
-                        restitution *= RBPhysCore.retrogate_phys_restitution_multiplier;
-                    }
-                    else if (tMode == TimeScaleMode.Freeze)
-                    {
-                        restitution = 0;
+                        restitution *= RBPhysCore.retrograde_phys_restitution_multiplier;
+                        restitution = Mathf.Min(restitution, RBPhysCore.retrograde_phys_restitution_min);
                     }
 
                     Vector3 relVel = Vector3.zero;
@@ -2240,6 +2236,7 @@ namespace RBPhys
                 jv += Vector3.Dot(_wa, col.ExpAngularVelocity_a);
                 jv += Vector3.Dot(_vb, col.ExpVelocity_b);
                 jv += Vector3.Dot(_wb, col.ExpAngularVelocity_b);
+                jv = 0;
 
                 float lambda = _effectiveMass * (-(jv + _bias));
                 float oldTotalLambda = _totalLambda;
@@ -2260,10 +2257,6 @@ namespace RBPhys
                     else if (tMode == TimeScaleMode.Retrograde)
                     {
                         _totalLambda = Mathf.Clamp(_totalLambda - lambda, -maxFriction, maxFriction);
-                    }
-                    else if (tMode == TimeScaleMode.Freeze)
-                    {
-                        _totalLambda = 0;
                     }
                 }
 
@@ -2703,7 +2696,6 @@ namespace RBPhys
     public enum TimeScaleMode
     {
         Prograde = 0,
-        Retrograde = 1,
-        Freeze = 2
+        Retrograde = 1
     }
 }
