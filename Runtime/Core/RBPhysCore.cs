@@ -1155,6 +1155,8 @@ namespace RBPhys
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-PrepareSolveCollisions");
 
+            int solverCount = cpu_std_solver_max_iter * cpu_std_solver_internal_sync_per_iteration;
+
             Parallel.For(0, _obb_obb_cols.Count, i =>
             {
                 var pair = _obb_obb_cols[i];
@@ -1193,7 +1195,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt, _timeScaleMode);
+                    rbc.InitVelocityConstraint(dt, _timeScaleMode, solverCount);
                     rbc.info = pair.p.info;
 
                     _obb_obb_cols[i] = (default, default, default, rbc);
@@ -1246,7 +1248,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt, _timeScaleMode);
+                    rbc.InitVelocityConstraint(dt, _timeScaleMode, solverCount);
                     rbc.info = pair.p.info;
 
                     _obb_sphere_cols[i] = (default, default, default, rbc);
@@ -1299,7 +1301,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt, _timeScaleMode);
+                    rbc.InitVelocityConstraint(dt, _timeScaleMode, solverCount);
                     rbc.info = pair.p.info;
 
                     _sphere_sphere_cols[i] = (default, default, default, rbc);
@@ -1352,7 +1354,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt, _timeScaleMode);
+                    rbc.InitVelocityConstraint(dt, _timeScaleMode, solverCount);
                     rbc.info = pair.p.info;
 
                     _obb_capsule_cols[i] = (default, default, default, rbc);
@@ -1405,7 +1407,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt, _timeScaleMode);
+                    rbc.InitVelocityConstraint(dt, _timeScaleMode, solverCount);
                     rbc.info = pair.p.info;
 
                     _sphere_capsule_cols[i] = (default, default, default, rbc);
@@ -1455,7 +1457,7 @@ namespace RBPhys
                     var pB = pair.col_b.ExpToCurrent(pair.p.pB);
 
                     rbc.Update(p, pA, pB);
-                    rbc.InitVelocityConstraint(dt, _timeScaleMode);
+                    rbc.InitVelocityConstraint(dt, _timeScaleMode, solverCount);
                     rbc.info = pair.p.info;
 
                     _capsule_capsule_cols[i] = (default, default, default, rbc);
@@ -1534,7 +1536,7 @@ namespace RBPhys
 
                     Parallel.For(0, _collisionsInSolver.Count, j =>
                     {
-                        UpdateTrajectoryPair(_collisionsInSolver[j], dt);
+                        UpdateTrajectoryPair(_collisionsInSolver[j], dt, solverCount);
                     });
 
                     Parallel.ForEach(_stdSolversAsync, s =>
@@ -1656,14 +1658,14 @@ namespace RBPhys
                     col.rigidbody_b.ExpAngularVelocity += angVelAdd_b;
                 }
 
-                if (velAdd_a.sqrMagnitude < cpu_solver_abort_veladd_sqrt && angVelAdd_a.sqrMagnitude < cpu_solver_abort_angveladd_sqrt && velAdd_b.sqrMagnitude < cpu_solver_abort_veladd_sqrt && angVelAdd_b.sqrMagnitude < cpu_solver_abort_angveladd_sqrt)
-                {
-                    col.skipInSolver = true;
-                }
+                //if (velAdd_a.sqrMagnitude < cpu_solver_abort_veladd_sqrt && angVelAdd_a.sqrMagnitude < cpu_solver_abort_angveladd_sqrt && velAdd_b.sqrMagnitude < cpu_solver_abort_veladd_sqrt && angVelAdd_b.sqrMagnitude < cpu_solver_abort_angveladd_sqrt)
+                //{
+                //    //col.skipInSolver = true;
+                //}
             }
         }
 
-        static void UpdateTrajectoryPair(RBCollision col, float dt)
+        static void UpdateTrajectoryPair(RBCollision col, float dt, int solverCount)
         {
             RecalculateCollision(col.collider_a, col.collider_b, col.info, out Vector3 p, out Vector3 pA, out Vector3 pB);
 
@@ -1673,7 +1675,7 @@ namespace RBPhys
                 pA = col.collider_a.ExpToCurrent(pA);
                 pB = col.collider_b.ExpToCurrent(pB);
                 col.Update(p, pA, pB);
-                col.InitVelocityConstraint(dt, _timeScaleMode, false);
+                col.InitVelocityConstraint(dt, _timeScaleMode, solverCount, false);
             }
             else
             {
@@ -2098,16 +2100,16 @@ namespace RBPhys
             cacCount = 0;
         }
 
-        public void InitVelocityConstraint(float dt, TimeScaleMode tMode, bool initBias = true)
+        public void InitVelocityConstraint(float dt, TimeScaleMode tMode, int solverCount, bool initBias = true)
         {
             Vector3 contactNormal = ContactNormal;
             Vector3 tangent = Vector3.zero;
             Vector3 bitangent = Vector3.zero;
             Vector3.OrthoNormalize(ref contactNormal, ref tangent, ref bitangent);
 
-            _jN.Init(this, contactNormal, dt, tMode, initBias);
-            _jT.Init(this, tangent, dt, tMode, initBias);
-            _jB.Init(this, bitangent, dt, tMode, initBias);
+            _jN.Init(this, contactNormal, dt, tMode, solverCount, initBias);
+            _jT.Init(this, tangent, dt, tMode, solverCount, initBias);
+            _jB.Init(this, bitangent, dt, tMode, solverCount, initBias);
         }
 
         public void SolveVelocityConstraints(out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b, TimeScaleMode tMode)
@@ -2165,7 +2167,7 @@ namespace RBPhys
                 _ie = 0;
             }
 
-            public void Init(RBCollision col, Vector3 dir, float dt, TimeScaleMode tMode, bool initBias = true)
+            public void Init(RBCollision col, Vector3 dir, float dt, TimeScaleMode tMode, int solverCount, bool initBias = true)
             {
                 Vector3 dirN = dir;
 
@@ -2227,7 +2229,7 @@ namespace RBPhys
                     float vi = _ie * cr_ki;
                     float vd = ((e - _eLast) / dt) * cr_kd;
 
-                    _bias = Mathf.Min(restitution * closingVelocity, vp + vi + vd);
+                    _bias = Mathf.Min(restitution * closingVelocity, vp + vi + vd) / solverCount;
 
                     _eLast = e;
                 }
