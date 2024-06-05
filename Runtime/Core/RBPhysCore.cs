@@ -2135,6 +2135,7 @@ namespace RBPhys
             Vector3 _wb;
 
             float _bias;
+            float _restitutionBias;
             float _totalLambda;
             float _effectiveMass;
 
@@ -2157,6 +2158,7 @@ namespace RBPhys
                 _wb = Vector3.zero;
 
                 _bias = 0;
+                _restitutionBias = 0;
                 _totalLambda = 0;
                 _effectiveMass = 0;
 
@@ -2176,6 +2178,7 @@ namespace RBPhys
                 if (initBias)
                 {
                     _bias = 0;
+                    _restitutionBias = 0;
                     _totalLambda = 0;
                     _ie = 0;
                     _eLast = -1;
@@ -2200,7 +2203,7 @@ namespace RBPhys
                     {
                         restitution = (restitution != 0) ? 1 / restitution : 0;
                         restitution *= RBPhysCore.retrograde_phys_restitution_multiplier;
-                        restitution = Mathf.Min(restitution, RBPhysCore.retrograde_phys_restitution_min);
+                        restitution = Mathf.Max(restitution, RBPhysCore.retrograde_phys_restitution_min);
                     }
 
                     Vector3 relVel = Vector3.zero;
@@ -2223,7 +2226,8 @@ namespace RBPhys
                     float vi = _ie * cr_ki;
                     float vd = ((e - _eLast) / dt) * cr_kd;
 
-                    _bias = Mathf.Min(restitution * closingVelocity, vp + vi + vd);
+                    _bias = vp + vi + vd;
+                    if(initBias) _restitutionBias = restitution * closingVelocity;
 
                     _eLast = e;
                 }
@@ -2238,8 +2242,10 @@ namespace RBPhys
                 jv += Vector3.Dot(_wb, col.ExpAngularVelocity_b);
                 jv = 0;
 
-                float lambda = _effectiveMass * (-(jv + _bias));
+                float lambda = _effectiveMass * (-(jv + Mathf.Min(_bias, _restitutionBias)));
                 float oldTotalLambda = _totalLambda;
+
+                _restitutionBias = 0;
 
                 if (_type == Type.Normal)
                 {
