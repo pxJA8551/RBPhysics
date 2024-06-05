@@ -26,6 +26,8 @@ namespace RBPhys
         public const float RETROGRADE_PHYS_RESTITUTION_MULTIPLIER = .35f;
         public const float RETROGRADE_PHYS_RESTITUTION_MIN = 1.001f;
 
+        public const float RETROGRADE_PHYS_FRICTION_MULTIPLIER = .4f;
+
         public static int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
         public static int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
         public static float cpu_solver_abort_veladd_sqrt = CPU_SOLVER_ABORT_VELADD_SQRT;
@@ -33,6 +35,8 @@ namespace RBPhys
 
         public static float retrograde_phys_restitution_multiplier = RETROGRADE_PHYS_RESTITUTION_MULTIPLIER;
         public static float retrograde_phys_restitution_min = RETROGRADE_PHYS_RESTITUTION_MIN;
+
+        public static float retrograde_phys_friction_multiplier = RETROGRADE_PHYS_FRICTION_MULTIPLIER;
 
         public static Vector3 gravityAcceleration = new Vector3(0, -9.81f, 0);
 
@@ -2171,9 +2175,9 @@ namespace RBPhys
                 Vector3 dirN = dir;
 
                 _va = dirN;
-                _wa = Vector3.Cross(col.rA, dirN);
+                _wa = Vector3.Cross(col.rA, dirN).normalized;
                 _vb = -dirN;
-                _wb = Vector3.Cross(col.rB, -dirN);
+                _wb = Vector3.Cross(col.rB, -dirN).normalized;
 
                 if (initBias)
                 {
@@ -2240,7 +2244,6 @@ namespace RBPhys
                 jv += Vector3.Dot(_wa, col.ExpAngularVelocity_a);
                 jv += Vector3.Dot(_vb, col.ExpVelocity_b);
                 jv += Vector3.Dot(_wb, col.ExpAngularVelocity_b);
-                jv = 0;
 
                 float lambda = _effectiveMass * (-(jv + Mathf.Min(_bias, _restitutionBias)));
                 float oldTotalLambda = _totalLambda;
@@ -2254,9 +2257,21 @@ namespace RBPhys
                 else if (_type == Type.Tangent)
                 {
                     float friction = col.collider_a.friction * col.collider_b.friction;
+                    if (tMode == TimeScaleMode.Retrograde)
+                    {
+                        friction *= RBPhysCore.retrograde_phys_friction_multiplier;
+                    }
+
                     float maxFriction = friction * col._jN._totalLambda;
 
-                    _totalLambda = Mathf.Clamp(_totalLambda + lambda, -maxFriction, maxFriction);
+                    if (tMode == TimeScaleMode.Prograde)
+                    {
+                        _totalLambda = Mathf.Clamp(_totalLambda + lambda, -maxFriction, maxFriction);
+                    }
+                    else
+                    {
+                        _totalLambda = Mathf.Clamp(_totalLambda - lambda, -maxFriction, maxFriction);
+                    }
                 }
 
                 lambda = _totalLambda - oldTotalLambda;

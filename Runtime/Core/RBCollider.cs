@@ -19,7 +19,7 @@ namespace RBPhys
         [NonSerialized] public float cr_ki = 15f; //Õ“Ë‰ğÁˆ— IƒQƒCƒ“
         [NonSerialized] public float cr_kd = .1f; //Õ“Ë‰ğÁˆ— DƒQƒCƒ“
 
-        [NonSerialized] public float restitution = 0.5f; //”½”­ŒW”
+        [NonSerialized] public float restitution = 0.4f; //”½”­ŒW”
         [NonSerialized] public float friction = 0.75f; //–€CŒW”
 
         public RBTrajectory ExpTrajectory { get { return _expTrajectory; } }
