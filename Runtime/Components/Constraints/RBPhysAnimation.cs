@@ -189,7 +189,14 @@ namespace RBPhys
 
         public void AfterSolver()
         {
-            _ctrlTimeDeltaP = Mathf.Clamp01((ctrlTime - _ctrlTimeLast) / (Time.fixedDeltaTime * ctrlSpeed));
+            if (ctrlSpeed == 0)
+            {
+                _ctrlTimeDeltaP = 0;
+            }
+            else
+            {
+                _ctrlTimeDeltaP = Mathf.Clamp01((ctrlTime - _ctrlTimeLast) / (Time.fixedDeltaTime * ctrlSpeed));
+            }
 
             if (enablePhysProceduralAnimation && trsCurve != null)
             {
