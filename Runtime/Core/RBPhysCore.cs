@@ -181,13 +181,13 @@ namespace RBPhys
             _layerOptions[layer] = option;
         }
 
-        public static bool IsTriggerLayer(int layer)
+        public static bool IsIgnorePhysCastLayer(int layer)
         {
             int p = (int)_layerOptions[layer];
             return (p & 1) == 1;
         }
 
-        public static bool IsIgnorePhysCastLayer(int layer)
+        public static bool IsTriggerLayer(int layer)
         {
             int p = (int)_layerOptions[layer];
             return (p & 2) == 1;
