@@ -407,7 +407,7 @@ namespace RBPhys
                         {
                             if (c.gameObject.activeInHierarchy && c.enabled && !c.IgnoreCollision)
                             {
-                                if (!(selectCols && ignoreCols.Contains(c)))
+                                if (!(selectCols && ignoreCols.Contains(c)) && !IsIgnorePhysCastLayer(t.Layer))
                                 {
                                     hitList.Add(new RBColliderCastHitInfo(c, t, RBColliderCastHitInfo.PhysCastType.Raycast));
                                 }
@@ -421,8 +421,6 @@ namespace RBPhys
                     break;
                 }
             }
-
-            hitInfos = hitInfos.Where(item => !IsIgnorePhysCastLayer(item.trajectory.Layer)).ToList();
 
             Parallel.For(0, hitList.Count, i =>
             {
@@ -504,7 +502,7 @@ namespace RBPhys
                         {
                             if (c.gameObject.activeInHierarchy && c.enabled && !c.IgnoreCollision)
                             {
-                                if (!(selectCols && ignoreCols.Contains(c)))
+                                if (!(selectCols && ignoreCols.Contains(c)) && !IsIgnorePhysCastLayer(t.Layer))
                                 {
                                     hitList.Add(new RBColliderCastHitInfo(c, t, RBColliderCastHitInfo.PhysCastType.SphereCast));
                                 }
@@ -518,8 +516,6 @@ namespace RBPhys
                     break;
                 }
             }
-
-            hitList = hitList.Where(item => !IsIgnorePhysCastLayer(item.trajectory.Layer)).ToList();
 
             Parallel.For(0, hitList.Count, i =>
             {
