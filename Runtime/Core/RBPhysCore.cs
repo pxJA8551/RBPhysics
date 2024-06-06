@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEditor;
 using Unity.IL2CPP.CompilerServices;
+using UnityEditor.PackageManager;
 
 namespace RBPhys
 {
@@ -421,6 +422,8 @@ namespace RBPhys
                 }
             }
 
+            hitInfos = hitInfos.Where(item => !IsIgnorePhysCastLayer(item.trajectory.Layer)).ToList();
+
             Parallel.For(0, hitList.Count, i =>
             {
                 var t = hitList[i];
@@ -454,7 +457,7 @@ namespace RBPhys
                 }
             });
 
-            hitInfos = hitInfos.Where(item => item.IsValidHit).Where(item => !IsIgnorePhysCastLayer(item.trajectory.Layer)).OrderBy(item => item.length).ToList();
+            hitInfos = hitInfos.Where(item => item.IsValidHit).OrderBy(item => item.length).ToList();
         }
 
         public static RBColliderCastHitInfo SphereCast(Vector3 org, Vector3 dir, float length, float radius, bool allowNegativeValue = true)
@@ -463,6 +466,11 @@ namespace RBPhys
         }
 
         public static RBColliderCastHitInfo SphereCast(Vector3 org, Vector3 dir, float length, float radius, RBCollider[] ignoreCols, RBTrajectory[] ignoreTrajs, bool allowNegativeValue = true)
+        {
+            return SphereCastAll(org, dir, length, radius, ignoreCols, ignoreTrajs, allowNegativeValue).FirstOrDefault();
+        }
+
+        public static List<RBColliderCastHitInfo> SphereCastAll(Vector3 org, Vector3 dir, float length, float radius, RBCollider[] ignoreCols, RBTrajectory[] ignoreTrajs, bool allowNegativeValue = true)
         {
             dir = dir.normalized;
 
@@ -511,6 +519,8 @@ namespace RBPhys
                 }
             }
 
+            hitList = hitList.Where(item => !IsIgnorePhysCastLayer(item.trajectory.Layer)).ToList();
+
             Parallel.For(0, hitList.Count, i =>
             {
                 var t = hitList[i];
@@ -544,19 +554,8 @@ namespace RBPhys
                 }
             });
 
-            RBColliderCastHitInfo fMinOverlap = default;
-
-            hitList = hitList.Where(item => !IsIgnorePhysCastLayer(item.trajectory.Layer)).ToList();
-
-            foreach (var v in hitList)
-            {
-                if (!fMinOverlap.IsValidHit || (v.IsValidHit && v.length < fMinOverlap.length))
-                {
-                    fMinOverlap = v;
-                }
-            }
-
-            return fMinOverlap;
+            hitList = hitList.Where(item => item.IsValidHit).OrderBy(item => item.length).ToList();
+            return hitList;
         }
 
         public static List<RBColliderOverlapInfo> LineOverlap(RBColliderLine line)
