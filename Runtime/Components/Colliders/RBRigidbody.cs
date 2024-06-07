@@ -106,6 +106,10 @@ namespace RBPhys
             UpdateTransform();
             RecalculateInertiaTensor();
 
+            infInertiaTensorX = true;
+            infInertiaTensorY = true;
+            infInertiaTensorZ = true;
+
             if (!isSleeping || sleepGrace != 5)
             {
                 isSleeping = false;

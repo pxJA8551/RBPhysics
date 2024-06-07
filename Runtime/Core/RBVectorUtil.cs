@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Data;
 using System.Runtime.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
@@ -187,6 +188,50 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void CalcNearestP(Vector3 beginA, Vector3 endA, Vector3 beginB, Vector3 endB, out Vector3 nearestA, out Vector3 nearestB, out bool parallel, int solverIter = 6)
+        {
+            CalcNearest(beginA, endA, beginB, endB, out nearestA, out nearestB, out parallel);
+
+            for (int iter = 0; iter < solverIter; iter++)
+            {
+                nearestA = ProjectPointToEdge(nearestB, beginA, endA);
+                nearestB = ProjectPointToEdge(nearestA, beginB, endB);
+
+                if (parallel) return;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void CalcNearestOnPlaneP(Vector3 beginA, Vector3 endA, Vector3 planeDirN, Vector3 planeCenter, out Vector3 nearestA, out Vector3 nearestB, out bool parallel, int solverIter = 6)
+        {
+            nearestA = beginA;
+            nearestB = CalcNearestOnPlane(beginA, endA, planeDirN, planeCenter, out parallel);
+
+            for (int iter = 0; iter < solverIter; iter++)
+            {
+                nearestA = ProjectPointToEdge(nearestB, beginA, endA);
+                nearestB = ProjectPointToPlane(nearestA, planeDirN, planeCenter);
+
+                if (parallel) return;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void CalcNearestOnRectP(Vector3 beginA, Vector3 endA, Vector3 a, Vector3 b, Vector3 c, Vector3 d, Vector3 planeDirN, Vector3 planeCenter, out Vector3 nearestA, out Vector3 nearestB, out bool parallel, int solverIter = 6)
+        {
+            nearestA = beginA;
+            nearestB = CalcNearestOnPlane(beginA, endA, planeDirN, planeCenter, out parallel);
+
+            for (int iter = 0; iter < solverIter; iter++)
+            {
+                nearestA = ProjectPointToEdge(nearestB, beginA, endA);
+                nearestB = ProjectPointToRect(nearestA, a, b, c, d, planeCenter, planeDirN);
+
+                if (parallel) return;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 CalcNearest(Vector3 beginA, Vector3 endA, Vector3 beginB, Vector3 endB, out bool invalid)
         {
             float ebA = (endA - beginA).magnitude;
@@ -213,8 +258,10 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 CalcNearestOnPlane(Vector3 edgeBegin, Vector3 edgeEnd, Vector3 planeNormal, Vector3 planeCenter)
+        public static Vector3 CalcNearestOnPlane(Vector3 edgeBegin, Vector3 edgeEnd, Vector3 planeNormal, Vector3 planeCenter, out bool parallel)
         {
+            parallel = false;
+
             Vector3 dirN = edgeEnd - edgeBegin;
             float dirL = dirN.magnitude;
 
@@ -228,6 +275,13 @@ namespace RBPhys
             Vector3 prjBegin = planeCenter + Vector3.ProjectOnPlane(edgeBegin - planeCenter, planeNormal);
             Vector3 pd = prjBegin - edgeBegin;
             float dc = Vector3.Dot(pd, dirN);
+
+            if (dc == 0)
+            {
+                parallel = true;
+                return edgeBegin;
+            }
+
             float ff = 1 / dc;
 
             if (0 <= ff && ff <= dirL)
@@ -238,6 +292,36 @@ namespace RBPhys
             {
                 return ProjectPointToPlane(edgeBegin + (dirN * Mathf.Clamp(ff, 0, dirL)), planeNormal, planeCenter);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 V3XZero(Vector3 v)
+        {
+            v.x = 0;
+            return v;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 V3YZero(Vector3 v)
+        {
+            v.y = 0;
+            return v;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 V3ZZero(Vector3 v)
+        {
+            v.z = 0;
+            return v;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 V3Multiply(Vector3 v, float a, float b, float c)
+        {
+            v.x *= a;
+            v.y *= b;
+            v.z *= c;
+            return v;
         }
     }
 }

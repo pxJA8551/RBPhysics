@@ -1,7 +1,8 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using UnityEngine;
+using static RBPhys.RBDetailCollision;
 using static RBPhys.RBPhysUtil;
 using static RBPhys.RBVectorUtil;
 
@@ -11,8 +12,6 @@ namespace RBPhys
     {
         public static class DetailCollisionOBBCapsule
         {
-            const float FACE_PARALLEL_DOT_EPSILON = 0.000001f;
-
             public static Penetration CalcDetailCollisionInfo(RBColliderOBB obb_a, RBColliderCapsule capsule_b)
             {
                 var r = CalcDetailCollision(obb_a, capsule_b);
@@ -21,262 +20,253 @@ namespace RBPhys
 
             public static (Vector3 p, Vector3 pA, Vector3 pB) CalcDetailCollision(RBColliderOBB obb_a, RBColliderCapsule capsule_b)
             {
-                float pSqrMag;
-                Vector3 penetration;
+                Vector3 pDir = Vector3.zero;
                 Vector3 pA = Vector3.zero;
                 Vector3 pB = Vector3.zero;
 
-                Vector3 d = capsule_b.pos - obb_a.Center;
+                var edge = capsule_b.GetEdge();
+                var org = edge.end;
+                var capsuleDirN = capsule_b.GetHeightAxisN();
+                float edgeLength = capsule_b.height;
 
-                Vector3 aFwdN = obb_a.GetAxisForwardN();
-                Vector3 aRightN = obb_a.GetAxisRightN();
-                Vector3 aUpN = obb_a.GetAxisUpN();
+                Quaternion toLsRot = Quaternion.Inverse(obb_a.rot);
 
-                Vector3 bUpN = capsule_b.GetHeightAxisN();
+                Vector3 lsPA;
+                Vector3 lsPB;
 
-                Vector3 aFwd = aFwdN * obb_a.size.z;
-                Vector3 aRight = aRightN * obb_a.size.x;
-                Vector3 aUp = aUpN * obb_a.size.y;
+                bool bA;
+                bool bB;
 
-                //•ª—£Ž²‚PFaFwd
                 {
-                    float dd = Vector3.Dot(d, aFwdN);
-                    float prjL = Mathf.Abs(dd);
-                    float rA = Mathf.Abs(obb_a.size.z);
-                    float rB = capsule_b.GetAxisSize(aFwdN);
+                    Vector3 lsDirN = toLsRot * capsuleDirN;
+                    Vector3 lsOrg = toLsRot * (org - obb_a.pos);
 
-                    float dp = prjL * 2 - (rA + rB);
+                    float t_x_min = -lsOrg.x / lsDirN.x;
+                    float t_x_max = (obb_a.size.x - lsOrg.x) / lsDirN.x;
 
-                    if (dp > 0)
-                    {
-                        return (Vector3.zero, Vector3.zero, Vector3.zero);
-                    }
+                    float t_y_min = -lsOrg.y / lsDirN.y;
+                    float t_y_max = (obb_a.size.y - lsOrg.y) / lsDirN.y;
 
-                    Vector3 p = aFwdN * (dp / 2) * F32Sign11(dd);
+                    float t_z_min = -lsOrg.z / lsDirN.z;
+                    float t_z_max = (obb_a.size.z - lsOrg.z) / lsDirN.z;
 
-                    penetration = p;
-                    pSqrMag = p.sqrMagnitude;
+                    bool rayHit = RBPhysUtil.RangeOverlap(t_x_min, t_x_max, t_y_min, t_y_max, t_z_min, t_z_max, out float t_min, out float t_max, out int i_min, out int i_max);
+
+                    bA = (rayHit && t_min > 0 && t_min < edgeLength);
+                    bB = (rayHit && t_max > 0 && t_max < edgeLength);
+
+                    lsPA = bA ? lsOrg + lsDirN * t_min : lsOrg;
+                    lsPB = bB ? lsOrg + lsDirN * t_max : lsOrg + lsDirN * edgeLength;
                 }
 
-                //•ª—£Ž²‚QFaRight
+                Vector3 wsPA = obb_a.pos + obb_a.rot * lsPA;
+                Vector3 wsPB = obb_a.pos + obb_a.rot * lsPB;
+
+                if (bA || bB)
                 {
-                    float dd = Vector3.Dot(d, aRightN);
-                    float prjL = Mathf.Abs(dd);
-                    float rA = Mathf.Abs(obb_a.size.x);
-                    float rB = capsule_b.GetAxisSize(aRightN);
+                    Vector3 d = (wsPB + wsPA) / 2f - obb_a.pos;
+                    Vector3 wsD = wsPB - wsPA;
+                    Vector3 dN = d.normalized;
+                    float wsLength = d.magnitude;
 
-                    float dp = prjL * 2 - (rA + rB);
+                    Vector3 penetration;
+                    float pSqr;
 
-                    if (dp > 0)
                     {
-                        return (Vector3.zero, Vector3.zero, Vector3.zero);
-                    }
+                        Vector3 aRightN = obb_a.GetAxisRightN();
+                        if (d == Vector3.zero) { d = aRightN * .001f; }
 
-                    Vector3 p = aRightN * (dp / 2) * F32Sign11(dd);
-
-                    bool pMin = p.sqrMagnitude < pSqrMag;
-                    penetration = pMin ? p : penetration;
-                    pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-                }
-
-                //•ª—£Ž²‚RFaUp
-                {
-                    float dd = Vector3.Dot(d, aUpN);
-                    float prjL = Mathf.Abs(dd);
-                    float rA = Mathf.Abs(obb_a.size.y);
-                    float rB = capsule_b.GetAxisSize(aUpN);
-
-                    float dp = prjL * 2 - (rA + rB);
-
-                    if (dp > 0)
-                    {
-                        return (Vector3.zero, Vector3.zero, Vector3.zero);
-                    }
-
-                    Vector3 p = aUpN * (dp / 2) * F32Sign11(dd);
-
-                    bool pMin = p.sqrMagnitude < pSqrMag;
-                    penetration = pMin ? p : penetration;
-                    pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-                }
-
-                //•ª—£Ž²‚SFaUp
-                {
-                    float dd = Vector3.Dot(d, bUpN);
-                    float prjL = Mathf.Abs(dd);
-                    float rA = obb_a.GetAxisSize(bUpN);
-                    float rB = capsule_b.height + capsule_b.radius * 2;
-
-                    float dp = prjL * 2 - (rA + rB);
-
-                    if (dp > 0)
-                    {
-                        return (Vector3.zero, Vector3.zero, Vector3.zero);
-                    }
-
-                    Vector3 p = aUpN * (dp / 2) * F32Sign11(dd);
-
-                    bool pMin = p.sqrMagnitude < pSqrMag;
-                    penetration = pMin ? p : penetration;
-                    pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-                }
-
-                //•ª—£Ž²‚TFaFwd x bUp
-                {
-                    Vector3 c = Vector3.Cross(aFwdN, bUpN).normalized;
-
-                    if (c != Vector3.zero)
-                    {
-                        float dd = Vector3.Dot(d, c);
+                        float dd = Vector3.Dot(d, aRightN);
                         float prjL = Mathf.Abs(dd);
-                        float rA = obb_a.GetAxisSize(c);
-                        float rB = capsule_b.GetAxisSize(c);
+                        float rA = Mathf.Abs(obb_a.size.x);
+                        float rB = Vector3.Dot(wsD, aRightN);
 
                         float dp = prjL * 2 - (rA + rB);
 
-                        if (dp > 0)
-                        {
-                            return (Vector3.zero, Vector3.zero, Vector3.zero);
-                        }
+                        Vector3 p = aRightN * (dp / 2) * F32Sign11(dd);
 
-                        Vector3 p = c * (dp / 2) * F32Sign11(dd);
+                        pSqr = p.sqrMagnitude;
+                        penetration = p;
 
-                        bool pMin = p.sqrMagnitude < pSqrMag;
+                        bool pMin = p.sqrMagnitude < pSqr;
                         penetration = pMin ? p : penetration;
-                        pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                        pSqr = pMin ? p.sqrMagnitude : pSqr;
                     }
-                }
 
-                //•ª—£Ž²‚UFaRight x bUp
-                {
-                    Vector3 c = Vector3.Cross(aRightN, bUpN).normalized;
-
-                    if (c != Vector3.zero)
                     {
-                        float dd = Vector3.Dot(d, c);
+                        Vector3 aUpN = obb_a.GetAxisUpN();
+                        if (d == Vector3.zero) { d = aUpN * .001f; }
+
+                        float dd = Vector3.Dot(d, aUpN);
                         float prjL = Mathf.Abs(dd);
-                        float rA = obb_a.GetAxisSize(c);
-                        float rB = capsule_b.GetAxisSize(c);
+                        float rA = Mathf.Abs(obb_a.size.y);
+                        float rB = Vector3.Dot(wsD, aUpN);
 
                         float dp = prjL * 2 - (rA + rB);
 
-                        if (dp > 0)
-                        {
-                            return (Vector3.zero, Vector3.zero, Vector3.zero);
-                        }
+                        Vector3 p = aUpN * (dp / 2) * F32Sign11(dd);
 
-                        Vector3 p = c * (dp / 2) * F32Sign11(dd);
-
-                        bool pMin = p.sqrMagnitude < pSqrMag;
+                        bool pMin = p.sqrMagnitude < pSqr;
                         penetration = pMin ? p : penetration;
-                        pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                        pSqr = pMin ? p.sqrMagnitude : pSqr;
                     }
-                }
 
-                //•ª—£Ž²‚VFaUp x bUp
-                {
-                    Vector3 c = Vector3.Cross(aUpN, bUpN).normalized;
-
-                    if (c != Vector3.zero)
                     {
-                        float dd = Vector3.Dot(d, c);
+                        Vector3 aFwdN = obb_a.GetAxisForwardN();
+                        if (d == Vector3.zero) { d = aFwdN * .001f; }
+
+                        float dd = Vector3.Dot(d, aFwdN);
                         float prjL = Mathf.Abs(dd);
-                        float rA = obb_a.GetAxisSize(c);
-                        float rB = capsule_b.GetAxisSize(c);
+                        float rA = Mathf.Abs(obb_a.size.z);
+                        float rB = Vector3.Dot(wsD, aFwdN);
 
                         float dp = prjL * 2 - (rA + rB);
 
-                        if (dp > 0)
-                        {
-                            return (Vector3.zero, Vector3.zero, Vector3.zero);
-                        }
+                        Vector3 p = aFwdN * (dp / 2) * F32Sign11(dd);
 
-                        Vector3 p = c * (dp / 2) * F32Sign11(dd);
-
-                        bool pMin = p.sqrMagnitude < pSqrMag;
+                        bool pMin = p.sqrMagnitude < pSqr;
                         penetration = pMin ? p : penetration;
-                        pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                        pSqr = pMin ? p.sqrMagnitude : pSqr;
                     }
-                }
 
+                    pA = wsPA;
+                    pB = wsPB + (penetration.normalized) * capsule_b.radius;
+
+                    return (penetration, pA, pB);
+                }
+                else
                 {
-                    Vector3 pDirN = -penetration.normalized;
-
-                    float eps = 0.0001f;
-
-                    float dAFwd = F32Sign101Epsilon(Vector3.Dot(aFwdN, pDirN), eps);
-                    float dARight = F32Sign101Epsilon(Vector3.Dot(aRightN, pDirN), eps);
-                    float dAUp = F32Sign101Epsilon(Vector3.Dot(aUpN, pDirN), eps);
-                    int aPd = (dAFwd == 0 ? 1 : 0) + (dARight == 0 ? 1 : 0) + (dAUp == 0 ? 1 : 0);
-
-                    Vector3 ofAFwd = aFwd * dAFwd / 2;
-                    Vector3 ofARight = aRight * dARight / 2;
-                    Vector3 ofAUp = aUp * dAUp / 2;
-
-                    Vector3 nA = ofAFwd + ofARight + ofAUp;
-
-                    pA = obb_a.Center + nA;
-
-                    nA.Normalize();
-
-                    Vector3 fA1 = Vector3.zero;
-                    fA1 += (fA1 == Vector3.zero) ? aFwd * (dAFwd == 0 ? 1 : 0) : Vector3.zero;
-                    fA1 += (fA1 == Vector3.zero) ? aRight * (dARight == 0 ? 1 : 0) : Vector3.zero;
-                    fA1 += (fA1 == Vector3.zero) ? aUp * (dAUp == 0 ? 1 : 0) : Vector3.zero;
-
-                    Vector3 fA2 = Vector3.zero;
-                    fA2 += (fA2 == Vector3.zero) ? aUp * (dAUp == 0 ? 1 : 0) : Vector3.zero;
-                    fA2 += (fA2 == Vector3.zero) ? aRight * (dARight == 0 ? 1 : 0) : Vector3.zero;
-                    fA2 += (fA2 == Vector3.zero) ? aFwd * (dAFwd == 0 ? 1 : 0) : Vector3.zero;
-
-                    fA1 /= 2f;
-                    fA2 /= 2f;
-
-                    if (aPd == 0)
                     {
-                        var edge = capsule_b.GetEdge();
-                        pB = ProjectPointToEdge(pA, edge.begin, edge.end);
-                        return (penetration, pA, pB);
-                    }
-                    else if (aPd == 1)
-                    {
-                        var edge = capsule_b.GetEdge();
-                        CalcNearest(edge.begin, edge.end, pA + (fA1 + fA2) / 2f, pA - (fA1 + fA2) / 2f, out pA, out pB, out _);
-                        return (penetration, pA, pB);
-                    }
-                    else if (aPd == 2)
-                    {
-                        var edge = capsule_b.GetEdge();
+                        var hs = obb_a.size / 2f;
+                        var r = obb_a.rot;
 
-                        Vector3 rv1 = pA + fA1 + fA2;
-                        Vector3 rv2 = pA - fA1 + fA2;
-                        Vector3 rv3 = pA - fA1 - fA2;
-                        Vector3 rv4 = pA + fA1 - fA2;
+                        Vector3 penetration = Vector3.zero;
 
-                        if (Mathf.Abs(Vector3.Dot(bUpN, pDirN)) < FACE_PARALLEL_DOT_EPSILON)
+                        float sqrP = -1;
                         {
-                            Vector3 te_begin = ProjectPointToPlane(edge.begin, nA, pA);
-                            Vector3 te_end = ProjectPointToPlane(edge.end, nA, pA);
+                            Vector3 vr = r * V3Multiply(hs, 1, 0, 0);
+                            var p = obb_a.Center + vr;
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 1, 0), p + V3Multiply(hs, 1, -1, 0), p + V3Multiply(hs, -1, -1, 0), p + V3Multiply(hs, -1, 1, 0), vr.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
 
-                            ReverseProjectLineToLine(ref te_begin, ref te_end, rv1, rv2);
-                            ReverseProjectLineToLine(ref te_begin, ref te_end, rv2, rv3);
+                            Vector3 pp = ppB - ppA;
 
-                            pA = (te_begin + te_end) / 2;
-                            pB = ProjectPointToEdge(pA, edge.begin, edge.end);
-                        }
-                        else
-                        {
-                            Vector3 prjB = CalcNearestOnPlane(edge.begin, edge.end, nA, pA);
-
-                            pA = ProjectPointToRect(prjB, rv1, rv2, rv3, rv4, pA, nA);
-                            pB = ProjectPointToEdge(pA, edge.begin, edge.end) - pDirN * capsule_b.radius;
+                            float sqrPP = pp.sqrMagnitude;
+                            if (Vector3.Dot(pp, vr.normalized) > 0)
+                            {
+                                sqrP = sqrPP;
+                                penetration = pp;
+                                pA = ppA;
+                                pB = ppB;
+                            }
                         }
 
-                        return (penetration, pA, pB);
+                        {
+                            var p = obb_a.Center + r * V3Multiply(hs, -1, 0, 0);
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 1, 0), p + V3Multiply(hs, 1, -1, 0), p + V3Multiply(hs, -1, -1, 0), p + V3Multiply(hs, -1, 1, 0), capsuleDirN.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
+
+                            Vector3 pp = ppB - ppA;
+
+                            float sqrPP = pp.sqrMagnitude;
+                            if ((sqrPP < sqrP || sqrP == -1))
+                            {
+                                sqrP = sqrPP;
+                                penetration = pp;
+                                pA = ppA;
+                                pB = ppB;
+                            }
+                        }
+
+                        {
+                            var p = obb_a.Center + r * V3Multiply(hs, 0, 1, 0);
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 0, 1), p + V3Multiply(hs, 1, 0, -1), p + V3Multiply(hs, -1, 0, -1), p + V3Multiply(hs, -1, 0, 1), capsuleDirN.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
+
+                            Vector3 pp = ppB - ppA;
+
+                            float sqrPP = pp.sqrMagnitude;
+                            if ((sqrPP < sqrP || sqrP == -1))
+                            {
+                                sqrP = sqrPP;
+                                penetration = pp;
+                                pA = ppA;
+                                pB = ppB;
+                            }
+                        }
+
+                        {
+                            var p = obb_a.Center + r * V3Multiply(hs, 0, -1, 0);
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 0, 1), p + V3Multiply(hs, 1, 0, -1), p + V3Multiply(hs, -1, 0, -1), p + V3Multiply(hs, -1, 0, 1), capsuleDirN.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
+
+                            Vector3 pp = ppB - ppA;
+
+                            float sqrPP = pp.sqrMagnitude;
+                            if ((sqrPP < sqrP || sqrP == -1))
+                            {
+                                sqrP = sqrPP;
+                                penetration = pp;
+                                pA = ppA;
+                                pB = ppB;
+                            }
+                        }
+
+                        {
+                            var p = obb_a.Center + r * V3Multiply(hs, 0, 0, 1);
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 0, 1), p + V3Multiply(hs, 1, 0, -1), p + V3Multiply(hs, -1, 0, -1), p + V3Multiply(hs, -1, 0, 1), capsuleDirN.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
+
+                            Vector3 pp = ppB - ppA;
+
+                            float sqrPP = pp.sqrMagnitude;
+                            if ((sqrPP < sqrP || sqrP == -1))
+                            {
+                                sqrP = sqrPP;
+                                penetration = pp;
+                                pA = ppA;
+                                pB = ppB;
+                            }
+                        }
+
+                        {
+                            var p = obb_a.Center + r * V3Multiply(hs, 0, 0, -1);
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 0, 1, 1), p + V3Multiply(hs, 0, 1, -1), p + V3Multiply(hs, 0, -1, -1), p + V3Multiply(hs, 0, -1, 1), capsuleDirN.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
+
+                            Vector3 pp = ppB - ppA;
+
+                            float sqrPP = pp.sqrMagnitude;
+                            if ((sqrPP < sqrP || sqrP == -1))
+                            {
+                                sqrP = sqrPP;
+                                penetration = pp;
+                                pA = ppA;
+                                pB = ppB;
+                            }
+                        }
+
+                        if (penetration.magnitude < capsule_b.radius)
+                        {
+                            penetration = pA - pB;
+
+                            float epsilon = .0001f * .0001f;
+
+                            if ((pA - edge.begin).sqrMagnitude < epsilon)
+                            {
+                                penetration *= Vector3.Dot(penetration, -capsuleDirN) > 0 ? 1 : -1;
+                            }
+                            else if ((pA - edge.end).sqrMagnitude < epsilon)
+                            {
+                                penetration *= Vector3.Dot(penetration, capsuleDirN) > 0 ? 1 : -1;
+                            }
+                            else
+                            {
+                                penetration = Vector3.ProjectOnPlane(penetration, -capsuleDirN);
+                            }
+
+                            pB = pB + penetration.normalized * capsule_b.radius;
+                            penetration = pA - pB;
+                            return (penetration, pA, pB);
+                        }
+
+                        return default;
                     }
                 }
-
-                return (penetration, pA, pB);
             }
         }
     }
