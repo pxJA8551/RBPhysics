@@ -554,71 +554,6 @@ namespace RBPhys
             return hitList;
         }
 
-        public static List<RBColliderOverlapInfo> LineOverlap(RBColliderLine line)
-        {
-            List<RBColliderOverlapInfo> overlappings = new List<RBColliderOverlapInfo>();
-
-            float xMin = Mathf.Min(line.pos_a.x, line.pos_b.x);
-            float xMax = Mathf.Max(line.pos_a.x, line.pos_b.x);
-
-            for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
-            {
-                var t = _trajectories_orderByXMin[i];
-                var f = _trajectories_xMin[i];
-
-                if (xMin < t.trajectoryAABB.MaxX)
-                {
-                    if (t.trajectoryAABB.OverlapAABB(new RBColliderAABB(line.Center, RBPhysUtil.V3Abs(line.pos_b - line.pos_a))))
-                    {
-                        foreach (var c in t.Colliders)
-                        {
-                            overlappings.Add(new RBColliderOverlapInfo(c));
-                        }
-                    }
-                }
-
-                if (xMax < f)
-                {
-                    break;
-                }
-            }
-
-            Parallel.For(0, overlappings.Count, i =>
-            {
-                var t = overlappings[i];
-
-                switch (t.collider.GeometryType)
-                {
-                    case RBGeometryType.OBB:
-                        {
-                            var p = RBDetailCollision.DetailCollisionOBBLine.CalcDetailCollisionInfo(t.collider.CalcOBB(), line);
-                            if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
-                            RBPhysDebugging.IsOverlapValidAssert(t);
-                            overlappings[i] = t;
-                        }
-                        break;
-                    case RBGeometryType.Sphere:
-                        {
-                            var p = RBDetailCollision.DetailCollisionSphereLine.CalcDetailCollisionInfo(t.collider.CalcSphere(), line);
-                            if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
-                            RBPhysDebugging.IsOverlapValidAssert(t);
-                            overlappings[i] = t;
-                        }
-                        break;
-                    case RBGeometryType.Capsule:
-                        {
-                            var p = RBDetailCollision.DetailCollisionCapsuleLine.CalcDetailCollisionInfo(t.collider.CalcCapsule(), line);
-                            if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
-                            RBPhysDebugging.IsOverlapValidAssert(t);
-                            overlappings[i] = t;
-                        }
-                        break;
-                }
-            });
-
-            return overlappings;
-        }
-
         public static List<RBColliderOverlapInfo> BoxOverlap(RBColliderOBB obb)
         {
             List<RBColliderOverlapInfo> overlappings = new List<RBColliderOverlapInfo>();
@@ -2508,37 +2443,6 @@ namespace RBPhys
         }
     }
 
-    public struct RBColliderLine
-    {
-        public Vector3 pos_a;
-        public Vector3 pos_b;
-        public readonly bool isValidLine;
-
-        public Vector3 Center { get { return (pos_b + pos_a) / 2f; } }
-        public Vector3 Direction { get { return (pos_b - pos_a).normalized; } }
-        public float Length { get { return (pos_b - pos_a).magnitude; } }
-        public float SqrLength { get { return (pos_b - pos_a).sqrMagnitude; } }
-
-        public RBColliderLine(Vector3 pos_a, Vector3 pos_b)
-        {
-            this.pos_a = pos_a;
-            this.pos_b = pos_b;
-            isValidLine = true;
-        }
-
-        public RBColliderLine(Vector3 pos, Vector3 dir, float length)
-        {
-            this.pos_a = pos;
-            this.pos_b = pos + dir.normalized * length;
-            isValidLine = true;
-        }
-
-        public float GetAxisSize(Vector3 axisN)
-        {
-            return Mathf.Abs(Vector3.Dot(pos_b - pos_a, axisN));
-        }
-    }
-
     public struct RBColliderTriangleMesh
     {
         public int[] indices;
@@ -2563,7 +2467,6 @@ namespace RBPhys
         OBB,
         Sphere,
         Capsule,
-        Line,
         TriangleMesh
     }
 

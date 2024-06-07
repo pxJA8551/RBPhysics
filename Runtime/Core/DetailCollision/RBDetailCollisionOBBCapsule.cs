@@ -100,7 +100,28 @@ namespace RBPhys
                     pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
                 }
 
-                //•ª—£Ž²‚SFaFwd x bUp
+                //•ª—£Ž²‚SFaUp
+                {
+                    float dd = Vector3.Dot(d, bUpN);
+                    float prjL = Mathf.Abs(dd);
+                    float rA = obb_a.GetAxisSize(bUpN);
+                    float rB = capsule_b.height + capsule_b.radius * 2;
+
+                    float dp = prjL * 2 - (rA + rB);
+
+                    if (dp > 0)
+                    {
+                        return (Vector3.zero, Vector3.zero, Vector3.zero);
+                    }
+
+                    Vector3 p = aUpN * (dp / 2) * F32Sign11(dd);
+
+                    bool pMin = p.sqrMagnitude < pSqrMag;
+                    penetration = pMin ? p : penetration;
+                    pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                }
+
+                //•ª—£Ž²‚TFaFwd x bUp
                 {
                     Vector3 c = Vector3.Cross(aFwdN, bUpN).normalized;
 
@@ -126,7 +147,7 @@ namespace RBPhys
                     }
                 }
 
-                //•ª—£Ž²‚TFaRight x bUp
+                //•ª—£Ž²‚UFaRight x bUp
                 {
                     Vector3 c = Vector3.Cross(aRightN, bUpN).normalized;
 
@@ -152,7 +173,7 @@ namespace RBPhys
                     }
                 }
 
-                //•ª—£Ž²‚UFaUp x bUp
+                //•ª—£Ž²‚VFaUp x bUp
                 {
                     Vector3 c = Vector3.Cross(aUpN, bUpN).normalized;
 
