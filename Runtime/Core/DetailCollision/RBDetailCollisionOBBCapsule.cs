@@ -66,8 +66,6 @@ namespace RBPhys
                 {
                     Vector3 d = (wsPB + wsPA) / 2f - obb_a.pos;
                     Vector3 wsD = wsPB - wsPA;
-                    Vector3 dN = d.normalized;
-                    float wsLength = d.magnitude;
 
                     Vector3 penetration;
                     float pSqr;
@@ -141,12 +139,15 @@ namespace RBPhys
                         var r = obb_a.rot;
 
                         Vector3 penetration;
+                        Vector3 aRightN = -obb_a.GetAxisRightN();
+                        Vector3 aUpN = -obb_a.GetAxisUpN();
+                        Vector3 aFwdN = -obb_a.GetAxisForwardN();
 
                         float sqrP;
                         {
                             Vector3 vr = r * V3Multiply(hs, 1, 0, 0);
                             var p = obb_a.Center + vr;
-                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 0, 1, 1), p + V3Multiply(hs, 0, 1, -1), p + V3Multiply(hs, 0, -1, -1), p + V3Multiply(hs, 0, -1, 1), vr.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 0, 1, 1), p + V3Multiply(hs, 0, 1, -1), p + V3Multiply(hs, 0, -1, -1), p + V3Multiply(hs, 0, -1, 1), aRightN, p, out Vector3 ppA, out Vector3 ppB, out _);
 
                             Vector3 pp = ppB - ppA;
 
@@ -162,7 +163,7 @@ namespace RBPhys
                         {
                             Vector3 vr = r * V3Multiply(hs, -1, 0, 0);
                             var p = obb_a.Center + vr;
-                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 0, 1, 1), p + V3Multiply(hs, 0, 1, -1), p + V3Multiply(hs, 0, -1, -1), p + V3Multiply(hs, 0, -1, 1), vr.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 0, 1, 1), p + V3Multiply(hs, 0, 1, -1), p + V3Multiply(hs, 0, -1, -1), p + V3Multiply(hs, 0, -1, 1), -aRightN, p, out Vector3 ppA, out Vector3 ppB, out _);
 
                             Vector3 pp = ppB - ppA;
 
@@ -179,7 +180,7 @@ namespace RBPhys
                         {
                             Vector3 vr = r * V3Multiply(hs, 0, 1, 0);
                             var p = obb_a.Center + vr;
-                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 0, 1), p + V3Multiply(hs, 1, 0, -1), p + V3Multiply(hs, -1, 0, -1), p + V3Multiply(hs, -1, 0, 1), vr.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 0, 1), p + V3Multiply(hs, 1, 0, -1), p + V3Multiply(hs, -1, 0, -1), p + V3Multiply(hs, -1, 0, 1), aUpN, p, out Vector3 ppA, out Vector3 ppB, out _);
 
                             Vector3 pp = ppB - ppA;
 
@@ -196,7 +197,7 @@ namespace RBPhys
                         {
                             Vector3 vr = r * V3Multiply(hs, 0, -1, 0);
                             var p = obb_a.Center + vr;
-                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 0, 1), p + V3Multiply(hs, 1, 0, -1), p + V3Multiply(hs, -1, 0, -1), p + V3Multiply(hs, -1, 0, 1), vr.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 0, 1), p + V3Multiply(hs, 1, 0, -1), p + V3Multiply(hs, -1, 0, -1), p + V3Multiply(hs, -1, 0, 1), -aUpN, p, out Vector3 ppA, out Vector3 ppB, out _);
 
                             Vector3 pp = ppB - ppA;
 
@@ -213,7 +214,7 @@ namespace RBPhys
                         {
                             Vector3 vr = r * V3Multiply(hs, 0, 0, 1);
                             var p = obb_a.Center + vr;
-                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 1, 0), p + V3Multiply(hs, 1, -1, 0), p + V3Multiply(hs, -1, -1, 0), p + V3Multiply(hs, -1, 1, 0), vr.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 1, 0), p + V3Multiply(hs, 1, -1, 0), p + V3Multiply(hs, -1, -1, 0), p + V3Multiply(hs, -1, 1, 0), aFwdN, p, out Vector3 ppA, out Vector3 ppB, out _);
 
                             Vector3 pp = ppB - ppA;
 
@@ -230,7 +231,7 @@ namespace RBPhys
                         {
                             Vector3 vr = r * V3Multiply(hs, 0, 0, -1);
                             var p = obb_a.Center + vr;
-                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 1, 0), p + V3Multiply(hs, 1, -1, 0), p + V3Multiply(hs, -1, -1, 0), p + V3Multiply(hs, -1, 1, 0), vr.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 1, 0), p + V3Multiply(hs, 1, -1, 0), p + V3Multiply(hs, -1, -1, 0), p + V3Multiply(hs, -1, 1, 0), -aFwdN, p, out Vector3 ppA, out Vector3 ppB, out _);
 
                             Vector3 pp = ppB - ppA;
 
