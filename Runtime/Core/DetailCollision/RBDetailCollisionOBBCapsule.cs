@@ -140,18 +140,85 @@ namespace RBPhys
                         var hs = obb_a.size / 2f;
                         var r = obb_a.rot;
 
-                        Vector3 penetration = Vector3.zero;
+                        Vector3 penetration;
 
-                        float sqrP = -1;
+                        float sqrP;
                         {
                             Vector3 vr = r * V3Multiply(hs, 1, 0, 0);
+                            var p = obb_a.Center + vr;
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 0, 1, 1), p + V3Multiply(hs, 0, 1, -1), p + V3Multiply(hs, 0, -1, -1), p + V3Multiply(hs, 0, -1, 1), vr.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
+
+                            Vector3 pp = ppB - ppA;
+
+                            float sqrPP = pp.sqrMagnitude;
+                            {
+                                sqrP = sqrPP;
+                                penetration = pp;
+                                pA = ppA;
+                                pB = ppB;
+                            }
+                        }
+
+                        {
+                            Vector3 vr = r * V3Multiply(hs, -1, 0, 0);
+                            var p = obb_a.Center + vr;
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 0, 1, 1), p + V3Multiply(hs, 0, 1, -1), p + V3Multiply(hs, 0, -1, -1), p + V3Multiply(hs, 0, -1, 1), vr.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
+
+                            Vector3 pp = ppB - ppA;
+
+                            float sqrPP = pp.sqrMagnitude;
+                            if (sqrPP < sqrP)
+                            {
+                                sqrP = sqrPP;
+                                penetration = pp;
+                                pA = ppA;
+                                pB = ppB;
+                            }
+                        }
+
+                        {
+                            Vector3 vr = r * V3Multiply(hs, 0, 1, 0);
+                            var p = obb_a.Center + vr;
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 0, 1), p + V3Multiply(hs, 1, 0, -1), p + V3Multiply(hs, -1, 0, -1), p + V3Multiply(hs, -1, 0, 1), vr.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
+
+                            Vector3 pp = ppB - ppA;
+
+                            float sqrPP = pp.sqrMagnitude;
+                            if (sqrPP < sqrP)
+                            {
+                                sqrP = sqrPP;
+                                penetration = pp;
+                                pA = ppA;
+                                pB = ppB;
+                            }
+                        }
+
+                        {
+                            Vector3 vr = r * V3Multiply(hs, 0, -1, 0);
+                            var p = obb_a.Center + vr;
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 0, 1), p + V3Multiply(hs, 1, 0, -1), p + V3Multiply(hs, -1, 0, -1), p + V3Multiply(hs, -1, 0, 1), vr.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
+
+                            Vector3 pp = ppB - ppA;
+
+                            float sqrPP = pp.sqrMagnitude;
+                            if (sqrPP < sqrP)
+                            {
+                                sqrP = sqrPP;
+                                penetration = pp;
+                                pA = ppA;
+                                pB = ppB;
+                            }
+                        }
+
+                        {
+                            Vector3 vr = r * V3Multiply(hs, 0, 0, 1);
                             var p = obb_a.Center + vr;
                             CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 1, 0), p + V3Multiply(hs, 1, -1, 0), p + V3Multiply(hs, -1, -1, 0), p + V3Multiply(hs, -1, 1, 0), vr.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
 
                             Vector3 pp = ppB - ppA;
 
                             float sqrPP = pp.sqrMagnitude;
-                            if (Vector3.Dot(pp, vr.normalized) > 0)
+                            if (sqrPP < sqrP)
                             {
                                 sqrP = sqrPP;
                                 penetration = pp;
@@ -161,77 +228,14 @@ namespace RBPhys
                         }
 
                         {
-                            var p = obb_a.Center + r * V3Multiply(hs, -1, 0, 0);
-                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 1, 0), p + V3Multiply(hs, 1, -1, 0), p + V3Multiply(hs, -1, -1, 0), p + V3Multiply(hs, -1, 1, 0), capsuleDirN.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
+                            Vector3 vr = r * V3Multiply(hs, 0, 0, -1);
+                            var p = obb_a.Center + vr;
+                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 1, 0), p + V3Multiply(hs, 1, -1, 0), p + V3Multiply(hs, -1, -1, 0), p + V3Multiply(hs, -1, 1, 0), vr.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
 
                             Vector3 pp = ppB - ppA;
 
                             float sqrPP = pp.sqrMagnitude;
-                            if ((sqrPP < sqrP || sqrP == -1))
-                            {
-                                sqrP = sqrPP;
-                                penetration = pp;
-                                pA = ppA;
-                                pB = ppB;
-                            }
-                        }
-
-                        {
-                            var p = obb_a.Center + r * V3Multiply(hs, 0, 1, 0);
-                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 0, 1), p + V3Multiply(hs, 1, 0, -1), p + V3Multiply(hs, -1, 0, -1), p + V3Multiply(hs, -1, 0, 1), capsuleDirN.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
-
-                            Vector3 pp = ppB - ppA;
-
-                            float sqrPP = pp.sqrMagnitude;
-                            if ((sqrPP < sqrP || sqrP == -1))
-                            {
-                                sqrP = sqrPP;
-                                penetration = pp;
-                                pA = ppA;
-                                pB = ppB;
-                            }
-                        }
-
-                        {
-                            var p = obb_a.Center + r * V3Multiply(hs, 0, -1, 0);
-                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 0, 1), p + V3Multiply(hs, 1, 0, -1), p + V3Multiply(hs, -1, 0, -1), p + V3Multiply(hs, -1, 0, 1), capsuleDirN.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
-
-                            Vector3 pp = ppB - ppA;
-
-                            float sqrPP = pp.sqrMagnitude;
-                            if ((sqrPP < sqrP || sqrP == -1))
-                            {
-                                sqrP = sqrPP;
-                                penetration = pp;
-                                pA = ppA;
-                                pB = ppB;
-                            }
-                        }
-
-                        {
-                            var p = obb_a.Center + r * V3Multiply(hs, 0, 0, 1);
-                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 1, 0, 1), p + V3Multiply(hs, 1, 0, -1), p + V3Multiply(hs, -1, 0, -1), p + V3Multiply(hs, -1, 0, 1), capsuleDirN.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
-
-                            Vector3 pp = ppB - ppA;
-
-                            float sqrPP = pp.sqrMagnitude;
-                            if ((sqrPP < sqrP || sqrP == -1))
-                            {
-                                sqrP = sqrPP;
-                                penetration = pp;
-                                pA = ppA;
-                                pB = ppB;
-                            }
-                        }
-
-                        {
-                            var p = obb_a.Center + r * V3Multiply(hs, 0, 0, -1);
-                            CalcNearestOnRectP(edge.begin, edge.end, p + V3Multiply(hs, 0, 1, 1), p + V3Multiply(hs, 0, 1, -1), p + V3Multiply(hs, 0, -1, -1), p + V3Multiply(hs, 0, -1, 1), capsuleDirN.normalized, p, out Vector3 ppA, out Vector3 ppB, out _);
-
-                            Vector3 pp = ppB - ppA;
-
-                            float sqrPP = pp.sqrMagnitude;
-                            if ((sqrPP < sqrP || sqrP == -1))
+                            if (sqrPP < sqrP)
                             {
                                 sqrP = sqrPP;
                                 penetration = pp;
