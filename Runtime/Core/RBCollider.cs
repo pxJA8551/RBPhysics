@@ -15,7 +15,7 @@ namespace RBPhys
         public Vector3 GameObjectPos { get; private set; }
         public Quaternion GameObjectRot { get; private set; }
 
-        [NonSerialized] public float cr_kp = .6f; //Õ“Ë‰ğÁˆ— PƒQƒCƒ“
+        [NonSerialized] public float cr_kp = .45f; //Õ“Ë‰ğÁˆ— PƒQƒCƒ“
         [NonSerialized] public float cr_ki = 15f; //Õ“Ë‰ğÁˆ— IƒQƒCƒ“
         [NonSerialized] public float cr_kd = .1f; //Õ“Ë‰ğÁˆ— DƒQƒCƒ“
 
