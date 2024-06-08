@@ -262,11 +262,10 @@ namespace RBPhys
                         {
                             pB = ProjectPointToEdge(pA, capsuleEdge.begin, capsuleEdge.end);
 
-                            Vector3 pd = pA - pB;
+                            Vector3 pd = Vector3.ProjectOnPlane(pA - pB, capsuleDirN);
                             pB = pA + pd * dp;
                             pd = pA - pB;
                             pd *= -1;
-
                             return (pd, pA, pB);
                         }
                         else
