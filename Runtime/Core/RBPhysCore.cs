@@ -2054,7 +2054,7 @@ namespace RBPhys
             (vAdd_a, avAdd_a, vAdd_b, avAdd_b) = _jB.Resolve(this, vAdd_a, avAdd_a, vAdd_b, avAdd_b, tMode);
         }
 
-        const float COLLISION_ERROR_SLOP = 0.005f;
+        const float COLLISION_ERROR_SLOP = 0.0001f;
 
         struct Jacobian
         {
@@ -2145,7 +2145,7 @@ namespace RBPhys
                     relVel -= col.ExpVelocity_b;
                     relVel -= Vector3.Cross(col.ExpAngularVelocity_b, col.rB);
 
-                    float e = -(col.penetration.magnitude - COLLISION_ERROR_SLOP);
+                    float e = -Mathf.Max(0, col.penetration.magnitude - COLLISION_ERROR_SLOP);
 
                     if (_eLast < 0)
                     {
