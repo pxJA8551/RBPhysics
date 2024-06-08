@@ -21,8 +21,7 @@ namespace RBPhysEditor
         SerializedProperty sleeping;
         SerializedProperty sleepGrace;
         SerializedProperty useGravity;
-
-        bool sleepDefault;
+        SerializedProperty sleepDefault;
 
         const float HANDLE_SIZE = 1;
         const float HANDLE_DOT_SIZE = 0.003f;
@@ -36,6 +35,7 @@ namespace RBPhysEditor
             useGravity = serializedObject.FindProperty("useGravity");
             drag = serializedObject.FindProperty("drag");
             angularDrag = serializedObject.FindProperty("angularDrag");
+            sleepDefault = serializedObject.FindProperty("sleepUntilInteraction");
         }
 
         public override void OnInspectorGUI()
@@ -44,11 +44,11 @@ namespace RBPhysEditor
 
             if (sleeping.boolValue == true && sleepGrace.intValue == 5)
             {
-                sleepDefault = true;
+                sleepDefault.boolValue = true;
             }
             else
             {
-                sleepDefault = false;
+                sleepDefault.boolValue = false;
             }
 
             EditorGUILayout.PropertyField(mass);
@@ -56,20 +56,9 @@ namespace RBPhysEditor
             EditorGUILayout.PropertyField(drag);
             EditorGUILayout.PropertyField(angularDrag);
             EditorGUILayout.PropertyField(useGravity);
-            sleepDefault = EditorGUILayout.Toggle("Sleep until interaction", sleepDefault);
+            sleepDefault.boolValue = EditorGUILayout.Toggle("Sleep until interaction", sleepDefault.boolValue);
 
             EditorGUILayout.LabelField(string.Format("Sleep:{0}({1})", sleeping.boolValue ? "TRUE" : "FALSE", sleepGrace.intValue));
-
-            if (sleepDefault)
-            {
-                sleeping.boolValue = true;
-                sleepGrace.intValue = 5;
-            }
-            else
-            {
-                sleeping.boolValue = false;
-                sleepGrace.intValue = 0;
-            }
 
             serializedObject.ApplyModifiedProperties();
         }

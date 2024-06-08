@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Experimental.GlobalIllumination;
 using static RBPhys.RBPhysCore;
 using static RBPhys.RBPhysUtil;
 
@@ -74,6 +75,8 @@ namespace RBPhys
         public int sleepGrace = 0;
         public bool useGravity = true;
 
+        public bool sleepUntilInteraction;
+
         [NonSerialized] public RBCollider[] colliding = new RBCollider[2];
         [NonSerialized] public int collidingCount = 0;
 
@@ -106,14 +109,19 @@ namespace RBPhys
             UpdateTransform();
             RecalculateInertiaTensor();
 
-            infInertiaTensorX = true;
-            infInertiaTensorY = true;
-            infInertiaTensorZ = true;
-
             if (!isSleeping || sleepGrace != 5)
             {
                 isSleeping = false;
                 sleepGrace = 0;
+            }
+
+            if (sleepUntilInteraction)
+            {
+                PhysSleep();
+            }
+            else
+            {
+                PhysAwakeForce();
             }
         }
 
