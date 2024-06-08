@@ -21,8 +21,6 @@ namespace RBPhys
             return new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));
         }
 
-        public static Vector3 V3NaN = new Vector3(float.NaN, float.NaN, float.NaN);
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 V3Rcp(Vector3 v)
         {

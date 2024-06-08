@@ -47,6 +47,32 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 ProjectPointToEdge(Vector3 p, Vector3 begin, Vector3 end, out float t)
+        {
+            float dn = (end - begin).magnitude;
+
+            Vector3 dirN = (end - begin) / dn;
+            float dd = Vector3.Dot(p - begin, dirN);
+
+            t = Mathf.Clamp(dd, 0, dn);
+            return begin + dirN * t;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 ProjectPointToEdgePZero(Vector3 begin, Vector3 end, out float tp)
+        {
+            float dn = (end - begin).magnitude;
+
+            Vector3 dirN = (end - begin) / dn;
+            float dd = -Vector3.Dot(begin, dirN);
+
+            float t = Mathf.Clamp(dd, 0, dn);
+
+            tp = t / dn;
+            return begin + dirN * t;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 ProjectPointToPlane(Vector3 p, Vector3 planeNormal, Vector3 planeCenter)
         {
             return planeCenter + Vector3.ProjectOnPlane(p - planeCenter, planeNormal);
@@ -172,8 +198,8 @@ namespace RBPhys
 
             if (div == 0)
             {
-                nearestA = RBPhysUtil.V3NaN;
-                nearestB = RBPhysUtil.V3NaN;
+                nearestA = Vector3.zero;
+                nearestB = Vector3.zero;
                 parallel = true;
                 return;
             }

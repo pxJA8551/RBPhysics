@@ -9,6 +9,7 @@ using UnityEngine.Profiling;
 using UnityEditor;
 using Unity.IL2CPP.CompilerServices;
 using UnityEditor.PackageManager;
+using System.Drawing;
 
 namespace RBPhys
 {
@@ -2435,6 +2436,14 @@ namespace RBPhys
         public float GetAxisSize(Vector3 axisN)
         {
             return Mathf.Abs(Vector3.Dot(rot * new Vector3(0, height, 0), axisN)) + radius * 2;
+        }
+
+        public float GetCylinderAxisN(Vector3 axisN)
+        {
+            float fwd = Mathf.Abs(Vector3.Dot(rot * new Vector3(0, 0, radius * 2), axisN));
+            float right = Mathf.Abs(Vector3.Dot(rot * new Vector3(radius * 2, 0, 0), axisN));
+            float up = Mathf.Abs(Vector3.Dot(rot * new Vector3(0, height, 0), axisN));
+            return fwd + right + up;
         }
 
         public (Vector3 begin, Vector3 end) GetEdge()

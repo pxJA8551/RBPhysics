@@ -35,7 +35,7 @@ namespace RBPhys
 
                 if (pdL == 0)
                 {
-                    return (V3NaN, pA, sphere_b.pos);
+                    return (Vector3.zero, pA, sphere_b.pos);
                 }
 
                 Vector3 pdN = pd / pdL;

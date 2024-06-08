@@ -86,12 +86,12 @@ namespace RBPhys
                         penetration = Vector3.zero;
                         return new Penetration(penetration, aDp, bDp, default);
                     }
-
                     Vector3 p = aRightN * (dp / 2) * F32Sign11(dd);
 
                     bool pMin = p.sqrMagnitude < pSqrMag;
                     penetration = pMin ? p : penetration;
                     pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+
                     info.obb_obb_penetrationIndex = pMin ? (sbyte)1 : info.obb_obb_penetrationIndex;
                 }
 
