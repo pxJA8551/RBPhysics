@@ -2145,7 +2145,7 @@ namespace RBPhys
                     relVel -= col.ExpVelocity_b;
                     relVel -= Vector3.Cross(col.ExpAngularVelocity_b, col.rB);
 
-                    float e = -Mathf.Max(0, col.penetration.magnitude - COLLISION_ERROR_SLOP);
+                    float e = -(col.penetration.magnitude - COLLISION_ERROR_SLOP);
 
                     if (_eLast < 0)
                     {
