@@ -1,11 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using Unity.Android.Types;
-using UnityEditor.Android;
 using UnityEngine;
-using static RBPhys.RBDetailCollision;
 using static RBPhys.RBPhysUtil;
 using static RBPhys.RBVectorUtil;
 
