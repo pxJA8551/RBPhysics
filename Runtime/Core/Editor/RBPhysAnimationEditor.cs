@@ -241,6 +241,7 @@ namespace RBPhys
             if (!trsCurve.Validate())
             {
                 Debug.LogWarning("RBPhysAnimation -- Validation falied.");
+                EditorUtility.DisplayDialog("Conversion Failed", "RBPhysAnimation -- Validation falied.", "OK");
             }
         }
     }
