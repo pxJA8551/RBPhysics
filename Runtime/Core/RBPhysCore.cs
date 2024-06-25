@@ -2440,7 +2440,7 @@ namespace RBPhys
         RBCollider[] _colliders;
         int _layer;
 
-        public Guid RetrogradeKeyGuid { get { return tempSleeping ? _retrogradeKeyGuid : Guid.Empty; } }
+        public Guid RetrogradeKeyGuid { get { return _retrogradeKeyGuid; } }
         Guid _retrogradeKeyGuid = Guid.Empty;
 
         public void SetRetrogradeKeyGuid(Guid guid)
