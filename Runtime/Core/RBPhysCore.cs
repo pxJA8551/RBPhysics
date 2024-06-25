@@ -1050,7 +1050,7 @@ namespace RBPhys
 
                 if (colPair.col_b.useCCD)
                 {
-                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(colPair.col_a.CalcExpOBB(), colPair.col_b.CalcSphere(), colPair.col.ExpVelocity_a);
+                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(colPair.col_a.CalcExpOBB(), colPair.col_b.CalcSphere(), colPair.col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
                     _obb_sphere_cols[i] = (colPair.col_a, colPair.col_b, p, null);
                 }
                 else
@@ -1066,7 +1066,7 @@ namespace RBPhys
 
                 if (colPair.col_a.useCCD || colPair.col_b.useCCD)
                 {
-                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfoCCD(colPair.col_a.CalcSphere(), colPair.col_b.CalcSphere(), colPair.col.ExpAngularVelocity_a, colPair.col.ExpAngularVelocity_b);
+                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfoCCD(colPair.col_a.CalcSphere(), colPair.col_b.CalcSphere(), colPair.col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero, colPair.col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
                     _sphere_sphere_cols[i] = (colPair.col_a, colPair.col_b, p, null);
                 }
                 else
@@ -1088,7 +1088,7 @@ namespace RBPhys
                 var colPair = _sphere_capsule_cols[i];
                 if (colPair.col_a.useCCD)
                 {
-                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(colPair.col_a.CalcSphere(), colPair.col_b.CalcExpCapsule(), colPair.col.ExpAngularVelocity_a);
+                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(colPair.col_a.CalcSphere(), colPair.col_b.CalcExpCapsule(), colPair.col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
                     _sphere_capsule_cols[i] = (colPair.col_a, colPair.col_b, p, null);
                 }
                 else
