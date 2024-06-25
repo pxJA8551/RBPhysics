@@ -2487,7 +2487,7 @@ namespace RBPhys
         public bool IsStatic { get { return _isStatic; } }
         public RBCollider Collider { get { return _collider; } }
         public RBCollider[] Colliders { get { return _colliders; } }
-        public bool IsStaticOrSleeping { get { return (Rigidbody?.isSleeping ?? true || tempSleeping) || IsStatic; } }
+        public bool IsStaticOrSleeping { get { return ((Rigidbody?.isSleeping ?? true) || tempSleeping) || IsStatic; } }
         public int Layer { get { return _layer; } }
 
         public bool tempSleeping = false;
