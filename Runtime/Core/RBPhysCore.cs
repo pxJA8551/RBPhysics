@@ -1113,8 +1113,8 @@ namespace RBPhys
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
 
-                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
-                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
+                    if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
+                    if (!traj1.IsStatic) rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1166,8 +1166,8 @@ namespace RBPhys
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
 
-                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
-                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
+                    if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
+                    if (!traj1.IsStatic) rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1219,8 +1219,8 @@ namespace RBPhys
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
 
-                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
-                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
+                    if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
+                    if (!traj1.IsStatic) rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1272,8 +1272,8 @@ namespace RBPhys
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
 
-                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
-                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
+                    if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
+                    if (!traj1.IsStatic) rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1325,8 +1325,8 @@ namespace RBPhys
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
 
-                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
-                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
+                    if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
+                    if (!traj1.IsStatic) rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1377,6 +1377,9 @@ namespace RBPhys
                     rbc.collider_a?.OnCollision(traj2);
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
+
+                    if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
+                    if (!traj1.IsStatic) rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
