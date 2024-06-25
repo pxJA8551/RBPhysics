@@ -199,15 +199,6 @@ namespace RBPhys
             }
         }
 
-        public void SetColliderSizeMultiplierWithOffset(float multiplier)
-        {
-            foreach (var c in _colliders)
-            {
-                c.colliderSizeMultiplier = multiplier;
-                c.colliderSizeMultiplierRigidbody = this;
-            }
-        }
-
         public void SetIgnoreVelocity()
         {
             _stackVal_ignoreVelocity_ifGreaterThanZero++;

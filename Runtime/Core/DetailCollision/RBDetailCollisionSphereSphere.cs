@@ -26,6 +26,20 @@ namespace RBPhys
 
                 return (penetration, sphere_a.pos - dN * sphere_a.radius, sphere_b.pos + dN * sphere_b.radius);
             }
+
+            public static Penetration CalcDetailCollisionInfoCCD(RBColliderSphere sphere_a, RBColliderSphere sphere_b, Vector3 velocityA, Vector3 velocityB)
+            {
+                Vector3 velocity = velocityB - velocityA;
+
+                float length = velocity.magnitude;
+                Vector3 dirN = velocity / length;
+
+                var p = RBSphereCast.SphereCastSphere.CalcSphereCollision(sphere_a, sphere_b.pos, dirN, length, sphere_b.radius, true);
+                Vector3 pA = p.position;
+                Vector3 pB = (p.position + velocity * RBPhysCore.PhysTime.SolverSetDeltaTime) + p.normal * sphere_b.radius;
+
+                return new Penetration(pB - pA, pA, pB, default);
+            }
         }
     }
 }

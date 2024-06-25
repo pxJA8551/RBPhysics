@@ -25,9 +25,9 @@ namespace RBPhys
         public RBTrajectory ExpTrajectory { get { return _expTrajectory; } }
 
         [NonSerialized] public float colliderSizeMultiplier = 1f;
-        [NonSerialized] public RBRigidbody colliderSizeMultiplierRigidbody;
 
         public bool IgnoreCollision { get { return _stackVal_ignoreCollision_ifGreaterThanZero > 0; } }
+        public bool useCCD;
 
         int _stackVal_ignoreCollision_ifGreaterThanZero = 0;
 

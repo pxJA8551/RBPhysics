@@ -12,6 +12,7 @@ namespace RBPhysEditor
     {
         SerializedProperty center;
         SerializedProperty radius;
+        SerializedProperty useCcd;
 
         bool scaleEditMode = false;
         const float HANDLE_SIZE = 1;
@@ -36,6 +37,7 @@ namespace RBPhysEditor
         {
             center = serializedObject.FindProperty("_center");
             radius = serializedObject.FindProperty("_radius");
+            useCcd = serializedObject.FindProperty("useCCD");
         }
 
         public override void OnInspectorGUI()
@@ -43,6 +45,7 @@ namespace RBPhysEditor
             serializedObject.Update();
             EditorGUILayout.PropertyField(center);
             EditorGUILayout.PropertyField(radius);
+            EditorGUILayout.PropertyField(useCcd);
 
             EditorGUILayout.Space(1);
             GUILayout.BeginHorizontal();

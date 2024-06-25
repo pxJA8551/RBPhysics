@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using RBPhys;
 using System;
 using System.Collections;
@@ -5,6 +6,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static UnityEngine.GraphicsBuffer;
 
 namespace RBPhys
@@ -21,25 +23,13 @@ namespace RBPhys
         public Vector3 Center { get { return _center; } set { _center = value; } }
         public float Radius { get { return _radius; } set { _radius = Mathf.Abs(value); } }
 
-        public float MutipliedRadius { get { return _radius * colliderSizeMultiplier; } }
-        public Vector3 MutipliedCenter { get { return _center * colliderSizeMultiplier; } }
-
-        public Vector3 GetMutlpliedPos(Vector3 pos)
-        {
-            if (colliderSizeMultiplierRigidbody != null)
-            {
-                return colliderSizeMultiplierRigidbody.Position;
-            }
-            else
-            {
-                return pos;
-            }
-        }
+        public float MultipliedRadius { get { return _radius * colliderSizeMultiplier; } }
+        public Vector3 MultipliedCenter { get { return _center * colliderSizeMultiplier; } }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override float CalcVolume()
         {
-            return (4f * Mathf.PI * MutipliedRadius * MutipliedRadius * MutipliedRadius) / 3f;
+            return (4f * Mathf.PI * MultipliedRadius * MultipliedRadius * MultipliedRadius) / 3f;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -51,26 +41,55 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot)
         {
-            return new RBColliderSphere(GetMutlpliedPos(pos) + MutipliedCenter, MutipliedRadius);
+            return new RBColliderSphere((pos) + MultipliedCenter, MultipliedRadius);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot)
         {
-            return new RBColliderAABB(GetMutlpliedPos(pos) + MutipliedCenter, Vector3.one * MutipliedRadius * 2);
+            if (useCCD)
+            {
+                Vector3 pos_current = pos;
+                Vector3 pos_exp = pos + ((ParentRigidbody?.Velocity * RBPhysCore.PhysTime.SolverSetDeltaTime) ?? Vector3.zero);
+
+                Vector3 size = RBPhysUtil.V3Abs(pos_current - pos_exp) + Vector3.one * MultipliedRadius * 2;
+                Vector3 avgPos = (pos_current + pos_exp) / 2f;
+
+                return new RBColliderAABB(avgPos, size);
+            }
+            else
+            {
+                return new RBColliderAABB((pos) + MultipliedCenter, Vector3.one * MultipliedRadius * 2);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot)
         {
-            Vector3 size = Vector3.one * MutipliedRadius * 2;
-            return new RBColliderOBB(GetMutlpliedPos(pos) + MutipliedCenter - size / 2f, rot, size);
+            if (useCCD)
+            {
+                Vector3 pos_current = pos;
+                Vector3 pos_exp = pos + ((ParentRigidbody?.Velocity * RBPhysCore.PhysTime.SolverSetDeltaTime) ?? Vector3.zero);
+
+                Vector3 avgPos = (pos_current + pos_exp) / 2f;
+                Vector3 sizeFwd = Vector3.one * MultipliedRadius * 2;
+                sizeFwd.z += (pos_current - pos_exp).magnitude;
+
+                Quaternion qRot = Quaternion.FromToRotation(Vector3.forward, pos_exp - pos_current);
+
+                return new RBColliderOBB(avgPos - (qRot * sizeFwd / 2f), qRot, sizeFwd);
+            }
+            else
+            {
+                Vector3 size = Vector3.one * MultipliedRadius * 2;
+                return new RBColliderOBB((pos) + MultipliedCenter - size / 2f, rot, size);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override Vector3 GetColliderCenter(Vector3 pos, Quaternion rot)
         {
-            return GetMutlpliedPos(pos) + MutipliedCenter;
+            return (pos) + MultipliedCenter;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

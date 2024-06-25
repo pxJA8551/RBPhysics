@@ -1047,15 +1047,33 @@ namespace RBPhys
             Parallel.For(0, _obb_sphere_cols.Count, i =>
             {
                 var colPair = _obb_sphere_cols[i];
-                RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(colPair.col_a.CalcExpOBB(), colPair.col_b.CalcExpSphere());
-                _obb_sphere_cols[i] = (colPair.col_a, colPair.col_b, p, null);
+
+                if (colPair.col_b.useCCD)
+                {
+                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(colPair.col_a.CalcExpOBB(), colPair.col_b.CalcSphere(), colPair.col.ExpVelocity_a);
+                    _obb_sphere_cols[i] = (colPair.col_a, colPair.col_b, p, null);
+                }
+                else
+                {
+                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(colPair.col_a.CalcExpOBB(), colPair.col_b.CalcExpSphere());
+                    _obb_sphere_cols[i] = (colPair.col_a, colPair.col_b, p, null);
+                }
             });
 
             Parallel.For(0, _sphere_sphere_cols.Count, i =>
             {
                 var colPair = _sphere_sphere_cols[i];
-                RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfo(colPair.col_a.CalcExpSphere(), colPair.col_b.CalcExpSphere());
-                _sphere_sphere_cols[i] = (colPair.col_a, colPair.col_b, p, null);
+
+                if (colPair.col_a.useCCD || colPair.col_b.useCCD)
+                {
+                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfoCCD(colPair.col_a.CalcSphere(), colPair.col_b.CalcSphere(), colPair.col.ExpAngularVelocity_a, colPair.col.ExpAngularVelocity_b);
+                    _sphere_sphere_cols[i] = (colPair.col_a, colPair.col_b, p, null);
+                }
+                else
+                {
+                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfo(colPair.col_a.CalcExpSphere(), colPair.col_b.CalcExpSphere());
+                    _sphere_sphere_cols[i] = (colPair.col_a, colPair.col_b, p, null);
+                }
             });
 
             Parallel.For(0, _obb_capsule_cols.Count, i =>
@@ -1068,8 +1086,16 @@ namespace RBPhys
             Parallel.For(0, _sphere_capsule_cols.Count, i =>
             {
                 var colPair = _sphere_capsule_cols[i];
-                RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(colPair.col_a.CalcExpSphere(), colPair.col_b.CalcExpCapsule());
-                _sphere_capsule_cols[i] = (colPair.col_a, colPair.col_b, p, null);
+                if (colPair.col_a.useCCD)
+                {
+                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(colPair.col_a.CalcSphere(), colPair.col_b.CalcExpCapsule(), colPair.col.ExpAngularVelocity_a);
+                    _sphere_capsule_cols[i] = (colPair.col_a, colPair.col_b, p, null);
+                }
+                else
+                {
+                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(colPair.col_a.CalcExpSphere(), colPair.col_b.CalcExpCapsule());
+                    _sphere_capsule_cols[i] = (colPair.col_a, colPair.col_b, p, null);
+                }
             });
 
             Parallel.For(0, _capsule_capsule_cols.Count, i =>
@@ -1749,6 +1775,8 @@ namespace RBPhys
         public static class PhysTime
         {
             public static bool Initialized { get { return _solverTimeInitialized; } }
+
+            public static readonly float SolverSetDeltaTime = Time.fixedDeltaTime;
 
             public static double SolverTime { get { return _solverTime; } }
             public static double SolverUnscaledTime { get { return _solverUnscaledTime; } }
