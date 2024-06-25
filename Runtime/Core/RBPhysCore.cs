@@ -234,11 +234,6 @@ namespace RBPhys
             UpdateExtTrajectories(dt);
             SortTrajectories();
 
-            foreach (RBRigidbody rb in _rigidbodies)
-            {
-                rb.AfterSolverValidatorUpdate(dt);
-            }
-
             foreach (var p in _physValidatorObjects)
             {
                 p.AfterSolver();
