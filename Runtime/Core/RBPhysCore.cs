@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEditor;
 using Unity.IL2CPP.CompilerServices;
+using UnityEngine.TerrainUtils;
 
 namespace RBPhys
 {
@@ -1117,8 +1118,8 @@ namespace RBPhys
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
 
-                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2, dt));
-                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1, dt));
+                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
+                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1170,8 +1171,8 @@ namespace RBPhys
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
 
-                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2, dt));
-                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1, dt));
+                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
+                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1223,8 +1224,8 @@ namespace RBPhys
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
 
-                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2, dt));
-                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1, dt));
+                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
+                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1276,8 +1277,8 @@ namespace RBPhys
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
 
-                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2, dt));
-                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1, dt));
+                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
+                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1329,8 +1330,8 @@ namespace RBPhys
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
 
-                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2, dt));
-                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1, dt));
+                    rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
+                    rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1773,81 +1774,23 @@ namespace RBPhys
         {
             return false;
         }
-
-        public override void UpdateAfterSolver(float dt) { }
     }
 
     public class RBCollisionValidator : RBPhysCore.RBConstraints.RBPhysStateValidator
     {
         public override bool Validate()
         {
-            if (traj == null)
-            {
-                return false;
-            }
-
-            if (traj.IsStatic)
-            {
-                if (traj.Collider != null)
-                {
-                    var c = traj.Collider;
-
-                    if (!RBPhysUtil.IsV3EpsilonEqual(pos, c.GameObjectPos)) return false;
-                    if (!RBPhysUtil.IsQuaternionEpsilonEqual(rot, c.GameObjectRot)) return false;
-                    if (!RBPhysUtil.IsF32EpsilonInfEqual(mass, float.PositiveInfinity)) return false;
-                    if (!RBPhysUtil.IsV3EpsilonInfEqual(inertiaTensor, Vector3.positiveInfinity)) return false;
-                    if (!RBPhysUtil.IsQuaternionEpsilonEqual(inertiaTensorRotation, Quaternion.identity)) return false;
-
-                    return true;
-                }
-            }
-            else
-            {
-                if (traj.Rigidbody != null)
-                {
-                    var r = traj.Rigidbody;
-
-                    if (!RBPhysUtil.IsV3EpsilonEqual(pos, r.Position)) return false;
-                    if (!RBPhysUtil.IsQuaternionEpsilonEqual(rot, r.Rotation)) return false;
-                    if (!RBPhysUtil.IsF32EpsilonInfEqual(mass, r.mass)) return false;
-                    if (!RBPhysUtil.IsV3EpsilonInfEqual(inertiaTensor, r.inertiaTensor * r.inertiaTensorMultiplier)) return false;
-                    if (!RBPhysUtil.IsQuaternionEpsilonEqual(inertiaTensorRotation, r.inertiaTensorRotation)) return false;
-
-                    return true;
-                }
-            }
-
-            return false;
+            return (retrogradeKeyGuid != Guid.Empty) && ((traj?.RetrogradeKeyGuid ?? Guid.Empty) == retrogradeKeyGuid);
         }
 
-        public override void UpdateAfterSolver(float dt)
-        {
-            Setup(traj, dt);
-        }
-
-        public RBCollisionValidator(RBTrajectory traj, float dt) : base(traj?.trajectoryGuid ?? Guid.Empty)
-        {
-            Setup(traj, dt);
-        }
-
-        void Setup(RBTrajectory traj, float dt)
+        public RBCollisionValidator(RBTrajectory traj) : base(traj?.trajectoryGuid ?? Guid.Empty)
         {
             this.traj = traj;
-
-            bool s = traj.IsStatic;
-            pos = s ? traj.Collider.GameObjectPos : traj.Rigidbody.Position;
-            rot = s ? traj.Collider.GameObjectRot : traj.Rigidbody.Rotation;
-            mass = s ? float.PositiveInfinity : traj.Rigidbody.mass;
-            inertiaTensor = s ? Vector3.positiveInfinity : traj.Rigidbody.inertiaTensor * traj.Rigidbody.inertiaTensorMultiplier;
-            inertiaTensorRotation = s ? Quaternion.identity : traj.Rigidbody.inertiaTensorRotation;
+            this.retrogradeKeyGuid = traj.RetrogradeKeyGuid;
         }
 
-        public RBTrajectory traj;
-        public Vector3 pos;
-        public Quaternion rot;
-        public float mass;
-        public Vector3 inertiaTensor;
-        public Quaternion inertiaTensorRotation;
+        public readonly RBTrajectory traj;
+        public readonly Guid retrogradeKeyGuid;
     }
 
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
@@ -2498,6 +2441,19 @@ namespace RBPhys
         RBCollider _collider;
         RBCollider[] _colliders;
         int _layer;
+
+        public Guid RetrogradeKeyGuid { get { return tempSleeping ? _retrogradeKeyGuid : Guid.Empty; } }
+        Guid _retrogradeKeyGuid = Guid.Empty;
+
+        public void SetRetrogradeKeyGuid(Guid guid)
+        {
+            _retrogradeKeyGuid = guid;
+        }
+
+        public void ClearRetrogradeKeyGuid()
+        {
+            _retrogradeKeyGuid = Guid.Empty;
+        }
 
         public RBTrajectory()
         {

@@ -29,22 +29,20 @@ namespace RBPhys
             public interface IRBPhysStateValidator
             {
                 bool Validate();
-                void UpdateAfterSolver(float dt);
-                Guid ValidatorPublisher { get; }
+                Guid TrajectoryGuid { get; }
             }
 
             public abstract class RBPhysStateValidator : IRBPhysStateValidator
             {
                 public abstract bool Validate();
-                public abstract void UpdateAfterSolver(float dt);
 
-                public Guid ValidatorPublisher { get { return _validatorPublisherGuid; } }
+                public Guid TrajectoryGuid { get { return _trajectoryGuid; } }
 
-                readonly Guid _validatorPublisherGuid;
+                readonly Guid _trajectoryGuid;
 
-                public RBPhysStateValidator(Guid guid)
+                public RBPhysStateValidator(Guid trajectoryGuid)
                 {
-                    _validatorPublisherGuid = guid;
+                    _trajectoryGuid = trajectoryGuid;
                 }
             }
         }
