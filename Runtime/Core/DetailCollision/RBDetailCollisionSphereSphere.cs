@@ -34,9 +34,19 @@ namespace RBPhys
                 float length = velocity.magnitude;
                 Vector3 dirN = velocity / length;
 
+                if(length == 0)
+                {
+                    return CalcDetailCollisionInfo(sphere_a, sphere_b);
+                }
+
                 var p = RBSphereCast.SphereCastSphere.CalcSphereCollision(sphere_a, sphere_b.pos, dirN, length, sphere_b.radius, true);
                 Vector3 pA = p.position;
                 Vector3 pB = (p.position + velocity * RBPhysCore.PhysTime.SolverSetDeltaTime) + p.normal * sphere_b.radius;
+
+                if (!p.IsValidHit || length < Mathf.Abs(p.length))
+                {
+                    return CalcDetailCollisionInfo(sphere_a, sphere_b);
+                }
 
                 return new Penetration(pB - pA, pA, pB, default);
             }

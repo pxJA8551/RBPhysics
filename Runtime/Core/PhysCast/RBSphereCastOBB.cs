@@ -691,18 +691,18 @@ public static partial class RBSphereCast
 
             if (pd1 && !pd2)
             {
-                list.Add((t1, p1, n1));
+                list.Add((t1, q1, n1));
                 return true;
             }
             else if (!pd1 && pd2)
             {
-                list.Add((t2, p2, n2));
+                list.Add((t2, q2, n2));
                 return true;
             }
             else if (pd1 && pd2)
             {
-                list.Add((t1, p1, n1));
-                list.Add((t2, p2, n2));
+                list.Add((t1, q1, n1));
+                list.Add((t2, q2, n2));
                 return true;
             }
 

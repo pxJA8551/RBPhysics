@@ -29,6 +29,10 @@ namespace RBPhys
 
         public const float RETROGRADE_PHYS_FRICTION_MULTIPLIER = .35f;
 
+        public const float TANGENT_FRICTION_JV_IGNORE_MIN = .05f;
+        public const float VELOCITY_MAX = 100f;
+        public const float ANG_VELOCITY_MAX = 20f;
+
         public static int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
         public static int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
         public static float cpu_solver_abort_veladd_sqrt = CPU_SOLVER_ABORT_VELADD_SQRT;
@@ -87,6 +91,10 @@ namespace RBPhys
 
         static int[] _collisionIgnoreLayers = new int[32];
         static RBCollisionLayerOption[] _layerOptions = new RBCollisionLayerOption[32];
+
+        public static float tangent_friction_jv_ignore_max = TANGENT_FRICTION_JV_IGNORE_MIN;
+        public static float rbRigidbody_velocity_max = VELOCITY_MAX;
+        public static float rbRigidbody_ang_velocity_max = ANG_VELOCITY_MAX;
 
         public static void AddRigidbody(RBRigidbody rb)
         {
@@ -1050,7 +1058,7 @@ namespace RBPhys
 
                 if (colPair.col_b.useCCD)
                 {
-                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(colPair.col_a.CalcExpOBB(), colPair.col_b.CalcSphere(), colPair.col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(colPair.col_a.CalcExpOBB(), colPair.col_b.CalcSphere(), colPair.col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
                     _obb_sphere_cols[i] = (colPair.col_a, colPair.col_b, p, null);
                 }
                 else
@@ -1527,20 +1535,50 @@ namespace RBPhys
                 else if (col_a.GeometryType == RBGeometryType.OBB && col_b.GeometryType == RBGeometryType.Sphere)
                 {
                     //Sphere-OBB衝突
-                    (p, pA, pB) = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollision(col_a.CalcExpOBB(), col_b.CalcExpSphere());
+
+                    if (col_b.useCCD)
+                    {
+                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(col_a.CalcExpOBB(), col_b.CalcSphere(), col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                        (p, pA, pB) = (pc.p, pc.pA, pc.pB);
+                    }
+                    else
+                    {
+                        (p, pA, pB) = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollision(col_a.CalcExpOBB(), col_b.CalcExpSphere());
+                    }
+
                     return true;
                 }
                 else if (col_a.GeometryType == RBGeometryType.Sphere && col_b.GeometryType == RBGeometryType.OBB)
                 {
                     //Sphere-OBB衝突（逆転）
-                    (p, pB, pA) = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollision(col_b.CalcExpOBB(), col_a.CalcExpSphere());
+
+                    if (col_a.useCCD)
+                    {
+                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(col_b.CalcExpOBB(), col_a.CalcSphere(), col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                        (p, pB, pA) = (pc.p, pc.pA, pc.pB);
+                    }
+                    else
+                    {
+                        (p, pB, pA) = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollision(col_b.CalcExpOBB(), col_a.CalcExpSphere());
+                    }
+
                     p = -p;
                     return true;
                 }
                 else if (col_a.GeometryType == RBGeometryType.Sphere && col_b.GeometryType == RBGeometryType.Sphere)
                 {
                     //Sphere-Sphere衝突
-                    (p, pA, pB) = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollision(col_a.CalcExpSphere(), col_b.CalcExpSphere());
+
+                    if (col_a.useCCD || col_b.useCCD)
+                    {
+                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfoCCD(col_a.CalcSphere(), col_b.CalcSphere(), col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero, col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                        (p, pA, pB) = (pc.p, pc.pA, pc.pB);
+                    }
+                    else
+                    {
+                        (p, pA, pB) = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollision(col_a.CalcExpSphere(), col_b.CalcExpSphere());
+                    }
+
                     return true;
                 }
                 else if (col_a.GeometryType == RBGeometryType.OBB && col_b.GeometryType == RBGeometryType.Capsule)
@@ -1559,13 +1597,33 @@ namespace RBPhys
                 else if (col_a.GeometryType == RBGeometryType.Sphere && col_b.GeometryType == RBGeometryType.Capsule)
                 {
                     //Sphere-Capsule衝突
-                    (p, pA, pB) = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollision(col_a.CalcExpSphere(), col_b.CalcExpCapsule());
+
+                    if (col_b.useCCD)
+                    {
+                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(col_a.CalcSphere(), col_b.CalcExpCapsule(), col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                        (p, pA, pB) = (pc.p, pc.pA, pc.pB);
+                    }
+                    else
+                    {
+                        (p, pA, pB) = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollision(col_a.CalcExpSphere(), col_b.CalcExpCapsule());
+                    }
+
                     return true;
                 }
                 else if (col_a.GeometryType == RBGeometryType.Capsule && col_b.GeometryType == RBGeometryType.Sphere)
                 {
                     //Sphere-Capsule衝突（逆転）
-                    (p, pB, pA) = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollision(col_b.CalcExpSphere(), col_a.CalcExpCapsule());
+
+                    if (col_a.useCCD)
+                    {
+                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(col_b.CalcSphere(), col_a.CalcExpCapsule(), col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                        (p, pB, pA) = (pc.p, pc.pA, pc.pB);
+                    }
+                    else
+                    {
+                        (p, pB, pA) = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollision(col_b.CalcExpSphere(), col_a.CalcExpCapsule());
+                    }
+
                     p = -p;
                     return true;
                 }
@@ -2152,6 +2210,11 @@ namespace RBPhys
                 }
                 else if (_type == Type.Tangent)
                 {
+                    if (jv < RBPhysCore.tangent_friction_jv_ignore_max)
+                    {
+                        return (vAdd_a, avAdd_a, vAdd_b, avAdd_b);
+                    }
+
                     float friction = col.collider_a.friction * col.collider_b.friction;
                     if (tMode == TimeScaleMode.Retrograde)
                     {

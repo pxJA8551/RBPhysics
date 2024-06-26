@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using UnityEngine;
 using static RBPhys.RBPhysUtil;
@@ -47,9 +48,19 @@ namespace RBPhys
                 float length = velocity.magnitude;
                 Vector3 dirN = velocity / length;
 
+                if (length == 0)
+                {
+                    return CalcDetailCollisionInfo(sphere_a, capsule_b);
+                }
+
                 var p = RBSphereCast.SphereCastCapsule.CalcSphereCollision(capsule_b, sphere_a.pos, dirN, length, sphere_a.radius, true);
                 Vector3 pA = (p.position + velocity * RBPhysCore.PhysTime.SolverSetDeltaTime) + p.normal * capsule_b.radius;
                 Vector3 pB = p.position;
+
+                if (!p.IsValidHit || length < Mathf.Abs(p.length))
+                {
+                    return CalcDetailCollisionInfo(sphere_a, capsule_b);
+                }
 
                 return new Penetration(pB - pA, pA, pB, default);
             }

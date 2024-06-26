@@ -19,7 +19,7 @@ namespace RBPhys
 
         public float mass = 1;
         public float inertiaTensorMultiplier = 1;
-        public float drag = 0.03f;
+        public float drag = 0.035f;
         public float angularDrag = 0.07f;
 
         [NonSerialized] public Vector3 inertiaTensor;
@@ -213,6 +213,9 @@ namespace RBPhys
         {
             if (!IgnoreVelocity)
             {
+                _expVelocity = Vector3.ClampMagnitude(_expVelocity, rbRigidbody_velocity_max);
+                _expAngularVelocity = Vector3.ClampMagnitude(_expAngularVelocity, rbRigidbody_ang_velocity_max);
+
                 if (PhysTimeScaleMode == TimeScaleMode.Prograde)
                 {
                     float vm = _expVelocity.magnitude;
