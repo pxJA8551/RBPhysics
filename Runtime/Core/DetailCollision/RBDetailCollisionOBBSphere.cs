@@ -69,7 +69,7 @@ namespace RBPhys
                 Vector3 pA = p.position;
                 Vector3 pB = (sphere_b.pos + velocity) - p.normal * sphere_b.radius;
 
-                return new Penetration(pB - pA, pA, pB, default);
+                return new Penetration(Vector3.Project(pB - pA, p.normal), pA, pB, default);
             }
         }
     }

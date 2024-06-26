@@ -62,7 +62,7 @@ namespace RBPhys
                     return CalcDetailCollisionInfo(sphere_a, capsule_b);
                 }
 
-                return new Penetration(pB - pA, pA, pB, default);
+                return new Penetration(Vector3.Project(pB - pA, p.normal), pA, pB, default);
             }
         }
     }
