@@ -24,13 +24,13 @@ namespace RBPhys
         public const float CPU_SOLVER_ABORT_VELADD_SQRT = .005f * .005f;
         public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = .002f * .002f;
         public const float COLLISION_AS_CONTINUOUS_FRAMES = 3;
-        public const float RETROGRADE_PHYS_RESTITUTION_MULTIPLIER = .38f;
+        public const float RETROGRADE_PHYS_RESTITUTION_MULTIPLIER = .5f;
         public const float RETROGRADE_PHYS_RESTITUTION_MIN = 1.001f;
 
-        public const float RETROGRADE_PHYS_FRICTION_MULTIPLIER = .35f;
+        public const float RETROGRADE_PHYS_FRICTION_MULTIPLIER = 1f;
 
         public const float TANGENT_FRICTION_JV_IGNORE_MIN = .05f;
-        public const float VELOCITY_MAX = 100f;
+        public const float VELOCITY_MAX = 180f;
         public const float ANG_VELOCITY_MAX = 20f;
 
         public static int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
