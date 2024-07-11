@@ -1000,7 +1000,7 @@ namespace RBPhys
 
                             if ((_collisionIgnoreLayers[activeTraj.Layer] & (1 << targetTraj.Layer)) == 0)
                             {
-                                if (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping)
+                                if (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping || ((IsTriggerLayer(activeTraj.Layer) || IsTriggerLayer(targetTraj.Layer)) && (activeTraj.SetTempSleeping || targetTraj.SetTempSleeping)))
                                 {
                                     if (targetTraj.IsValidTrajectory)
                                     {
@@ -2520,6 +2520,7 @@ namespace RBPhys
         public RBCollider Collider { get { return _collider; } }
         public RBCollider[] Colliders { get { return _colliders; } }
         public bool IsStaticOrSleeping { get { return ((Rigidbody?.isSleeping ?? true) || tempSleeping) || IsStatic; } }
+        public bool SetTempSleeping { get { return !(Rigidbody?.isSleeping ?? true) && tempSleeping && !IsStatic; } }
         public int Layer { get { return _layer; } }
 
         public bool tempSleeping = false;
