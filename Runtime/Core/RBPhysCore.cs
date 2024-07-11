@@ -2210,7 +2210,7 @@ namespace RBPhys
                 }
                 else if (_type == Type.Tangent)
                 {
-                    if (jv < RBPhysCore.tangent_friction_jv_ignore_max)
+                    if (Mathf.Abs(jv) < RBPhysCore.tangent_friction_jv_ignore_max)
                     {
                         return (vAdd_a, avAdd_a, vAdd_b, avAdd_b);
                     }
