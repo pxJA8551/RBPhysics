@@ -680,11 +680,11 @@ public static partial class RBSphereCast
 
             float t1 = (b - s) / a;
             Vector3 q1 = org + dirN * t1;
-            Vector3 n1 = Vector3.ProjectOnPlane(q1 - cylinder_center, p);
+            Vector3 n1 = Vector3.ProjectOnPlane(q1 - cylinder_center, p).normalized;
 
             float t2 = (b + s) / a;
             Vector3 q2 = org + dirN * t2;
-            Vector3 n2 = Vector3.ProjectOnPlane(q2 - cylinder_center, p);
+            Vector3 n2 = Vector3.ProjectOnPlane(q2 - cylinder_center, p).normalized;
 
             bool pd1 = (t1 > 0 || allowNegativeValue) && RBPhysUtil.IsV3Sign101EpsilonEqualAll(xyzN, n1);
             bool pd2 = (t2 > 0 || allowNegativeValue) && RBPhysUtil.IsV3Sign101EpsilonEqualAll(xyzN, n2);
