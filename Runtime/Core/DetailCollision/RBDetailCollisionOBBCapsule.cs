@@ -45,6 +45,8 @@ namespace RBPhys
 
                 Vector3 de = capsuleEdge.end - capsuleEdge.begin;
 
+                bool radius_d;
+
                 //Separating Axis 1: aFwd
                 {
                     float dd = Vector3.Dot(d, aFwdN);
@@ -64,6 +66,8 @@ namespace RBPhys
 
                     penetration = p;
                     pSqrMag = p.sqrMagnitude;
+
+                    radius_d = (dp > -capsule_b.radius * 2);
                 }
 
                 //Separating Axis 2: aRight
@@ -85,6 +89,7 @@ namespace RBPhys
                     bool pMin = p.sqrMagnitude < pSqrMag;
                     penetration = pMin ? p : penetration;
                     pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                    radius_d = pMin ? (dp > -capsule_b.radius * 2) : radius_d;
                 }
 
                 //Separating Axis 3: aUp
@@ -107,6 +112,7 @@ namespace RBPhys
                     bool pMin = p.sqrMagnitude < pSqrMag;
                     penetration = pMin ? p : penetration;
                     pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                    radius_d = pMin ? (dp > -capsule_b.radius * 2) : radius_d;
                 }
 
                 //Separating Axis 4: capsuleDir
@@ -129,6 +135,7 @@ namespace RBPhys
                     bool pMin = p.sqrMagnitude < pSqrMag;
                     penetration = pMin ? p : penetration;
                     pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                    radius_d = pMin ? (dp > -capsule_b.radius * 2) : radius_d;
                 }
 
                 //Separating Axis 5: aFwd x capsuleDir
@@ -155,6 +162,7 @@ namespace RBPhys
                         bool pMin = p.sqrMagnitude < pSqrMag;
                         penetration = pMin ? p : penetration;
                         pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                        radius_d = pMin ? (dp > -capsule_b.radius * 2) : radius_d;
                     }
                 }
 
@@ -182,6 +190,7 @@ namespace RBPhys
                         bool pMin = p.sqrMagnitude < pSqrMag;
                         penetration = pMin ? p : penetration;
                         pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                        radius_d = pMin ? (dp > -capsule_b.radius * 2) : radius_d;
                     }
                 }
 
@@ -209,6 +218,7 @@ namespace RBPhys
                         bool pMin = p.sqrMagnitude < pSqrMag;
                         penetration = pMin ? p : penetration;
                         pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
+                        radius_d = pMin ? (dp > -capsule_b.radius * 2) : radius_d;
                     }
                 }
 
@@ -252,8 +262,15 @@ namespace RBPhys
                     fA2 /= 2f;
 
                     aDp = RBVectorUtil.ProjectPointToRect(bDp, aDp + fA1 - fA2, aDp + fA1 + fA2, aDp - fA1 + fA2, aDp - fA1 - fA2, aDp, pDirN);
+                    if (radius_d) bDp = RBVectorUtil.ProjectPointToEdge(aDp, capsuleEdge.begin, capsuleEdge.end);
 
                     var v = aDp - bDp;
+
+                    if (radius_d && v.magnitude > capsule_b.radius)
+                    {
+                        return default;
+                    }
+
                     bDp -= (v * Vector3.Dot(v, pDirN)).normalized * capsule_b.radius;
 
                     return (bDp - aDp, aDp, bDp);
