@@ -2202,14 +2202,15 @@ namespace RBPhys
                     float vi = _ie * cr_ki;
                     float vd = ((e - _eLast) / dt) * cr_kd;
 
-                    _bias = vp + vi + vd;
-
                     bool useSoftClip = (RBPhysCore.IsAllowSoftClipLayer(col.layer_a) && RBPhysCore.IsAllowSoftClipLayer(col.layer_b)) || RBPhysCore.IsForceSoftClipLayer(col.layer_a) || RBPhysCore.IsForceSoftClipLayer(col.layer_b);
                     if (useSoftClip)
                     {
-                        _bias *= RBPhysCore.softClip_beta_multiplier;
+                        vp *= RBPhysCore.softClip_beta_multiplier;
+                        vi = 0;
+                        vd = 0;
                     }
 
+                    _bias = vp + vi + vd;
                     _restitutionBias = restitution * closingVelocity;
 
                     _eLast = e;
