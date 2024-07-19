@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -89,7 +90,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot)
         {
-            return new RBColliderCapsule(pos, rot * LocalRot, MutipliedRadius, MutipliedHeight);
+            return new RBColliderCapsule(pos + MutipliedCenter, rot * LocalRot, MutipliedRadius, MutipliedHeight);
         }
 
         private void Reset()
