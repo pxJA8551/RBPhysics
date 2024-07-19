@@ -14,7 +14,7 @@ namespace RBPhys
     {
         IgnorePhyscast = 1,
         Trigger = 2,
-        AllowSoftClip = 3,
-        ForceSoftClip = 4
+        AllowSoftClip = 4,
+        ForceSoftClip = 8
     }
 }
