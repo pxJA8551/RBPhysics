@@ -28,6 +28,7 @@ namespace RBPhys
 
         public bool IgnoreCollision { get { return _stackVal_ignoreCollision_ifGreaterThanZero > 0; } }
         public bool useCCD;
+        public bool allowSoftClip;
 
         int _stackVal_ignoreCollision_ifGreaterThanZero = 0;
 

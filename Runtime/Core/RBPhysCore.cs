@@ -212,18 +212,6 @@ namespace RBPhys
             return (p & 2) == 2;
         }
 
-        public static bool IsAllowSoftClipLayer(int layer)
-        {
-            int p = (int)_layerOptions[layer];
-            return (p & 4) == 4;
-        }
-
-        public static bool IsForceSoftClipLayer(int layer)
-        {
-            int p = (int)_layerOptions[layer];
-            return (p & 8) == 8;
-        }
-
         public static void OpenPhysicsFrameWindow(float dt)
         {
             foreach (var p in _physValidatorObjects)
@@ -1162,6 +1150,7 @@ namespace RBPhys
                     rbc.collider_a?.OnCollision(traj2);
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
+                    rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
                     if (!traj1.IsStatic) rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
@@ -1215,6 +1204,7 @@ namespace RBPhys
                     rbc.collider_a?.OnCollision(traj2);
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
+                    rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
                     if (!traj1.IsStatic) rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
@@ -1268,6 +1258,7 @@ namespace RBPhys
                     rbc.collider_a?.OnCollision(traj2);
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
+                    rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
                     if (!traj1.IsStatic) rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
@@ -1321,6 +1312,7 @@ namespace RBPhys
                     rbc.collider_a?.OnCollision(traj2);
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
+                    rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
                     if (!traj1.IsStatic) rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
@@ -1374,6 +1366,7 @@ namespace RBPhys
                     rbc.collider_a?.OnCollision(traj2);
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
+                    rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
                     if (!traj1.IsStatic) rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
@@ -1427,6 +1420,7 @@ namespace RBPhys
                     rbc.collider_a?.OnCollision(traj2);
                     rbc.rigidbody_b?.OnCollision(traj1);
                     rbc.collider_b?.OnCollision(traj1);
+                    rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
                     if (!traj1.IsStatic) rbc.rigidbody_b?.AddVaidator(new RBCollisionValidator(traj1));
@@ -1921,6 +1915,8 @@ namespace RBPhys
         public bool skipInSolver;
         public int cacCount = 0;
 
+        public bool useSoftClip;
+
         Jacobian _jN = new Jacobian(Jacobian.Type.Normal); //Normal
         Jacobian _jT = new Jacobian(Jacobian.Type.Tangent); //Tangent
         Jacobian _jB = new Jacobian(Jacobian.Type.Tangent); //Bi-Tangent
@@ -2208,7 +2204,7 @@ namespace RBPhys
                     _bias = vp + vi + vd;
                     _restitutionBias = restitution * closingVelocity;
 
-                    _useSoftClip = (RBPhysCore.IsAllowSoftClipLayer(col.layer_a) && RBPhysCore.IsAllowSoftClipLayer(col.layer_b)) || RBPhysCore.IsForceSoftClipLayer(col.layer_a) || RBPhysCore.IsForceSoftClipLayer(col.layer_b);
+                    _useSoftClip = col.useSoftClip;
 
                     _eLast = e;
                 }
