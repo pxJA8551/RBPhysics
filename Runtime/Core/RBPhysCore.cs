@@ -219,6 +219,8 @@ namespace RBPhys
                 p.BeforeSolver();
             }
 
+            ClearCollisions();
+
             ClearValidators();
             UpdateSolverTimeVariables();
 
@@ -814,8 +816,6 @@ namespace RBPhys
             {
                 rb.UpdateTransform();
             }
-
-            ClearCollisions();
 
             Profiler.EndSample();
 
