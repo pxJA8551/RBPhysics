@@ -29,6 +29,8 @@ namespace RBPhys
 
         public const float RETROGRADE_PHYS_FRICTION_MULTIPLIER = 1f;
 
+        public const float SOFTCLIP_BETA_MULTIPLIER = .2f;
+
         public const float TANGENT_FRICTION_JV_IGNORE_MIN = .05f;
         public const float VELOCITY_MAX = 180f;
         public const float ANG_VELOCITY_MAX = 20f;
@@ -42,6 +44,7 @@ namespace RBPhys
         public static float retrograde_phys_restitution_min = RETROGRADE_PHYS_RESTITUTION_MIN;
 
         public static float retrograde_phys_friction_multiplier = RETROGRADE_PHYS_FRICTION_MULTIPLIER;
+        public static float softClip_beta_multiplier = SOFTCLIP_BETA_MULTIPLIER;
 
         public static Vector3 gravityAcceleration = new Vector3(0, -9.81f, 0);
 
@@ -206,6 +209,18 @@ namespace RBPhys
         {
             int p = (int)_layerOptions[layer];
             return (p & 2) == 2;
+        }
+
+        public static bool IsAllowSoftClipLayer(int layer)
+        {
+            int p = (int)_layerOptions[layer];
+            return (p & 4) == 4;
+        }
+
+        public static bool IsForceSoftClipLayer(int layer)
+        {
+            int p = (int)_layerOptions[layer];
+            return (p & 8) == 8;
         }
 
         public static void OpenPhysicsFrameWindow(float dt)
@@ -2187,6 +2202,13 @@ namespace RBPhys
                     float vd = ((e - _eLast) / dt) * cr_kd;
 
                     _bias = vp + vi + vd;
+
+                    bool useSoftClip = RBPhysCore.IsAllowSoftClipLayer(col.layer_a) && RBPhysCore.IsAllowSoftClipLayer(col.layer_b) || RBPhysCore.IsForceSoftClipLayer(col.layer_a) || RBPhysCore.IsForceSoftClipLayer(col.layer_b);
+                    if (useSoftClip)
+                    {
+                        _bias *= RBPhysCore.softClip_beta_multiplier;
+                    }
+
                     _restitutionBias = restitution * closingVelocity;
 
                     _eLast = e;

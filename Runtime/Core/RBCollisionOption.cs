@@ -13,6 +13,8 @@ namespace RBPhys
     public enum RBCollisionLayerOption
     {
         IgnorePhyscast = 1,
-        Trigger = 2
+        Trigger = 2,
+        AllowSoftClip = 3,
+        ForceSoftClip = 4
     }
 }
