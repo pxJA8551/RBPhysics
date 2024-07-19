@@ -29,7 +29,7 @@ namespace RBPhys
 
         public const float RETROGRADE_PHYS_FRICTION_MULTIPLIER = 1f;
 
-        public const float SOFTCLIP_BETA_MULTIPLIER = .2f;
+        public const float SOFTCLIP_LAMBDA_MULTIPLIER = .2f;
 
         public const float TANGENT_FRICTION_JV_IGNORE_MIN = .05f;
         public const float VELOCITY_MAX = 180f;
@@ -44,7 +44,7 @@ namespace RBPhys
         public static float retrograde_phys_restitution_min = RETROGRADE_PHYS_RESTITUTION_MIN;
 
         public static float retrograde_phys_friction_multiplier = RETROGRADE_PHYS_FRICTION_MULTIPLIER;
-        public static float softClip_beta_multiplier = SOFTCLIP_BETA_MULTIPLIER;
+        public static float softClip_lambda_multiplier = SOFTCLIP_LAMBDA_MULTIPLIER;
 
         public static Vector3 gravityAcceleration = new Vector3(0, -9.81f, 0);
 
@@ -2118,6 +2118,8 @@ namespace RBPhys
             float _eLast;
             float _ie;
 
+            bool _useSoftClip;
+
             public enum Type
             {
                 Normal,
@@ -2140,6 +2142,7 @@ namespace RBPhys
 
                 _eLast = -1;
                 _ie = 0;
+                _useSoftClip = false;
             }
 
             public void Init(RBCollision col, Vector3 dir, float dt, TimeScaleMode tMode, bool initBias = true)
@@ -2202,16 +2205,10 @@ namespace RBPhys
                     float vi = _ie * cr_ki;
                     float vd = ((e - _eLast) / dt) * cr_kd;
 
-                    bool useSoftClip = (RBPhysCore.IsAllowSoftClipLayer(col.layer_a) && RBPhysCore.IsAllowSoftClipLayer(col.layer_b)) || RBPhysCore.IsForceSoftClipLayer(col.layer_a) || RBPhysCore.IsForceSoftClipLayer(col.layer_b);
-                    if (useSoftClip)
-                    {
-                        vp *= RBPhysCore.softClip_beta_multiplier;
-                        vi = 0;
-                        vd = 0;
-                    }
-
                     _bias = vp + vi + vd;
                     _restitutionBias = restitution * closingVelocity;
+
+                    _useSoftClip = (RBPhysCore.IsAllowSoftClipLayer(col.layer_a) && RBPhysCore.IsAllowSoftClipLayer(col.layer_b)) || RBPhysCore.IsForceSoftClipLayer(col.layer_a) || RBPhysCore.IsForceSoftClipLayer(col.layer_b);
 
                     _eLast = e;
                 }
@@ -2227,6 +2224,11 @@ namespace RBPhys
 
                 float lambda = _effectiveMass * (-(jv + Mathf.Min(_bias, _restitutionBias)));
                 float oldTotalLambda = _totalLambda;
+
+                if (_useSoftClip)
+                {
+                    lambda *= RBPhysCore.softClip_lambda_multiplier;
+                }
 
                 if (_type == Type.Normal)
                 {
