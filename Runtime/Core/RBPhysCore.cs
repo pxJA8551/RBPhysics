@@ -197,7 +197,7 @@ namespace RBPhys
         public static void SetCollisionLayerOption(int layer, RBCollisionLayerOption option)
         {
             _layerOptions[layer] = (RBCollisionLayerOption)((int)_layerOptions[layer] & (int)~option);
-            _layerOptions[layer] = (RBCollisionLayerOption)((int)_layerOptions[layer] + (int)~option);
+            _layerOptions[layer] = (RBCollisionLayerOption)((int)_layerOptions[layer] + (int)option);
         }
 
         public static bool IsIgnorePhysCastLayer(int layer)
