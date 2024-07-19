@@ -196,7 +196,8 @@ namespace RBPhys
 
         public static void SetCollisionLayerOption(int layer, RBCollisionLayerOption option)
         {
-            _layerOptions[layer] = option;
+            _layerOptions[layer] = (RBCollisionLayerOption)((int)_layerOptions[layer] & (int)~option);
+            _layerOptions[layer] = (RBCollisionLayerOption)((int)_layerOptions[layer] + (int)~option);
         }
 
         public static bool IsIgnorePhysCastLayer(int layer)
@@ -2203,7 +2204,7 @@ namespace RBPhys
 
                     _bias = vp + vi + vd;
 
-                    bool useSoftClip = RBPhysCore.IsAllowSoftClipLayer(col.layer_a) && RBPhysCore.IsAllowSoftClipLayer(col.layer_b) || RBPhysCore.IsForceSoftClipLayer(col.layer_a) || RBPhysCore.IsForceSoftClipLayer(col.layer_b);
+                    bool useSoftClip = (RBPhysCore.IsAllowSoftClipLayer(col.layer_a) && RBPhysCore.IsAllowSoftClipLayer(col.layer_b)) || RBPhysCore.IsForceSoftClipLayer(col.layer_a) || RBPhysCore.IsForceSoftClipLayer(col.layer_b);
                     if (useSoftClip)
                     {
                         _bias *= RBPhysCore.softClip_beta_multiplier;
