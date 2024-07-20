@@ -49,6 +49,9 @@ namespace RBPhysEditor
 
         public override void OnInspectorGUI()
         {
+            height.floatValue = Mathf.Abs(height.floatValue);
+            radius.floatValue = Mathf.Abs(radius.floatValue);
+
             serializedObject.Update();
             EditorGUILayout.PropertyField(center);
             EditorGUILayout.PropertyField(rotationEuler);
