@@ -48,9 +48,9 @@ namespace RBPhysEditor
 
         public override void OnInspectorGUI()
         {
+            serializedObject.Update();
             size.vector3Value = RBPhysUtil.V3Abs(size.vector3Value);
 
-            serializedObject.Update();
             EditorGUILayout.PropertyField(center);
             EditorGUILayout.PropertyField(rotationEuler);
             EditorGUILayout.PropertyField(size);

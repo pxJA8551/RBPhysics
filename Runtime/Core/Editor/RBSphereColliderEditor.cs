@@ -45,6 +45,10 @@ namespace RBPhysEditor
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
+
+            center.floatValue = Mathf.Abs(center.floatValue);
+            radius.floatValue = Mathf.Abs(radius.floatValue);
+
             EditorGUILayout.PropertyField(center);
             EditorGUILayout.PropertyField(radius);
             EditorGUILayout.PropertyField(useCcd);

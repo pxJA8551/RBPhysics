@@ -51,6 +51,11 @@ namespace RBPhysEditor
                 sleepDefault.boolValue = false;
             }
 
+            mass.floatValue = Mathf.Abs(mass.floatValue);
+            inertiaTensorMultiplier.floatValue = Mathf.Abs(inertiaTensorMultiplier.floatValue);
+            drag.floatValue = Mathf.Abs(drag.floatValue);
+            angularDrag.floatValue = Mathf.Abs(angularDrag.floatValue);
+
             EditorGUILayout.PropertyField(mass);
             EditorGUILayout.PropertyField(inertiaTensorMultiplier);
             EditorGUILayout.PropertyField(drag);
