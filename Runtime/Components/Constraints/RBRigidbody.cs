@@ -137,6 +137,7 @@ namespace RBPhys
             foreach (var c in _colliders)
             {
                 RBPhysCore.SwitchToRigidbody(c);
+                c.UpdateTransform();
             }
         }
 
@@ -147,6 +148,7 @@ namespace RBPhys
             foreach (var c in _colliders)
             {
                 RBPhysCore.SwitchToCollider(c);
+                c.UpdateTransform();
             }
         }
 
