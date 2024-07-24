@@ -917,7 +917,8 @@ namespace RBPhys
                 _colAddQueue.Clear();
             }
 
-            if (_rbRemoveQueue.Any() || _colRemoveQueue.Any())
+            bool pRemove = _rbRemoveQueue.Any() || _colRemoveQueue.Any();
+
             {
                 int rmvOffset_min = 0;
 
@@ -932,9 +933,17 @@ namespace RBPhys
                         _trajectories_xMin[i - rmvOffset_min] = _trajectories_xMin[i];
                     }
 
-                    if ((isStatic && _colRemoveQueue.Contains(_trajectories_orderByXMin[i].Collider)) || (!isStatic && _rbRemoveQueue.Contains(_trajectories_orderByXMin[i].Rigidbody)))
+                    if (!isStatic && _trajectories_orderByXMin[i].Rigidbody == null)
                     {
                         rmvOffset_min++;
+                    }
+
+                    if (pRemove)
+                    {
+                        if ((isStatic && _colRemoveQueue.Contains(_trajectories_orderByXMin[i].Collider)) || (!isStatic && _rbRemoveQueue.Contains(_trajectories_orderByXMin[i].Rigidbody)))
+                        {
+                            rmvOffset_min++;
+                        }
                     }
                 }
 
@@ -944,6 +953,8 @@ namespace RBPhys
                 _rbRemoveQueue.Clear();
                 _colRemoveQueue.Clear();
             }
+
+            _trajectories_orderByXMin = _trajectories_orderByXMin.Distinct().ToArray();
 
             //挿入ソート
             for (int i = 1; i < _trajectories_orderByXMin.Length; i++)

@@ -35,8 +35,6 @@ namespace RBPhysEditor
 
         private void OnEnable()
         {
-            radius.floatValue = Mathf.Abs(radius.floatValue);
-
             center = serializedObject.FindProperty("_center");
             radius = serializedObject.FindProperty("_radius");
             useCcd = serializedObject.FindProperty("useCCD");
@@ -46,7 +44,6 @@ namespace RBPhysEditor
         {
             serializedObject.Update();
 
-            center.floatValue = Mathf.Abs(center.floatValue);
             radius.floatValue = Mathf.Abs(radius.floatValue);
 
             EditorGUILayout.PropertyField(center);
