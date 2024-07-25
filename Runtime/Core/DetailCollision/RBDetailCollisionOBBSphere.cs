@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Net.WebSockets;
 using System.Threading.Tasks;
 using UnityEngine;
 using static RBPhys.RBPhysUtil;
@@ -35,6 +36,28 @@ namespace RBPhys
 
                 if (pdL == 0)
                 {
+                    var vd = (sphere_b.pos - obb_a.Center);
+
+                    var vdMin = Mathf.Min(Mathf.Abs(vd.x), Mathf.Abs(vd.y), Mathf.Abs(vd.z));
+
+                    if (Mathf.Abs(vd.x) == vdMin)
+                    {
+                        var vp = new Vector3(-vd.x, 0, 0);
+                        return (vp, pA, sphere_b.pos);
+                    }
+
+                    if (Mathf.Abs(vd.y) == vdMin)
+                    {
+                        var vp = new Vector3(0, -vd.y, 0);
+                        return (vp, pA, sphere_b.pos);
+                    }
+
+                    if (Mathf.Abs(vd.z) == vdMin)
+                    {
+                        var vp = new Vector3(0, 0, -vd.z);
+                        return (vp, pA, sphere_b.pos);
+                    }
+
                     return (Vector3.zero, pA, sphere_b.pos);
                 }
 
