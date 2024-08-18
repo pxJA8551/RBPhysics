@@ -27,7 +27,7 @@ namespace RBPhys
         public const float RETROGRADE_PHYS_RESTITUTION_MULTIPLIER = .6f;
         public const float RETROGRADE_PHYS_RESTITUTION_MIN = 1.001f;
 
-        public const float RETROGRADE_PHYS_FRICTION_MULTIPLIER = 1f;
+        public const float RETROGRADE_PHYS_FRICTION_MULTIPLIER = .35f;
 
         public const float SOFTCLIP_LAMBDA_MULTIPLIER = .2f;
 
