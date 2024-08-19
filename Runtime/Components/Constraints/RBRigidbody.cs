@@ -152,8 +152,6 @@ namespace RBPhys
             }
         }
 
-        private void FixedUpdate() { }
-
         public RBRigidbody()
         {
             _expObjTrajectory = new RBTrajectory();
@@ -230,7 +228,7 @@ namespace RBPhys
                     float vm = _expVelocity.magnitude;
                     float avm = _expAngularVelocity.magnitude;
                     _velocity = (vm > 0 ? (_expVelocity / vm) : Vector3.zero) * Mathf.Max(0, vm + drag);
-                    _angularVelocity = (avm > 0 ? (_expAngularVelocity / avm) : Vector3.zero) * Mathf.Max(0, avm + angularDrag);
+                    _angularVelocity = (avm > 0 ? (_expAngularVelocity / avm) : Vector3.zero) * Mathf.Max(0, avm - angularDrag);
                 }
 
                 transform.position = _position + (_velocity * dt);
