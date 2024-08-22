@@ -114,7 +114,15 @@ namespace RBPhys
                 _radius = Mathf.Max(aabbSize.x, aabbSize.z) / 2f;
                 _height = Mathf.Max(aabbSize.y - _radius * 2, 0);
                 _center = aabbCenter;
+
+                SetValidate();
             }
+        }
+
+        public void SetValidate()
+        {
+            _height = Mathf.Abs(_height);
+            _radius = Mathf.Abs(_radius);
         }
     }
 }

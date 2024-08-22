@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEditor;
@@ -94,7 +95,14 @@ namespace RBPhys
 
                 _size = aabbSize;
                 _center = aabbCenter;
+
+                SetValidate();
             }
+        }
+
+        public void SetValidate()
+        {
+            _size = RBPhysUtil.V3Abs(_size);
         }
     }
 }

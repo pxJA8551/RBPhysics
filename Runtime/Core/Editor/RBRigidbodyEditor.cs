@@ -11,7 +11,7 @@ using UnityEngine.UIElements;
 namespace RBPhysEditor
 {
     [CustomEditor(typeof(RBRigidbody))]
-    [CanEditMultipleObjects]
+
     public class RBRigidbodyEditor : Editor
     {
         SerializedProperty mass;

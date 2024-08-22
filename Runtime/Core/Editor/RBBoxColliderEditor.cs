@@ -12,7 +12,6 @@ namespace RBPhysEditor
 {
     [CustomEditor(typeof(RBBoxCollider))]
     [CanEditMultipleObjects]
-
     public class RBBoxColliderEditor : Editor
     {
         SerializedProperty center;
@@ -49,34 +48,37 @@ namespace RBPhysEditor
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            size.vector3Value = RBPhysUtil.V3Abs(size.vector3Value);
 
             EditorGUILayout.PropertyField(center);
             EditorGUILayout.PropertyField(rotationEuler);
             EditorGUILayout.PropertyField(size);
 
-            EditorGUILayout.Space(1);
-            GUILayout.BeginHorizontal();
-            GUI.enabled = !rotationEditMode;
-            GUI.color = scaleEditMode ? Color.red : new Color(0.8f, 0.8f, 0.8f, 1f);
-            if (GUILayout.Button(scaleEditMode ? "終了              " : "スケールを編集"))
+            if (serializedObject.targetObjects.Length == 1)
             {
-                scaleEditMode = !scaleEditMode;
-                SceneView.RepaintAll();
+                EditorGUILayout.Space(1);
+                GUILayout.BeginHorizontal();
+                GUI.enabled = !rotationEditMode;
+                GUI.color = scaleEditMode ? Color.red : new Color(0.8f, 0.8f, 0.8f, 1f);
+                if (GUILayout.Button(scaleEditMode ? "終了              " : "スケールを編集"))
+                {
+                    scaleEditMode = !scaleEditMode;
+                    SceneView.RepaintAll();
+                }
+                GUI.enabled = !scaleEditMode;
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
+                GUILayout.BeginHorizontal();
+                GUI.color = rotationEditMode ? Color.red : new Color(0.8f, 0.8f, 0.8f, 1f);
+                if (GUILayout.Button(rotationEditMode ? "終了              " : "回転を編集    "))
+                {
+                    rotationEditMode = !rotationEditMode;
+                    SceneView.RepaintAll();
+                }
+                GUI.enabled = true;
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
             }
-            GUI.enabled = !scaleEditMode;
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
-            GUILayout.BeginHorizontal();
-            GUI.color = rotationEditMode ? Color.red : new Color(0.8f, 0.8f, 0.8f, 1f);
-            if (GUILayout.Button(rotationEditMode ? "終了              " : "回転を編集    "))
-            {
-                rotationEditMode = !rotationEditMode;
-                SceneView.RepaintAll();
-            }
-            GUI.enabled = true;
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
+
             EditorGUILayout.Space(3);
 
             serializedObject.ApplyModifiedProperties();
@@ -98,6 +100,16 @@ namespace RBPhysEditor
             }
 
             SceneView.RepaintAll();
+
+            foreach (var g in serializedObject.targetObjects)
+            {
+                var s = (g as RBBoxCollider);
+
+                if (s != null)
+                {
+                    s.SetValidate();
+                }
+            }
         }
 
         public void OnSceneGUI()

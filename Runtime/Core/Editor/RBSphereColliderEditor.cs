@@ -50,16 +50,22 @@ namespace RBPhysEditor
             EditorGUILayout.PropertyField(radius);
             EditorGUILayout.PropertyField(useCcd);
 
-            EditorGUILayout.Space(1);
-            GUILayout.BeginHorizontal();
-            GUI.color = scaleEditMode ? Color.red : new Color(0.8f, 0.8f, 0.8f, 1f);
-            if (GUILayout.Button(scaleEditMode ? "終了              " : "スケールを編集"))
+            if (serializedObject.targetObjects.Length == 1)
             {
-                scaleEditMode = !scaleEditMode;
-                SceneView.RepaintAll();
+                EditorGUILayout.Space(1);
+                GUILayout.BeginHorizontal();
+                GUI.color = scaleEditMode ? Color.red : new Color(0.8f, 0.8f, 0.8f, 1f);
+
+                if (GUILayout.Button(scaleEditMode ? "終了              " : "スケールを編集"))
+                {
+                    scaleEditMode = !scaleEditMode;
+                    SceneView.RepaintAll();
+                }
+
+                GUILayout.FlexibleSpace();
+                GUILayout.EndHorizontal();
             }
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
+
             EditorGUILayout.Space(3);
 
             serializedObject.ApplyModifiedProperties();
@@ -79,7 +85,18 @@ namespace RBPhysEditor
                     t = Tools.current;
                 }
             }
+
             SceneView.RepaintAll();
+
+            foreach (var g in serializedObject.targetObjects)
+            {
+                var s = (g as RBSphereCollider);
+
+                if (s != null)
+                {
+                    s.SetValidate();
+                }
+            }
         }
 
         public void OnSceneGUI()
