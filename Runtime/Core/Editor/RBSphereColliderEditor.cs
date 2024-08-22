@@ -44,8 +44,6 @@ namespace RBPhysEditor
         {
             serializedObject.Update();
 
-            radius.floatValue = Mathf.Abs(radius.floatValue);
-
             EditorGUILayout.PropertyField(center);
             EditorGUILayout.PropertyField(radius);
             EditorGUILayout.PropertyField(useCcd);
