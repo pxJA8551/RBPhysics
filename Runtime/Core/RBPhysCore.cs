@@ -32,7 +32,7 @@ namespace RBPhys
         public const float SOFTCLIP_LAMBDA_MULTIPLIER = .2f;
 
         public const float TANGENT_FRICTION_JV_IGNORE_MIN = .05f;
-        public const float VELOCITY_MAX = 180f;
+        public const float VELOCITY_MAX = 50f;
         public const float ANG_VELOCITY_MAX = 20f;
 
         public static int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
