@@ -70,7 +70,6 @@ namespace RBPhys
 
             public static Penetration CalcDetailCollisionInfoCCD(RBColliderOBB obb_a, RBColliderSphere sphere_b, Vector3 velocity)
             {
-                velocity *= RBPhysCore.PhysTime.SolverSetDeltaTime;
                 float length = velocity.magnitude;
 
                 if (length == 0)
@@ -79,7 +78,7 @@ namespace RBPhys
                     return new Penetration(r.p, r.pA, r.pB, default);
                 }
 
-                Vector3 dirN = velocity / length;
+                Vector3 dirN = velocity.normalized;
 
                 var p = RBSphereCast.SphereCastOBB.CalcSphereCollision(obb_a, sphere_b.pos, dirN, length, sphere_b.radius, false);
 
@@ -90,7 +89,7 @@ namespace RBPhys
                 }
 
                 Vector3 pA = p.position;
-                Vector3 pB = sphere_b.pos - p.normal * sphere_b.radius;
+                Vector3 pB = (sphere_b.pos + velocity * (p.length / RBPhysCore.PhysTime.SolverSetDeltaTime)) - p.normal * sphere_b.radius;
 
                 return new Penetration(Vector3.Project(pB - pA, p.normal), pA, pB, default);
             }
