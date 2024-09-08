@@ -36,7 +36,7 @@ public static partial class RBSphereCast
                 t = t2;
             }
 
-            if ((t > 0 || allowNegativeDist) && length <= t && t <= length)
+            if ((t > 0 || allowNegativeDist) && -length <= t && t <= length)
             {
                 Vector3 pos = org + dirN * t;
                 Vector3 n = ((pos - sphere.pos) / pRadius).normalized;
