@@ -56,7 +56,8 @@ namespace RBPhys
                 }
 
                 var p = RBSphereCast.SphereCastCapsule.CalcSphereCollision(capsule_b, sphere_a.pos, dirN, length, sphere_a.radius, false);
-                Vector3 pA = (p.position + velocity * (p.length / length)) + p.normal * capsule_b.radius;
+
+                Vector3 pA = (p.position + velocity);
                 Vector3 pB = p.position;
 
                 if (!p.IsValidHit || length < Mathf.Abs(p.length))
