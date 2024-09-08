@@ -2189,7 +2189,7 @@ namespace RBPhys
                     {
                         restitution = (restitution != 0) ? 1 / restitution : 0;
                         restitution *= RBPhysCore.retrograde_phys_restitution_multiplier;
-                        restitution = Mathf.Max(restitution, RBPhysCore.retrograde_phys_restitution_min);
+                        restitution = (restitution != 0) ? Mathf.Max(restitution, RBPhysCore.retrograde_phys_restitution_min) : 0;
                     }
 
                     Vector3 relVel = Vector3.zero;
