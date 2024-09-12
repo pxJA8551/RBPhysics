@@ -487,8 +487,8 @@ namespace RBPhys
 
             List<RBColliderCastHitInfo> hitList = new List<RBColliderCastHitInfo>();
 
-            float xMin = Mathf.Min(pos_a.x, pos_b.x);
-            float xMax = Mathf.Max(pos_a.x, pos_b.x);
+            float xMin = Mathf.Min(pos_a.x, pos_b.x) - radius;
+            float xMax = Mathf.Max(pos_a.x, pos_b.x) + radius;
 
             bool selectTrajs = ignoreTrajs != null;
             bool selectCols = ignoreCols != null;
