@@ -1930,7 +1930,7 @@ namespace RBPhys
 
         Jacobian _jN = new Jacobian(Jacobian.Type.Normal); //Normal
         Jacobian _jT = new Jacobian(Jacobian.Type.Tangent); //Tangent
-        Jacobian _jB = new Jacobian(Jacobian.Type.Tangent); //Bi-Tangent
+        //Jacobian _jB = new Jacobian(Jacobian.Type.Tangent); //Bi-Tangent
 
         public Vector3 Velocity_a { get { return rigidbody_a?.Velocity ?? Vector3.zero; } }
         public Vector3 AngularVelocity_a { get { return rigidbody_a?.AngularVelocity ?? Vector3.zero; } }
@@ -2083,13 +2083,11 @@ namespace RBPhys
         public void InitVelocityConstraint(float dt, TimeScaleMode tMode, bool initBias = true)
         {
             Vector3 contactNormal = ContactNormal;
-            Vector3 tangent = Vector3.zero;
-            Vector3 bitangent = Vector3.zero;
-            Vector3.OrthoNormalize(ref contactNormal, ref tangent, ref bitangent);
+            Vector3 tangent = Vector3.ProjectOnPlane(ExpVelocity_b - ExpVelocity_a, contactNormal).normalized;
+            //Vector3.OrthoNormalize(ref contactNormal, ref tangent, ref bitangent);
 
             _jN.Init(this, contactNormal, dt, tMode, initBias);
             _jT.Init(this, tangent, dt, tMode, initBias);
-            _jB.Init(this, bitangent, dt, tMode, initBias);
         }
 
         public void SolveVelocityConstraints(out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b, TimeScaleMode tMode)
@@ -2101,7 +2099,6 @@ namespace RBPhys
 
             (vAdd_a, avAdd_a, vAdd_b, avAdd_b) = _jN.Resolve(this, vAdd_a, avAdd_a, vAdd_b, avAdd_b, tMode);
             (vAdd_a, avAdd_a, vAdd_b, avAdd_b) = _jT.Resolve(this, vAdd_a, avAdd_a, vAdd_b, avAdd_b, tMode);
-            (vAdd_a, avAdd_a, vAdd_b, avAdd_b) = _jB.Resolve(this, vAdd_a, avAdd_a, vAdd_b, avAdd_b, tMode);
         }
 
         const float COLLISION_ERROR_SLOP = 0.0001f;
