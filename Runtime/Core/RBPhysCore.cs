@@ -2289,7 +2289,7 @@ namespace RBPhys
         public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 velAdd, Vector3 normal, bool continuous)
         {
             vDiff = velAdd.magnitude;
-            impulse = vDiff * rbRigidbody.mass;
+            impulse = (vDiff * rbRigidbody?.mass) ?? 0;
 
             this.normal = normal;
             continuousCollision = continuous;
