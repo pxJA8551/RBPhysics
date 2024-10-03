@@ -1146,6 +1146,7 @@ namespace RBPhys
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
                     rbc?.ClearCACCount();
+                    rbc?.ClearSolverCache();
 
                     if (isInverted && rbc != null)
                     {
@@ -1196,6 +1197,7 @@ namespace RBPhys
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
                     rbc?.ClearCACCount();
+                    rbc?.ClearSolverCache();
 
                     if (isInverted && rbc != null)
                     {
@@ -1246,6 +1248,7 @@ namespace RBPhys
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
                     rbc?.ClearCACCount();
+                    rbc?.ClearSolverCache();
 
                     if (isInverted && rbc != null)
                     {
@@ -1296,6 +1299,7 @@ namespace RBPhys
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
                     rbc?.ClearCACCount();
+                    rbc?.ClearSolverCache();
 
                     if (isInverted && rbc != null)
                     {
@@ -1346,6 +1350,7 @@ namespace RBPhys
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
                     rbc?.ClearCACCount();
+                    rbc?.ClearSolverCache();
 
                     if (isInverted && rbc != null)
                     {
@@ -1396,6 +1401,7 @@ namespace RBPhys
                     var rbc = FindCollision(pair.Item1, pair.Item2, out bool isInverted);
 
                     rbc?.ClearCACCount();
+                    rbc?.ClearSolverCache();
 
                     if (isInverted && rbc != null)
                     {
@@ -1518,8 +1524,8 @@ namespace RBPhys
 
             Parallel.ForEach(_collisionsInSolver, rbc =>
             {
-                var info_a = new RBCollisionInfo(rbc.rigidbody_a, rbc.velAdd_a, rbc.ContactNormal, rbc.cacCount > 0);
-                var info_b = new RBCollisionInfo(rbc.rigidbody_b, rbc.velAdd_b, -rbc.ContactNormal, rbc.cacCount > 0);
+                var info_a = new RBCollisionInfo(rbc.rigidbody_a, rbc.solverCache_velAdd_a, rbc.cacCount > 0);
+                var info_b = new RBCollisionInfo(rbc.rigidbody_b, rbc.solverCache_velAdd_b, rbc.cacCount > 0);
 
                 rbc.rigidbody_a?.OnCollision(rbc.collider_b, info_a);
                 rbc.collider_a?.OnCollision(rbc.collider_b, info_a);
@@ -1685,8 +1691,8 @@ namespace RBPhys
                     col.rigidbody_b.ExpAngularVelocity += angVelAdd_b;
                 }
 
-                col.velAdd_a += velAdd_a;
-                col.velAdd_b += velAdd_b;
+                col.solverCache_velAdd_a += velAdd_a;
+                col.solverCache_velAdd_b += velAdd_b;
 
                 if (velAdd_a.sqrMagnitude < cpu_solver_abort_veladd_sqrt && angVelAdd_a.sqrMagnitude < cpu_solver_abort_angveladd_sqrt && velAdd_b.sqrMagnitude < cpu_solver_abort_veladd_sqrt && angVelAdd_b.sqrMagnitude < cpu_solver_abort_angveladd_sqrt)
                 {
@@ -1919,8 +1925,8 @@ namespace RBPhys
         public Vector3 rB;
         public RBDetailCollision.DetailCollisionInfo info;
 
-        public Vector3 velAdd_a;
-        public Vector3 velAdd_b;
+        public Vector3 solverCache_velAdd_a;
+        public Vector3 solverCache_velAdd_b;
 
         public bool skipInSolver;
         public int cacCount = 0;
@@ -1982,6 +1988,12 @@ namespace RBPhys
 
             this.layer_a = layer_a;
             this.layer_b = layer_b;
+        }
+
+        public void ClearSolverCache()
+        {
+            solverCache_velAdd_a = Vector3.zero;
+            solverCache_velAdd_b = Vector3.zero;
         }
 
         public bool ObjectEquals(RBCollision col)
@@ -2087,9 +2099,6 @@ namespace RBPhys
 
             _jN.Init(this, contactNormal, dt, tMode, initBias);
             _jT.Init(this, tangent, dt, tMode, initBias);
-
-            velAdd_a = Vector3.zero;
-            velAdd_b = Vector3.zero;
         }
 
         public void SolveVelocityConstraints(out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b, TimeScaleMode tMode)
@@ -2281,28 +2290,14 @@ namespace RBPhys
     {
         public float impulse;
         public float vDiff;
-        public Vector3 normal;
         public bool continuousCollision;
 
-        public RBCollisionInfo Inversed { get { return GetInversed(this); } }
-
-        public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 velAdd, Vector3 normal, bool continuous)
+        public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 velAdd, bool continuous)
         {
             vDiff = velAdd.magnitude;
             impulse = (vDiff * rbRigidbody?.mass) ?? 0;
 
-            this.normal = normal;
             continuousCollision = continuous;
-        }
-
-        public static RBCollisionInfo GetInversed(RBCollisionInfo info)
-        {
-            RBCollisionInfo invInfo = default;
-            invInfo.normal = -info.normal;
-            invInfo.impulse = info.impulse;
-            invInfo.continuousCollision = info.continuousCollision;
-
-            return invInfo;
         }
     }
 
