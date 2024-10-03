@@ -1518,8 +1518,8 @@ namespace RBPhys
 
             Parallel.ForEach(_collisionsInSolver, rbc =>
             {
-                var info_a = new RBCollisionInfo();
-                var info_b = new RBCollisionInfo();
+                var info_a = new RBCollisionInfo(rbc);
+                var info_b = info_a.Inversed;
 
                 rbc.rigidbody_a?.OnCollision(rbc.collider_b, info_a);
                 rbc.collider_a?.OnCollision(rbc.collider_b, info_a);
@@ -2274,6 +2274,8 @@ namespace RBPhys
         public Vector3 normal;
         public bool continuousCollision;
 
+        public RBCollisionInfo Inversed { get { return GetInversed(this); } }
+
         public RBCollisionInfo(RBCollision c)
         {
             impulse = (Vector3.ProjectOnPlane(c.Velocity_a - c.Velocity_b, c.ContactNormal) - Vector3.ProjectOnPlane(c.ExpAngularVelocity_a - c.ExpAngularVelocity_b, c.ContactNormal)).magnitude;
@@ -2281,12 +2283,12 @@ namespace RBPhys
             continuousCollision = c.cacCount > 0;
         }
 
-        public RBCollisionInfo Inverse()
+        public static RBCollisionInfo GetInversed(RBCollisionInfo info)
         {
             RBCollisionInfo invInfo = default;
-            invInfo.normal = -normal;
-            invInfo.impulse = impulse;
-            invInfo.continuousCollision = continuousCollision;
+            invInfo.normal = -info.normal;
+            invInfo.impulse = info.impulse;
+            invInfo.continuousCollision = info.continuousCollision;
 
             return invInfo;
         }
