@@ -99,8 +99,8 @@ namespace RBPhys
         public static float rbRigidbody_ang_velocity_max = ANG_VELOCITY_MAX;
 
         public ComputerTimeParams timeParams = ComputerTimeParams.GetDefault();
-
         public PhysComputerTime physComputerTime;
+        public bool predictionMode = false;
 
         public RBPhysComputer()
         {
@@ -222,24 +222,37 @@ namespace RBPhys
 
         public void OpenPhysicsFrameWindow()
         {
-            float dt = timeParams.fixedDeltaTime;
+            float dt = _solverDeltaTimeAsFloat;
 
             UpdateSolverTimeVariables();
 
             if (dt == 0) return;
 
-            foreach (var p in _physValidatorObjects)
+            if (!predictionMode)
             {
-                p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                foreach (var p in _physValidatorObjects)
+                {
+                    p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                }
             }
 
             ClearCollisions();
 
-            ClearValidators();
+            if(!predictionMode) ClearValidators();
 
-            foreach (var p in _physObjects)
+            if (!predictionMode)
             {
-                p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                foreach (var p in _physObjects)
+                {
+                    p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                }
+            }
+            else
+            {
+                foreach (var p in _physObjects)
+                {
+                    p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                }
             }
 
             foreach (RBRigidbody rb in _rigidbodies)
@@ -787,7 +800,7 @@ namespace RBPhys
 
         public void ClosePhysicsFrameWindow()
         {
-            float dt = timeParams.fixedDeltaTime;
+            float dt = _solverDeltaTimeAsFloat;
 
             //FixedUpdate�I�����Ɏ��s
 
@@ -1101,7 +1114,7 @@ namespace RBPhys
 
                 if (colPair.col_b.useCCD)
                 {
-                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(_solverDeltaTimeAsFloat, colPair.col_a.CalcExpOBB(_solverDeltaTimeAsFloat), colPair.col_b.CalcSphere(_solverDeltaTimeAsFloat), colPair.col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(_solverDeltaTimeAsFloat, colPair.col_a.CalcExpOBB(_solverDeltaTimeAsFloat), colPair.col_b.CalcExpSphere(_solverDeltaTimeAsFloat), colPair.col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
                     _obb_sphere_cols[i] = (colPair.col_a, colPair.col_b, p, null);
                 }
                 else
@@ -1117,7 +1130,7 @@ namespace RBPhys
 
                 if (colPair.col_a.useCCD || colPair.col_b.useCCD)
                 {
-                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfoCCD(_solverDeltaTimeAsFloat, colPair.col_a.CalcSphere(_solverDeltaTimeAsFloat), colPair.col_b.CalcSphere(_solverDeltaTimeAsFloat), colPair.col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero, colPair.col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfoCCD(_solverDeltaTimeAsFloat, colPair.col_a.CalcExpSphere(_solverDeltaTimeAsFloat), colPair.col_b.CalcExpSphere(_solverDeltaTimeAsFloat), colPair.col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero, colPair.col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
                     _sphere_sphere_cols[i] = (colPair.col_a, colPair.col_b, p, null);
                 }
                 else
@@ -1139,7 +1152,7 @@ namespace RBPhys
                 var colPair = _sphere_capsule_cols[i];
                 if (colPair.col_a.useCCD)
                 {
-                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(_solverDeltaTimeAsFloat, colPair.col_a.CalcSphere(_solverDeltaTimeAsFloat), colPair.col_b.CalcExpCapsule(_solverDeltaTimeAsFloat), colPair.col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                    RBDetailCollision.Penetration p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(_solverDeltaTimeAsFloat, colPair.col_a.CalcExpSphere(_solverDeltaTimeAsFloat), colPair.col_b.CalcExpCapsule(_solverDeltaTimeAsFloat), colPair.col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
                     _sphere_capsule_cols[i] = (colPair.col_a, colPair.col_b, p, null);
                 }
                 else
@@ -1583,7 +1596,7 @@ namespace RBPhys
 
                     if (col_b.useCCD)
                     {
-                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(delta, col_a.CalcExpOBB(delta), col_b.CalcSphere(delta), col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(delta, col_a.CalcExpOBB(delta), col_b.CalcExpSphere(delta), col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
                         (p, pA, pB) = (pc.p, pc.pA, pc.pB);
                     }
                     else
@@ -1599,7 +1612,7 @@ namespace RBPhys
 
                     if (col_a.useCCD)
                     {
-                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(delta, col_b.CalcExpOBB(delta), col_a.CalcSphere(delta), col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(delta, col_b.CalcExpOBB(delta), col_a.CalcExpSphere(delta), col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
                         (p, pB, pA) = (pc.p, pc.pA, pc.pB);
                     }
                     else
@@ -1616,7 +1629,7 @@ namespace RBPhys
 
                     if (col_a.useCCD || col_b.useCCD)
                     {
-                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfoCCD(delta, col_a.CalcSphere(delta), col_b.CalcSphere(delta), col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero, col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfoCCD(delta, col_a.CalcExpSphere(delta), col_b.CalcExpSphere(delta), col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero, col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
                         (p, pA, pB) = (pc.p, pc.pA, pc.pB);
                     }
                     else
@@ -1645,7 +1658,7 @@ namespace RBPhys
 
                     if (col_b.useCCD)
                     {
-                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(delta, col_a.CalcSphere(delta), col_b.CalcExpCapsule(delta), col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(delta, col_a.CalcExpSphere(delta), col_b.CalcExpCapsule(delta), col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
                         (p, pA, pB) = (pc.p, pc.pA, pc.pB);
                     }
                     else
@@ -1661,7 +1674,7 @@ namespace RBPhys
 
                     if (col_a.useCCD)
                     {
-                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(delta, col_b.CalcSphere(delta), col_a.CalcExpCapsule(delta), col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(delta, col_b.CalcCalcExpSphereSphere(delta), col_a.CalcExpCapsule(delta), col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
                         (p, pB, pA) = (pc.p, pc.pA, pc.pB);
                     }
                     else

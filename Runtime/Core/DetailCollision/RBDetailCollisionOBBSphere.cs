@@ -85,8 +85,7 @@ namespace RBPhys
 
                 if (!p.IsValidHit || (0 < p.length && length < p.length))
                 {
-                    var r = CalcDetailCollision(obb_a, sphere_b);
-                    return new Penetration(r.p, r.pA, r.pB, default);
+                    return default;
                 }
 
                 Vector3 pA = p.position;

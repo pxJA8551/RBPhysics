@@ -16,10 +16,27 @@ namespace RBPhys
                 void StdSolverIteration(int iterationCount) { }
             }
 
+            public interface IStdSolverPredictionObject
+            {
+                void StdSolverInitPrediction(float dt, bool isPrimaryInit) { }
+                void StdSolverIterationPrediction(int iterationCount) { }
+            }
+
             public interface IRBPhysObject
             {
                 void BeforeSolver(float delta, TimeScaleMode timeScaleMode) { }
                 void AfterSolver(float delta, TimeScaleMode timeScaleMode) { }
+            }
+
+            public interface IRBPhysPredictionObject
+            {
+                void BeforeSolverPrediction(float delta, TimeScaleMode timeScaleMode) { }
+                void AfterSolverPrediction(float delta, TimeScaleMode timeScaleMode) { }
+            }
+
+            public interface IRBOnCollision
+            {
+                void OnCollision(RBCollider col, RBCollisionInfo info);
             }
 
             public interface IRBOnCollision
