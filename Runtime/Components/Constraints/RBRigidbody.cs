@@ -235,8 +235,8 @@ namespace RBPhys
                 transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
             }
 
-            UpdateExpTrajectory(dt);
             UpdateTransform(dt);
+            UpdateExpTrajectory(dt);
         }
 
         internal void UpdateTransform(float delta, bool updateColliders = true)

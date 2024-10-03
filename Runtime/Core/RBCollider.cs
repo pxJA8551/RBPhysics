@@ -116,7 +116,8 @@ namespace RBPhys
             _expPos = intergratedPos + relPos;
             _expRot = intergratedRot * relRot;
 
-            _expTrajectory.Update(this, _expPos, _expRot, delta);
+            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, relPos, relRot, delta);
+            else _expTrajectory.Update(this, _expPos, _expRot, delta);
         }
 
         internal void OnCollision(RBCollider col, RBCollisionInfo info)
