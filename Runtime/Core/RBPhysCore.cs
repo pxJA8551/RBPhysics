@@ -1887,7 +1887,6 @@ namespace RBPhys
             public bool Initialized { get { return computer._solverTimeInitialized; } }
 
             public float SolverSetDeltaTime { get { return computer.timeParams.fixedDeltaTime; } }
-
             public double SolverTime { get { return computer._solverTime; } }
             public double SolverUnscaledTime { get { return computer._solverUnscaledTime; } }
             public double SolverDeltaTime { get { return computer._solverDeltaTime; } }
