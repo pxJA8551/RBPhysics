@@ -218,11 +218,11 @@ namespace RBPhys
                 _expVelocity = Vector3.ClampMagnitude(_expVelocity, rbRigidbody_velocity_max);
                 _expAngularVelocity = Vector3.ClampMagnitude(_expAngularVelocity, rbRigidbody_ang_velocity_max);
 
-                if (_expVelocity.x < XZ_VELOCITY_MIN_CUTOUT) _expVelocity.x = 0;
-                if (_expVelocity.z < XZ_VELOCITY_MIN_CUTOUT) _expVelocity.z = 0;
-                if (_expAngularVelocity.x < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.x = 0;
-                if (_expAngularVelocity.y < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.y = 0;
-                if (_expAngularVelocity.z < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.z = 0;
+                if (Mathf.Abs(_expVelocity.x) < XZ_VELOCITY_MIN_CUTOUT) _expVelocity.x = 0;
+                if (Mathf.Abs(_expVelocity.z) < XZ_VELOCITY_MIN_CUTOUT) _expVelocity.z = 0;
+                if (Mathf.Abs(_expAngularVelocity.x) < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.x = 0;
+                if (Mathf.Abs(_expAngularVelocity.y) < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.y = 0;
+                if (Mathf.Abs(_expAngularVelocity.z) < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.z = 0;
 
                 if (physTimeScaleMode == TimeScaleMode.Prograde)
                 {
