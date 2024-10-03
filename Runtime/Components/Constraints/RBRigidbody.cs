@@ -15,6 +15,8 @@ namespace RBPhys
     {
         const float SLEEP_VEL_MAX_SQRT = 0.03f * 0.03f;
         const float SLEEP_ANGVEL_MAX_SQRT = 0.03f * 0.03f;
+        const float XZ_VELOCITY_MIN_CUTOUT = .0001f;
+        const float ANG_VELOCITY_MIN_CUTOUT = .001f;
         const int SLEEP_GRACE_FRAMES = 6;
 
         public float mass = 1;
@@ -215,6 +217,12 @@ namespace RBPhys
             {
                 _expVelocity = Vector3.ClampMagnitude(_expVelocity, rbRigidbody_velocity_max);
                 _expAngularVelocity = Vector3.ClampMagnitude(_expAngularVelocity, rbRigidbody_ang_velocity_max);
+
+                if (_expVelocity.x < XZ_VELOCITY_MIN_CUTOUT) _expVelocity.x = 0;
+                if (_expVelocity.z < XZ_VELOCITY_MIN_CUTOUT) _expVelocity.z = 0;
+                if (_expAngularVelocity.x < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.x = 0;
+                if (_expAngularVelocity.y < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.y = 0;
+                if (_expAngularVelocity.z < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.z = 0;
 
                 if (physTimeScaleMode == TimeScaleMode.Prograde)
                 {

@@ -34,6 +34,8 @@ namespace RBPhys
         public const float VELOCITY_MAX = 50f;
         public const float ANG_VELOCITY_MAX = 20f;
 
+        public const float XZ_VELOCITY_MIN_CUTOUT = .0001f;
+
         public int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
         public int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
         public float cpu_solver_abort_veladd_sqrt = CPU_SOLVER_ABORT_VELADD_SQRT;
@@ -44,6 +46,8 @@ namespace RBPhys
 
         public static float retrograde_phys_friction_multiplier = RETROGRADE_PHYS_FRICTION_MULTIPLIER;
         public static float softClip_lambda_multiplier = SOFTCLIP_LAMBDA_MULTIPLIER;
+
+        public static float xz_velocity_min_cutout = XZ_VELOCITY_MIN_CUTOUT;
 
         public Vector3 gravityAcceleration = new Vector3(0, -9.81f, 0);
 
