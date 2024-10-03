@@ -39,13 +39,13 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot)
+        public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot, float delta)
         {
             return new RBColliderSphere(pos + rot * MutipliedCenter,  Mathf.Sqrt(Mathf.Pow(MutipliedSize.x, 2) + Mathf.Pow(MutipliedSize.y, 2) + Mathf.Pow(MutipliedSize.z, 2)) / 2f);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot)
+        public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot, float delta)
         {
             Quaternion r = rot * LocalRot;
 
@@ -58,7 +58,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot)
+        public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot, float delta)
         {
             return new RBColliderOBB(pos + rot * (MutipliedCenter - LocalRot * MutipliedSize / 2f), rot * LocalRot, MutipliedSize);
         }
@@ -70,7 +70,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot)
+        public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot, float delta)
         {
             throw new System.NotImplementedException();
         }

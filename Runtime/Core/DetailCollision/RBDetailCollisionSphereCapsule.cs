@@ -2,6 +2,7 @@ using System.Collections;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static RBPhys.RBPhysUtil;
 using static RBPhys.RBVectorUtil;
 
@@ -43,9 +44,9 @@ namespace RBPhys
                 return (penetration, pA, pB);
             }
 
-            public static Penetration CalcDetailCollisionInfoCCD(RBColliderSphere sphere_a, RBColliderCapsule capsule_b, Vector3 velocity)
+            public static Penetration CalcDetailCollisionInfoCCD(float delta, RBColliderSphere sphere_a, RBColliderCapsule capsule_b, Vector3 velocity)
             {
-                velocity *= RBPhysCore.PhysTime.SolverSetDeltaTime;
+                velocity *= delta;
 
                 float length = velocity.magnitude;
                 Vector3 dirN = velocity / length;

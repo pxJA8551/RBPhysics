@@ -27,10 +27,10 @@ namespace RBPhys
                 return (penetration, sphere_a.pos - dN * sphere_a.radius, sphere_b.pos + dN * sphere_b.radius);
             }
 
-            public static Penetration CalcDetailCollisionInfoCCD(RBColliderSphere sphere_a, RBColliderSphere sphere_b, Vector3 velocityA, Vector3 velocityB)
+            public static Penetration CalcDetailCollisionInfoCCD(float delta, RBColliderSphere sphere_a, RBColliderSphere sphere_b, Vector3 velocityA, Vector3 velocityB)
             {
                 Vector3 velocity = velocityB - velocityA;
-                velocity *= RBPhysCore.PhysTime.SolverSetDeltaTime;
+                velocity *= delta;
 
                 float length = velocity.magnitude;
                 Vector3 dirN = velocity / length;
@@ -43,7 +43,7 @@ namespace RBPhys
                 var p = RBSphereCast.SphereCastSphere.CalcSphereCollision(sphere_a, sphere_b.pos, dirN, length, sphere_b.radius, false);
 
                 Vector3 pA = p.position;
-                Vector3 pB = (p.position + velocityB * RBPhysCore.PhysTime.SolverSetDeltaTime);
+                Vector3 pB = (p.position + velocityB * delta);
 
                 if (!p.IsValidHit || length < Mathf.Abs(p.length))
                 {

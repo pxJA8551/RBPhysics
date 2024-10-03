@@ -7,7 +7,7 @@ using UnityEngine;
 namespace RBPhys
 {
     [RequireComponent(typeof(RBRigidbody))]
-    public class RBPhysAnimation : MonoBehaviour, RBPhysCore.RBConstraints.IStdSolver, RBPhysCore.RBConstraints.IRBPhysObject
+    public class RBPhysAnimation : MonoBehaviour, RBPhysComputer.RBConstraints.IStdSolver, RBPhysComputer.RBConstraints.IRBPhysObject
     {
         const int PHYS_ANIM_INTERGRADE = 1;
         const float PHYS_ANIM_RESOLUTION_BETA = 1f;
@@ -42,8 +42,8 @@ namespace RBPhys
         {
             rbRigidbody = GetComponent<RBRigidbody>();
 
-            RBPhysCore.AddStdSolver(this);
-            RBPhysCore.AddPhysObject(this);
+            RBPhysController.AddStdSolver(this);
+            RBPhysController.AddPhysObject(this);
 
             if (playing)
             {
@@ -445,8 +445,8 @@ namespace RBPhys
 
         public void OnDestroy()
         {
-            RBPhysCore.RemoveStdSolver(this);
-            RBPhysCore.RemovePhysObject(this);
+            RBPhysController.RemoveStdSolver(this);
+            RBPhysController.RemovePhysObject(this);
         }
 
         public float CalcLinkedAnimLambda(float time, float linkedInvMass, Vector3 linkedInvInertiaTensorWs)

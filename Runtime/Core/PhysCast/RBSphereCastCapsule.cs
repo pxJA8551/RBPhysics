@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using static RBPhys.RBPhysCore;
+using static RBPhys.RBPhysComputer;
 
 public static partial class RBSphereCast
 {

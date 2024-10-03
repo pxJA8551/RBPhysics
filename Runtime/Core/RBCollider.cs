@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static RBPhys.RBPhysCore;
+using static RBPhys.RBPhysComputer;
 
 namespace RBPhys
 {
@@ -53,7 +53,7 @@ namespace RBPhys
 
         void Awake()
         {
-            UpdateTransform();
+            UpdateTransform(0);
         }
 
         void OnDestroy()
@@ -62,17 +62,17 @@ namespace RBPhys
 
         void OnEnable()
         {
-            RBPhysCore.AddCollider(this);
+            RBPhysController.AddCollider(this);
 
             if (ParentRigidbody != null)
             {
-                RBPhysCore.SwitchToRigidbody(this);
+                RBPhysController.SwitchToRigidbody(this);
             }
         }
 
         private void OnDisable()
         {
-            RBPhysCore.RemoveCollider(this);
+            RBPhysController.RemoveCollider(this);
         }
 
         public void FixedUpdate() { }
@@ -95,7 +95,7 @@ namespace RBPhys
             _parent = null;
         }
 
-        public void UpdateTransform()
+        public void UpdateTransform(float delta)
         {
             GameObjectPos = gameObject?.transform.position ?? Vector3.zero;
             GameObjectRot = gameObject?.transform.rotation ?? Quaternion.identity;
@@ -105,10 +105,10 @@ namespace RBPhys
 
             _hasParentRigidbodyInFrame = _parent?.isActiveAndEnabled ?? false;
 
-            _expTrajectory.Update(this, gameObject?.layer ?? 0);
+            _expTrajectory.Update(this, gameObject?.layer ?? 0, delta);
         }
 
-        public void UpdateExpTrajectory(Vector3 rbPos, Quaternion rbRot, Vector3 intergratedPos, Quaternion intergratedRot)
+        public void UpdateExpTrajectory(float delta, Vector3 rbPos, Quaternion rbRot, Vector3 intergratedPos, Quaternion intergratedRot)
         {
             Vector3 relPos = GameObjectPos - rbPos;
             Quaternion relRot = GameObjectRot * Quaternion.Inverse(rbRot);
@@ -116,7 +116,7 @@ namespace RBPhys
             _expPos = intergratedPos + relPos;
             _expRot = intergratedRot * relRot;
 
-            _expTrajectory.Update(this, _expPos, _expRot);
+            _expTrajectory.Update(this, _expPos, _expRot, delta);
         }
 
         internal void OnCollision(RBCollider col, RBCollisionInfo info)
@@ -139,29 +139,29 @@ namespace RBPhys
 
         public abstract float CalcVolume();
         public abstract float CalcUnscaledVolume();
-        public abstract RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot);
-        public abstract RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot);
-        public abstract RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot);
-        public abstract RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot);
+        public abstract RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot, float delta);
+        public abstract RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot, float delta);
+        public abstract RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot, float delta);
+        public abstract RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot, float delta);
 
-        public virtual RBColliderSphere CalcSphere()
+        public virtual RBColliderSphere CalcSphere(float delta)
         {
-            return CalcSphere(GameObjectPos, GameObjectRot);
+            return CalcSphere(GameObjectPos, GameObjectRot, delta);
         }
 
-        public virtual RBColliderAABB CalcAABB()
+        public virtual RBColliderAABB CalcAABB(float delta)
         {
-            return CalcAABB(GameObjectPos, GameObjectRot);
+            return CalcAABB(GameObjectPos, GameObjectRot, delta);
         }
 
-        public virtual RBColliderOBB CalcOBB()
+        public virtual RBColliderOBB CalcOBB(float delta)
         {
-            return CalcOBB(GameObjectPos, GameObjectRot);
+            return CalcOBB(GameObjectPos, GameObjectRot, delta);
         }
 
-        public virtual RBColliderCapsule CalcCapsule()
+        public virtual RBColliderCapsule CalcCapsule(float delta)
         {
-            return CalcCapsule(GameObjectPos, GameObjectRot);
+            return CalcCapsule(GameObjectPos, GameObjectRot, delta);
         }
 
         public abstract Vector3 GetColliderCenter(Vector3 pos, Quaternion rot);
@@ -171,24 +171,24 @@ namespace RBPhys
             return GetColliderCenter(GameObjectPos, GameObjectRot);
         }
 
-        public virtual RBColliderSphere CalcExpSphere()
+        public virtual RBColliderSphere CalcExpSphere(float delta)
         {
-            return CalcSphere(_expPos, _expRot);
+            return CalcSphere(_expPos, _expRot, delta);
         }
 
-        public virtual RBColliderAABB CalcExpAABB()
+        public virtual RBColliderAABB CalcExpAABB(float delta)
         {
-            return CalcAABB(_expPos, _expRot);
+            return CalcAABB(_expPos, _expRot, delta);
         }
 
-        public virtual RBColliderOBB CalcExpOBB()
+        public virtual RBColliderOBB CalcExpOBB(float delta)
         {
-            return CalcOBB(_expPos, _expRot);
+            return CalcOBB(_expPos, _expRot, delta);
         }
 
-        public virtual RBColliderCapsule CalcExpCapsule()
+        public virtual RBColliderCapsule CalcExpCapsule(float delta)
         {
-            return CalcCapsule(_expPos, _expRot);
+            return CalcCapsule(_expPos, _expRot, delta);
         }
 
         public Vector3 ExpToCurrent(Vector3 expPos)

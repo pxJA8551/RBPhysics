@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace RBPhys
 {
-    public static partial class RBPhysCore
+    public partial class RBPhysComputer
     {
         public static class RBConstraints
         {

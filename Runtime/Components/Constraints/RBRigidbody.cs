@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Experimental.GlobalIllumination;
-using static RBPhys.RBPhysCore;
+using static RBPhys.RBPhysComputer;
 using static RBPhys.RBPhysUtil;
 
 namespace RBPhys
@@ -106,7 +106,7 @@ namespace RBPhys
         void Awake()
         {
             FindColliders();
-            UpdateTransform();
+            UpdateTransform(0);
             RecalculateInertiaTensor();
 
             if (!isSleeping || sleepGrace != 5)
@@ -132,23 +132,23 @@ namespace RBPhys
 
         void OnEnable()
         {
-            RBPhysCore.AddRigidbody(this);
+            RBPhysController.AddRigidbody(this);
 
             foreach (var c in _colliders)
             {
-                RBPhysCore.SwitchToRigidbody(c);
-                c.UpdateTransform();
+                RBPhysController.SwitchToRigidbody(c);
+                c.UpdateTransform(0);
             }
         }
 
         private void OnDisable()
         {
-            RBPhysCore.RemoveRigidbody(this);
+            RBPhysController.RemoveRigidbody(this);
 
             foreach (var c in _colliders)
             {
-                RBPhysCore.SwitchToCollider(c);
-                c.UpdateTransform();
+                RBPhysController.SwitchToCollider(c);
+                c.UpdateTransform(0);
             }
         }
 
@@ -209,21 +209,21 @@ namespace RBPhys
             _stackVal_ignoreVelocity_ifGreaterThanZero--;
         }
 
-        internal void ApplyTransform(float dt)
+        internal void ApplyTransform(float dt, RBPhys.TimeScaleMode physTimeScaleMode)
         {
             if (!IgnoreVelocity)
             {
                 _expVelocity = Vector3.ClampMagnitude(_expVelocity, rbRigidbody_velocity_max);
                 _expAngularVelocity = Vector3.ClampMagnitude(_expAngularVelocity, rbRigidbody_ang_velocity_max);
 
-                if (PhysTimeScaleMode == TimeScaleMode.Prograde)
+                if (physTimeScaleMode == TimeScaleMode.Prograde)
                 {
                     float vm = _expVelocity.magnitude;
                     float avm = _expAngularVelocity.magnitude;
                     _velocity = (vm > 0 ? (_expVelocity / vm) : Vector3.zero) * Mathf.Max(0, vm - drag);
                     _angularVelocity = (avm > 0 ? (_expAngularVelocity / avm) : Vector3.zero) * Mathf.Max(0, avm - angularDrag);
                 }
-                else if (PhysTimeScaleMode == TimeScaleMode.Retrograde)
+                else if (physTimeScaleMode == TimeScaleMode.Retrograde)
                 {
                     float vm = _expVelocity.magnitude;
                     float avm = _expAngularVelocity.magnitude;
@@ -235,11 +235,11 @@ namespace RBPhys
                 transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
             }
 
-            UpdateTransform();
+            UpdateTransform(dt);
             UpdateExpTrajectory(dt);
         }
 
-        internal void UpdateTransform(bool updateColliders = true)
+        internal void UpdateTransform(float delta, bool updateColliders = true)
         {
             Position = transform.position;
             Rotation = transform.rotation;
@@ -248,7 +248,7 @@ namespace RBPhys
             {
                 foreach (RBCollider c in _colliders)
                 {
-                    c.UpdateTransform();
+                    c.UpdateTransform(delta);
                 }
             }
         }
@@ -266,7 +266,7 @@ namespace RBPhys
             {
                 foreach (RBCollider c in _colliders)
                 {
-                    c.UpdateExpTrajectory(Position, Rotation, r.pos, r.rot);
+                    c.UpdateExpTrajectory(dt, Position, Rotation, r.pos, r.rot);
                 }
             }
 
@@ -279,7 +279,7 @@ namespace RBPhys
 
             for (int i = 0; i < _colliders.Length; i++)
             {
-                _colliders[i].UpdateExpTrajectory(Position, Rotation, r.pos, r.rot);
+                _colliders[i].UpdateExpTrajectory(dt, Position, Rotation, r.pos, r.rot);
             }
         }
 
@@ -437,19 +437,19 @@ namespace RBPhys
                 {
                     case RBGeometryType.OBB:
                         {
-                            geometryIt.SetInertiaOBB(c.CalcOBB(), relPos, relRot);
+                            geometryIt.SetInertiaOBB(c.CalcOBB(0), relPos, relRot);
                         }
                         break;
 
                     case RBGeometryType.Sphere:
                         {
-                            geometryIt.SetInertiaSphere(c.CalcSphere(), relPos, relRot);
+                            geometryIt.SetInertiaSphere(c.CalcSphere(0), relPos, relRot);
                         }
                         break;
 
                     case RBGeometryType.Capsule:
                         {
-                            geometryIt.SetInertiaCapsule(c.CalcCapsule(), relPos, relRot);
+                            geometryIt.SetInertiaCapsule(c.CalcCapsule(0), relPos, relRot);
                         }
                         break;
                 }

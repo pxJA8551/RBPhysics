@@ -39,18 +39,18 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot)
+        public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot, float delta)
         {
             return new RBColliderSphere((pos) + MultipliedCenter, MultipliedRadius);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot)
+        public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot, float delta)
         {
             if (useCCD)
             {
                 Vector3 pos_current = pos;
-                Vector3 pos_exp = pos + ((ParentRigidbody?.Velocity * RBPhysCore.PhysTime.SolverSetDeltaTime) ?? Vector3.zero);
+                Vector3 pos_exp = pos + ((ParentRigidbody?.Velocity * delta) ?? Vector3.zero);
 
                 Vector3 size = RBPhysUtil.V3Abs(pos_current - pos_exp) + Vector3.one * MultipliedRadius * 2;
                 Vector3 avgPos = (pos_current + pos_exp) / 2f;
@@ -64,12 +64,12 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot)
+        public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot, float delta)
         {
             if (useCCD)
             {
                 Vector3 pos_current = pos;
-                Vector3 pos_exp = pos + ((ParentRigidbody?.Velocity * RBPhysCore.PhysTime.SolverSetDeltaTime) ?? Vector3.zero);
+                Vector3 pos_exp = pos + ((ParentRigidbody?.Velocity * delta) ?? Vector3.zero);
 
                 Vector3 avgPos = (pos_current + pos_exp) / 2f;
                 Vector3 sizeFwd = Vector3.one * MultipliedRadius * 2;
@@ -93,7 +93,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot)
+        public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot, float delta)
         {
             throw new System.NotImplementedException();
         }

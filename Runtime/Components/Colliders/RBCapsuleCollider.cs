@@ -48,13 +48,13 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot)
+        public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot, float delta)
         {
             return new RBColliderSphere(pos + MutipliedCenter, MutipliedHeight / 2f + MutipliedRadius);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot)
+        public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot, float delta)
         {
             var p = GetEdge(pos, rot);
 
@@ -67,7 +67,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot)
+        public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot, float delta)
         {
             Vector3 extents = new Vector3(MutipliedRadius * 2, MutipliedRadius, MutipliedRadius * 2);
             return new RBColliderOBB(pos + MutipliedCenter - extents, rot * LocalRot, extents * 2f);
@@ -88,7 +88,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot)
+        public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot, float delta)
         {
             return new RBColliderCapsule(pos + MutipliedCenter, rot * LocalRot, MutipliedRadius, MutipliedHeight);
         }

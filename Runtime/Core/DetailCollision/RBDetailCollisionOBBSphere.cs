@@ -68,9 +68,9 @@ namespace RBPhys
                 return (sub > 0 ? pdN * sub : Vector3.zero, pA, pB);
             }
 
-            public static Penetration CalcDetailCollisionInfoCCD(RBColliderOBB obb_a, RBColliderSphere sphere_b, Vector3 velocity)
+            public static Penetration CalcDetailCollisionInfoCCD(float delta, RBColliderOBB obb_a, RBColliderSphere sphere_b, Vector3 velocity)
             {
-                velocity *= RBPhysCore.PhysTime.SolverSetDeltaTime;
+                velocity *= delta;
                 float length = velocity.magnitude;
 
                 if (length == 0)
