@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Collections;
 using UnityEngine;
 
 namespace RBPhys
@@ -17,8 +18,8 @@ namespace RBPhys
 
             public interface IRBPhysObject
             {
-                void BeforeSolver() { }
-                void AfterSolver() { }
+                void BeforeSolver(float delta, TimeScaleMode timeScaleMode) { }
+                void AfterSolver(float delta, TimeScaleMode timeScaleMode) { }
             }
 
             public interface IRBOnCollision

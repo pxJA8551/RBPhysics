@@ -220,19 +220,20 @@ namespace RBPhys
 
         public void OpenPhysicsFrameWindow(float dt)
         {
+            UpdateSolverTimeVariables();
+
             foreach (var p in _physValidatorObjects)
             {
-                p.BeforeSolver();
+                p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
             }
 
             ClearCollisions();
 
             ClearValidators();
-            UpdateSolverTimeVariables();
 
             foreach (var p in _physObjects)
             {
-                p.BeforeSolver();
+                p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
             }
 
             foreach (RBRigidbody rb in _rigidbodies)
@@ -247,7 +248,7 @@ namespace RBPhys
 
             foreach (var p in _physObjects)
             {
-                p.AfterSolver();
+                p.AfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
             }
 
             UpdateTransforms();
@@ -256,7 +257,7 @@ namespace RBPhys
 
             foreach (var p in _physValidatorObjects)
             {
-                p.AfterSolver();
+                p.AfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
             }
 
             TrySleepRigidbodies();
