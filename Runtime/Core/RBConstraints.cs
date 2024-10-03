@@ -39,9 +39,9 @@ namespace RBPhys
                 void OnCollision(RBCollider col, RBCollisionInfo info);
             }
 
-            public interface IRBOnCollision
+            public interface IRBOnCollisionPrediction
             {
-                void OnCollision(RBCollider col, RBCollisionInfo info);
+                void OnCollisionPrediction(RBCollider col, RBCollisionInfo info);
             }
 
             public interface IRBPhysStateValidator

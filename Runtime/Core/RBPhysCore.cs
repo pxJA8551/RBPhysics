@@ -1674,7 +1674,7 @@ namespace RBPhys
 
                     if (col_a.useCCD)
                     {
-                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(delta, col_b.CalcCalcExpSphereSphere(delta), col_a.CalcExpCapsule(delta), col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(delta, col_b.CalcExpSphere(delta), col_a.CalcExpCapsule(delta), col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
                         (p, pB, pA) = (pc.p, pc.pA, pc.pB);
                     }
                     else
