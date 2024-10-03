@@ -1518,8 +1518,8 @@ namespace RBPhys
 
             Parallel.ForEach(_collisionsInSolver, rbc =>
             {
-                var info_a = new RBCollisionInfo(rbc);
-                var info_b = info_a.Inversed;
+                var info_a = new RBCollisionInfo(rbc.rigidbody_a, rbc.velAdd_a, rbc.ContactNormal, rbc.cacCount > 0);
+                var info_b = new RBCollisionInfo(rbc.rigidbody_b, rbc.velAdd_b, -rbc.ContactNormal, rbc.cacCount > 0);
 
                 rbc.rigidbody_a?.OnCollision(rbc.collider_b, info_a);
                 rbc.collider_a?.OnCollision(rbc.collider_b, info_a);
@@ -1684,6 +1684,9 @@ namespace RBPhys
                     col.rigidbody_b.ExpVelocity += velAdd_b;
                     col.rigidbody_b.ExpAngularVelocity += angVelAdd_b;
                 }
+
+                col.velAdd_a += velAdd_a;
+                col.velAdd_b += velAdd_b;
 
                 if (velAdd_a.sqrMagnitude < cpu_solver_abort_veladd_sqrt && angVelAdd_a.sqrMagnitude < cpu_solver_abort_angveladd_sqrt && velAdd_b.sqrMagnitude < cpu_solver_abort_veladd_sqrt && angVelAdd_b.sqrMagnitude < cpu_solver_abort_angveladd_sqrt)
                 {
@@ -1916,6 +1919,9 @@ namespace RBPhys
         public Vector3 rB;
         public RBDetailCollision.DetailCollisionInfo info;
 
+        public Vector3 velAdd_a;
+        public Vector3 velAdd_b;
+
         public bool skipInSolver;
         public int cacCount = 0;
 
@@ -2081,6 +2087,9 @@ namespace RBPhys
 
             _jN.Init(this, contactNormal, dt, tMode, initBias);
             _jT.Init(this, tangent, dt, tMode, initBias);
+
+            velAdd_a = Vector3.zero;
+            velAdd_b = Vector3.zero;
         }
 
         public void SolveVelocityConstraints(out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b, TimeScaleMode tMode)
@@ -2271,16 +2280,19 @@ namespace RBPhys
     public struct RBCollisionInfo
     {
         public float impulse;
+        public float vDiff;
         public Vector3 normal;
         public bool continuousCollision;
 
         public RBCollisionInfo Inversed { get { return GetInversed(this); } }
 
-        public RBCollisionInfo(RBCollision c)
+        public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 velAdd, Vector3 normal, bool continuous)
         {
-            impulse = (Vector3.ProjectOnPlane(c.Velocity_a - c.Velocity_b, c.ContactNormal) - Vector3.ProjectOnPlane(c.ExpAngularVelocity_a - c.ExpAngularVelocity_b, c.ContactNormal)).magnitude;
-            normal = c.ContactNormal;
-            continuousCollision = c.cacCount > 0;
+            vDiff = velAdd.magnitude;
+            impulse = vDiff * rbRigidbody.mass;
+
+            this.normal = normal;
+            continuousCollision = continuous;
         }
 
         public static RBCollisionInfo GetInversed(RBCollisionInfo info)
