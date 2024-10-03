@@ -226,6 +226,8 @@ namespace RBPhys
 
             UpdateSolverTimeVariables();
 
+            if (dt == 0) return;
+
             foreach (var p in _physValidatorObjects)
             {
                 p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
@@ -296,6 +298,7 @@ namespace RBPhys
                 _solverDeltaTime = timeParams.fixedDeltaTime * timeParams.timeScale;
                 _solverUnscaledTime = timeParams.fixedDeltaTime;
                 _solverUnscaledDeltaTime = timeParams.fixedDeltaTime;
+
                 _solverTimeInitialized = true;
             }
         }
