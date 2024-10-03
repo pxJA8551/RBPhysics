@@ -85,7 +85,7 @@ namespace RBPhys
         public static void InitMainComputer()
         {
             _mainComputer?.Dispose();
-            _mainComputer = null;
+            _mainComputer = new RBPhysComputer();
         }
 
         public static void DisposeMainComputer()
