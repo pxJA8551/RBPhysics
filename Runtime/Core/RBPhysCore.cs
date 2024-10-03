@@ -9,6 +9,8 @@ using UnityEngine.Profiling;
 using UnityEditor;
 using Unity.IL2CPP.CompilerServices;
 using UnityEngine.TerrainUtils;
+using System.Diagnostics;
+using System.Security.Cryptography.X509Certificates;
 
 namespace RBPhys
 {
@@ -860,6 +862,7 @@ namespace RBPhys
             {
                 Array.Resize(ref rb.colliding, rb.collidingCount);
             }
+
             rb.collidingCount = 0;
         }
 
@@ -1157,10 +1160,6 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
                     }
 
-                    rbc.rigidbody_a?.OnCollision(traj2);
-                    rbc.collider_a?.OnCollision(traj2);
-                    rbc.rigidbody_b?.OnCollision(traj1);
-                    rbc.collider_b?.OnCollision(traj1);
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
@@ -1211,10 +1210,6 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
                     }
 
-                    rbc.rigidbody_a?.OnCollision(traj2);
-                    rbc.collider_a?.OnCollision(traj2);
-                    rbc.rigidbody_b?.OnCollision(traj1);
-                    rbc.collider_b?.OnCollision(traj1);
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
@@ -1265,10 +1260,6 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
                     }
 
-                    rbc.rigidbody_a?.OnCollision(traj2);
-                    rbc.collider_a?.OnCollision(traj2);
-                    rbc.rigidbody_b?.OnCollision(traj1);
-                    rbc.collider_b?.OnCollision(traj1);
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
@@ -1319,10 +1310,6 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
                     }
 
-                    rbc.rigidbody_a?.OnCollision(traj2);
-                    rbc.collider_a?.OnCollision(traj2);
-                    rbc.rigidbody_b?.OnCollision(traj1);
-                    rbc.collider_b?.OnCollision(traj1);
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
@@ -1373,10 +1360,6 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
                     }
 
-                    rbc.rigidbody_a?.OnCollision(traj2);
-                    rbc.collider_a?.OnCollision(traj2);
-                    rbc.rigidbody_b?.OnCollision(traj1);
-                    rbc.collider_b?.OnCollision(traj1);
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
@@ -1427,10 +1410,6 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
                     }
 
-                    rbc.rigidbody_a?.OnCollision(traj2);
-                    rbc.collider_a?.OnCollision(traj2);
-                    rbc.rigidbody_b?.OnCollision(traj1);
-                    rbc.collider_b?.OnCollision(traj1);
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
@@ -1486,10 +1465,13 @@ namespace RBPhys
                     col.rigidbody_b.PhysAwake();
                     AddCollision(col.rigidbody_b, col.collider_a);
                 }
+
+                if (IsTriggerLayer(col.layer_a) || IsTriggerLayer(col.layer_b))
+                {
+                    col.skipInSolver = true;
+                }
             }
             Profiler.EndSample();
-
-            _collisionsInSolver.RemoveAll(item => IsTriggerLayer(item.layer_a) || IsTriggerLayer(item.layer_b));
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-SolveCollisions/StdSolver");
             for (int iter = 0; iter < cpu_std_solver_max_iter; iter++)
@@ -1533,6 +1515,17 @@ namespace RBPhys
             }
 
             Profiler.EndSample();
+
+            Parallel.ForEach(_collisionsInSolver, rbc =>
+            {
+                var info_a = new RBCollisionInfo();
+                var info_b = new RBCollisionInfo();
+
+                rbc.rigidbody_a?.OnCollision(rbc.collider_b, info_a);
+                rbc.collider_a?.OnCollision(rbc.collider_b, info_a);
+                rbc.rigidbody_b?.OnCollision(rbc.collider_a, info_b);
+                rbc.collider_b?.OnCollision(rbc.collider_a, info_b);
+            });
 
             _collisions.RemoveAll(item => item.cacCount > COLLISION_AS_CONTINUOUS_FRAMES);
             _collisions.AddRange(_collisionsInSolver);
@@ -1703,7 +1696,7 @@ namespace RBPhys
         {
             RecalculateCollision(col.collider_a, col.collider_b, col.info, out Vector3 p, out Vector3 pA, out Vector3 pB);
 
-            if (p != Vector3.zero)
+            if (p != Vector3.zero || col.skipInSolver)
             {
                 p = col.collider_a.ExpToCurrentVector(p);
                 pA = col.collider_a.ExpToCurrent(pA);
@@ -2272,6 +2265,30 @@ namespace RBPhys
 
                 return (vAdd_a, avAdd_a, vAdd_b, avAdd_b);
             }
+        }
+    }
+
+    public struct RBCollisionInfo
+    {
+        public float impulse;
+        public Vector3 normal;
+        public bool continuousCollision;
+
+        public RBCollisionInfo(RBCollision c)
+        {
+            impulse = (Vector3.ProjectOnPlane(c.Velocity_a - c.Velocity_b, c.ContactNormal) - Vector3.ProjectOnPlane(c.ExpAngularVelocity_a - c.ExpAngularVelocity_b, c.ContactNormal)).magnitude;
+            normal = c.ContactNormal;
+            continuousCollision = c.cacCount > 0;
+        }
+
+        public RBCollisionInfo Inverse()
+        {
+            RBCollisionInfo invInfo = default;
+            invInfo.normal = -normal;
+            invInfo.impulse = impulse;
+            invInfo.continuousCollision = continuousCollision;
+
+            return invInfo;
         }
     }
 

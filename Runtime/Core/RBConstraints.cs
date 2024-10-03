@@ -23,7 +23,7 @@ namespace RBPhys
 
             public interface IRBOnCollision
             {
-                void OnCollision(RBTrajectory traj);
+                void OnCollision(RBCollider col, RBCollisionInfo info);
             }
 
             public interface IRBPhysStateValidator
