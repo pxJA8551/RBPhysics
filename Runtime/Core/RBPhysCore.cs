@@ -34,10 +34,10 @@ namespace RBPhys
         public const float VELOCITY_MAX = 50f;
         public const float ANG_VELOCITY_MAX = 20f;
 
-        public static int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
-        public static int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
-        public static float cpu_solver_abort_veladd_sqrt = CPU_SOLVER_ABORT_VELADD_SQRT;
-        public static float cpu_solver_abort_angveladd_sqrt = CPU_SOLVER_ABORT_ANGVELADD_SQRT;
+        public int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
+        public int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
+        public float cpu_solver_abort_veladd_sqrt = CPU_SOLVER_ABORT_VELADD_SQRT;
+        public float cpu_solver_abort_angveladd_sqrt = CPU_SOLVER_ABORT_ANGVELADD_SQRT;
 
         public static float retrograde_phys_restitution_multiplier = RETROGRADE_PHYS_RESTITUTION_MULTIPLIER;
         public static float retrograde_phys_restitution_min = RETROGRADE_PHYS_RESTITUTION_MIN;
