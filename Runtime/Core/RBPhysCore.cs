@@ -270,8 +270,8 @@ namespace RBPhys
                 p.AfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
             }
 
-            UpdateTransforms();
             UpdateExtTrajectories(dt);
+            UpdateTransforms();
             SortTrajectories();
 
             foreach (var p in _physValidatorObjects)
