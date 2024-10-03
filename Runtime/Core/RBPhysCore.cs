@@ -34,10 +34,10 @@ namespace RBPhys
         public const float VELOCITY_MAX = 50f;
         public const float ANG_VELOCITY_MAX = 20f;
 
-        public static int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
-        public static int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
-        public static float cpu_solver_abort_veladd_sqrt = CPU_SOLVER_ABORT_VELADD_SQRT;
-        public static float cpu_solver_abort_angveladd_sqrt = CPU_SOLVER_ABORT_ANGVELADD_SQRT;
+        public int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
+        public int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
+        public float cpu_solver_abort_veladd_sqrt = CPU_SOLVER_ABORT_VELADD_SQRT;
+        public float cpu_solver_abort_angveladd_sqrt = CPU_SOLVER_ABORT_ANGVELADD_SQRT;
 
         public static float retrograde_phys_restitution_multiplier = RETROGRADE_PHYS_RESTITUTION_MULTIPLIER;
         public static float retrograde_phys_restitution_min = RETROGRADE_PHYS_RESTITUTION_MIN;
@@ -97,6 +97,8 @@ namespace RBPhys
         public static float tangent_friction_jv_ignore_max = TANGENT_FRICTION_JV_IGNORE_MIN;
         public static float rbRigidbody_velocity_max = VELOCITY_MAX;
         public static float rbRigidbody_ang_velocity_max = ANG_VELOCITY_MAX;
+
+        public ComputerTimeParams timeParams = ComputerTimeParams.GetDefault();
 
         public PhysComputerTime physComputerTime;
 
@@ -218,8 +220,10 @@ namespace RBPhys
             return (p & 2) == 2;
         }
 
-        public void OpenPhysicsFrameWindow(float dt)
+        public void OpenPhysicsFrameWindow()
         {
+            float dt = timeParams.fixedDeltaTime;
+
             UpdateSolverTimeVariables();
 
             foreach (var p in _physValidatorObjects)
@@ -268,21 +272,32 @@ namespace RBPhys
 
         void UpdateSolverTimeVariables()
         {
-            if (_solverTimeInitialized)
+            if (timeParams.enableAutoTimeIntergrading)
             {
-                _solverDeltaTime = Time.timeAsDouble - _solverTime;
-                _solverUnscaledDeltaTime = Time.unscaledTimeAsDouble - _solverUnscaledTime;
+                if (_solverTimeInitialized)
+                {
+                    _solverDeltaTime = Time.timeAsDouble - _solverTime;
+                    _solverUnscaledDeltaTime = Time.unscaledTimeAsDouble - _solverUnscaledTime;
+                }
+                else
+                {
+                    _solverDeltaTime = 0;
+                    _solverUnscaledDeltaTime = 0;
+                }
+
+                _solverTime = Time.timeAsDouble;
+                _solverUnscaledTime = Time.unscaledTimeAsDouble;
+
+                _solverTimeInitialized = true;
             }
             else
             {
-                _solverDeltaTime = 0;
-                _solverUnscaledDeltaTime = 0;
+                _solverTime += timeParams.fixedDeltaTime * timeParams.timeScale;
+                _solverDeltaTime = timeParams.fixedDeltaTime * timeParams.timeScale;
+                _solverUnscaledTime = timeParams.fixedDeltaTime;
+                _solverUnscaledDeltaTime = timeParams.fixedDeltaTime;
+                _solverTimeInitialized = true;
             }
-
-            _solverTime = Time.timeAsDouble;
-            _solverUnscaledTime = Time.unscaledTimeAsDouble;
-
-            _solverTimeInitialized = true;
         }
 
         public struct RBColliderCastHitInfo
@@ -767,8 +782,10 @@ namespace RBPhys
             return overlappings;
         }
 
-        public void ClosePhysicsFrameWindow(float dt)
+        public void ClosePhysicsFrameWindow()
         {
+            float dt = timeParams.fixedDeltaTime;
+
             //FixedUpdate�I�����Ɏ��s
 
             // ====== �����t���[���E�C���h�E �����܂� ======
@@ -1869,7 +1886,7 @@ namespace RBPhys
 
             public bool Initialized { get { return computer._solverTimeInitialized; } }
 
-            public readonly float SolverSetDeltaTime = Time.fixedDeltaTime;
+            public float SolverSetDeltaTime { get { return computer.timeParams.fixedDeltaTime; } }
 
             public double SolverTime { get { return computer._solverTime; } }
             public double SolverUnscaledTime { get { return computer._solverUnscaledTime; } }
@@ -1884,6 +1901,23 @@ namespace RBPhys
         double _solverUnscaledDeltaTime;
         float _solverDeltaTimeAsFloat { get { return (float)_solverDeltaTime; } }
         double _solverUnscaledDeltaTimeAsFloat { get { return (float)_solverUnscaledDeltaTime; } }
+    }
+
+    public struct ComputerTimeParams
+    {
+        public float fixedDeltaTime;
+        public float timeScale;
+        public bool enableAutoTimeIntergrading;
+
+        public static ComputerTimeParams GetDefault()
+        {
+            var p = new ComputerTimeParams();
+            p.fixedDeltaTime = Time.fixedDeltaTime;
+            p.timeScale = 1f;
+            p.enableAutoTimeIntergrading = true;
+
+            return p;
+        }
     }
 
     public class RBEmptyValidator : RBPhysComputer.RBConstraints.RBPhysStateValidator

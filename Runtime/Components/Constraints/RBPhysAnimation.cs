@@ -83,7 +83,7 @@ namespace RBPhys
         Vector3 _lsBasePos;
         Quaternion _lsBaseRot;
 
-        public void BeforeSolver()
+        public void BeforeSolver(float dt, TimeScaleMode timeScaleMode)
         {
             if (parentTransform != null)
             {
@@ -99,7 +99,7 @@ namespace RBPhys
 
             _ctrlTimeLast = ctrlTime;
 
-            ctrlTime += Time.fixedDeltaTime * ctrlSpeed;
+            ctrlTime += dt * ctrlSpeed;
             ctrlTime = Mathf.Clamp(ctrlTime, 0, Mathf.Max(animationClip?.length ?? 0, trsCurve?.length ?? 0));
 
             if (trsCurve != null)
@@ -107,7 +107,7 @@ namespace RBPhys
                 if (enablePhysProceduralAnimation)
                 {
                     SetBasePos();
-                    SampleApplyTRSAnimation(ctrlTime, Time.fixedDeltaTime, _lsBasePos, _lsBaseRot);
+                    SampleApplyTRSAnimation(ctrlTime, dt, _lsBasePos, _lsBaseRot);
                 }
                 else
                 {
@@ -188,7 +188,7 @@ namespace RBPhys
             return (rbRigidbody.InverseInertiaWs);
         }
 
-        public void AfterSolver()
+        public void AfterSolver(float dt, TimeScaleMode timeScaleMode)
         {
             if (ctrlSpeed == 0)
             {
@@ -196,12 +196,12 @@ namespace RBPhys
             }
             else
             {
-                _ctrlTimeDeltaP = Mathf.Clamp01((ctrlTime - _ctrlTimeLast) / (Time.fixedDeltaTime * ctrlSpeed));
+                _ctrlTimeDeltaP = Mathf.Clamp01((ctrlTime - _ctrlTimeLast) / (dt * ctrlSpeed));
             }
 
             if (enablePhysProceduralAnimation && trsCurve != null)
             {
-                SampleApplyTRSAnimation(ctrlTime, Time.fixedDeltaTime, _lsBasePos, _lsBaseRot);
+                SampleApplyTRSAnimation(ctrlTime, dt, _lsBasePos, _lsBaseRot);
             }
             else
             {

@@ -29,11 +29,11 @@ namespace RBPhys
 
         IEnumerator PhysicsFrame(float dt)
         {
-            RBPhysController.MainComputer.OpenPhysicsFrameWindow(dt);
+            RBPhysController.MainComputer.OpenPhysicsFrameWindow();
 
             yield return new WaitForFixedUpdate();
 
-            RBPhysController.MainComputer.ClosePhysicsFrameWindow(dt);
+            RBPhysController.MainComputer.ClosePhysicsFrameWindow();
         }
 
         private void OnDestroy()
