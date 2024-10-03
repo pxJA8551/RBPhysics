@@ -283,8 +283,8 @@ namespace RBPhys
                 }
                 else
                 {
-                    _solverDeltaTime = 0;
-                    _solverUnscaledDeltaTime = 0;
+                    _solverDeltaTime = Time.fixedDeltaTime;
+                    _solverUnscaledDeltaTime = Time.fixedUnscaledDeltaTime;
                 }
 
                 _solverTime = Time.timeAsDouble;
