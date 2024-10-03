@@ -116,7 +116,7 @@ namespace RBPhys
             _expPos = intergratedPos + relPos;
             _expRot = intergratedRot * relRot;
 
-            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, relPos, relRot, delta);
+            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, GameObjectPos, GameObjectRot, delta);
             else _expTrajectory.Update(this, _expPos, _expRot, delta);
         }
 
