@@ -1527,7 +1527,7 @@ namespace RBPhys
 
             Profiler.EndSample();
 
-            Parallel.ForEach(_collisionsInSolver, rbc =>
+            foreach(var rbc in _collisionsInSolver)
             {
                 var info_a = new RBCollisionInfo(rbc.rigidbody_a, rbc.solverCache_velAdd_a, rbc.cacCount > 0);
                 var info_b = new RBCollisionInfo(rbc.rigidbody_b, rbc.solverCache_velAdd_b, rbc.cacCount > 0);
@@ -1536,7 +1536,7 @@ namespace RBPhys
                 rbc.collider_a?.OnCollision(rbc.collider_b, info_a);
                 rbc.rigidbody_b?.OnCollision(rbc.collider_a, info_b);
                 rbc.collider_b?.OnCollision(rbc.collider_a, info_b);
-            });
+            }
 
             _collisions.RemoveAll(item => item.cacCount > COLLISION_AS_CONTINUOUS_FRAMES);
             _collisions.AddRange(_collisionsInSolver);
