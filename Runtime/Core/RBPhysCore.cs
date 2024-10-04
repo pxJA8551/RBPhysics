@@ -17,7 +17,7 @@ namespace RBPhys
     [Il2CppSetOption(Option.DivideByZeroChecks, false)]
     public partial class RBPhysComputer
     {
-        // dt = .005 ms
+        // dt = .01 ms
 
         public const int CPU_STD_SOLVER_MAX_ITERATION = 2;
         public const int CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION = 3;
@@ -316,6 +316,9 @@ namespace RBPhys
         {
             if (timeParams.enableAutoTimeIntergrading)
             {
+                timeParams.fixedDeltaTime = Time.fixedDeltaTime;
+                timeParams.timeScale = Time.timeScale;
+
                 if (_solverTimeInitialized)
                 {
                     _solverDeltaTime = Time.timeAsDouble - _solverTime;
@@ -1961,7 +1964,7 @@ namespace RBPhys
         public static ComputerTimeParams GetDefault()
         {
             var p = new ComputerTimeParams();
-            p.fixedDeltaTime = Time.fixedDeltaTime;
+            p.fixedDeltaTime = .01f;
             p.timeScale = 1f;
             p.enableAutoTimeIntergrading = true;
 
