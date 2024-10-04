@@ -88,11 +88,11 @@ namespace RBPhys
         List<RBCollision> _collisions = new List<RBCollision>();
         List<RBCollision> _collisionsInSolver = new List<RBCollision>();
 
-        List<RBConstraints.IRBPhysObject> _physObjects = new List<RBConstraints.IRBPhysObject>();
-        List<RBConstraints.IRBPhysPredictionObject> _physObjectsPrediction = new List<RBConstraints.IRBPhysPredictionObject>();
-        List<RBConstraints.IRBPhysObject> _physValidatorObjects = new List<RBConstraints.IRBPhysObject>();
-        List<RBConstraints.IStdSolver> _stdSolversAsync = new List<RBConstraints.IStdSolver>();
-        List<RBConstraints.IStdPredictionSolver> _stdPredictionsAsync = new List<RBConstraints.IStdPredictionSolver>();
+        List<IRBPhysObject> _physObjects = new List<IRBPhysObject>();
+        List<IRBPhysPredictionObject> _physObjectsPrediction = new List<IRBPhysPredictionObject>();
+        List<IRBPhysObject> _physValidatorObjects = new List<IRBPhysObject>();
+        List<IStdSolver> _stdSolversAsync = new List<IStdSolver>();
+        List<IStdPredictionSolver> _stdPredictionsAsync = new List<IStdPredictionSolver>();
 
         int[] _collisionIgnoreLayers = new int[32];
         RBCollisionLayerOption[] _layerOptions = new RBCollisionLayerOption[32];
@@ -158,7 +158,7 @@ namespace RBPhys
             _colRemoveQueue.Add(c);
         }
 
-        public void AddStdSolver(RBConstraints.IStdSolver solver)
+        public void AddStdSolver(IStdSolver solver)
         {
             if (!_stdSolversAsync.Contains(solver))
             {
@@ -166,12 +166,12 @@ namespace RBPhys
             }
         }
 
-        public void RemoveStdSolver(RBConstraints.IStdSolver solver)
+        public void RemoveStdSolver(IStdSolver solver)
         {
             _stdSolversAsync.Remove(solver);
         }
 
-        public void AddPhysObject(RBConstraints.IRBPhysObject physObj, bool asyncIteration = true)
+        public void AddPhysObject(IRBPhysObject physObj, bool asyncIteration = true)
         {
             if (!_physObjects.Contains(physObj))
             {
@@ -179,12 +179,12 @@ namespace RBPhys
             }
         }
 
-        public void RemovePhysObject(RBConstraints.IRBPhysObject physObj)
+        public void RemovePhysObject(IRBPhysObject physObj)
         {
             _physObjects.Remove(physObj);
         }
 
-        public void AddPhysValidatorObject(RBConstraints.IRBPhysObject physObj)
+        public void AddPhysValidatorObject(IRBPhysObject physObj)
         {
             if (!_physValidatorObjects.Contains(physObj))
             {
@@ -192,7 +192,7 @@ namespace RBPhys
             }
         }
 
-        public void RemovePhysValidatorObject(RBConstraints.IRBPhysObject physObj)
+        public void RemovePhysValidatorObject(IRBPhysObject physObj)
         {
             _physValidatorObjects.Remove(physObj);
         }
@@ -1608,7 +1608,7 @@ namespace RBPhys
             _collisions = _collisions.Distinct().ToList();
         }
 
-        static bool RecalculateCollision(float delta, RBCollider col_a, RBCollider col_b, RBDetailCollision.DetailCollisionInfo info, out Vector3 p, out Vector3 pA, out Vector3 pB)
+        bool RecalculateCollision(float delta, RBCollider col_a, RBCollider col_b, RBDetailCollision.DetailCollisionInfo info, out Vector3 p, out Vector3 pA, out Vector3 pB)
         {
             bool aabbCollide = col_a.ExpTrajectory.trajectoryAABB.OverlapAABB(col_b.ExpTrajectory.trajectoryAABB);
 
@@ -1972,7 +1972,7 @@ namespace RBPhys
         }
     }
 
-    public class RBEmptyValidator : RBPhysComputer.RBConstraints.RBPhysStateValidator
+    public class RBEmptyValidator : RBPhysComputer.RBPhysStateValidator
     {
         public RBEmptyValidator() : base(Guid.Empty) { }
         public RBEmptyValidator(Guid guid) : base(guid) { }
@@ -1983,7 +1983,7 @@ namespace RBPhys
         }
     }
 
-    public class RBCollisionValidator : RBPhysComputer.RBConstraints.RBPhysStateValidator
+    public class RBCollisionValidator : RBPhysComputer.RBPhysStateValidator
     {
         public override bool Validate()
         {

@@ -39,7 +39,7 @@ namespace RBPhys
 
         bool _hasParentRigidbodyInFrame = false;
 
-        List<RBConstraints.IRBOnCollision> collisionCallbacks = new List<RBConstraints.IRBOnCollision>();
+        List<IRBOnCollision> collisionCallbacks = new List<IRBOnCollision>();
 
         public void SetIgnoreCollision()
         {
@@ -129,12 +129,12 @@ namespace RBPhys
             }
         }
 
-        public void AddCollisionCallback(RBConstraints.IRBOnCollision c)
+        public void AddCollisionCallback(IRBOnCollision c)
         {
             collisionCallbacks.Add(c);
         }
 
-        public void RemoveCollisionCallback(RBConstraints.IRBOnCollision c)
+        public void RemoveCollisionCallback(IRBOnCollision c)
         {
             collisionCallbacks.Remove(c);
         }

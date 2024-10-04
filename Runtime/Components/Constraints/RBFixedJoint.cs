@@ -10,7 +10,7 @@ using UnityEngine.UIElements;
 namespace RBPhys
 {
     [RequireComponent(typeof(RBRigidbody))]
-    public class RBFixedJoint : MonoBehaviour, RBPhysComputer.RBConstraints.IStdSolver
+    public class RBFixedJoint : MonoBehaviour, RBPhysComputer.IStdSolver
     {
         const float SOLVER_LINEAR_BETA = 0.25f;
         const float SOLVER_ANGULAR_BETA = 0.25f;

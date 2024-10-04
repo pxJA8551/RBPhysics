@@ -7,7 +7,7 @@ using UnityEngine;
 namespace RBPhys
 {
     [RequireComponent(typeof(RBRigidbody))]
-    public class RBPhysAnimation : MonoBehaviour, RBPhysComputer.RBConstraints.IStdSolver, RBPhysComputer.RBConstraints.IRBPhysObject
+    public class RBPhysAnimation : MonoBehaviour, RBPhysComputer.IStdSolver, RBPhysComputer.IRBPhysObject
     {
         const int PHYS_ANIM_INTERGRADE = 1;
         const float PHYS_ANIM_RESOLUTION_BETA = 1f;

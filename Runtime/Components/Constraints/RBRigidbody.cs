@@ -86,11 +86,11 @@ namespace RBPhys
 
         RBTrajectory _expObjTrajectory;
 
-        List<RBConstraints.IRBOnCollision> collisionCallbacks = new List<RBConstraints.IRBOnCollision>();
+        List<IRBOnCollision> collisionCallbacks = new List<IRBOnCollision>();
 
-        public List<RBConstraints.RBPhysStateValidator> validators = new List<RBConstraints.RBPhysStateValidator>();
+        public List<RBPhysStateValidator> validators = new List<RBPhysStateValidator>();
 
-        public void AddVaidator(RBConstraints.RBPhysStateValidator validator)
+        public void AddVaidator(RBPhysStateValidator validator)
         {
             validators.Add(validator);
         }
@@ -315,12 +315,12 @@ namespace RBPhys
             }
         }
 
-        public void AddCollisionCallback(RBConstraints.IRBOnCollision c)
+        public void AddCollisionCallback(IRBOnCollision c)
         {
             collisionCallbacks.Add(c);
         }
 
-        public void RemoveCollisionCallback(RBConstraints.IRBOnCollision c)
+        public void RemoveCollisionCallback(IRBOnCollision c)
         {
             collisionCallbacks.Remove(c);
         }

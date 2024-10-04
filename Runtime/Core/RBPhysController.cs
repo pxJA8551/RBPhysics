@@ -50,32 +50,32 @@ namespace RBPhys
             _mainComputer.SwitchToRigidbody(c);
         }
 
-        public static void AddStdSolver(RBConstraints.IStdSolver solver)
+        public static void AddStdSolver(IStdSolver solver)
         {
             _mainComputer.AddStdSolver(solver);
         }
 
-        public static void RemoveStdSolver(RBConstraints.IStdSolver solver)
+        public static void RemoveStdSolver(IStdSolver solver)
         {
             _mainComputer.RemoveStdSolver(solver);
         }
 
-        public static void AddPhysObject(RBConstraints.IRBPhysObject physObj, bool asyncIteration = true)
+        public static void AddPhysObject(IRBPhysObject physObj, bool asyncIteration = true)
         {
             _mainComputer.AddPhysObject(physObj, asyncIteration);
         }
 
-        public static void RemovePhysObject(RBConstraints.IRBPhysObject physObj)
+        public static void RemovePhysObject(IRBPhysObject physObj)
         {
             _mainComputer.RemovePhysObject(physObj);
         }
 
-        public static void AddPhysValidatorObject(RBConstraints.IRBPhysObject physObj)
+        public static void AddPhysValidatorObject(IRBPhysObject physObj)
         {
             _mainComputer.AddPhysValidatorObject(physObj);
         }
 
-        public static void RemovePhysValidatorObject(RBConstraints.IRBPhysObject physObj)
+        public static void RemovePhysValidatorObject(IRBPhysObject physObj)
         {
             _mainComputer.RemovePhysValidatorObject(physObj);
         }
