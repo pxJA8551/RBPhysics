@@ -825,12 +825,9 @@ namespace RBPhys
 
             // ====== �����t���[���E�C���h�E �����܂� ======
 
-            if (!predictionMode)
+            foreach (RBRigidbody rb in _rigidbodies)
             {
-                foreach (RBRigidbody rb in _rigidbodies)
-                {
-                    rb.ApplyTransform(dt, _timeScaleMode);
-                }
+                rb.ApplyTransform(dt, _timeScaleMode, predictionMode);
             }
         }
 
