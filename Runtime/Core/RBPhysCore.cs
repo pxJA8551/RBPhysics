@@ -2412,11 +2412,11 @@ namespace RBPhys
 
                     if (tMode == TimeScaleMode.Prograde)
                     {
-                        _totalLambda = Mathf.Clamp(_totalLambda + lambda, -maxFriction, maxFriction);
+                        _totalLambda = Mathf.Clamp(_totalLambda - lambda, -maxFriction, maxFriction);
                     }
                     else
                     {
-                        _totalLambda = Mathf.Clamp(_totalLambda - lambda, -maxFriction, maxFriction);
+                        _totalLambda = Mathf.Clamp(_totalLambda + lambda, -maxFriction, maxFriction);
                     }
                 }
 
