@@ -211,7 +211,7 @@ namespace RBPhys
             _stackVal_ignoreVelocity_ifGreaterThanZero--;
         }
 
-        internal void ApplyTransform(float dt, RBPhys.TimeScaleMode physTimeScaleMode)
+        internal void ApplyTransform(float dt, RBPhys.TimeScaleMode physTimeScaleMode, bool predictionMode)
         {
             if (!IgnoreVelocity)
             {
@@ -239,12 +239,23 @@ namespace RBPhys
                     _angularVelocity = (avm > 0 ? (_expAngularVelocity / avm) : Vector3.zero) * Mathf.Max(0, avm - angularDrag);
                 }
 
-                transform.position = _position + (_velocity * dt);
-                transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
+                if (!predictionMode)
+                {
+                    transform.position = _position + (_velocity * dt);
+                    transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
+                }
+                else
+                {
+                    Position = _position + (_velocity * dt);
+                    Rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
+                }
             }
 
-            UpdateTransform(dt);
-            UpdateExpTrajectory(dt);
+            if (!predictionMode)
+            {
+                UpdateTransform(dt);
+                UpdateExpTrajectory(dt);
+            }
         }
 
         internal void UpdateTransform(float delta, bool updateColliders = true)

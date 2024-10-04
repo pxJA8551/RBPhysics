@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEditor;
 using Unity.IL2CPP.CompilerServices;
+using UnityEditor.Experimental.GraphView;
 
 namespace RBPhys
 {
@@ -34,8 +35,6 @@ namespace RBPhys
         public const float VELOCITY_MAX = 50f;
         public const float ANG_VELOCITY_MAX = 20f;
 
-        public const float XZ_VELOCITY_MIN_CUTOUT = .0001f;
-
         public int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
         public int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
         public float cpu_solver_abort_veladd_sqrt = CPU_SOLVER_ABORT_VELADD_SQRT;
@@ -46,8 +45,6 @@ namespace RBPhys
 
         public static float retrograde_phys_friction_multiplier = RETROGRADE_PHYS_FRICTION_MULTIPLIER;
         public static float softClip_lambda_multiplier = SOFTCLIP_LAMBDA_MULTIPLIER;
-
-        public static float xz_velocity_min_cutout = XZ_VELOCITY_MIN_CUTOUT;
 
         public Vector3 gravityAcceleration = new Vector3(0, -9.81f, 0);
 
@@ -92,8 +89,10 @@ namespace RBPhys
         List<RBCollision> _collisionsInSolver = new List<RBCollision>();
 
         List<RBConstraints.IRBPhysObject> _physObjects = new List<RBConstraints.IRBPhysObject>();
+        List<RBConstraints.IRBPhysPredictionObject> _physObjectsPrediction = new List<RBConstraints.IRBPhysPredictionObject>();
         List<RBConstraints.IRBPhysObject> _physValidatorObjects = new List<RBConstraints.IRBPhysObject>();
         List<RBConstraints.IStdSolver> _stdSolversAsync = new List<RBConstraints.IStdSolver>();
+        List<RBConstraints.IStdPredictionSolver> _stdPredictionsAsync = new List<RBConstraints.IStdPredictionSolver>();
 
         int[] _collisionIgnoreLayers = new int[32];
         RBCollisionLayerOption[] _layerOptions = new RBCollisionLayerOption[32];
@@ -253,9 +252,9 @@ namespace RBPhys
             }
             else
             {
-                foreach (var p in _physObjects)
+                foreach (var p in _physObjectsPrediction)
                 {
-                    p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                    p.BeforeSolverPrediction(_solverDeltaTimeAsFloat, _timeScaleMode);
                 }
             }
 
@@ -269,22 +268,38 @@ namespace RBPhys
 
             SolveConstraints(dt);
 
-            foreach (var p in _physObjects)
+            if (!predictionMode)
             {
-                p.AfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                foreach (var p in _physObjects)
+                {
+                    p.AfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                }
+            }
+            else
+            {
+                foreach (var p in _physObjectsPrediction)
+                {
+                    p.AfterSolverPrediction(_solverDeltaTimeAsFloat, _timeScaleMode);
+                }
             }
 
-            UpdateTransforms();
+            if(!predictionMode) UpdateTransforms();
             UpdateExtTrajectories(dt);
             SortTrajectories();
 
-            foreach (var p in _physValidatorObjects)
+            if (!predictionMode)
             {
-                p.AfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                foreach (var p in _physValidatorObjects)
+                {
+                    p.AfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                }
             }
 
-            TrySleepRigidbodies();
-            TryAwakeRigidbodies();
+            if (!predictionMode)
+            {
+                TrySleepRigidbodies();
+                TryAwakeRigidbodies();
+            }
 
             //OnClosePhysicsFrame��
         }
@@ -810,9 +825,12 @@ namespace RBPhys
 
             // ====== �����t���[���E�C���h�E �����܂� ======
 
-            foreach (RBRigidbody rb in _rigidbodies)
+            if (!predictionMode)
             {
-                rb.ApplyTransform(dt, _timeScaleMode);
+                foreach (RBRigidbody rb in _rigidbodies)
+                {
+                    rb.ApplyTransform(dt, _timeScaleMode);
+                }
             }
         }
 
