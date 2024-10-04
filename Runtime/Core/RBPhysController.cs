@@ -12,10 +12,8 @@ namespace RBPhys
     public static class RBPhysController
     {
         static RBPhysComputer _mainComputer = new RBPhysComputer();
-        static List<RBPhysComputer> _subComputers = new List<RBPhysComputer>();
 
         public static RBPhysComputer MainComputer { get { return _mainComputer; } }
-        public static List<RBPhysComputer> SubComputers { get { return _subComputers; } }
 
         static RBPhysController()
         {
@@ -91,14 +89,6 @@ namespace RBPhys
         public static void DisposeMainComputer()
         {
             _mainComputer?.Dispose();
-        }
-
-        public static void DisposeSubComputers()
-        {
-            foreach (var s in _subComputers)
-            {
-                s?.Dispose();
-            }
         }
     }
 }
