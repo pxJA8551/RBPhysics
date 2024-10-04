@@ -14,7 +14,7 @@ namespace RBPhys
             void StdSolverIteration(int iterationCount) { }
         }
 
-        public interface IStdPredictionSolver
+        public interface IStdSolverPrediction
         {
             void StdSolverInitPrediction(float dt, bool isPrimaryInit) { }
             void StdSolverIterationPrediction(int iterationCount) { }
@@ -26,7 +26,7 @@ namespace RBPhys
             void AfterSolver(float delta, TimeScaleMode timeScaleMode) { }
         }
 
-        public interface IRBPhysPredictionObject
+        public interface IRBPhysObjectPrediction
         {
             void BeforeSolverPrediction(float delta, TimeScaleMode timeScaleMode) { }
             void AfterSolverPrediction(float delta, TimeScaleMode timeScaleMode) { }

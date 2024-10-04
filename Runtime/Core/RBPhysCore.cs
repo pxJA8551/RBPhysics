@@ -89,10 +89,10 @@ namespace RBPhys
         List<RBCollision> _collisionsInSolver = new List<RBCollision>();
 
         List<IRBPhysObject> _physObjects = new List<IRBPhysObject>();
-        List<IRBPhysPredictionObject> _physObjectsPrediction = new List<IRBPhysPredictionObject>();
+        List<IRBPhysObjectPrediction> _physObjectsPredictions = new List<IRBPhysObjectPrediction>();
         List<IRBPhysObject> _physValidatorObjects = new List<IRBPhysObject>();
         List<IStdSolver> _stdSolversAsync = new List<IStdSolver>();
-        List<IStdPredictionSolver> _stdPredictionsAsync = new List<IStdPredictionSolver>();
+        List<IStdSolverPrediction> _stdSolverAsyncPredictions = new List<IStdSolverPrediction>();
 
         int[] _collisionIgnoreLayers = new int[32];
         RBCollisionLayerOption[] _layerOptions = new RBCollisionLayerOption[32];
@@ -197,6 +197,32 @@ namespace RBPhys
             _physValidatorObjects.Remove(physObj);
         }
 
+        public void AddStdSolverPredication(IStdSolverPrediction stdSolver)
+        {
+            if (!_stdSolverAsyncPredictions.Contains(stdSolver))
+            {
+                _stdSolverAsyncPredictions.Add(stdSolver);
+            }
+        }
+
+        public void RemoveStdSolverPredication(IStdSolverPrediction stdSolver)
+        {
+            _stdSolverAsyncPredictions.Remove(stdSolver);
+        }
+
+        public void AddPhysObjectPrediction(IRBPhysObjectPrediction physObject)
+        {
+            if (!_physObjectsPredictions.Contains(physObject))
+            {
+                _physObjectsPredictions.Add(physObject);
+            }
+        }
+
+        public void RemovePhysObjectPrediction(IRBPhysObjectPrediction physObject)
+        {
+            _physObjectsPredictions.Remove(physObject);
+        }
+
         public void SetCollisionOption(int layer_a, int layer_b, RBCollisionOption option)
         {
             switch (option)
@@ -260,7 +286,7 @@ namespace RBPhys
             }
             else
             {
-                foreach (var p in _physObjectsPrediction)
+                foreach (var p in _physObjectsPredictions)
                 {
                     p.BeforeSolverPrediction(_solverDeltaTimeAsFloat, _timeScaleMode);
                 }
@@ -285,7 +311,7 @@ namespace RBPhys
             }
             else
             {
-                foreach (var p in _physObjectsPrediction)
+                foreach (var p in _physObjectsPredictions)
                 {
                     p.AfterSolverPrediction(_solverDeltaTimeAsFloat, _timeScaleMode);
                 }
@@ -1513,10 +1539,20 @@ namespace RBPhys
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-RigidbodyPrepareSolve");
 
-            Parallel.For(0, _stdSolversAsync.Count, j =>
+            if (!multiThreadPredictionMode)
             {
-                _stdSolversAsync[j].StdSolverInit(dt, true);
-            });
+                Parallel.For(0, _stdSolversAsync.Count, j =>
+                {
+                    _stdSolversAsync[j].StdSolverInit(dt, true);
+                });
+            }
+            else
+            {
+                Parallel.For(0, _stdSolverAsyncPredictions.Count, j =>
+                {
+                    _stdSolverAsyncPredictions[j].StdSolverInitPrediction(dt, true);
+                });
+            }
 
             foreach (RBCollision col in _collisionsInSolver)
             {
@@ -1579,10 +1615,20 @@ namespace RBPhys
                         UpdateTrajectoryPair(_collisionsInSolver[j], dt);
                     });
 
-                    Parallel.ForEach(_stdSolversAsync, s =>
+                    if (!multiThreadPredictionMode)
                     {
-                        s.StdSolverInit(dt, false);
-                    });
+                        Parallel.ForEach(_stdSolversAsync, s =>
+                        {
+                            s.StdSolverInit(dt, false);
+                        });
+                    }
+                    else
+                    {
+                        Parallel.ForEach(_stdSolverAsyncPredictions, s =>
+                        {
+                            s.StdSolverInitPrediction(dt, false);
+                        });
+                    }
 
                     Profiler.EndSample();
                 }
