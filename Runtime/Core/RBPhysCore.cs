@@ -101,13 +101,21 @@ namespace RBPhys
         public static float rbRigidbody_velocity_max = VELOCITY_MAX;
         public static float rbRigidbody_ang_velocity_max = ANG_VELOCITY_MAX;
 
-        public ComputerTimeParams timeParams = ComputerTimeParams.GetDefault();
+        public ComputerTimeParams timeParams;
         public PhysComputerTime physComputerTime;
-        public bool predictionMode = false;
+        public bool multiThreadPredictionMode = false;
 
         public RBPhysComputer()
         {
             physComputerTime = new PhysComputerTime(this);
+            timeParams = ComputerTimeParams.GetDefault();
+        }
+
+        public RBPhysComputer(bool multiThreadPrediction, float deltaTime)
+        {
+            physComputerTime = new PhysComputerTime(this);
+            multiThreadPredictionMode = multiThreadPrediction;
+            timeParams = new ComputerTimeParams(deltaTime, 1, false);
         }
 
         public void AddRigidbody(RBRigidbody rb)
@@ -231,7 +239,7 @@ namespace RBPhys
 
             if (dt == 0) return;
 
-            if (!predictionMode)
+            if (!multiThreadPredictionMode)
             {
                 foreach (var p in _physValidatorObjects)
                 {
@@ -241,9 +249,9 @@ namespace RBPhys
 
             ClearCollisions();
 
-            if(!predictionMode) ClearValidators();
+            if(!multiThreadPredictionMode) ClearValidators();
 
-            if (!predictionMode)
+            if (!multiThreadPredictionMode)
             {
                 foreach (var p in _physObjects)
                 {
@@ -268,7 +276,7 @@ namespace RBPhys
 
             SolveConstraints(dt);
 
-            if (!predictionMode)
+            if (!multiThreadPredictionMode)
             {
                 foreach (var p in _physObjects)
                 {
@@ -283,11 +291,11 @@ namespace RBPhys
                 }
             }
 
-            if(!predictionMode) UpdateTransforms();
+            if(!multiThreadPredictionMode) UpdateTransforms();
             UpdateExtTrajectories(dt);
             SortTrajectories();
 
-            if (!predictionMode)
+            if (!multiThreadPredictionMode)
             {
                 foreach (var p in _physValidatorObjects)
                 {
@@ -295,7 +303,7 @@ namespace RBPhys
                 }
             }
 
-            if (!predictionMode)
+            if (!multiThreadPredictionMode)
             {
                 TrySleepRigidbodies();
                 TryAwakeRigidbodies();
@@ -827,7 +835,7 @@ namespace RBPhys
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                rb.ApplyTransform(dt, _timeScaleMode, predictionMode);
+                rb.ApplyTransform(dt, _timeScaleMode, multiThreadPredictionMode);
             }
         }
 
@@ -1942,6 +1950,13 @@ namespace RBPhys
         public float fixedDeltaTime;
         public float timeScale;
         public bool enableAutoTimeIntergrading;
+
+        public ComputerTimeParams(float fixedDeltaTime, float timeScale, bool enableAutoTimeIntergrading)
+        {
+            this.fixedDeltaTime = fixedDeltaTime;
+            this.timeScale = timeScale;
+            this.enableAutoTimeIntergrading = enableAutoTimeIntergrading;
+        }
 
         public static ComputerTimeParams GetDefault()
         {
