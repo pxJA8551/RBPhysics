@@ -136,6 +136,8 @@ namespace RBPhys
             r._position = _position;
             r._rotation = _rotation;
 
+            r.SetVTransform(vTransform);
+
             return r;
         }
 

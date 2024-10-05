@@ -22,12 +22,17 @@ namespace RBPhys
         protected override void OnEnable() { }
         protected override void OnDisable() { }
 
-        RBVirtualTransform vTransform;
-
-        public bool vActive_And_vEnabled { get { return _vEnabled && (vTransform?.Active ?? false); } }
+        public bool vActive_And_vEnabled { get { return _vEnabled && (_vTransform?.Active ?? false); } }
 
         public bool vEnabled { get { return _vEnabled; } set { SetEnableInternal(value); } }
         bool _vEnabled;
+
+        RBVirtualTransform _vTransform;
+
+        public void SetVTransform(RBVirtualTransform vTransform)
+        {
+            _vTransform = vTransform;
+        }
 
         void SetEnableInternal(bool state)
         {
@@ -38,22 +43,22 @@ namespace RBPhys
 
         void OnVEnabled()
         {
-            vTransform.physComputer.AddRigidbody(this);
+            _vTransform.physComputer.AddRigidbody(this);
 
             foreach (var c in _colliders)
             {
-                vTransform.physComputer.SwitchToRigidbody(c);
+                _vTransform.physComputer.SwitchToRigidbody(c);
                 c.UpdateTransform(0);
             }
         }
 
         void OnVDisabled()
         {
-            vTransform.physComputer.RemoveRigidbody(this);
+            _vTransform.physComputer.RemoveRigidbody(this);
 
             foreach (var c in _colliders)
             {
-                vTransform.physComputer.SwitchToCollider(c);
+                _vTransform.physComputer.SwitchToCollider(c);
                 c.UpdateTransform(0);
             }
         }
@@ -61,7 +66,7 @@ namespace RBPhys
 
         public void SetTransform(RBVirtualTransform vTransform)
         {
-            this.vTransform = vTransform;
+            this._vTransform = vTransform;
         }
 
         internal override void ApplyTransform(float dt, TimeScaleMode physTimeScaleMode)
@@ -92,8 +97,8 @@ namespace RBPhys
                     _angularVelocity = (avm > 0 ? (_expAngularVelocity / avm) : Vector3.zero) * Mathf.Max(0, avm - angularDrag);
                 }
 
-                vTransform.Position = _position + (_velocity * dt);
-                vTransform.Rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
+                _vTransform.Position = _position + (_velocity * dt);
+                _vTransform.Rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
             }
 
             UpdateTransform(dt);
@@ -102,8 +107,8 @@ namespace RBPhys
 
         internal override void UpdateTransform(float delta, bool updateColliders = true)
         {
-            Position = vTransform.Position;
-            Rotation = vTransform.Rotation;
+            Position = _vTransform.Position;
+            Rotation = _vTransform.Rotation;
 
             if (updateColliders)
             {

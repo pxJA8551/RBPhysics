@@ -24,7 +24,7 @@ namespace RBPhys
         {
         }
 
-        public bool vActive_And_vEnabled { get { return _vEnabled && (vTransform?.Active ?? false); } }
+        public bool vActive_And_vEnabled { get { return _vEnabled && (_vTransform?.Active ?? false); } }
 
         public bool vEnabled { get { return _vEnabled; } set { SetEnableInternal(value); } }
         bool _vEnabled;
@@ -36,36 +36,41 @@ namespace RBPhys
             else OnVDisabled();
         }
 
+        protected RBVirtualTransform _vTransform;
+
+        public void SetVTransform(RBVirtualTransform vTransform)
+        {
+            _vTransform = vTransform;
+        }
+
         void OnVEnabled()
         {
-            if (!(vTransform?.Validate() ?? false)) return;
+            if (!(_vTransform?.Validate() ?? false)) return;
 
-            vTransform.physComputer.AddCollider(this);
+            _vTransform.physComputer.AddCollider(this);
 
             if (ParentRigidbody != null)
             {
-                vTransform.physComputer.SwitchToRigidbody(this);
+                _vTransform.physComputer.SwitchToRigidbody(this);
             }
         }
 
         void OnVDisabled()
         {
-            if (!(vTransform?.Validate() ?? false)) return;
+            if (!(_vTransform?.Validate() ?? false)) return;
 
-            vTransform.physComputer.RemoveCollider(this);
+            _vTransform.physComputer.RemoveCollider(this);
         }
-
-        RBVirtualTransform vTransform;
 
         public void SetTransform(RBVirtualTransform vTransform)
         {
-            this.vTransform = vTransform;
+            this._vTransform = vTransform;
         }
 
         public override void UpdateTransform(float delta)
         {
-            GameObjectPos = vTransform?.Position ?? Vector3.zero;
-            GameObjectRot = vTransform?.Rotation ?? Quaternion.identity;
+            GameObjectPos = _vTransform?.Position ?? Vector3.zero;
+            GameObjectRot = _vTransform?.Rotation ?? Quaternion.identity;
 
             _expPos = GameObjectPos;
             _expRot = GameObjectRot;

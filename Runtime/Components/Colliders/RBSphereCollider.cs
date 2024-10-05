@@ -32,6 +32,7 @@ namespace RBPhys
             AddVirtualCollider(v);
             v._center = _center;
             v._radius = _radius;
+            v.SetVTransform(vTransform);
 
             return v;
         }
