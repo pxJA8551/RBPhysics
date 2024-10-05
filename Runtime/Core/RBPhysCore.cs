@@ -122,7 +122,7 @@ namespace RBPhys
         {
             physComputerTime = new PhysComputerTime(this);
 
-            UpdateSolverTimeVariables();
+            ReInitializeSolverTime();
 
             _trajectories_orderByXMin = new RBTrajectory[0];
             _trajectories_xMin = new float[0];
@@ -346,6 +346,16 @@ namespace RBPhys
             TryAwakeRigidbodies();
 
             //OnClosePhysicsFrame��
+        }
+
+        void ReInitializeSolverTime()
+        {
+            _solverTime = 0;
+            _solverDeltaTime = 0;
+            _solverUnscaledTime = 0;
+            _solverUnscaledDeltaTime = 0;
+
+            UpdateSolverTimeVariables();
         }
 
         void UpdateSolverTimeVariables()
