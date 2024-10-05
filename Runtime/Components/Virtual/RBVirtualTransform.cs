@@ -66,6 +66,22 @@ namespace RBPhys
             _parent = parent;
         }
 
+        public void ResetTransform()
+        {
+            var t = _baseObj.transform;
+            if (t != null)
+            {
+                _position = t.position;
+                _rotation = t.rotation;
+                _layer = baseObj?.layer ?? 0;
+                _active = baseObj.activeSelf;
+            }
+            else
+            {
+                Destroy(this);
+            }
+        }
+
         void UpdateGameObjectTransform()
         {
             if (_parent != null)

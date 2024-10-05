@@ -24,6 +24,24 @@ namespace RBPhys
 
         List<RBVirtualTransform> _vTransforms = new List<RBVirtualTransform>();
 
+        public void ResetTransform()
+        {
+            foreach (var vt in _vTransforms)
+            {
+                vt.ResetTransform();
+            }
+
+            foreach (var rb in _rbRigidbody)
+            {
+                rb.UpdateTransform(0);
+            }
+
+            foreach (var c in _rbCols)
+            {
+                c.UpdateTransform(0);
+            }
+        }
+
         public void AddRigidbody(RBRigidbody rb)
         {
             if (_predictionComputer != null)
