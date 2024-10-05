@@ -140,12 +140,12 @@ namespace RBPhys
             vTransform.Initialize(_predictionComputer, obj, vParent);
             _vTransforms.Add(vTransform);
 
-            if (vObj.TryGetComponent(out RBRigidbody r))
+            if (obj.TryGetComponent(out RBRigidbody r))
             {
                 r.CreateVirtual(vTransform);
             }
 
-            foreach (var c in vObj.GetComponents<RBCollider>())
+            foreach (var c in obj.GetComponents<RBCollider>())
             {
                 if (c.GeometryType == RBGeometryType.OBB)
                 {
@@ -166,9 +166,9 @@ namespace RBPhys
 
             if (recursive)
             {
-                for (int i = 0; i < vObj.transform.childCount; i++)
+                for (int i = 0; i < obj.transform.childCount; i++)
                 {
-                    var childObj = vObj.transform.GetChild(i);
+                    var childObj = obj.transform.GetChild(i);
                     if (childObj != null)
                     {
                         var vChildTransform = CreateVirtual(childObj.gameObject, vTransform, true);
