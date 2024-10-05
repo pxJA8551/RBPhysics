@@ -225,7 +225,7 @@ namespace RBPhys
             }
         }
 
-        public void AddCollider(RBCollider c)
+        public virtual void AddCollider(RBCollider c)
         {
             Array.Resize(ref _colliders, _colliders.Length + 1);
             _colliders[_colliders.Length - 1] = c;

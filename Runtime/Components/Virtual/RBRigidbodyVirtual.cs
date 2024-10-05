@@ -53,6 +53,15 @@ namespace RBPhys
             _expObjTrajectory.Update(this, _vTransform.layer);
         }
 
+        public override void AddCollider(RBCollider c)
+        {
+            Array.Resize(ref _colliders, _colliders.Length + 1);
+            _colliders[_colliders.Length - 1] = c;
+
+            _vTransform.physComputer.SwitchToCollider(c);
+            c.UpdateTransform(0);
+        }
+
         public void VInititalize()
         {
             base.Awake();
