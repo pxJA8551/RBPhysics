@@ -37,11 +37,7 @@ namespace RBPhys
         void FindRigidbody()
         {
             var r = GetComponentInParent<RBRigidbody>();
-
-            if (r != null)
-            {
-                SetParentRigidbody(r);
-            }
+            r?.AddCollider(this);
         }
 
         public void VInititalize()

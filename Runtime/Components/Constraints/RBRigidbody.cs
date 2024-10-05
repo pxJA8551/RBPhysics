@@ -223,6 +223,14 @@ namespace RBPhys
             }
         }
 
+        public void AddCollider(RBCollider c)
+        {
+            Array.Resize(ref _colliders, _colliders.Length + 1);
+            _colliders[_colliders.Length - 1] = c;
+
+            c.SetParentRigidbody(this);
+        }
+
         void ReleaseColliders()
         {
             foreach (var c in _colliders)
