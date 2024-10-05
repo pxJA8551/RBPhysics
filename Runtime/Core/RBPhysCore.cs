@@ -120,8 +120,8 @@ namespace RBPhys
 
         public void AddRigidbody(RBRigidbody rb)
         {
-            _rigidbodies.Add(rb);
-            _rbAddQueue.Add(rb);
+            if (!_rigidbodies.Contains(rb)) _rigidbodies.Add(rb);
+            if (!_rbAddQueue.Contains(rb)) _rbAddQueue.Add(rb);
             _rbRemoveQueue.Remove(rb);
         }
 
@@ -129,13 +129,13 @@ namespace RBPhys
         {
             _rigidbodies.Remove(rb);
             _rbAddQueue.Remove(rb);
-            _rbRemoveQueue.Add(rb);
+            if (!_rbRemoveQueue.Contains(rb)) _rbRemoveQueue.Add(rb);
         }
 
         public void AddCollider(RBCollider c)
         {
-            _colliders.Add(c);
-            _colAddQueue.Add(c);
+            if (!_colliders.Contains(c)) _colliders.Add(c);
+            if (!_colAddQueue.Contains(c)) _colAddQueue.Add(c);
             _colRemoveQueue.Remove(c);
         }
 
@@ -143,19 +143,19 @@ namespace RBPhys
         {
             _colliders.Remove(c);
             _colAddQueue.Remove(c);
-            _colRemoveQueue.Add(c);
+            if (!_colRemoveQueue.Contains(c)) _colRemoveQueue.Add(c);
         }
 
         public void SwitchToCollider(RBCollider c)
         {
-            _colAddQueue.Add(c);
+            if (!_colAddQueue.Contains(c)) _colAddQueue.Add(c);
             _colRemoveQueue.Remove(c);
         }
 
         public void SwitchToRigidbody(RBCollider c)
         {
             _colAddQueue.Remove(c);
-            _colRemoveQueue.Add(c);
+            if (!_colRemoveQueue.Contains(c)) _colRemoveQueue.Add(c);
         }
 
         public void AddStdSolver(IStdSolver solver)
