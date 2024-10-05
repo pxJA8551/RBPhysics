@@ -151,13 +151,13 @@ namespace RBPhys
                 }
                 else if (c.GeometryType == RBGeometryType.Sphere)
                 {
-                    var obb = c as RBSphereCollider;
-                    obb.CreateVirtual(vTransform);
+                    var sphere = c as RBSphereCollider;
+                    sphere.CreateVirtual(vTransform);
                 }
                 else if (c.GeometryType == RBGeometryType.Capsule)
                 {
-                    var obb = c as RBCapsuleCollider;
-                    obb.CreateVirtual(vTransform);
+                    var capusle = c as RBCapsuleCollider;
+                    capusle.CreateVirtual(vTransform);
                 }
             }
 

@@ -34,9 +34,20 @@ namespace RBPhys
             _vTransform = vTransform;
         }
 
+        void FindRigidbody()
+        {
+            var r = GetComponentInParent<RBRigidbody>();
+
+            if (r != null)
+            {
+                SetParentRigidbody(r);
+            }
+        }
+
         public void VInititalize()
         {
             Awake();
+            FindRigidbody();
             OnVEnabled();
         }
 

@@ -259,9 +259,9 @@ namespace RBPhys
 
         public void OpenPhysicsFrameWindow()
         {
-            float dt = _solverDeltaTimeAsFloat;
-
             UpdateSolverTimeVariables();
+
+            float dt = _solverDeltaTimeAsFloat;
 
             if (dt == 0) return;
 
@@ -317,7 +317,7 @@ namespace RBPhys
                 }
             }
 
-            if(!multiThreadPredictionMode) UpdateTransforms();
+            UpdateTransforms();
             UpdateExtTrajectories(dt);
             SortTrajectories();
 
@@ -329,11 +329,8 @@ namespace RBPhys
                 }
             }
 
-            if (!multiThreadPredictionMode)
-            {
-                TrySleepRigidbodies();
-                TryAwakeRigidbodies();
-            }
+            TrySleepRigidbodies();
+            TryAwakeRigidbodies();
 
             //OnClosePhysicsFrame��
         }
