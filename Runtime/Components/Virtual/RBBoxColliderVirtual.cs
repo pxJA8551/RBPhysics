@@ -36,7 +36,7 @@ namespace RBPhys
 
         void FindRigidbody()
         {
-            var r = GetComponentInParent<RBRigidbody>(true);
+            var r = GetComponentInParent<RBRigidbodyVirtual>(true);
             r?.AddCollider(this);
         }
 
