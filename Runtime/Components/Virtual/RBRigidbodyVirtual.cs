@@ -65,7 +65,25 @@ namespace RBPhys
 
         public void VInititalize()
         {
-            base.Awake();
+            FindColliders();
+            UpdateTransform(0);
+            if (_colliders.Any()) RecalculateInertiaTensor();
+
+            if (!isSleeping || sleepGrace != 5)
+            {
+                isSleeping = false;
+                sleepGrace = 0;
+            }
+
+            if (sleepUntilInteraction)
+            {
+                PhysSleep();
+            }
+            else
+            {
+                PhysAwakeForce();
+            }
+
             SetEnableInternal(true);
         }
 

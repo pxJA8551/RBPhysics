@@ -212,7 +212,7 @@ namespace RBPhys
             _expObjTrajectory = new RBTrajectory();
         }
 
-        void FindColliders()
+        protected void FindColliders()
         {
             _colliders = GetComponentsInChildren<RBCollider>(true).ToArray();
 
