@@ -233,6 +233,8 @@ namespace RBPhys
             RBPhysController.SwitchToRigidbody(c);
             c.UpdateTransform(0);
             c.SetParentRigidbody(this);
+
+            RecalculateInertiaTensor();
         }
 
         void ReleaseColliders()
@@ -536,9 +538,9 @@ namespace RBPhys
             inertiaTensorRotation = itRot;
             cg = it.CenterOfGravity;
 
-            if (float.IsNaN(inertiaTensor.x) || float.IsNaN(inertiaTensor.y) || float.IsNaN(inertiaTensor.z))
+            if (inertiaTensor == Vector3.zero)
             {
-                Debug.LogWarning("No collider found. Error initializing InertiaTensor/InertiaTensorRotation.");
+                Debug.LogError("No collider found. Error initializing InertiaTensor/InertiaTensorRotation.");
                 inertiaTensor = Vector3.one;
                 inertiaTensorRotation = Quaternion.identity;
             }
