@@ -36,8 +36,8 @@ namespace RBPhys
 
         void FindRigidbody()
         {
-            var r = GetComponentInParent<RBRigidbody>();
-            r?.AddCollider(this);
+            var r = GetComponentInParent<RBRigidbody>(true);
+            r.AddCollider(this);
         }
 
         public void VInititalize()
@@ -64,11 +64,6 @@ namespace RBPhys
             if (!(_vTransform?.Validate() ?? false)) return;
 
             _vTransform.physComputer.RemoveCollider(this);
-        }
-
-        public void SetTransform(RBVirtualTransform vTransform)
-        {
-            this._vTransform = vTransform;
         }
 
         public override void UpdateTransform(float delta)

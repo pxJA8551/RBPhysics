@@ -232,6 +232,7 @@ namespace RBPhys
 
             RBPhysController.SwitchToRigidbody(c);
             c.UpdateTransform(0);
+            c.SetParentRigidbody(this);
         }
 
         void ReleaseColliders()
