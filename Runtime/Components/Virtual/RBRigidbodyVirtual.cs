@@ -58,7 +58,7 @@ namespace RBPhys
             Array.Resize(ref _colliders, _colliders.Length + 1);
             _colliders[_colliders.Length - 1] = c;
 
-            _vTransform.physComputer.SwitchToCollider(c);
+            _vTransform.physComputer.SwitchToRigidbody(c);
             c.UpdateTransform(0);
         }
 
