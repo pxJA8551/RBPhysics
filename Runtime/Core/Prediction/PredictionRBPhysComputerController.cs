@@ -20,8 +20,8 @@ namespace RBPhys
         List<RBPhysComputer.IStdSolverPrediction> _predSolvers = new List<RBPhysComputer.IStdSolverPrediction>();
         List<RBPhysComputer.IRBPhysObjectPrediction> _predPhysObjs = new List<RBPhysComputer.IRBPhysObjectPrediction>();
 
-        List<RBRigidbody> _rbRigidbodyAddQueue;
-        List<RBCollider> _rbColsAddQueue;
+        List<RBRigidbody> _rbRigidbodyAddQueue = new List<RBRigidbody>();
+        List<RBCollider> _rbColsAddQueue = new List<RBCollider>();
         List<RBPhysComputer.IStdSolverPrediction> _predSolversAddQueue = new List<RBPhysComputer.IStdSolverPrediction>();
         List<RBPhysComputer.IRBPhysObjectPrediction> _predPhysObjsAddQueue = new List<RBPhysComputer.IRBPhysObjectPrediction>();
 
