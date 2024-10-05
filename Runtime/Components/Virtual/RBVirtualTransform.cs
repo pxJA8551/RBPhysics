@@ -32,6 +32,9 @@ namespace RBPhys
 
         List<RBVirtualTransform> _children = new List<RBVirtualTransform>();
 
+        public int layer { get { return _layer; } }
+        int _layer;
+
         public T AddCollider<T>() where T : RBCollider
         {
             if (typeof(T) != typeof(RBBoxColliderVirtual) && typeof(T) != typeof(RBSphereColliderVirtual) && typeof(T) != typeof(RBCapsuleColliderVirtual)) throw new NotImplementedException();
@@ -56,6 +59,7 @@ namespace RBPhys
             {
                 _position = t.position;
                 _rotation = t.rotation;
+                _layer = baseObj?.layer ?? 0;
                 _active = baseObj.activeSelf;
             }
 

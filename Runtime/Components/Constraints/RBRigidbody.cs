@@ -317,7 +317,7 @@ namespace RBPhys
             validators.Clear();
         }
 
-        internal void UpdateExpTrajectory(float dt, bool updateColliders = true)
+        internal virtual void UpdateExpTrajectory(float dt, bool updateColliders = true)
         {
             (Vector3 pos, Quaternion rot) r = GetIntergrated(dt);
 
