@@ -186,7 +186,7 @@ namespace RBPhys
             InitPredictionComputer();
         }
 
-        public async void InitIntergradePrediction()
+        public async Task InitIntergradePrediction()
         {
             if (_predictionComputer != null)
             {
