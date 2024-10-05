@@ -9,9 +9,6 @@ namespace RBPhys
 {
     public class PredictionRBPhysComputerController
     {
-        const int PREDICTION_FRAMES_COUNT = 200; // dt = .01f
-        const float PREDICTION_DELTATIME = .05f;
-
         public RBPhysComputer PredictionComputer { get { return _predictionComputer; } }
         RBPhysComputer _predictionComputer;
 
@@ -180,23 +177,23 @@ namespace RBPhys
             return vTransform;
         }
 
-        public void InitPrediction()
+        public void InitPrediction(float deltaTime)
         {
-            CreatePrediction();
+            CreatePrediction(deltaTime);
             InitPredictionComputer();
         }
 
-        public async Task InitIntergradePrediction()
+        public async Task InitIntergradePrediction(int frames)
         {
             if (_predictionComputer != null)
             {
-                await IntergradeComputeFor(PREDICTION_FRAMES_COUNT);
+                await IntergradeComputeFor(frames);
             }
         }
 
-        public void CreatePrediction()
+        public void CreatePrediction(float deltaTime)
         {
-            _predictionComputer = new RBPhysComputer(true, PREDICTION_DELTATIME);
+            _predictionComputer = new RBPhysComputer(true, deltaTime);
         }
 
         public void InitPredictionComputer()
