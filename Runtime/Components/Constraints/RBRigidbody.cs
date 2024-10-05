@@ -121,7 +121,7 @@ namespace RBPhys
             return _virtualRigidbodies.Count;
         }
 
-        public RBRigidbody CreateVirtual(RBVirtualTransform vTransform)
+        public RBRigidbodyVirtual CreateVirtual(RBVirtualTransform vTransform)
         {
             var r = vTransform.AddRigidbody();
             r.CopyRigidbody(this);
