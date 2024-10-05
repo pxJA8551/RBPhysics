@@ -118,6 +118,17 @@ namespace RBPhys
             timeParams = new ComputerTimeParams(deltaTime, 1, false);
         }
 
+        public void ReInitializeComputer()
+        {
+            physComputerTime = new PhysComputerTime(this);
+
+            _trajectories_orderByXMin = new RBTrajectory[0];
+            _trajectories_xMin = new float[0];
+
+            _collisions.Clear();
+            _collisionsInSolver.Clear();
+        }
+
         public void AddRigidbody(RBRigidbody rb)
         {
             if (!_rigidbodies.Contains(rb)) _rigidbodies.Add(rb);

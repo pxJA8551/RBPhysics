@@ -26,6 +26,8 @@ namespace RBPhys
 
         public void ReInitialize()
         {
+            _predictionComputer.ReInitializeComputer();
+
             foreach (var vt in _vTransforms)
             {
                 vt.ReInitialize();
