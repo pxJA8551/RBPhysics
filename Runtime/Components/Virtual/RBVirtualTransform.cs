@@ -34,7 +34,7 @@ namespace RBPhys
 
         public T AddCollider<T>() where T : RBCollider
         {
-            if (typeof(T) != typeof(RBBoxColliderVirtual) || typeof(T) != typeof(RBSphereColliderVirtual) || typeof(T) != typeof(RBCapsuleColliderVirtual)) throw new NotImplementedException();
+            if (typeof(T) != typeof(RBBoxColliderVirtual) && typeof(T) != typeof(RBSphereColliderVirtual) && typeof(T) != typeof(RBCapsuleColliderVirtual)) throw new NotImplementedException();
 
             var c = gameObject.AddComponent<T>();
             return c;
