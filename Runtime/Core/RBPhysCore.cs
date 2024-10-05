@@ -122,6 +122,8 @@ namespace RBPhys
         {
             physComputerTime = new PhysComputerTime(this);
 
+            UpdateSolverTimeVariables();
+
             _trajectories_orderByXMin = new RBTrajectory[0];
             _trajectories_xMin = new float[0];
 
