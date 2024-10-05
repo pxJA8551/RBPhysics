@@ -56,7 +56,7 @@ namespace RBPhys
         public void VInititalize()
         {
             base.Awake();
-            OnVEnabled();
+            SetEnableInternal(true);
         }
 
         void OnVEnabled()

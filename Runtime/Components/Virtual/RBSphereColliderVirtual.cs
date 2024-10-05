@@ -45,7 +45,7 @@ namespace RBPhys
         {
             Awake();
             FindRigidbody();
-            OnVEnabled();
+            SetEnableInternal(true);
         }
 
         void OnVEnabled()
