@@ -30,12 +30,17 @@ namespace RBPhys
         {
             var v = vTransform.AddCollider<RBSphereColliderVirtual>();
             AddVirtualCollider(v);
-            v._center = _center;
-            v._radius = _radius;
+            v.CopyRigidbody(this);
             v.SetVTransform(vTransform);
             v.VInititalize();
 
             return v;
+        }
+
+        public void CopyRigidbody(RBSphereCollider c)
+        {
+            _center = c._center;
+            _radius = c._radius;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

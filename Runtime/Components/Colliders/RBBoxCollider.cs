@@ -7,6 +7,8 @@ using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using static UnityEditor.ShaderData;
+using UnityEngine.UIElements;
 
 namespace RBPhys
 {
@@ -31,13 +33,18 @@ namespace RBPhys
         {
             var v = vTransform.AddCollider<RBBoxColliderVirtual>();
             AddVirtualCollider(v);
-            v._size = _size;
-            v._center = _center;
-            v._rotationEuler = _rotationEuler;
+            v.CopyRigidbody(this);
             v.SetVTransform(vTransform);
             v.VInititalize();
 
             return v;
+        }
+
+        public void CopyRigidbody(RBBoxCollider c)
+        {
+            _size = c._size;
+            _center = c._center;
+            _rotationEuler = c._rotationEuler;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

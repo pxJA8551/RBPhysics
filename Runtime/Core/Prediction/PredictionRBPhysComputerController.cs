@@ -24,21 +24,48 @@ namespace RBPhys
 
         List<RBVirtualTransform> _vTransforms = new List<RBVirtualTransform>();
 
-        public void ResetTransform()
+        public void ReInitialize()
         {
             foreach (var vt in _vTransforms)
             {
-                vt.ResetTransform();
+                vt.ReInitialize();
             }
 
             foreach (var rb in _rbRigidbody)
             {
-                rb.UpdateTransform(0);
+                var vRb = rb as RBRigidbodyVirtual;
+                if (vRb)
+                {
+                    vRb.ReInitialize();
+                }
             }
 
             foreach (var c in _rbCols)
             {
-                c.UpdateTransform(0);
+                if (c.GeometryType == RBGeometryType.OBB)
+                {
+                    var vOBB = c as RBBoxColliderVirtual;
+                    if (vOBB != null)
+                    {
+                        vOBB.ReInitialize();
+                    }
+                }
+                else if (c.GeometryType == RBGeometryType.Sphere)
+                {
+                    var vSphere = c as RBSphereColliderVirtual;
+                    if (vSphere != null)
+                    {
+                        vSphere.ReInitialize();
+                    }
+                }
+                else if (c.GeometryType == RBGeometryType.Capsule)
+                {
+                    var vCapsule = c as RBCapsuleColliderVirtual;
+                    if (vCapsule != null)
+                    {
+                        vCapsule.ReInitialize();
+                    }
+                }
             }
         }
 

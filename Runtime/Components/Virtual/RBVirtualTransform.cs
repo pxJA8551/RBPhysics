@@ -66,7 +66,7 @@ namespace RBPhys
             _parent = parent;
         }
 
-        public void ResetTransform()
+        public void ReInitialize()
         {
             var t = _baseObj.transform;
             if (t != null)

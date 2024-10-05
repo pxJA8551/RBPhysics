@@ -34,7 +34,7 @@ namespace RBPhys
 
         int _stackVal_ignoreVelocity_ifGreaterThanZero = 0;
 
-        Vector3 _centerOfGravity;
+        protected Vector3 _centerOfGravity;
 
         protected Vector3 _velocity;
         protected Vector3 _angularVelocity;
@@ -124,23 +124,28 @@ namespace RBPhys
         public RBRigidbody CreateVirtual(RBVirtualTransform vTransform)
         {
             var r = vTransform.AddRigidbody();
-            r.mass = mass;
-            r.inertiaTensorMultiplier = inertiaTensorMultiplier;
-            r.drag = drag;
-            r.angularDrag = angularDrag;
-            r.inertiaTensor = inertiaTensor;
-            r.inertiaTensorRotation = inertiaTensorRotation;
-            r._centerOfGravity = _centerOfGravity;
-            r._velocity = _velocity;
-            r._angularVelocity = _angularVelocity;
-            r._expVelocity = _expVelocity;
-            r._expAngularVelocity = _expAngularVelocity;
-            r._position = _position;
-            r._rotation = _rotation;
+            r.CopyRigidbody(this);
             r.SetVTransform(vTransform);
-            r.VInititalize();
+            r.VInititalize(this);
 
             return r;
+        }
+
+        public void CopyRigidbody(RBRigidbody rb)
+        {
+            mass = rb.mass;
+            inertiaTensorMultiplier = rb.inertiaTensorMultiplier;
+            drag = rb.drag;
+            angularDrag = rb.angularDrag;
+            inertiaTensor = rb.inertiaTensor;
+            inertiaTensorRotation = rb.inertiaTensorRotation;
+            _centerOfGravity = rb._centerOfGravity;
+            _velocity = rb._velocity;
+            _angularVelocity = rb._angularVelocity;
+            _expVelocity = rb._expVelocity;
+            _expAngularVelocity = rb._expAngularVelocity;
+            _position = rb._position;
+            _rotation = rb._rotation;
         }
 
         public void AddVaidator(RBPhysStateValidator validator)

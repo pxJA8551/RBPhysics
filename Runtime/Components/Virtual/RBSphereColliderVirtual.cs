@@ -23,9 +23,25 @@ namespace RBPhys
 
         protected RBVirtualTransform _vTransform;
 
+        public RBSphereCollider BaseCollider { get { return _baseCollider; } }
+        RBSphereCollider _baseCollider;
+
         public void SetVTransform(RBVirtualTransform vTransform)
         {
             _vTransform = vTransform;
+        }
+
+        public void ReInitialize()
+        {
+            var c = _baseCollider;
+            if (c != null)
+            {
+                CopyRigidbody(c);
+            }
+            else
+            {
+                Destroy(this);
+            }
         }
 
         void SetEnableInternal(bool state)

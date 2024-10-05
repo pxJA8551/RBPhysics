@@ -32,14 +32,19 @@ namespace RBPhys
         {
             var v = vTransform.AddCollider<RBCapsuleColliderVirtual>();
             AddVirtualCollider(v);
-            v._center = _center;
-            v._rotationEuler = _rotationEuler;
-            v._radius = _radius;
-            v._height = _height;
+            v.CopyRigidbody(this);
             v.SetVTransform(vTransform);
             v.VInititalize();
 
             return v;
+        }
+
+        public void CopyRigidbody(RBCapsuleCollider c)
+        {
+            _center = c._center;
+            _rotationEuler = c._rotationEuler;
+            _radius = c._radius;
+            _height = c._height;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

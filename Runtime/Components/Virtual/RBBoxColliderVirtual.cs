@@ -29,9 +29,25 @@ namespace RBPhys
 
         protected RBVirtualTransform _vTransform;
 
+        public RBBoxCollider BaseCollider { get { return _baseCollider; } }
+        RBBoxCollider _baseCollider;
+
         public void SetVTransform(RBVirtualTransform vTransform)
         {
             _vTransform = vTransform;
+        }
+
+        public void ReInitialize()
+        {
+            var c = _baseCollider;
+            if (c != null)
+            {
+                CopyRigidbody(c);
+            }
+            else
+            {
+                Destroy(this);
+            }
         }
 
         void FindRigidbody()

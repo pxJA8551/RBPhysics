@@ -26,6 +26,9 @@ namespace RBPhys
 
         RBVirtualTransform _vTransform;
 
+        public RBRigidbody BaseRigidbody { get { return _baseRigidbody; } }
+        RBRigidbody _baseRigidbody;
+
         public void SetVTransform(RBVirtualTransform vTransform)
         {
             _vTransform = vTransform;
@@ -63,7 +66,7 @@ namespace RBPhys
             c.UpdateTransform(0);
         }
 
-        public void VInititalize()
+        public void VInititalize(RBRigidbody baseRigidbody)
         {
             FindColliders();
             UpdateTransform(0);
@@ -83,6 +86,8 @@ namespace RBPhys
             {
                 PhysAwakeForce();
             }
+
+            _baseRigidbody = baseRigidbody;
 
             SetEnableInternal(true);
         }
@@ -109,6 +114,18 @@ namespace RBPhys
             }
         }
 
+        public void ReInitialize()
+        {
+            var rb = _baseRigidbody;
+            if (rb != null)
+            {
+                CopyRigidbody(rb);
+            }
+            else
+            {
+                Destroy(this);
+            }
+        }
 
         public void SetTransform(RBVirtualTransform vTransform)
         {
