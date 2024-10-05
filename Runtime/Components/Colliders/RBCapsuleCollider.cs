@@ -27,6 +27,19 @@ namespace RBPhys
         public float MutipliedHeight { get { return _height * colliderSizeMultiplier; } }
         public Vector3 MutipliedCenter { get { return _center * colliderSizeMultiplier; } }
 
+        public RBCapsuleCollider CreateVirtual()
+        {
+            var v = gameObject.AddComponent<RBCapsuleCollider>();
+            v.SetVirtual();
+            AddVirtualCollider(v);
+            v._center = _center;
+            v._rotationEuler = _rotationEuler;
+            v._radius = _radius;
+            v._height = _height;
+
+            return v;
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override float CalcVolume()
         {

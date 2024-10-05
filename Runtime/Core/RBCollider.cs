@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using static RBPhys.RBPhysComputer;
 
@@ -14,6 +15,11 @@ namespace RBPhys
 
         public Vector3 GameObjectPos { get; private set; }
         public Quaternion GameObjectRot { get; private set; }
+
+        public bool isVirtual { get{ return _isVirtual; } }
+        bool _isVirtual;
+
+        List<RBCollider> _virtualColliders;
 
         [NonSerialized] public float cr_kp = .45f; //Õ“Ë‰ğÁˆ— PƒQƒCƒ“
         [NonSerialized] public float cr_ki = 15f; //Õ“Ë‰ğÁˆ— IƒQƒCƒ“
@@ -41,6 +47,37 @@ namespace RBPhys
 
         List<IRBOnCollision> collisionCallbacks = new List<IRBOnCollision>();
 
+        protected void SetVirtual()
+        {
+            _isVirtual = true;
+        }
+
+        protected void AddVirtualCollider(RBCollider collider)
+        {
+            if (!_virtualColliders.Contains(collider))
+            {
+                _virtualColliders.Add(collider);
+            }
+        }
+
+        protected void RemoveVirtualCollider(RBCollider collider)
+        {
+            _virtualColliders.Remove(collider);
+        }
+
+        public int VirtualColliders(ref RBCollider[] colliders)
+        {
+            if (colliders == null) colliders = new RBCollider[Mathf.Max(_virtualColliders.Count, 1)];
+            if (colliders.Length < _virtualColliders.Count) Array.Resize(ref colliders, _virtualColliders.Count);
+
+            for (int i = 0; i < colliders.Length; i++)
+            {
+                colliders[i] = _virtualColliders.ElementAtOrDefault(i);
+            }
+
+            return _virtualColliders.Count;
+        }
+
         public void SetIgnoreCollision()
         {
             _stackVal_ignoreCollision_ifGreaterThanZero++;
@@ -54,10 +91,6 @@ namespace RBPhys
         void Awake()
         {
             UpdateTransform(0);
-        }
-
-        void OnDestroy()
-        {
         }
 
         void OnEnable()

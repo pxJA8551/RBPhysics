@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Net.WebSockets;
 using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEngine;
@@ -25,6 +26,18 @@ namespace RBPhys
 
         public Vector3 MutipliedSize { get { return _size * colliderSizeMultiplier; } }
         public Vector3 MutipliedCenter { get { return _center * colliderSizeMultiplier; } }
+
+        public RBBoxCollider CreateVirtual()
+        {
+            var v = gameObject.AddComponent<RBBoxCollider>();
+            v.SetVirtual();
+            AddVirtualCollider(v);
+            v._size = _size;
+            v._center = _center;
+            v._rotationEuler = _rotationEuler;
+
+            return v;
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override float CalcVolume()
