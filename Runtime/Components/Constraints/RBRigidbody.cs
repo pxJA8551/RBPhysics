@@ -230,7 +230,8 @@ namespace RBPhys
             Array.Resize(ref _colliders, _colliders.Length + 1);
             _colliders[_colliders.Length - 1] = c;
 
-            c.SetParentRigidbody(this);
+            RBPhysController.SwitchToRigidbody(c);
+            c.UpdateTransform(0);
         }
 
         void ReleaseColliders()
