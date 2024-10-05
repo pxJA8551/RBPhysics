@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static RBPhys.RBPhysComputer;
 
 namespace RBPhys
@@ -17,6 +18,8 @@ namespace RBPhys
         public Quaternion GameObjectRot { get; protected set; }
 
         List<RBCollider> _virtualColliders = new List<RBCollider>();
+
+        public virtual bool vActive_And_vEnabled { get { return enabled && gameObject.activeSelf; } }
 
         [NonSerialized] public float cr_kp = .45f; //è’ìÀâè¡èàóù PÉQÉCÉì
         [NonSerialized] public float cr_ki = 15f; //è’ìÀâè¡èàóù IÉQÉCÉì
@@ -128,7 +131,7 @@ namespace RBPhys
             _expPos = GameObjectPos;
             _expRot = GameObjectRot;
 
-            _hasParentRigidbodyInFrame = _parent?.isActiveAndEnabled ?? false;
+            _hasParentRigidbodyInFrame = _parent?.vActive_And_vEnabled ?? false;
 
             if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, GameObjectPos, GameObjectRot, delta);
             else _expTrajectory.Update(this, _expPos, _expRot, delta);

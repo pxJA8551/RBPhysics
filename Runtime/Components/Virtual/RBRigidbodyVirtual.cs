@@ -19,7 +19,7 @@ namespace RBPhys
         protected override void OnEnable() { }
         protected override void OnDisable() { }
 
-        public bool vActive_And_vEnabled { get { return _vEnabled && (_vTransform?.Active ?? false); } }
+        public override bool vActive_And_vEnabled { get { return _vEnabled && (_vTransform?.Active ?? false); } }
 
         public bool vEnabled { get { return _vEnabled; } set { SetEnableInternal(value); } }
         bool _vEnabled;

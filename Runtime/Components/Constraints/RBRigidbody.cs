@@ -28,6 +28,8 @@ namespace RBPhys
         [NonSerialized] public Vector3 inertiaTensor;
         [NonSerialized] public Quaternion inertiaTensorRotation;
 
+        public virtual bool vActive_And_vEnabled { get { return enabled && gameObject.activeSelf; } }
+
         public bool IgnoreVelocity { get { return _stackVal_ignoreVelocity_ifGreaterThanZero > 0; } }
 
         int _stackVal_ignoreVelocity_ifGreaterThanZero = 0;
