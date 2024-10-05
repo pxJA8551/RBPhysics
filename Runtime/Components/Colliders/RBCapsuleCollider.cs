@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace RBPhys
 {
@@ -27,10 +28,9 @@ namespace RBPhys
         public float MutipliedHeight { get { return _height * colliderSizeMultiplier; } }
         public Vector3 MutipliedCenter { get { return _center * colliderSizeMultiplier; } }
 
-        public RBCapsuleCollider CreateVirtual()
+        public RBCapsuleCollider CreateVirtual(RBVirtualTransform vTransform)
         {
-            var v = gameObject.AddComponent<RBCapsuleCollider>();
-            v.SetVirtual();
+            var v = vTransform.AddCollider<RBCapsuleColliderVirtual>();
             AddVirtualCollider(v);
             v._center = _center;
             v._rotationEuler = _rotationEuler;

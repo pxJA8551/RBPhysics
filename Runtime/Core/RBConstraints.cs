@@ -37,11 +37,6 @@ namespace RBPhys
             void OnCollision(RBCollider col, RBCollisionInfo info);
         }
 
-        public interface IRBOnCollisionPrediction
-        {
-            void OnCollisionPrediction(RBCollider col, RBCollisionInfo info);
-        }
-
         public interface IRBPhysStateValidator
         {
             bool Validate();

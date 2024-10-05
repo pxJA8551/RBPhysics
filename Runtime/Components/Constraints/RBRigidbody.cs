@@ -11,12 +11,13 @@ using static RBPhys.RBPhysUtil;
 
 namespace RBPhys
 {
+    [DisallowMultipleComponent]
     public class RBRigidbody : MonoBehaviour
     {
         const float SLEEP_VEL_MAX_SQRT = 0.03f * 0.03f;
         const float SLEEP_ANGVEL_MAX_SQRT = 0.03f * 0.03f;
-        const float XZ_VELOCITY_MIN_CUTOUT = .002f;
-        const float ANG_VELOCITY_MIN_CUTOUT = .02f;
+        protected const float XZ_VELOCITY_MIN_CUTOUT = .002f;
+        protected const float ANG_VELOCITY_MIN_CUTOUT = .02f;
         const int SLEEP_GRACE_FRAMES = 6;
 
         public float mass = 1;
@@ -33,14 +34,14 @@ namespace RBPhys
 
         Vector3 _centerOfGravity;
 
-        Vector3 _velocity;
-        Vector3 _angularVelocity;
-        Vector3 _expVelocity;
-        Vector3 _expAngularVelocity;
-        Vector3 _position;
-        Quaternion _rotation;
+        protected Vector3 _velocity;
+        protected Vector3 _angularVelocity;
+        protected Vector3 _expVelocity;
+        protected Vector3 _expAngularVelocity;
+        protected Vector3 _position;
+        protected Quaternion _rotation;
 
-        RBCollider[] _colliders;
+        protected RBCollider[] _colliders;
 
         public Vector3 Velocity { get { return _velocity; } }
         public Vector3 AngularVelocity { get { return _angularVelocity; } }
@@ -84,11 +85,59 @@ namespace RBPhys
 
         public RBTrajectory ExpObjectTrajectory { get { return _expObjTrajectory; } }
 
-        RBTrajectory _expObjTrajectory;
+        protected RBTrajectory _expObjTrajectory;
 
         List<IRBOnCollision> collisionCallbacks = new List<IRBOnCollision>();
 
         public List<RBPhysStateValidator> validators = new List<RBPhysStateValidator>();
+
+        List<RBRigidbody> _virtualRigidbodies = new List<RBRigidbody>();
+        
+        protected void AddVirtualRigidbody(RBRigidbody collider)
+        {
+            if (!_virtualRigidbodies.Contains(collider))
+            {
+                _virtualRigidbodies.Add(collider);
+            }
+        }
+
+        protected void RemoveVirtualRigidbody(RBRigidbody collider)
+        {
+            _virtualRigidbodies.Remove(collider);
+        }
+
+        public int VirtualRigidbodies(ref RBRigidbody[] rigidbodies)
+        {
+            if (rigidbodies == null) rigidbodies = new RBRigidbody[Mathf.Max(_virtualRigidbodies.Count, 1)];
+            if (rigidbodies.Length < _virtualRigidbodies.Count) Array.Resize(ref rigidbodies, _virtualRigidbodies.Count);
+
+            for (int i = 0; i < rigidbodies.Length; i++)
+            {
+                rigidbodies[i] = _virtualRigidbodies.ElementAtOrDefault(i);
+            }
+
+            return _virtualRigidbodies.Count;
+        }
+
+        public RBRigidbody CreateVirtual(RBVirtualTransform vTransform)
+        {
+            var r = vTransform.AddRigidbody();
+            r.mass = mass;
+            r.inertiaTensorMultiplier = inertiaTensorMultiplier;
+            r.drag = drag;
+            r.angularDrag = angularDrag;
+            r.inertiaTensor = inertiaTensor;
+            r.inertiaTensorRotation = inertiaTensorRotation;
+            r._centerOfGravity = _centerOfGravity;
+            r._velocity = _velocity;
+            r._angularVelocity = _angularVelocity;
+            r._expVelocity = _expVelocity;
+            r._expAngularVelocity = _expAngularVelocity;
+            r._position = _position;
+            r._rotation = _rotation;
+
+            return r;
+        }
 
         public void AddVaidator(RBPhysStateValidator validator)
         {
@@ -105,7 +154,7 @@ namespace RBPhys
             }
         }
 
-        void Awake()
+        protected virtual void Awake()
         {
             FindColliders();
             UpdateTransform(0);
@@ -127,12 +176,7 @@ namespace RBPhys
             }
         }
 
-        void OnDestroy()
-        {
-            ReleaseColliders();
-        }
-
-        void OnEnable()
+        protected virtual void OnEnable()
         {
             RBPhysController.AddRigidbody(this);
 
@@ -143,7 +187,7 @@ namespace RBPhys
             }
         }
 
-        private void OnDisable()
+        protected virtual void OnDisable()
         {
             RBPhysController.RemoveRigidbody(this);
 
@@ -152,6 +196,11 @@ namespace RBPhys
                 RBPhysController.SwitchToCollider(c);
                 c.UpdateTransform(0);
             }
+        }
+
+        void OnDestroy()
+        {
+            ReleaseColliders();
         }
 
         public RBRigidbody()
@@ -211,7 +260,7 @@ namespace RBPhys
             _stackVal_ignoreVelocity_ifGreaterThanZero--;
         }
 
-        internal void ApplyTransform(float dt, RBPhys.TimeScaleMode physTimeScaleMode, bool predictionMode)
+        internal virtual void ApplyTransform(float dt, RBPhys.TimeScaleMode physTimeScaleMode)
         {
             if (!IgnoreVelocity)
             {
@@ -239,26 +288,15 @@ namespace RBPhys
                     _angularVelocity = (avm > 0 ? (_expAngularVelocity / avm) : Vector3.zero) * Mathf.Max(0, avm - angularDrag);
                 }
 
-                if (!predictionMode)
-                {
-                    transform.position = _position + (_velocity * dt);
-                    transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
-                }
-                else
-                {
-                    Position = _position + (_velocity * dt);
-                    Rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
-                }
+                transform.position = _position + (_velocity * dt);
+                transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
             }
 
-            if (!predictionMode)
-            {
-                UpdateTransform(dt);
-                UpdateExpTrajectory(dt);
-            }
+            UpdateTransform(dt);
+            UpdateExpTrajectory(dt);
         }
 
-        internal void UpdateTransform(float delta, bool updateColliders = true)
+        internal virtual void UpdateTransform(float delta, bool updateColliders = true)
         {
             Position = transform.position;
             Rotation = transform.rotation;

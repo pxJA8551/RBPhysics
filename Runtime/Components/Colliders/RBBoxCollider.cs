@@ -27,10 +27,9 @@ namespace RBPhys
         public Vector3 MutipliedSize { get { return _size * colliderSizeMultiplier; } }
         public Vector3 MutipliedCenter { get { return _center * colliderSizeMultiplier; } }
 
-        public RBBoxCollider CreateVirtual()
+        public RBBoxCollider CreateVirtual(RBVirtualTransform vTransform)
         {
-            var v = gameObject.AddComponent<RBBoxCollider>();
-            v.SetVirtual();
+            var v = vTransform.AddCollider<RBBoxColliderVirtual>();
             AddVirtualCollider(v);
             v._size = _size;
             v._center = _center;

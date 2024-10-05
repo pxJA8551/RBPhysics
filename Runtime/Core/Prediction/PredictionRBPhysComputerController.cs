@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace RBPhys
 {
@@ -18,13 +19,13 @@ namespace RBPhys
         List<RBCollider> _rbCols = new List<RBCollider>();
         List<RBPhysComputer.IStdSolverPrediction> _predSolvers = new List<RBPhysComputer.IStdSolverPrediction>();
         List<RBPhysComputer.IRBPhysObjectPrediction> _predPhysObjs = new List<RBPhysComputer.IRBPhysObjectPrediction>();
-        List<RBPhysComputer.IRBOnCollisionPrediction> _predOnCollisions = new List<RBPhysComputer.IRBOnCollisionPrediction>();
 
         List<RBRigidbody> _rbRigidbodyAddQueue;
         List<RBCollider> _rbColsAddQueue;
         List<RBPhysComputer.IStdSolverPrediction> _predSolversAddQueue = new List<RBPhysComputer.IStdSolverPrediction>();
         List<RBPhysComputer.IRBPhysObjectPrediction> _predPhysObjsAddQueue = new List<RBPhysComputer.IRBPhysObjectPrediction>();
-        List<RBPhysComputer.IRBOnCollisionPrediction> _predOnCollisionsAddQueue = new List<RBPhysComputer.IRBOnCollisionPrediction>();
+
+        List<RBVirtualTransform> _vTransforms = new List<RBVirtualTransform>();
 
         public void AddRigidbody(RBRigidbody rb)
         {
@@ -128,6 +129,55 @@ namespace RBPhys
             {
                 _predPhysObjsAddQueue.Remove(predObj);
             }
+        }
+
+        public RBVirtualTransform CreateVirtual(GameObject obj, RBVirtualTransform vParent, bool recursive = false)
+        {
+            GameObject vObj = new GameObject();
+            vObj.transform.parent = vParent?.transform;
+            vObj.name = "rbVTransform";
+            var vTransform = vObj.AddComponent<RBVirtualTransform>();
+            vTransform.Initialize(_predictionComputer, obj, vParent);
+            _vTransforms.Add(vTransform);
+
+            if (vObj.TryGetComponent(out RBRigidbody r))
+            {
+                r.CreateVirtual(vTransform);
+            }
+
+            foreach (var c in vObj.GetComponents<RBCollider>())
+            {
+                if (c.GeometryType == RBGeometryType.OBB)
+                {
+                    var obb = c as RBBoxCollider;
+                    obb.CreateVirtual(vTransform);
+                }
+                else if (c.GeometryType == RBGeometryType.Sphere)
+                {
+                    var obb = c as RBSphereCollider;
+                    obb.CreateVirtual(vTransform);
+                }
+                else if (c.GeometryType == RBGeometryType.Capsule)
+                {
+                    var obb = c as RBCapsuleCollider;
+                    obb.CreateVirtual(vTransform);
+                }
+            }
+
+            if (recursive)
+            {
+                for (int i = 0; i < vObj.transform.childCount; i++)
+                {
+                    var childObj = vObj.transform.GetChild(i);
+                    if (childObj != null)
+                    {
+                        var vChildTransform = CreateVirtual(childObj.gameObject, vTransform, true);
+                        vTransform.AddChildren(vChildTransform);
+                    }
+                }
+            }
+
+            return vTransform;
         }
 
         public void InitPrediction()

@@ -8,18 +8,15 @@ namespace RBPhys
 {
     public abstract class RBCollider : MonoBehaviour
     {
-        RBRigidbody _parent;
+        protected RBRigidbody _parent;
 
         public RBRigidbody ParentRigidbody { get { return _hasParentRigidbodyInFrame ? _parent : null; } }
         public abstract RBGeometryType GeometryType { get; }
 
-        public Vector3 GameObjectPos { get; private set; }
-        public Quaternion GameObjectRot { get; private set; }
+        public Vector3 GameObjectPos { get; protected set; }
+        public Quaternion GameObjectRot { get; protected set; }
 
-        public bool isVirtual { get{ return _isVirtual; } }
-        bool _isVirtual;
-
-        List<RBCollider> _virtualColliders;
+        List<RBCollider> _virtualColliders = new List<RBCollider>();
 
         [NonSerialized] public float cr_kp = .45f; //è’ìÀâè¡èàóù PÉQÉCÉì
         [NonSerialized] public float cr_ki = 15f; //è’ìÀâè¡èàóù IÉQÉCÉì
@@ -38,19 +35,14 @@ namespace RBPhys
 
         int _stackVal_ignoreCollision_ifGreaterThanZero = 0;
 
-        RBTrajectory _expTrajectory;
+        protected RBTrajectory _expTrajectory;
 
-        Vector3 _expPos;
-        Quaternion _expRot;
+        protected Vector3 _expPos;
+        protected Quaternion _expRot;
 
-        bool _hasParentRigidbodyInFrame = false;
+        protected bool _hasParentRigidbodyInFrame = false;
 
         List<IRBOnCollision> collisionCallbacks = new List<IRBOnCollision>();
-
-        protected void SetVirtual()
-        {
-            _isVirtual = true;
-        }
 
         protected void AddVirtualCollider(RBCollider collider)
         {
@@ -88,12 +80,12 @@ namespace RBPhys
             _stackVal_ignoreCollision_ifGreaterThanZero--;
         }
 
-        void Awake()
+        protected virtual void Awake()
         {
             UpdateTransform(0);
         }
 
-        void OnEnable()
+        protected virtual void OnEnable()
         {
             RBPhysController.AddCollider(this);
 
@@ -103,7 +95,7 @@ namespace RBPhys
             }
         }
 
-        private void OnDisable()
+        protected virtual void OnDisable()
         {
             RBPhysController.RemoveCollider(this);
         }
@@ -128,7 +120,7 @@ namespace RBPhys
             _parent = null;
         }
 
-        public void UpdateTransform(float delta)
+        public virtual void UpdateTransform(float delta)
         {
             GameObjectPos = gameObject?.transform.position ?? Vector3.zero;
             GameObjectRot = gameObject?.transform.rotation ?? Quaternion.identity;

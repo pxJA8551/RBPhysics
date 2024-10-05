@@ -864,7 +864,7 @@ namespace RBPhys
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                rb.ApplyTransform(dt, _timeScaleMode, multiThreadPredictionMode);
+                rb.ApplyTransform(dt, _timeScaleMode);
             }
         }
 

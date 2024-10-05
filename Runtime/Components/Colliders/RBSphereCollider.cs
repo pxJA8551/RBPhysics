@@ -26,10 +26,9 @@ namespace RBPhys
         public float MultipliedRadius { get { return _radius * colliderSizeMultiplier; } }
         public Vector3 MultipliedCenter { get { return _center * colliderSizeMultiplier; } }
 
-        public RBSphereCollider CreateVirtual()
+        public RBSphereCollider CreateVirtual(RBVirtualTransform vTransform)
         {
-            var v = gameObject.AddComponent<RBSphereCollider>();
-            v.SetVirtual();
+            var v = vTransform.AddCollider<RBSphereColliderVirtual>();
             AddVirtualCollider(v);
             v._center = _center;
             v._radius = _radius;
