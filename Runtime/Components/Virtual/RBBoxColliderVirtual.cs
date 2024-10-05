@@ -12,17 +12,8 @@ namespace RBPhys
 {
     public class RBBoxColliderVirtual : RBBoxCollider
     {
-        public RBBoxColliderVirtual()
-        {
-        }
-
-        protected override void OnEnable()
-        {
-        }
-
-        protected override void OnDisable() 
-        {
-        }
+        protected override void OnEnable() { }
+        protected override void OnDisable() { }
 
         public bool vActive_And_vEnabled { get { return _vEnabled && (_vTransform?.Active ?? false); } }
 
@@ -41,6 +32,12 @@ namespace RBPhys
         public void SetVTransform(RBVirtualTransform vTransform)
         {
             _vTransform = vTransform;
+        }
+
+        public void VInititalize()
+        {
+            Awake();
+            OnVEnabled();
         }
 
         void OnVEnabled()

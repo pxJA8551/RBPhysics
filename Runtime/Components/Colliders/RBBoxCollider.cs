@@ -35,6 +35,7 @@ namespace RBPhys
             v._center = _center;
             v._rotationEuler = _rotationEuler;
             v.SetVTransform(vTransform);
+            v.VInititalize();
 
             return v;
         }

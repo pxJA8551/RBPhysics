@@ -12,17 +12,8 @@ namespace RBPhys
 {
     public class RBCapsuleColliderVirtual : RBCapsuleCollider
     {
-        public RBCapsuleColliderVirtual()
-        {
-        }
-
-        protected override void OnEnable()
-        {
-        }
-
-        protected override void OnDisable() 
-        {
-        }
+        protected override void OnEnable() { }
+        protected override void OnDisable() { }
 
         public bool vActive_And_vEnabled { get { return _vEnabled && (_vTransform?.Active ?? false); } }
 
@@ -41,6 +32,12 @@ namespace RBPhys
             _vEnabled = state;
             if (state) OnVEnabled();
             else OnVDisabled();
+        }
+
+        public void VInititalize()
+        {
+            Awake();
+            OnVEnabled();
         }
 
         void OnVEnabled()

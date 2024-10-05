@@ -37,6 +37,7 @@ namespace RBPhys
             v._radius = _radius;
             v._height = _height;
             v.SetVTransform(vTransform);
+            v.VInititalize();
 
             return v;
         }

@@ -135,8 +135,8 @@ namespace RBPhys
             r._expAngularVelocity = _expAngularVelocity;
             r._position = _position;
             r._rotation = _rotation;
-
             r.SetVTransform(vTransform);
+            r.VInititalize();
 
             return r;
         }

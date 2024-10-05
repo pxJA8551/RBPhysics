@@ -33,6 +33,7 @@ namespace RBPhys
             v._center = _center;
             v._radius = _radius;
             v.SetVTransform(vTransform);
+            v.VInititalize();
 
             return v;
         }

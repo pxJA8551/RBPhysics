@@ -15,10 +15,7 @@ namespace RBPhys
 {
     public class RBRigidbodyVirtual : RBRigidbody
     {
-        public RBRigidbodyVirtual()
-        {
-        }
-
+        protected override void Awake() { }
         protected override void OnEnable() { }
         protected override void OnDisable() { }
 
@@ -39,6 +36,12 @@ namespace RBPhys
             _vEnabled = state;
             if (state) OnVEnabled();
             else OnVDisabled();
+        }
+
+        public void VInititalize()
+        {
+            base.Awake();
+            OnVEnabled();
         }
 
         void OnVEnabled()
