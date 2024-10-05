@@ -124,9 +124,6 @@ namespace RBPhys
 
             ReInitializeSolverTime();
 
-            _trajectories_orderByXMin = new RBTrajectory[0];
-            _trajectories_xMin = new float[0];
-
             _collisions.Clear();
             _collisionsInSolver.Clear();
         }
