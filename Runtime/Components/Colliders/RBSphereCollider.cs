@@ -30,15 +30,17 @@ namespace RBPhys
         {
             var v = vTransform.AddCollider<RBSphereColliderVirtual>();
             AddVirtualCollider(v);
-            v.CopyRigidbody(this);
+            v.CopyCollider(this);
             v.SetVTransform(vTransform);
             v.VInititalize();
 
             return v;
         }
 
-        public void CopyRigidbody(RBSphereCollider c)
+        public void CopyCollider(RBSphereCollider c)
         {
+            useCCD = c.useCCD;
+            allowSoftClip = c.allowSoftClip;
             _center = c._center;
             _radius = c._radius;
         }

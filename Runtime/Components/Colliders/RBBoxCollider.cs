@@ -33,15 +33,17 @@ namespace RBPhys
         {
             var v = vTransform.AddCollider<RBBoxColliderVirtual>();
             AddVirtualCollider(v);
-            v.CopyRigidbody(this);
+            v.CopyCollider(this);
             v.SetVTransform(vTransform);
             v.VInititalize();
 
             return v;
         }
 
-        public void CopyRigidbody(RBBoxCollider c)
+        public void CopyCollider(RBBoxCollider c)
         {
+            useCCD = c.useCCD;
+            allowSoftClip = c.allowSoftClip;
             _size = c._size;
             _center = c._center;
             _rotationEuler = c._rotationEuler;

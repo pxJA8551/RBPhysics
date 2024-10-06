@@ -36,7 +36,7 @@ namespace RBPhys
             var c = _baseCollider;
             if (c != null)
             {
-                CopyRigidbody(c);
+                CopyCollider(c);
             }
             else
             {
