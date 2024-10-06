@@ -67,7 +67,7 @@ namespace RBPhys
                             rb.ExpAngularVelocity *= -1;
                         }
                     });
-                }
+                }   
 
                 _timeScaleMode = value;
             }
@@ -275,55 +275,58 @@ namespace RBPhys
 
             if (dt == 0) return;
 
-            if (!multiThreadPredictionMode)
+            if (_trajectories_orderByXMin.Length > 0)
             {
-                foreach (var p in _physValidatorObjects)
+                if (!multiThreadPredictionMode)
                 {
-                    p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                    foreach (var p in _physValidatorObjects)
+                    {
+                        p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                    }
                 }
-            }
 
-            ClearCollisions();
+                ClearCollisions();
 
-            if(!multiThreadPredictionMode) ClearValidators();
+                if (!multiThreadPredictionMode) ClearValidators();
 
-            if (!multiThreadPredictionMode)
-            {
-                foreach (var p in _physObjects)
+                if (!multiThreadPredictionMode)
                 {
-                    p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                    foreach (var p in _physObjects)
+                    {
+                        p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                    }
                 }
-            }
-            else
-            {
-                foreach (var p in _physObjectsPredictions)
+                else
                 {
-                    p.BeforeSolverPrediction(_solverDeltaTimeAsFloat, _timeScaleMode);
+                    foreach (var p in _physObjectsPredictions)
+                    {
+                        p.BeforeSolverPrediction(_solverDeltaTimeAsFloat, _timeScaleMode);
+                    }
                 }
-            }
 
-            foreach (RBRigidbody rb in _rigidbodies)
-            {
-                if (!rb.isSleeping && rb.useGravity && !rb.IgnoreVelocity)
+                foreach (RBRigidbody rb in _rigidbodies)
                 {
-                    rb.ExpVelocity += gravityAcceleration * dt;
+                    if (!rb.isSleeping && rb.useGravity && !rb.IgnoreVelocity)
+                    {
+                        rb.ExpVelocity += gravityAcceleration * dt;
+                    }
                 }
-            }
 
-            SolveConstraints(dt);
+                SolveConstraints(dt);
 
-            if (!multiThreadPredictionMode)
-            {
-                foreach (var p in _physObjects)
+                if (!multiThreadPredictionMode)
                 {
-                    p.AfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                    foreach (var p in _physObjects)
+                    {
+                        p.AfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                    }
                 }
-            }
-            else
-            {
-                foreach (var p in _physObjectsPredictions)
+                else
                 {
-                    p.AfterSolverPrediction(_solverDeltaTimeAsFloat, _timeScaleMode);
+                    foreach (var p in _physObjectsPredictions)
+                    {
+                        p.AfterSolverPrediction(_solverDeltaTimeAsFloat, _timeScaleMode);
+                    }
                 }
             }
 
