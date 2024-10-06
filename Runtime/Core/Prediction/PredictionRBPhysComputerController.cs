@@ -186,8 +186,8 @@ namespace RBPhys
 
             if (obj.TryGetComponent(out RBRigidbody r))
             {
-                r.CreateVirtual(vTransform);
-                AddRigidbody(r);
+                var vRb = r.CreateVirtual(vTransform);
+                AddRigidbody(vRb);
             }
 
             foreach (var c in obj.GetComponents<RBCollider>())
@@ -195,20 +195,20 @@ namespace RBPhys
                 if (c.GeometryType == RBGeometryType.OBB)
                 {
                     var obb = c as RBBoxCollider;
-                    obb.CreateVirtual(vTransform);
-                    AddCollider(obb);
+                    var vObb = obb.CreateVirtual(vTransform);
+                    AddCollider(vObb);
                 }
                 else if (c.GeometryType == RBGeometryType.Sphere)
                 {
                     var sphere = c as RBSphereCollider;
-                    sphere.CreateVirtual(vTransform);
-                    AddCollider(sphere);
+                    var vSphere = sphere.CreateVirtual(vTransform);
+                    AddCollider(vSphere);
                 }
                 else if (c.GeometryType == RBGeometryType.Capsule)
                 {
                     var capusle = c as RBCapsuleCollider;
-                    capusle.CreateVirtual(vTransform);
-                    AddCollider(capusle);
+                    var vCapsule = capusle.CreateVirtual(vTransform);
+                    AddCollider(vCapsule);
                 }
             }
 
