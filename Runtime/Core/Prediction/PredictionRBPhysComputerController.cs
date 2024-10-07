@@ -25,7 +25,7 @@ namespace RBPhys
 
         List<RBVirtualTransform> _vTransforms = new List<RBVirtualTransform>();
 
-        public async Task ReInitialize()
+        public async Task ReInitializeAsync()
         {
             await _predictionComputer.WaitSemaphoreAsync(0);
 
@@ -289,8 +289,11 @@ namespace RBPhys
 
         public async Task PhysicsFrame()
         {
-            _predictionComputer.OpenPhysicsFrameWindow();
-            _predictionComputer.ClosePhysicsFrameWindow();
+            await Task.Run(() =>
+            {
+                _predictionComputer.OpenPhysicsFrameWindow();
+                _predictionComputer.ClosePhysicsFrameWindow();
+            }).ConfigureAwait(false);
         }
 
         public void DisposePredictionComputer()
