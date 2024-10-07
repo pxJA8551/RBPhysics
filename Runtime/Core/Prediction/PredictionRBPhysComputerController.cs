@@ -27,6 +27,8 @@ namespace RBPhys
 
         public void ReInitialize()
         {
+            _predictionComputer.WaitSemaphore(0);
+
             _predictionComputer.ReInitializeComputer();
 
             foreach (var vt in _vTransforms)
@@ -70,6 +72,8 @@ namespace RBPhys
                     }
                 }
             }
+
+            _predictionComputer.ReleaseSemaphore();
         }
 
         public void AddRigidbody(RBRigidbody rb)

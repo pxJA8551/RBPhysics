@@ -124,16 +124,12 @@ namespace RBPhys
 
         public void ReInitializeComputer()
         {
-            _solverIterationSemaphore.Wait();
-
             physComputerTime = new PhysComputerTime(this);
 
             ReInitializeSolverTime();
 
             _collisions.Clear();
             _collisionsInSolver.Clear();
-
-            _solverIterationSemaphore.Release();
         }
 
         public void AddRigidbody(RBRigidbody rb)
@@ -339,6 +335,10 @@ namespace RBPhys
 
             _solverIterationSemaphore.Wait();
 
+            UpdateTransforms();
+            UpdateExtTrajectories(_solverDeltaTimeAsFloat);
+            SortTrajectories();
+
             if (_trajectories_orderByXMin.Length > 0)
             {
                 foreach (RBRigidbody rb in _rigidbodies)
@@ -366,10 +366,6 @@ namespace RBPhys
                     }
                 }
             }
-
-            UpdateTransforms();
-            UpdateExtTrajectories(dt);
-            SortTrajectories();
 
             _solverIterationSemaphore.Release();
 
