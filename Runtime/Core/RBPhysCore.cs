@@ -292,6 +292,27 @@ namespace RBPhys
             }
         }
 
+        public async Task WaitSemaphoreAsync(int timeoutMs = 500)
+        {
+            _lockSemaphoreTimeoutCxlSrc.Cancel();
+            await _solverIterationSemaphore.WaitAsync();
+
+            if (timeoutMs > 0)
+            {
+                _ = Task.Run(() =>
+                {
+                    for (int p = 0; p < timeoutMs; p += 3)
+                    {
+                        Task.Delay(3);
+                        if (_lockSemaphoreTimeoutCxlSrc.IsCancellationRequested) return;
+                    }
+
+                    _solverIterationSemaphore.Release();
+                    throw new TimeoutException("PhysComputer semaphore locking time outed.");
+                });
+            }
+        }
+
         public void ReleaseSemaphore()
         {
             _lockSemaphoreTimeoutCxlSrc.Cancel();
