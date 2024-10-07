@@ -89,7 +89,7 @@ namespace RBPhys
 
         protected RBTrajectory _expObjTrajectory;
 
-        OnCollision onCollision;
+        public OnCollision onCollision;
 
         public List<RBPhysStateValidator> validators = new List<RBPhysStateValidator>();
 
