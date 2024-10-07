@@ -89,7 +89,7 @@ namespace RBPhys
 
         protected RBTrajectory _expObjTrajectory;
 
-        List<IRBOnCollision> collisionCallbacks = new List<IRBOnCollision>();
+        OnCollision onCollision;
 
         public List<RBPhysStateValidator> validators = new List<RBPhysStateValidator>();
 
@@ -363,25 +363,12 @@ namespace RBPhys
 
         internal void OnCollision(RBCollider col, RBCollisionInfo info)
         {
-            foreach (var c in collisionCallbacks)
-            {
-                c?.OnCollision(col, info);
-            }
+            onCollision(col, info);
 
             foreach (var c in _colliders)
             {
                 c?.OnCollision(col, info);
             }
-        }
-
-        public void AddCollisionCallback(IRBOnCollision c)
-        {
-            collisionCallbacks.Add(c);
-        }
-
-        public void RemoveCollisionCallback(IRBOnCollision c)
-        {
-            collisionCallbacks.Remove(c);
         }
 
         public (Vector3 pos, Quaternion rot) GetIntergrated(float dt)

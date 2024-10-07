@@ -45,7 +45,7 @@ namespace RBPhys
 
         protected bool _hasParentRigidbodyInFrame = false;
 
-        List<IRBOnCollision> collisionCallbacks = new List<IRBOnCollision>();
+        public OnCollision onCollision;
 
         protected void AddVirtualCollider(RBCollider collider)
         {
@@ -151,20 +151,7 @@ namespace RBPhys
 
         internal void OnCollision(RBCollider col, RBCollisionInfo info)
         {
-            foreach (var c in collisionCallbacks)
-            {
-                c?.OnCollision(col, info);
-            }
-        }
-
-        public void AddCollisionCallback(IRBOnCollision c)
-        {
-            collisionCallbacks.Add(c);
-        }
-
-        public void RemoveCollisionCallback(IRBOnCollision c)
-        {
-            collisionCallbacks.Remove(c);
+            onCollision(col, info);
         }
 
         public abstract float CalcVolume();

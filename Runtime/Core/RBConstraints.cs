@@ -32,10 +32,7 @@ namespace RBPhys
             void AfterSolverPrediction(float delta, TimeScaleMode timeScaleMode) { }
         }
 
-        public interface IRBOnCollision
-        {
-            void OnCollision(RBCollider col, RBCollisionInfo info);
-        }
+        public delegate void OnCollision(RBCollider col, RBCollisionInfo info);
 
         public interface IRBPhysStateValidator
         {
