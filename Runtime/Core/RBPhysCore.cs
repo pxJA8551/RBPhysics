@@ -310,37 +310,37 @@ namespace RBPhys
 
             if (dt == 0) return;
 
+            if (!multiThreadPredictionMode)
+            {
+                foreach (var p in _physValidatorObjects)
+                {
+                    p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                }
+            }
+
+            ClearCollisions();
+
+            if (!multiThreadPredictionMode) ClearValidators();
+
+            if (!multiThreadPredictionMode)
+            {
+                foreach (var p in _physObjects)
+                {
+                    p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                }
+            }
+            else
+            {
+                foreach (var p in _physObjectsPredictions)
+                {
+                    p.BeforeSolverPrediction(_solverDeltaTimeAsFloat, _timeScaleMode);
+                }
+            }
+
+            _solverIterationSemaphore.Wait();
+
             if (_trajectories_orderByXMin.Length > 0)
             {
-                if (!multiThreadPredictionMode)
-                {
-                    foreach (var p in _physValidatorObjects)
-                    {
-                        p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
-                    }
-                }
-
-                ClearCollisions();
-
-                if (!multiThreadPredictionMode) ClearValidators();
-
-                if (!multiThreadPredictionMode)
-                {
-                    foreach (var p in _physObjects)
-                    {
-                        p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
-                    }
-                }
-                else
-                {
-                    foreach (var p in _physObjectsPredictions)
-                    {
-                        p.BeforeSolverPrediction(_solverDeltaTimeAsFloat, _timeScaleMode);
-                    }
-                }
-
-                _solverIterationSemaphore.Wait();
-
                 foreach (RBRigidbody rb in _rigidbodies)
                 {
                     if (!rb.isSleeping && rb.useGravity && !rb.IgnoreVelocity)
