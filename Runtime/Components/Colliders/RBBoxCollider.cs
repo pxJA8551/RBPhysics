@@ -7,7 +7,6 @@ using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
-using static UnityEditor.ShaderData;
 using UnityEngine.UIElements;
 
 namespace RBPhys

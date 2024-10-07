@@ -18,7 +18,7 @@ namespace RBPhys
         const float SLEEP_ANGVEL_MAX_SQRT = 0.03f * 0.03f;
         protected const float XZ_VELOCITY_MIN_CUTOUT = .002f;
         protected const float ANG_VELOCITY_MIN_CUTOUT = .02f;
-        const int SLEEP_GRACE_FRAMES = 6;
+        const int SLEEP_GRACE_FRAMES = 5; //, of no practical use
 
         public float mass = 1;
         public float inertiaTensorMultiplier = 1;
