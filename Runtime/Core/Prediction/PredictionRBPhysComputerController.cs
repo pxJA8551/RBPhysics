@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -284,11 +285,8 @@ namespace RBPhys
 
         public async Task PhysicsFrame()
         {
-            await Task.Run(() =>
-            {
-                _predictionComputer.OpenPhysicsFrameWindow();
-                _predictionComputer.ClosePhysicsFrameWindow();
-            });
+            _predictionComputer.OpenPhysicsFrameWindow();
+            _predictionComputer.ClosePhysicsFrameWindow();
         }
 
         public void DisposePredictionComputer()

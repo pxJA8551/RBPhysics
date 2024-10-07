@@ -9,6 +9,7 @@ using UnityEngine.Profiling;
 using UnityEditor;
 using Unity.IL2CPP.CompilerServices;
 using UnityEditor.Experimental.GraphView;
+using System.Threading;
 
 namespace RBPhys
 {
@@ -105,6 +106,9 @@ namespace RBPhys
         public PhysComputerTime physComputerTime;
         public bool multiThreadPredictionMode = false;
 
+        SemaphoreSlim _solverIterationSemaphore = new SemaphoreSlim(1, 1);
+        CancellationTokenSource _lockSemaphoreTimeoutCxlSrc = new CancellationTokenSource();
+
         public RBPhysComputer()
         {
             physComputerTime = new PhysComputerTime(this);
@@ -120,12 +124,16 @@ namespace RBPhys
 
         public void ReInitializeComputer()
         {
+            _solverIterationSemaphore.Wait();
+
             physComputerTime = new PhysComputerTime(this);
 
             ReInitializeSolverTime();
 
             _collisions.Clear();
             _collisionsInSolver.Clear();
+
+            _solverIterationSemaphore.Release();
         }
 
         public void AddRigidbody(RBRigidbody rb)
@@ -267,6 +275,33 @@ namespace RBPhys
             return (p & 2) == 2;
         }
 
+        public void WaitSemaphore(int timeoutMs = 500)
+        {
+            _lockSemaphoreTimeoutCxlSrc.Cancel();
+            _solverIterationSemaphore.Wait();
+
+            if (timeoutMs > 0)
+            {
+                Task.Run(() =>
+                {
+                    for (int p = 0; p < timeoutMs; p += 3)
+                    {
+                        Task.Delay(3);
+                        if (_lockSemaphoreTimeoutCxlSrc.IsCancellationRequested) return;
+                    }
+
+                    _solverIterationSemaphore.Release();
+                    throw new TimeoutException("PhysComputer semaphore locking time outed.");
+                });
+            }
+        }
+
+        public void ReleaseSemaphore()
+        {
+            _lockSemaphoreTimeoutCxlSrc.Cancel();
+            _solverIterationSemaphore.Release();
+        }
+
         public void OpenPhysicsFrameWindow()
         {
             UpdateSolverTimeVariables();
@@ -304,6 +339,8 @@ namespace RBPhys
                     }
                 }
 
+                _solverIterationSemaphore.Wait();
+
                 foreach (RBRigidbody rb in _rigidbodies)
                 {
                     if (!rb.isSleeping && rb.useGravity && !rb.IgnoreVelocity)
@@ -333,6 +370,8 @@ namespace RBPhys
             UpdateTransforms();
             UpdateExtTrajectories(dt);
             SortTrajectories();
+
+            _solverIterationSemaphore.Release();
 
             if (!multiThreadPredictionMode)
             {
@@ -367,8 +406,8 @@ namespace RBPhys
 
                 if (_solverTimeInitialized)
                 {
-                    _solverDeltaTime = Time.timeAsDouble - _solverTime;
-                    _solverUnscaledDeltaTime = Time.unscaledTimeAsDouble - _solverUnscaledTime;
+                    _solverDeltaTime = Time.fixedDeltaTime;
+                    _solverUnscaledDeltaTime = Time.fixedUnscaledDeltaTime;
                 }
                 else
                 {
