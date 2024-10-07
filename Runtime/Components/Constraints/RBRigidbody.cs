@@ -363,7 +363,7 @@ namespace RBPhys
 
         internal void OnCollision(RBCollider col, RBCollisionInfo info)
         {
-            onCollision(col, info);
+            if (onCollision != null) onCollision(col, info);
 
             foreach (var c in _colliders)
             {

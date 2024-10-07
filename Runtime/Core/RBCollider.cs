@@ -151,7 +151,7 @@ namespace RBPhys
 
         internal void OnCollision(RBCollider col, RBCollisionInfo info)
         {
-            onCollision(col, info);
+            if(onCollision != null) onCollision(col, info);
         }
 
         public abstract float CalcVolume();
