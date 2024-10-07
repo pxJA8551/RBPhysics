@@ -25,9 +25,9 @@ namespace RBPhys
 
         List<RBVirtualTransform> _vTransforms = new List<RBVirtualTransform>();
 
-        public void ReInitialize()
+        public async Task ReInitialize()
         {
-            _predictionComputer.WaitSemaphore(0);
+            await _predictionComputer.WaitSemaphoreAsync(0);
 
             _predictionComputer.ReInitializeComputer();
 
