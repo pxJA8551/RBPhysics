@@ -9,8 +9,8 @@ namespace RBPhys
     [RequireComponent(typeof(RBRigidbody))]
     public class RBPhysAnimation : MonoBehaviour, RBPhysComputer.IStdSolver, RBPhysComputer.IRBPhysObject
     {
-        const int PHYS_ANIM_INTERGRADE = 1;
-        const float PHYS_ANIM_RESOLUTION_BETA = 1f;
+        const int PHYS_ANIM_INTERGRADE = 5;
+        const float PHYS_ANIM_RESOLUTION_BETA = .25f;
 
         public AnimationClip baseAnimationClip;
 
@@ -36,6 +36,8 @@ namespace RBPhys
         public bool velocityInterp = true;
         public float interpMultiplier = 1.0f;
 
+        public float external_force_sens = 1;
+
         public float AnimationLength { get { return Mathf.Max(animationClip?.length ?? 0, trsCurve?.length ?? 0); } } 
 
         public void Awake()
@@ -47,7 +49,6 @@ namespace RBPhys
                 PlayAnimation();
             }
         }
-
 
         void OnEnable()
         {
@@ -325,6 +326,7 @@ namespace RBPhys
                         d_a = (f_v * ddv + f_r * ddav) / (f_v + f_r);
 
                         dc_a = lambda / lambda_anim;
+                        dc_a = 1 + (dc_a - 1) * external_force_sens;
                     }
 
                     if (intergradeTime < trsCurve.length)
@@ -343,6 +345,7 @@ namespace RBPhys
                         d_b = (f_v * ddv + f_r * ddav) / (f_v + f_r);
 
                         dc_b = lambda / lambda_anim;
+                        dc_b = 1 + (dc_b - 1) * external_force_sens;
                     }
 
                     if (d_a > d_b)
