@@ -36,7 +36,7 @@ namespace RBPhys
         public bool velocityInterp = true;
         public float interpMultiplier = 1.0f;
 
-        public float external_force_sens = 1;
+        public float ext_lambda_compensation = 1;
 
         public float AnimationLength { get { return Mathf.Max(animationClip?.length ?? 0, trsCurve?.length ?? 0); } } 
 
@@ -325,8 +325,8 @@ namespace RBPhys
 
                         d_a = (f_v * ddv + f_r * ddav) / (f_v + f_r);
 
+                        if (lambda < 0) lambda = Mathf.Clamp(lambda + ext_lambda_compensation, lambda, 0);
                         dc_a = lambda / lambda_anim;
-                        dc_a = 1 + (dc_a - 1) * external_force_sens;
                     }
 
                     if (intergradeTime < trsCurve.length)
@@ -344,8 +344,8 @@ namespace RBPhys
 
                         d_b = (f_v * ddv + f_r * ddav) / (f_v + f_r);
 
+                        if (lambda < 0) lambda = Mathf.Clamp(lambda + ext_lambda_compensation, lambda, 0);
                         dc_b = lambda / lambda_anim;
-                        dc_b = 1 + (dc_b - 1) * external_force_sens;
                     }
 
                     if (d_a > d_b)
