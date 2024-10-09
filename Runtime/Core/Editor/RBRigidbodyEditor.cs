@@ -37,7 +37,7 @@ namespace RBPhysEditor
             drag = serializedObject.FindProperty("drag");
             angularDrag = serializedObject.FindProperty("angularDrag");
             sleepDefault = serializedObject.FindProperty("sleepUntilInteraction");
-            infInertiaTensor = serializedObject.FindProperty("setInfInertiaTensorAtInit");
+            infInertiaTensor = serializedObject.FindProperty("setInfInertiaTensorOnInit");
         }
 
         public override void OnInspectorGUI()
