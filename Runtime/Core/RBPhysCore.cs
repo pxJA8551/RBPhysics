@@ -1673,7 +1673,7 @@ namespace RBPhys
                         }
                         else
                         {
-                            SolveCollisionPair(_collisionsInSolver[i - p]);
+                            if (!_collisionsInSolver[i - p].skipInSolver) SolveCollisionPair(_collisionsInSolver[i - p]);
                         }
                     });
                     Profiler.EndSample();
@@ -1687,7 +1687,7 @@ namespace RBPhys
 
                     Parallel.For(0, _collisionsInSolver.Count, j =>
                     {
-                        UpdateTrajectoryPair(_collisionsInSolver[j], dt);
+                        if (!_collisionsInSolver[j].skipInSolver) UpdateTrajectoryPair(_collisionsInSolver[j], dt);
                     });
 
                     if (!multiThreadPredictionMode)
@@ -1894,7 +1894,7 @@ namespace RBPhys
         {
             RecalculateCollision(dt, col.collider_a, col.collider_b, col.info, out Vector3 p, out Vector3 pA, out Vector3 pB);
 
-            if (p != Vector3.zero || col.skipInSolver)
+            if (p != Vector3.zero)
             {
                 p = col.collider_a.ExpToCurrentVector(p);
                 pA = col.collider_a.ExpToCurrent(pA);
