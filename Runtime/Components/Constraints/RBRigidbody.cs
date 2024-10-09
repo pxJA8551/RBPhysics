@@ -81,6 +81,7 @@ namespace RBPhys
         public bool useGravity = true;
 
         public bool sleepUntilInteraction;
+        public bool setInfInertiaTensorOnInit;
 
         [NonSerialized] public RBCollider[] colliding = new RBCollider[2];
         [NonSerialized] public int collidingCount = 0;
@@ -182,6 +183,16 @@ namespace RBPhys
             else
             {
                 PhysAwakeForce();
+            }
+
+            if (setInfInertiaTensorOnInit)
+            {
+                _infInertiaTensorX = true;
+                _infInertiaTensorY = true;
+                _infInertiaTensorZ = true;
+                _infInertiaTensorLsX = true;
+                _infInertiaTensorLsY = true;
+                _infInertiaTensorLsZ = true;
             }
         }
 

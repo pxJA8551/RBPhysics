@@ -22,6 +22,7 @@ namespace RBPhysEditor
         SerializedProperty sleepGrace;
         SerializedProperty useGravity;
         SerializedProperty sleepDefault;
+        SerializedProperty infInertiaTensor;
 
         const float HANDLE_SIZE = 1;
         const float HANDLE_DOT_SIZE = 0.003f;
@@ -36,6 +37,7 @@ namespace RBPhysEditor
             drag = serializedObject.FindProperty("drag");
             angularDrag = serializedObject.FindProperty("angularDrag");
             sleepDefault = serializedObject.FindProperty("sleepUntilInteraction");
+            infInertiaTensor = serializedObject.FindProperty("setInfInertiaTensorAtInit");
         }
 
         public override void OnInspectorGUI()
@@ -64,6 +66,8 @@ namespace RBPhysEditor
             sleepDefault.boolValue = EditorGUILayout.Toggle("Sleep until interaction", sleepDefault.boolValue);
 
             EditorGUILayout.LabelField(string.Format("Sleep:{0}({1})", sleeping.boolValue ? "TRUE" : "FALSE", sleepGrace.intValue));
+
+            EditorGUILayout.PropertyField(infInertiaTensor);
 
             serializedObject.ApplyModifiedProperties();
         }

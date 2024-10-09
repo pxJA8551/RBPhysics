@@ -180,7 +180,7 @@ namespace RBPhys
             }
         }
 
-        public RBVirtualTransform CreateVirtual(GameObject obj, RBVirtualTransform vParent, bool recursive = false)
+        public RBVirtualTransform CreateVirtual(GameObject obj, RBVirtualTransform vParent, bool recursive = false, bool ignoreRigidbody = false)
         {
             GameObject vObj = new GameObject();
             vObj.transform.parent = vParent?.transform;
@@ -189,10 +189,13 @@ namespace RBPhys
             vTransform.Initialize(_predictionComputer, obj, vParent);
             _vTransforms.Add(vTransform);
 
-            if (obj.TryGetComponent(out RBRigidbody r))
+            if (!ignoreRigidbody)
             {
-                var vRb = r.CreateVirtual(vTransform);
-                AddRigidbody(vRb);
+                if (obj.TryGetComponent(out RBRigidbody r))
+                {
+                    var vRb = r.CreateVirtual(vTransform);
+                    AddRigidbody(vRb);
+                }
             }
 
             foreach (var c in obj.GetComponents<RBCollider>())
