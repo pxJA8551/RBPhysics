@@ -136,7 +136,7 @@ namespace RBPhys
             _hasParentRigidbodyInFrame = _parent?.vActive_And_vEnabled ?? false;
 
             if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, GameObjectPos, GameObjectRot, delta);
-            else _expTrajectory.Update(this, _expPos, _expRot, delta);
+            else _expTrajectory.Update(this, _expPos, _expRot, gameObject?.layer ?? 0, delta);
         }
 
         public void UpdateExpTrajectoryMultiThreaded(float delta, Vector3 rbPos, Quaternion rbRot, Vector3 intergratedPos, Quaternion intergratedRot)
