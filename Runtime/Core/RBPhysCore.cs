@@ -2909,7 +2909,7 @@ namespace RBPhys
 
         public void Update(RBCollider collider, Vector3 pos, Quaternion rot, float delta)
         {
-            Update(collider, pos, rot, _layer, delta);
+            Update(collider, pos, rot, collider.Layer, delta);
         }
 
         public void Update(RBCollider collider, Vector3 pos, Quaternion rot, int layer, float delta)
@@ -2919,7 +2919,7 @@ namespace RBPhys
             _collider = collider;
             _isStatic = true;
             _isValidTrajectory = true;
-            _layer = collider.Layer;
+            _layer = layer;
 
             if ((_colliders?.Length ?? -1) != 1)
             {
