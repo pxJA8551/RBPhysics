@@ -42,13 +42,23 @@ namespace RBPhys
         {
             rbRigidbody = GetComponent<RBRigidbody>();
 
-            RBPhysController.AddStdSolver(this);
-            RBPhysController.AddPhysObject(this);
-
             if (playing)
             {
                 PlayAnimation();
             }
+        }
+
+
+        void OnEnable()
+        {
+            RBPhysController.AddStdSolver(this);
+            RBPhysController.AddPhysObject(this);
+        }
+
+        void OnDisable()
+        {
+            RBPhysController.RemoveStdSolver(this);
+            RBPhysController.RemovePhysObject(this);
         }
 
         public void PlayAnimation()
@@ -445,8 +455,6 @@ namespace RBPhys
 
         public void OnDestroy()
         {
-            RBPhysController.RemoveStdSolver(this);
-            RBPhysController.RemovePhysObject(this);
         }
 
         public float CalcLinkedAnimLambda(float time, float linkedInvMass, Vector3 linkedInvInertiaTensorWs)
