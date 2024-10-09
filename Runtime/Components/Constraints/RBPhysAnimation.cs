@@ -9,7 +9,7 @@ namespace RBPhys
     [RequireComponent(typeof(RBRigidbody))]
     public class RBPhysAnimation : MonoBehaviour, RBPhysComputer.IStdSolver, RBPhysComputer.IRBPhysObject
     {
-        const int PHYS_ANIM_INTERGRADE = 3;
+        const int PHYS_ANIM_INTERGRADE = 2;
         const float PHYS_ANIM_RESOLUTION_BETA = .25f;
 
         public AnimationClip baseAnimationClip;
@@ -96,6 +96,8 @@ namespace RBPhys
 
         public void BeforeSolver(float dt, TimeScaleMode timeScaleMode)
         {
+            if (!enabled) return;
+
             if (parentTransform != null)
             {
                 _useParentTransform = true;
@@ -201,6 +203,8 @@ namespace RBPhys
 
         public void AfterSolver(float dt, TimeScaleMode timeScaleMode)
         {
+            if (!enabled) return;
+
             if (ctrlSpeed == 0)
             {
                 _ctrlTimeDeltaP = 0;
