@@ -2909,6 +2909,11 @@ namespace RBPhys
 
         public void Update(RBCollider collider, Vector3 pos, Quaternion rot, float delta)
         {
+            Update(collider, pos, rot, _layer, delta);
+        }
+
+        public void Update(RBCollider collider, Vector3 pos, Quaternion rot, int layer, float delta)
+        {
             trajectoryAABB = collider.CalcAABB(pos, rot, delta);
             _rigidbody = null;
             _collider = collider;

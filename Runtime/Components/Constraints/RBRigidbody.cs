@@ -336,6 +336,21 @@ namespace RBPhys
             validators.Clear();
         }
 
+        internal virtual void UpdateExpTrajectoryMultiThreaded(float dt, bool updateColliders = true)
+        {
+            (Vector3 pos, Quaternion rot) r = GetIntergrated(dt);
+
+            if (updateColliders)
+            {
+                foreach (RBCollider c in _colliders)
+                {
+                    c.UpdateExpTrajectoryMultiThreaded(dt, Position, Rotation, r.pos, r.rot);
+                }
+            }
+
+            _expObjTrajectory.Update(this, gameObject.layer);
+        }
+
         internal virtual void UpdateExpTrajectory(float dt, bool updateColliders = true)
         {
             (Vector3 pos, Quaternion rot) r = GetIntergrated(dt);
@@ -344,7 +359,7 @@ namespace RBPhys
             {
                 foreach (RBCollider c in _colliders)
                 {
-                    c.UpdateExpTrajectory(dt, Position, Rotation, r.pos, r.rot);
+                    c.UpdateExpTrajectoryMultiThreaded(dt, Position, Rotation, r.pos, r.rot);
                 }
             }
 
