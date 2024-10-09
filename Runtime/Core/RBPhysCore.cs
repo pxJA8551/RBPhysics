@@ -291,18 +291,18 @@ namespace RBPhys
             }
         }
 
-        public async Task WaitSemaphoreAsync(int timeoutMs = 500)
+        public async Task WaitSemaphoreAsync(int waitTimeoutMs = 500, int lockTimeoutMs = 500)
         {
             _lockSemaphoreTimeoutCxlSrc.Cancel();
-            await _solverIterationSemaphore.WaitAsync();
+            await _solverIterationSemaphore.WaitAsync(waitTimeoutMs);
 
-            if (timeoutMs > 0)
+            if (lockTimeoutMs > 0)
             {
                 _ = Task.Run(() =>
                 {
-                    for (int p = 0; p < timeoutMs; p += 3)
+                    for (int p = 0; p < lockTimeoutMs; p += 1)
                     {
-                        Task.Delay(3);
+                        Task.Delay(1);
                         if (_lockSemaphoreTimeoutCxlSrc.IsCancellationRequested) return;
                     }
 
@@ -353,7 +353,7 @@ namespace RBPhys
                 }
             }
 
-            _solverIterationSemaphore.Wait();
+            _solverIterationSemaphore.Wait(500);
 
             UpdateTransforms();
             UpdateExtTrajectories(_solverDeltaTimeAsFloat);

@@ -372,7 +372,7 @@ namespace RBPhys
 
             for (int i = 0; i < _colliders.Length; i++)
             {
-                _colliders[i].UpdateExpTrajectory(dt, Position, Rotation, r.pos, r.rot);
+                _colliders[i].UpdateExpTrajectoryMultiThreaded(dt, Position, Rotation, r.pos, r.rot);
             }
         }
 
