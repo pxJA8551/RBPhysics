@@ -30,7 +30,7 @@ namespace RBPhys
 
         IEnumerator PhysicsFrame()
         {
-            RBPhysController.MainComputer.OpenPhysicsFrameWindow();
+            RBPhysController.MainComputer.OpenPhysicsFrameWindowAsync();
 
             yield return new WaitForFixedUpdate();
 

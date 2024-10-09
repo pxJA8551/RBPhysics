@@ -318,7 +318,7 @@ namespace RBPhys
             _solverIterationSemaphore.Release();
         }
 
-        public void OpenPhysicsFrameWindow()
+        public async void OpenPhysicsFrameWindowAsync()
         {
             UpdateSolverTimeVariables();
 
@@ -353,7 +353,7 @@ namespace RBPhys
                 }
             }
 
-            _solverIterationSemaphore.Wait(500);
+            await _solverIterationSemaphore.WaitAsync(500);
 
             UpdateTransforms();
             UpdateExtTrajectories(_solverDeltaTimeAsFloat);

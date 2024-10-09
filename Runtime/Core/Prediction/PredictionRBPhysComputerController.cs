@@ -291,7 +291,7 @@ namespace RBPhys
         {
             await Task.Run(() =>
             {
-                _predictionComputer.OpenPhysicsFrameWindow();
+                _predictionComputer.OpenPhysicsFrameWindowAsync();
                 _predictionComputer.ClosePhysicsFrameWindow();
             }).ConfigureAwait(false);
         }
