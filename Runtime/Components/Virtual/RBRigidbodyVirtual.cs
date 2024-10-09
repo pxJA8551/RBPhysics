@@ -56,6 +56,21 @@ namespace RBPhys
             _expObjTrajectory.Update(this, _vTransform.layer);
         }
 
+        internal override void UpdateExpTrajectory(float dt, bool updateColliders = true)
+        {
+            (Vector3 pos, Quaternion rot) r = GetIntergrated(dt);
+
+            if (updateColliders)
+            {
+                foreach (RBCollider c in _colliders)
+                {
+                    c.UpdateExpTrajectoryMultiThreaded(dt, Position, Rotation, r.pos, r.rot);
+                }
+            }
+
+            _expObjTrajectory.Update(this, _vTransform.layer);
+        }
+
         public override void AddCollider(RBCollider c)
         {
             Array.Resize(ref _colliders, _colliders.Length + 1);
