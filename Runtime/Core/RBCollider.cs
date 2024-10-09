@@ -47,6 +47,8 @@ namespace RBPhys
 
         public OnCollision onCollision;
 
+        public virtual int Layer { get; }
+
         public void AddVirtualCollider(RBCollider collider)
         {
             if (!_virtualColliders.Contains(collider))

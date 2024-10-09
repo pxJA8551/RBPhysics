@@ -25,6 +25,8 @@ namespace RBPhys
         public RBCapsuleCollider BaseCollider { get { return _baseCollider; } }
         RBCapsuleCollider _baseCollider;
 
+        public override int Layer { get { return _vTransform?.layer ?? 0; } }
+
         public void SetVTransform(RBVirtualTransform vTransform)
         {
             _vTransform = vTransform;

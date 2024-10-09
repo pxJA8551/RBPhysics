@@ -26,6 +26,8 @@ namespace RBPhys
         public float MultipliedRadius { get { return _radius * colliderSizeMultiplier; } }
         public Vector3 MultipliedCenter { get { return _center * colliderSizeMultiplier; } }
 
+        public override int Layer { get { return gameObject?.layer ?? 0; } }
+
         public RBSphereColliderVirtual CreateVirtual(RBVirtualTransform vTransform)
         {
             var v = vTransform.AddCollider<RBSphereColliderVirtual>();
