@@ -151,18 +151,6 @@ namespace RBPhys
             else _expTrajectory.Update(this, _expPos, _expRot, delta);
         }
 
-        public void UpdateExpTrajectory(float delta, Vector3 rbPos, Quaternion rbRot, Vector3 intergratedPos, Quaternion intergratedRot)
-        {
-            Vector3 relPos = GameObjectPos - rbPos;
-            Quaternion relRot = GameObjectRot * Quaternion.Inverse(rbRot);
-
-            _expPos = intergratedPos + relPos;
-            _expRot = intergratedRot * relRot;
-
-            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, GameObjectPos, GameObjectRot, delta);
-            else _expTrajectory.Update(this, _expPos, _expRot, _expTrajectory.Layer, delta);
-        }
-
         internal void OnCollision(RBCollider col, RBCollisionInfo info)
         {
             if(onCollision != null) onCollision(col, info);

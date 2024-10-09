@@ -2888,28 +2888,9 @@ namespace RBPhys
             _layer = layer;
         }
 
-        public void Update(RBCollider collider, float delta)
-        {
-            trajectoryAABB = collider.CalcAABB(collider.GameObjectPos, collider.GameObjectRot, delta);
-            _rigidbody = null;
-            _collider = collider;
-            _isStatic = true;
-            _isValidTrajectory = true;
-            _layer = collider.Layer;
-
-            if ((_colliders?.Length ?? -1) != 1)
-            {
-                _colliders = new RBCollider[] { collider };
-            }
-            else
-            {
-                _colliders[0] = collider;
-            }
-        }
-
         public void Update(RBCollider collider, Vector3 pos, Quaternion rot, float delta)
         {
-            Update(collider, pos, rot, collider.Layer, delta);
+            Update(collider, pos, rot, _layer, delta);
         }
 
         public void Update(RBCollider collider, Vector3 pos, Quaternion rot, int layer, float delta)
