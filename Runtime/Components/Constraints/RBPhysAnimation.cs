@@ -221,12 +221,12 @@ namespace RBPhys
             }
         }
 
-        public void StdSolverInit(float dt, bool isPrimaryInit)
+        public void StdSolverInit(float dt, bool isPrimaryInit, RBPhysComputer.SolverInfo info)
         {
             _solverDeltaTime = dt;
         }
 
-        public void StdSolverIteration(int iterationCount)
+        public void StdSolverIteration(int iterationCount, RBPhysComputer.SolverInfo info)
         {
             if (enablePhysProceduralAnimation && trsCurve != null)
             {
@@ -234,7 +234,7 @@ namespace RBPhys
 
                 if (_solverDeltaTime > 0)
                 {
-                    CalcTRSAnimVelocity(_solverDeltaTime);
+                    CalcTRSAnimVelocity(_solverDeltaTime, info.solver_iter_max * info.solver_sync_max);
                     LinkAnimationTime();
                 }
             }
@@ -264,11 +264,11 @@ namespace RBPhys
             rbRigidbody.ExpAngularVelocity = angVel;
         }
 
-        void CalcTRSAnimVelocity(float solverDelta)
+        void CalcTRSAnimVelocity(float solverDelta, int solverIters)
         {
             float intergradeTime = ctrlTime;
 
-            PhysAnimIntergrade(ref intergradeTime, solverDelta);
+            PhysAnimIntergrade(ref intergradeTime, solverDelta, solverIters);
         }
 
         void CalcTRSAnimAdditionalVelocity(float solverDelta, out Vector3 velAdd, out Vector3 angVelAdd)
@@ -285,9 +285,9 @@ namespace RBPhys
             angVelAdd = angVel;
         }
 
-        void PhysAnimIntergrade(ref float intergradeTime, float solverDelta)
+        void PhysAnimIntergrade(ref float intergradeTime, float solverDelta, int solverIters)
         {
-            float delta = solverDelta * (1f / PHYS_ANIM_INTERGRADE);
+            float delta = solverDelta * (1f / PHYS_ANIM_INTERGRADE) / solverIters;
 
             float invMass = CalcLinkedInvMass();
             Vector3 invInertiaTensor = CalcLinkedInvInertiaTensorWs();

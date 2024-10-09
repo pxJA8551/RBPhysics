@@ -36,7 +36,7 @@ namespace RBPhys
             RBPhysController.RemoveStdSolver(this);
         }
 
-        public void StdSolverInit(float dt, bool isPrimaryInit)
+        public void StdSolverInit(float dt, bool isPrimaryInit, RBPhysComputer.SolverInfo info)
         {
             //local_rb_contact_rot *= Quaternion.Euler(new Vector3(0.01f, 0, 0));
 
@@ -56,7 +56,7 @@ namespace RBPhys
             _jB.Init(rigidbody, pairRigidbody, ws_rb_contact, ws_rb_pair_contact, ws_jointDir, ws_jointDir_pair, binormal, dt, isPrimaryInit);
         }
 
-        public void StdSolverIteration(int iterCount)
+        public void StdSolverIteration(int iterCount, RBPhysComputer.SolverInfo info)
         {
             Solve(out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b);
 

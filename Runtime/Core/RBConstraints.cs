@@ -17,8 +17,8 @@ namespace RBPhys
 
         public interface IStdSolverPrediction
         {
-            void StdSolverInitPrediction(float dt, bool isPrimaryInit) { }
-            void StdSolverIterationPrediction(int iterationCount) { }
+            void StdSolverInitPrediction(float dt, bool isPrimaryInit, SolverInfo solverInfo) { }
+            void StdSolverIterationPrediction(int iterationCount, SolverInfo solverInfo) { }
         }
 
         public interface IRBPhysObject

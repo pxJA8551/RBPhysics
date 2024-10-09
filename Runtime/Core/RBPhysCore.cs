@@ -1630,7 +1630,7 @@ namespace RBPhys
             {
                 Parallel.For(0, _stdSolverAsyncPredictions.Count, j =>
                 {
-                    _stdSolverAsyncPredictions[j].StdSolverInitPrediction(dt, true);
+                    _stdSolverAsyncPredictions[j].StdSolverInitPrediction(dt, true, GetSolverInfo(-1, -1));
                 });
             }
 
@@ -1706,7 +1706,7 @@ namespace RBPhys
                     {
                         Parallel.ForEach(_stdSolverAsyncPredictions, s =>
                         {
-                            s.StdSolverInitPrediction(dt, false);
+                            s.StdSolverInitPrediction(dt, false, GetSolverInfo(iter, -1));
                         });
                     }
 
