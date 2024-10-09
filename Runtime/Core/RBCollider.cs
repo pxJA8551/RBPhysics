@@ -135,7 +135,7 @@ namespace RBPhys
 
             _hasParentRigidbodyInFrame = _parent?.vActive_And_vEnabled ?? false;
 
-            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, GameObjectPos, GameObjectRot, delta);
+            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, GameObjectPos, GameObjectRot, gameObject?.layer ?? 0, delta);
             else _expTrajectory.Update(this, _expPos, _expRot, gameObject?.layer ?? 0, delta);
         }
 
@@ -147,8 +147,8 @@ namespace RBPhys
             _expPos = intergratedPos + relPos;
             _expRot = intergratedRot * relRot;
 
-            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, GameObjectPos, GameObjectRot, delta);
-            else _expTrajectory.Update(this, _expPos, _expRot, delta);
+            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, GameObjectPos, GameObjectRot, _expTrajectory.Layer, delta);
+            else _expTrajectory.Update(this, _expPos, _expRot, _expTrajectory.Layer, delta);
         }
 
         internal void OnCollision(RBCollider col, RBCollisionInfo info)

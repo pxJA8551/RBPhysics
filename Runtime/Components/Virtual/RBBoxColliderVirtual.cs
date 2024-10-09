@@ -103,8 +103,8 @@ namespace RBPhys
             var vParent = _parent as RBRigidbodyVirtual;
             _hasParentRigidbodyInFrame = vParent?.vActive_And_vEnabled ?? false;
 
-            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, GameObjectPos, GameObjectRot, delta);
-            else _expTrajectory.Update(this, _expPos, _expRot, delta);
+            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, GameObjectPos, GameObjectRot, _vTransform?.layer ?? 0, delta);
+            else _expTrajectory.Update(this, _expPos, _expRot, _vTransform.layer, delta);
         }
     }
 }
