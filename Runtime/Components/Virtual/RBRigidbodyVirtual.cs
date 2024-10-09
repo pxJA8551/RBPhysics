@@ -90,6 +90,13 @@ namespace RBPhys
             _baseRigidbody = baseRigidbody;
 
             SetEnableInternal(true);
+
+            baseRigidbody?.AddVirtualRigidbody(this);
+        }
+
+        private void OnDestroy()
+        {
+            _baseRigidbody?.AddVirtualRigidbody(this);
         }
 
         void OnVEnabled()

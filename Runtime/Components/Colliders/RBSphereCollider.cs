@@ -32,7 +32,7 @@ namespace RBPhys
             AddVirtualCollider(v);
             v.CopyCollider(this);
             v.SetVTransform(vTransform);
-            v.VInititalize();
+            v.VInititalize(this);
 
             return v;
         }

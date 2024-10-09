@@ -56,11 +56,19 @@ namespace RBPhys
             r?.AddCollider(this);
         }
 
-        public void VInititalize()
+        public void VInititalize(RBCapsuleCollider baseCollider)
         {
             Awake();
             FindRigidbody();
             SetEnableInternal(true);
+
+            _baseCollider = baseCollider;
+            baseCollider?.AddVirtualCollider(this);
+        }
+
+        private void OnDestroy()
+        {
+            _baseCollider?.RemoveVirtualCollider(this);
         }
 
         void OnVEnabled()

@@ -95,7 +95,7 @@ namespace RBPhys
 
         List<RBRigidbodyVirtual> _virtualRigidbodies = new List<RBRigidbodyVirtual>();
 
-        protected void AddVirtualRigidbody(RBRigidbodyVirtual rb)
+        public void AddVirtualRigidbody(RBRigidbodyVirtual rb)
         {
             if (!_virtualRigidbodies.Contains(rb))
             {
@@ -103,7 +103,7 @@ namespace RBPhys
             }
         }
 
-        protected void RemoveVirtualRigidbody(RBRigidbodyVirtual rb)
+        public void RemoveVirtualRigidbody(RBRigidbodyVirtual rb)
         {
             _virtualRigidbodies.Remove(rb);
         }

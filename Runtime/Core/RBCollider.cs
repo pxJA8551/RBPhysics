@@ -47,7 +47,7 @@ namespace RBPhys
 
         public OnCollision onCollision;
 
-        protected void AddVirtualCollider(RBCollider collider)
+        public void AddVirtualCollider(RBCollider collider)
         {
             if (!_virtualColliders.Contains(collider))
             {
@@ -55,7 +55,7 @@ namespace RBPhys
             }
         }
 
-        protected void RemoveVirtualCollider(RBCollider collider)
+        public void RemoveVirtualCollider(RBCollider collider)
         {
             _virtualColliders.Remove(collider);
         }
