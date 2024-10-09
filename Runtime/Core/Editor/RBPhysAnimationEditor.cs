@@ -23,6 +23,7 @@ namespace RBPhys
         SerializedProperty interp;
         SerializedProperty velocityInterp;
         SerializedProperty interpMultiplier;
+        SerializedProperty ext_lambda_compensation;
 
         private void OnEnable()
         {
@@ -40,6 +41,7 @@ namespace RBPhys
             interp = serializedObject.FindProperty("interp");
             velocityInterp = serializedObject.FindProperty("velocityInterp");
             interpMultiplier = serializedObject.FindProperty("interpMultiplier");
+            ext_lambda_compensation = serializedObject.FindProperty("ext_lambda_compensation");
         }
 
         public override void OnInspectorGUI()
@@ -73,6 +75,7 @@ namespace RBPhys
             EditorGUILayout.PropertyField(interp);
             EditorGUILayout.PropertyField(velocityInterp);
             EditorGUILayout.PropertyField(interpMultiplier);
+            EditorGUILayout.PropertyField(ext_lambda_compensation);
 
             serializedObject.ApplyModifiedProperties();
         }
