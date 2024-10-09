@@ -93,24 +93,24 @@ namespace RBPhys
 
         public List<RBPhysStateValidator> validators = new List<RBPhysStateValidator>();
 
-        List<RBRigidbody> _virtualRigidbodies = new List<RBRigidbody>();
-        
-        protected void AddVirtualRigidbody(RBRigidbody collider)
+        List<RBRigidbodyVirtual> _virtualRigidbodies = new List<RBRigidbodyVirtual>();
+
+        protected void AddVirtualRigidbody(RBRigidbodyVirtual rb)
         {
-            if (!_virtualRigidbodies.Contains(collider))
+            if (!_virtualRigidbodies.Contains(rb))
             {
-                _virtualRigidbodies.Add(collider);
+                _virtualRigidbodies.Add(rb);
             }
         }
 
-        protected void RemoveVirtualRigidbody(RBRigidbody collider)
+        protected void RemoveVirtualRigidbody(RBRigidbodyVirtual rb)
         {
-            _virtualRigidbodies.Remove(collider);
+            _virtualRigidbodies.Remove(rb);
         }
 
-        public int VirtualRigidbodies(ref RBRigidbody[] rigidbodies)
+        public int VirtualRigidbodies(ref RBRigidbodyVirtual[] rigidbodies)
         {
-            if (rigidbodies == null) rigidbodies = new RBRigidbody[Mathf.Max(_virtualRigidbodies.Count, 1)];
+            if (rigidbodies == null) rigidbodies = new RBRigidbodyVirtual[Mathf.Max(_virtualRigidbodies.Count, 1)];
             if (rigidbodies.Length < _virtualRigidbodies.Count) Array.Resize(ref rigidbodies, _virtualRigidbodies.Count);
 
             for (int i = 0; i < rigidbodies.Length; i++)
