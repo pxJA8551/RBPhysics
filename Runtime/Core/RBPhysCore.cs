@@ -25,7 +25,7 @@ namespace RBPhys
         public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = .002f * .002f;
         public const float COLLISION_AS_CONTINUOUS_FRAMES = 3;
         public const float RETROGRADE_PHYS_RESTITUTION_MULTIPLIER = .6f;
-        public const float RETROGRADE_PHYS_RESTITUTION_MIN = 1.001f;
+        public const float RETROGRADE_PHYS_RESTITUTION_MIN = 1.1f;
 
         public const float RETROGRADE_PHYS_FRICTION_MULTIPLIER = .35f;
 
@@ -119,6 +119,11 @@ namespace RBPhys
             physComputerTime = new PhysComputerTime(this);
             multiThreadPredictionMode = multiThreadPrediction;
             timeParams = new ComputerTimeParams(deltaTime, 1, false);
+        }
+
+        public RBPhysComputer.SolverInfo GetSolverInfo(int iterCount, int syncCount)
+        {
+            return new SolverInfo(this, iterCount, syncCount);
         }
 
         public void ReInitializeComputer()
@@ -1618,7 +1623,7 @@ namespace RBPhys
             {
                 Parallel.For(0, _stdSolversAsync.Count, j =>
                 {
-                    _stdSolversAsync[j].StdSolverInit(dt, true);
+                    _stdSolversAsync[j].StdSolverInit(dt, true, GetSolverInfo(-1, -1));
                 });
             }
             else
@@ -1669,7 +1674,7 @@ namespace RBPhys
                     {
                         if (i < p)
                         {
-                            _stdSolversAsync[i].StdSolverIteration(iter);
+                            _stdSolversAsync[i].StdSolverIteration(iter, GetSolverInfo(iter, i));
                         }
                         else
                         {
@@ -1694,7 +1699,7 @@ namespace RBPhys
                     {
                         Parallel.ForEach(_stdSolversAsync, s =>
                         {
-                            s.StdSolverInit(dt, false);
+                            s.StdSolverInit(dt, false, GetSolverInfo(iter, -1));
                         });
                     }
                     else

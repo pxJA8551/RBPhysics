@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Collections;
 using UnityEngine;
+using static RBPhys.RBPhysComputer;
 
 namespace RBPhys
 {
@@ -10,8 +11,8 @@ namespace RBPhys
     {
         public interface IStdSolver
         {
-            void StdSolverInit(float dt, bool isPrimaryInit) { }
-            void StdSolverIteration(int iterationCount) { }
+            void StdSolverInit(float dt, bool isPrimaryInit, SolverInfo solverInfo) { }
+            void StdSolverIteration(int iterationCount, SolverInfo solverInfo) { }
         }
 
         public interface IStdSolverPrediction
@@ -33,6 +34,28 @@ namespace RBPhys
         }
 
         public delegate void OnCollision(RBCollider col, RBCollisionInfo info);
+
+        public struct SolverInfo
+        {
+            public readonly bool multiThreadedPrediction;
+
+            public readonly int solver_iter_max;
+            public readonly int solver_sync_max;
+
+            public readonly int solver_iter_count;
+            public readonly int solver_sync_count;
+
+            public SolverInfo(in RBPhysComputer computer, int iterCount, int syncCount)
+            {
+                multiThreadedPrediction = computer.multiThreadPredictionMode;
+
+                solver_iter_max = computer.cpu_std_solver_max_iter;
+                solver_sync_max = computer.cpu_std_solver_internal_sync_per_iteration;
+
+                solver_iter_count = iterCount;
+                solver_sync_count = syncCount;
+            }
+        }
 
         public interface IRBPhysStateValidator
         {

@@ -9,7 +9,7 @@ namespace RBPhys
     [RequireComponent(typeof(RBRigidbody))]
     public class RBPhysAnimation : MonoBehaviour, RBPhysComputer.IStdSolver, RBPhysComputer.IRBPhysObject
     {
-        const int PHYS_ANIM_INTERGRADE = 5;
+        const int PHYS_ANIM_INTERGRADE = 3;
         const float PHYS_ANIM_RESOLUTION_BETA = .25f;
 
         public AnimationClip baseAnimationClip;
@@ -301,69 +301,36 @@ namespace RBPhys
                     velResist *= -1;
                     angVelResist *= -1;
 
-                    float f_v = velResist.magnitude / rbRigidbody.InverseMass;
-                    float f_r = Vector3.Scale(angVelResist, RBPhysUtil.V3Rcp(rbRigidbody.InverseInertiaWs)).magnitude;
-
-                    float d_a = -1;
-                    float d_b = -1;
-
-                    float dc_a = 0;
-                    float dc_b = 0;
+                    float lambda = 0;
+                    float lambdaAnim = 0;
 
                     if (0 < intergradeTime)
                     {
                         float t = Mathf.Clamp(intergradeTime - delta, 0, trsCurve.length);
-                        float lambda_anim = CalcAnimLambda(t, invMass, invInertiaTensor, out Vector3 dPos, out Vector3 dRot);
+                        lambdaAnim += CalcAnimLambda(t, invMass, invInertiaTensor, out Vector3 dPos, out Vector3 dRot);
 
                         Vector3 evalVDirN = dPos.normalized;
                         Vector3 evalAVDirN = dRot.normalized;
 
-                        float lambda = Vector3.Dot(velResist, evalVDirN) / rbRigidbody.InverseMass + Vector3.Scale(Vector3.Dot(angVelResist.normalized, evalAVDirN) * evalAVDirN, RBPhysUtil.V3Rcp(rbRigidbody.InverseInertiaWs)).magnitude;
-
-                        float ddv = Vector3.Dot(evalVDirN, velResist.normalized);
-                        float ddav = Vector3.Dot(evalAVDirN, angVelResist.normalized);
-
-                        d_a = (f_v * ddv + f_r * ddav) / (f_v + f_r);
-
-                        if (lambda < 0) lambda = Mathf.Clamp(lambda + ext_lambda_compensation, lambda, 0);
-                        dc_a = lambda / lambda_anim;
+                        lambda -= Vector3.Dot(velResist, evalVDirN) / rbRigidbody.InverseMass + Vector3.Scale(Vector3.Dot(angVelResist, evalAVDirN) * evalAVDirN, RBPhysUtil.V3Rcp(rbRigidbody.InverseInertiaWs)).magnitude;
                     }
 
                     if (intergradeTime < trsCurve.length)
                     {
                         float t = Mathf.Clamp(intergradeTime + delta, 0, trsCurve.length);
-                        float lambda_anim = CalcAnimLambda(t, invMass, invInertiaTensor, out Vector3 dPos, out Vector3 dRot);
+                        lambdaAnim += CalcAnimLambda(t, invMass, invInertiaTensor, out Vector3 dPos, out Vector3 dRot);
 
                         Vector3 evalVDirN = dPos.normalized;
                         Vector3 evalAVDirN = dRot.normalized;
 
-                        float lambda = Vector3.Dot(velResist, evalVDirN) / rbRigidbody.InverseMass + Vector3.Scale(Vector3.Dot(angVelResist.normalized, evalAVDirN) * evalAVDirN, RBPhysUtil.V3Rcp(rbRigidbody.InverseInertiaWs)).magnitude;
-
-                        float ddv = Vector3.Dot(evalVDirN, velResist);
-                        float ddav = Vector3.Dot(evalAVDirN, angVelResist);
-
-                        d_b = (f_v * ddv + f_r * ddav) / (f_v + f_r);
-
-                        if (lambda < 0) lambda = Mathf.Clamp(lambda + ext_lambda_compensation, lambda, 0);
-                        dc_b = lambda / lambda_anim;
+                        lambda += Vector3.Dot(velResist, evalVDirN) / rbRigidbody.InverseMass + Vector3.Scale(Vector3.Dot(angVelResist, evalAVDirN) * evalAVDirN, RBPhysUtil.V3Rcp(rbRigidbody.InverseInertiaWs)).magnitude;
                     }
 
-                    if (d_a > d_b)
-                    {
-                        if (d_a > 0 && !float.IsInfinity(dc_a))
-                        {
-                            AddLinkedAnimationTime(-Mathf.Clamp01(dc_a) * delta * PHYS_ANIM_RESOLUTION_BETA);
-                            intergradeTime = ctrlTime;
-                        }
-                    }
-                    else
-                    {
-                        if (d_b > 0 && !float.IsInfinity(dc_b))
-                        {
-                            AddLinkedAnimationTime(Mathf.Clamp01(dc_b) * delta * PHYS_ANIM_RESOLUTION_BETA);
-                            intergradeTime = ctrlTime;
-                        }
-                    }
+                    float dc = lambda / lambdaAnim;
+                    dc = float.IsNaN(dc) || float.IsInfinity(dc) ? 0 : dc;
+
+                    AddLinkedAnimationTime(Mathf.Clamp(dc + dc, -1, 1) * delta * PHYS_ANIM_RESOLUTION_BETA);
+                    intergradeTime = ctrlTime;
                 }
             }
         }
