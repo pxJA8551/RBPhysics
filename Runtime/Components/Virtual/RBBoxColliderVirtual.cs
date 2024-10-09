@@ -104,7 +104,7 @@ namespace RBPhys
             _hasParentRigidbodyInFrame = vParent?.vActive_And_vEnabled ?? false;
 
             if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, GameObjectPos, GameObjectRot, _vTransform?.layer ?? 0, delta);
-            else _expTrajectory.Update(this, _expPos, _expRot, _vTransform.layer, delta);
+            else _expTrajectory.Update(this, _expPos, _expRot, _vTransform?.layer ?? 0, delta);
         }
     }
 }
