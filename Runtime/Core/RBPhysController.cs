@@ -20,6 +20,53 @@ namespace RBPhys
             InitMainComputer();
         }
 
+        public static async Task ChangeTimeScaleMode(TimeScaleMode timeScaleMode, int fadeLengthMs = 0)
+        {
+            if (_mainComputer == null) return;
+
+            if (fadeLengthMs > 0)
+            {
+                if (_mainComputer.PhysTimeScaleMode == timeScaleMode) return;
+
+                int wt0 = 0;
+                while (true)
+                {
+                    float ts = ((float)wt0 / fadeLengthMs);
+                    Time.timeScale = Mathf.Lerp(1, 0, ts);
+
+                    if (_mainComputer == null) return;
+
+                    if (fadeLengthMs < wt0)
+                    {
+                        _mainComputer.PhysTimeScaleMode = timeScaleMode;
+                        break;
+                    }
+
+                    await Task.Delay(1);
+                    wt0++;
+                }
+
+                int wt1 = 0;
+                while (true)
+                {
+                    float ts = ((float)wt1 / fadeLengthMs);
+                    Time.timeScale = Mathf.Lerp(0, 1, ts);
+
+                    if (fadeLengthMs < wt1)
+                    {
+                        break;
+                    }
+
+                    await Task.Delay(1);
+                    wt1++;
+                }
+            }
+            else
+            {
+                _mainComputer.PhysTimeScaleMode = timeScaleMode;
+            }
+        }
+
         public static void AddRigidbody(RBRigidbody rb)
         {
             _mainComputer.AddRigidbody(rb);
