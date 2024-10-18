@@ -28,32 +28,36 @@ namespace RBPhys
             {
                 if (_mainComputer.PhysTimeScaleMode == timeScaleMode) return;
 
-                int wt0 = 0;
+                float wt0 = Time.unscaledTime * 1000f;
                 while (true)
                 {
-                    float ts = ((float)wt0 / fadeLengthMs);
+                    float s = (Time.unscaledTime * 1000f) - wt0;
+
+                    float ts = ((float)s / fadeLengthMs);
                     Time.timeScale = Mathf.Lerp(1, 0, ts);
 
                     if (_mainComputer == null) return;
 
-                    if (fadeLengthMs < wt0)
+                    if (fadeLengthMs < s)
                     {
                         _mainComputer.PhysTimeScaleMode = timeScaleMode;
                         break;
                     }
 
                     await Task.Delay(1);
-                    wt0++;
                 }
 
-                int wt1 = 0;
+                float wt1 = Time.unscaledTime * 1000f;
                 while (true)
                 {
-                    float ts = ((float)wt1 / fadeLengthMs);
-                    Time.timeScale = Mathf.Lerp(0, 1, ts);
+                    float s = (Time.unscaledTime * 1000f) - wt1;
 
-                    if (fadeLengthMs < wt1)
+                    float ts = (s / fadeLengthMs);
+                    Time.timeScale = Mathf.Lerp(1, 0, (1 - ts));
+
+                    if (fadeLengthMs < s)
                     {
+                        Time.timeScale = 1;
                         break;
                     }
 

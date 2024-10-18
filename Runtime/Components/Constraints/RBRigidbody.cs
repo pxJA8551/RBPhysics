@@ -289,7 +289,7 @@ namespace RBPhys
 
         public void SetDecrIgnoreVelocity()
         {
-            _stackVal_ignoreVelocity_ifGreaterThanZero--;
+            if (_stackVal_ignoreVelocity_ifGreaterThanZero > 0) _stackVal_ignoreVelocity_ifGreaterThanZero--;
         }
 
         internal virtual void ApplyTransform(float dt, RBPhys.TimeScaleMode physTimeScaleMode)
