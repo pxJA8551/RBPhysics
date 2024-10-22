@@ -171,7 +171,7 @@ namespace RBPhys
         {
             bool b = baseAnim != null;
 
-            anim.name = baseName + "_cv";
+            anim.name = baseName + "_cv.rbAnim";
 
             string path = b ? AssetDatabase.GetAssetPath(baseAnim) : ""; // : application.datapath
             string savePath = EditorUtility.SaveFilePanelInProject(path, b ? baseAnim.name : "animClip", "", "");
@@ -182,13 +182,15 @@ namespace RBPhys
                     AssetDatabase.CreateAsset(anim, savePath);
                 }
             }
+
+            AssetDatabase.SaveAssets();
         }
 
         void SaveTRSCurve(RBPhysTRSAnimationCurve trsCurve, RBPhysTRSAnimationCurve baseTrsCurve, string baseName)
         {
             bool b = baseTrsCurve != null;
 
-            trsCurve.name = baseName + "_cv_trs";
+            trsCurve.name = baseName + "_cv_trs.rbTrsAnim";
 
             string path = b ? AssetDatabase.GetAssetPath(baseTrsCurve) : ""; // : application.datapath
             string savePath = EditorUtility.SaveFilePanelInProject(path, b ? baseTrsCurve.name : "animClip", "", "");
@@ -199,6 +201,8 @@ namespace RBPhys
                     AssetDatabase.CreateAsset(trsCurve, savePath);
                 }
             }
+
+            AssetDatabase.SaveAssets();
         }
 
         bool FindTRSAnimationCurve(AnimationClip anim)
@@ -224,6 +228,7 @@ namespace RBPhys
 
             animClip = AnimationClip.Instantiate(baseAnimation);
             animClip.name = baseAnimation.name;
+            animClip.legacy = true;
 
             trsCurve.length = animClip.length;
 
