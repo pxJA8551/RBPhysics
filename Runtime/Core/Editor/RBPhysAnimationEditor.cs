@@ -182,6 +182,10 @@ namespace RBPhys
                     AssetDatabase.CreateAsset(anim, savePath);
                 }
             }
+            else
+            {
+                AssetDatabase.CreateAsset(anim, savePath);
+            }
 
             AssetDatabase.SaveAssets();
         }
@@ -200,6 +204,10 @@ namespace RBPhys
                 {
                     AssetDatabase.CreateAsset(trsCurve, savePath);
                 }
+            }
+            else
+            {
+                AssetDatabase.CreateAsset(trsCurve, savePath);
             }
 
             AssetDatabase.SaveAssets();
