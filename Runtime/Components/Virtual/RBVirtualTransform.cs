@@ -51,6 +51,12 @@ namespace RBPhys
             return r;
         }
 
+        public RBPhysAnimationVirtual AddPhysAnimation()
+        {
+            var a = gameObject.AddComponent<RBPhysAnimationVirtual>();
+            return a;
+        }
+
         public void Initialize(RBPhysComputer physComputer, GameObject baseObj, RBVirtualTransform parent)
         {
             _physComputer = physComputer;

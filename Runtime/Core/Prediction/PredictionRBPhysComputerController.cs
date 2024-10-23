@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 
 using static RBPhys.RBPhysComputer;
@@ -17,11 +18,14 @@ namespace RBPhys
 
         List<RBRigidbody> _rbRigidbody = new List<RBRigidbody>();
         List<RBCollider> _rbCols = new List<RBCollider>();
+        List<RBPhysAnimation> _rbAnims = new List<RBPhysAnimation>();
+
         List<(StdSolverInit init, StdSolverIteration iter)> _prdSolvers = new List<(StdSolverInit init, StdSolverIteration iter)>();
         List<(BeforeSolver beforeSolver, AfterSolver afterSolver)> _prdPhysObjs = new List<(BeforeSolver beforeSolver, AfterSolver afterSolver)>();
 
         List<RBRigidbody> _rbRigidbodyAddQueue = new List<RBRigidbody>();
         List<RBCollider> _rbColsAddQueue = new List<RBCollider>();
+        List<RBPhysAnimation> _rbAnimsAddQueue = new List<RBPhysAnimation>();
         List<(StdSolverInit init, StdSolverIteration iter)> _prdSolversAddQueue = new List<(StdSolverInit init, StdSolverIteration iter)>();
         List<(BeforeSolver beforeSolver, AfterSolver afterSolver)> _prdPhysObjsAddQueue = new List<(BeforeSolver beforeSolver, AfterSolver afterSolver)>();
 
@@ -72,6 +76,15 @@ namespace RBPhys
                     {
                         vCapsule.ReInitialize();
                     }
+                }
+            }
+
+            foreach (var a in _rbAnims)
+            {
+                var vAnim = a as RBPhysAnimationVirtual;
+                if (vAnim != null)
+                {
+                    vAnim.ReInitialize();
                 }
             }
 
@@ -193,11 +206,13 @@ namespace RBPhys
 
             bool isObjectEmpty = true;
 
+            RBRigidbodyVirtual vRb = null;
+
             if (!ignoreRigidbody)
             {
                 if (obj.TryGetComponent(out RBRigidbody r))
                 {
-                    var vRb = r.CreateVirtual(vTransform);
+                    vRb = r.CreateVirtual(vTransform);
                     AddRigidbody(vRb);
 
                     isObjectEmpty = false;
@@ -228,6 +243,14 @@ namespace RBPhys
                 isObjectEmpty = false;
             }
 
+            if (vRb != null) 
+            {
+                foreach (var a in obj.GetComponents<RBPhysAnimation>())
+                {
+                    a.CreateVirtual(vTransform, vRb);
+                }
+            }
+
             if (recursive)
             {
                 for (int i = 0; i < obj.transform.childCount; i++)
@@ -243,6 +266,7 @@ namespace RBPhys
 
             if (vTransform.ChildCount == 0 && isObjectEmpty)
             {
+                GameObject.Destroy(vObj);
                 return null;
             }
 

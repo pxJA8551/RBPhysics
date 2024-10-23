@@ -41,7 +41,7 @@ namespace RBPhys
         public float AnimationLength { get { return Mathf.Max(animationClip?.length ?? 0, trsCurve?.length ?? 0); } }
 
         public virtual bool vActive_And_vEnabled { get { return enabled && gameObject.activeSelf; } }
-
+        
         protected virtual void Awake()
         {
             rbRigidbody = GetComponent<RBRigidbody>();
@@ -50,6 +50,43 @@ namespace RBPhys
             {
                 PlayAnimation();
             }
+        }
+
+        public RBPhysAnimationVirtual CreateVirtual(RBVirtualTransform vTransform, RBRigidbodyVirtual rbRigidbody)
+        {
+            var v = vTransform.AddPhysAnimation();
+            v.CopyPhysAnimation(this);
+            v.SetVTransform(vTransform);
+            v.VInititalize(this, rbRigidbody);
+
+            return v;
+        }
+
+        public void CopyPhysAnimation(RBPhysAnimation anim)
+        {
+            baseAnimationClip = anim.baseAnimationClip;
+            animationClip = anim.animationClip;
+            trsCurve = anim.trsCurve;
+
+            ctrlTime = anim.ctrlTime;
+            ctrlSpeed = anim.ctrlSpeed;
+            linker = anim.linker;
+            animationType = anim.animationType;
+
+            _useParentTransform = anim._useParentTransform;
+            _parentTransformPos = anim._parentTransformPos;
+            _parentTransformRot = anim._parentTransformRot;
+            _parentTransformScale = anim._parentTransformScale;
+
+            rbRigidbody = anim.rbRigidbody;
+            playing = anim.playing;
+            enablePhysProceduralAnimation = anim.enablePhysProceduralAnimation;
+
+            interp = anim.interp;
+            velocityInterp = anim.velocityInterp;
+            interpMultiplier = anim.interpMultiplier;
+
+            ext_lambda_compensation = anim.ext_lambda_compensation;
         }
 
         protected virtual void OnEnable()
