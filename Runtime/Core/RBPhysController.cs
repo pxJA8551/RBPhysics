@@ -101,34 +101,34 @@ namespace RBPhys
             _mainComputer.SwitchToRigidbody(c);
         }
 
-        public static void AddStdSolver(IStdSolver solver)
+        public static void AddStdSolver(StdSolverInit stdInit, StdSolverIteration stdIter)
         {
-            _mainComputer.AddStdSolver(solver);
+            _mainComputer.AddStdSolver(stdInit, stdIter);
         }
 
-        public static void RemoveStdSolver(IStdSolver solver)
+        public static void RemoveStdSolver(StdSolverInit stdInit, StdSolverIteration stdIter)
         {
-            _mainComputer.RemoveStdSolver(solver);
+            _mainComputer.RemoveStdSolver(stdInit, stdIter);
         }
 
-        public static void AddPhysObject(IRBPhysObject physObj, bool asyncIteration = true)
+        public static void AddPhysObject(BeforeSolver beforeSolver, AfterSolver afterSolver)
         {
-            _mainComputer.AddPhysObject(physObj, asyncIteration);
+            _mainComputer.AddPhysObject(beforeSolver, afterSolver);
         }
 
-        public static void RemovePhysObject(IRBPhysObject physObj)
+        public static void RemovePhysObject(BeforeSolver beforeSolver, AfterSolver afterSolver)
         {
-            _mainComputer.RemovePhysObject(physObj);
+            _mainComputer.RemovePhysObject(beforeSolver, afterSolver);
         }
 
-        public static void AddPhysValidatorObject(IRBPhysObject physObj)
+        public static void AddPhysValidatorObject(ValidatorBeforeSolver beforeSolver, ValidatorAfterSolver afterSolver)
         {
-            _mainComputer.AddPhysValidatorObject(physObj);
+            _mainComputer.AddPhysValidatorObject(beforeSolver, afterSolver);
         }
 
-        public static void RemovePhysValidatorObject(IRBPhysObject physObj)
+        public static void RemovePhysValidatorObject(ValidatorBeforeSolver beforeSolver, ValidatorAfterSolver afterSolver)
         {
-            _mainComputer.RemovePhysValidatorObject(physObj);
+            _mainComputer.RemovePhysValidatorObject(beforeSolver, afterSolver);
         }
 
         public static void InitMainComputer()

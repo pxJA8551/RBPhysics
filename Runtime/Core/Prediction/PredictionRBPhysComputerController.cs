@@ -6,6 +6,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
+using static RBPhys.RBPhysComputer;
+
 namespace RBPhys
 {
     public class PredictionRBPhysComputerController
@@ -15,13 +17,13 @@ namespace RBPhys
 
         List<RBRigidbody> _rbRigidbody = new List<RBRigidbody>();
         List<RBCollider> _rbCols = new List<RBCollider>();
-        List<RBPhysComputer.IStdSolverPrediction> _predSolvers = new List<RBPhysComputer.IStdSolverPrediction>();
-        List<RBPhysComputer.IRBPhysObjectPrediction> _predPhysObjs = new List<RBPhysComputer.IRBPhysObjectPrediction>();
+        List<(StdSolverInit init, StdSolverIteration iter)> _prdSolvers = new List<(StdSolverInit init, StdSolverIteration iter)>();
+        List<(BeforeSolver beforeSolver, AfterSolver afterSolver)> _prdPhysObjs = new List<(BeforeSolver beforeSolver, AfterSolver afterSolver)>();
 
         List<RBRigidbody> _rbRigidbodyAddQueue = new List<RBRigidbody>();
         List<RBCollider> _rbColsAddQueue = new List<RBCollider>();
-        List<RBPhysComputer.IStdSolverPrediction> _predSolversAddQueue = new List<RBPhysComputer.IStdSolverPrediction>();
-        List<RBPhysComputer.IRBPhysObjectPrediction> _predPhysObjsAddQueue = new List<RBPhysComputer.IRBPhysObjectPrediction>();
+        List<(StdSolverInit init, StdSolverIteration iter)> _prdSolversAddQueue = new List<(StdSolverInit init, StdSolverIteration iter)>();
+        List<(BeforeSolver beforeSolver, AfterSolver afterSolver)> _prdPhysObjsAddQueue = new List<(BeforeSolver beforeSolver, AfterSolver afterSolver)>();
 
         List<RBVirtualTransform> _vTransforms = new List<RBVirtualTransform>();
 
@@ -128,55 +130,55 @@ namespace RBPhys
             }
         }
 
-        public void AddSolverPrediction(RBPhysComputer.IStdSolverPrediction predSolver)
+        public void AddSolverPrediction(StdSolverInit initPrd, StdSolverIteration iterPrd)
         {
             if (_predictionComputer != null)
             {
-                _predictionComputer.AddStdSolverPredication(predSolver);
-                _predSolvers.Add(predSolver);
+                _predictionComputer.AddStdSolver(initPrd, iterPrd);
+                _prdSolvers.Add((initPrd, iterPrd));
             }
             else
             {
-                _predSolversAddQueue.Add(predSolver);
+                _prdSolversAddQueue.Add((initPrd, iterPrd));
             }
         }
 
-        public void RemoveSolverPrediction(RBPhysComputer.IStdSolverPrediction predSolver)
+        public void RemoveSolverPrediction(StdSolverInit initPrd, StdSolverIteration iterPrd)
         {
             if (_predictionComputer != null)
             {
-                _predictionComputer.RemoveStdSolverPredication(predSolver);
-                _predSolvers.Remove(predSolver);
+                _predictionComputer.RemoveStdSolver(initPrd, iterPrd);
+                _prdSolvers.Remove((initPrd, iterPrd));
             }
             else
             {
-                _predSolversAddQueue.Remove(predSolver);
+                _prdSolversAddQueue.Remove((initPrd, iterPrd));
             }
         }
 
-        public void AddPhysObjectPrediction(RBPhysComputer.IRBPhysObjectPrediction predObj)
+        public void AddPhysObjectPrediction(BeforeSolver beforePrd, AfterSolver afterPrd)
         {
             if (_predictionComputer != null)
             {
-                _predictionComputer.AddPhysObjectPrediction(predObj);
-                _predPhysObjs.Add(predObj);
+                _predictionComputer.AddPhysObject(beforePrd, afterPrd);
+                _prdPhysObjs.Add((beforePrd, afterPrd));
             }
             else
             {
-                _predPhysObjsAddQueue.Add(predObj);
+                _prdPhysObjsAddQueue.Add((beforePrd, afterPrd));
             }
         }
 
-        public void RemovePhysObjectPrediction(RBPhysComputer.IRBPhysObjectPrediction predObj)
+        public void RemovePhysObjectPrediction(BeforeSolver beforePrd, AfterSolver afterPrd)
         {
             if (_predictionComputer != null)
             {
-                _predictionComputer.RemovePhysObjectPrediction(predObj);
-                _predPhysObjs.Remove(predObj);
+                _predictionComputer.RemovePhysObject(beforePrd, afterPrd);
+                _prdPhysObjs.Remove((beforePrd, afterPrd));
             }
             else
             {
-                _predPhysObjsAddQueue.Remove(predObj);
+                _prdPhysObjsAddQueue.Remove((beforePrd, afterPrd));
             }
         }
 
@@ -184,10 +186,12 @@ namespace RBPhys
         {
             GameObject vObj = new GameObject();
             vObj.transform.parent = vParent?.transform;
-            vObj.name = "rbVTransform";
+            vObj.name = "rbvt_" + obj.name;
             var vTransform = vObj.AddComponent<RBVirtualTransform>();
             vTransform.Initialize(_predictionComputer, obj, vParent);
             _vTransforms.Add(vTransform);
+
+            bool isObjectEmpty = true;
 
             if (!ignoreRigidbody)
             {
@@ -195,6 +199,8 @@ namespace RBPhys
                 {
                     var vRb = r.CreateVirtual(vTransform);
                     AddRigidbody(vRb);
+
+                    isObjectEmpty = false;
                 }
             }
 
@@ -218,6 +224,8 @@ namespace RBPhys
                     var vCapsule = capusle.CreateVirtual(vTransform);
                     AddCollider(vCapsule);
                 }
+
+                isObjectEmpty = false;
             }
 
             if (recursive)
@@ -228,9 +236,14 @@ namespace RBPhys
                     if (childObj != null)
                     {
                         var vChildTransform = CreateVirtual(childObj.gameObject, vTransform, true);
-                        vTransform.AddChildren(vChildTransform);
+                        if (vChildTransform != null) vTransform.AddChildren(vChildTransform);
                     }
                 }
+            }
+
+            if (vTransform.ChildCount == 0 && isObjectEmpty)
+            {
+                return null;
             }
 
             return vTransform;

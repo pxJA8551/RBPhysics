@@ -9,29 +9,14 @@ namespace RBPhys
 {
     public partial class RBPhysComputer
     {
-        public interface IStdSolver
-        {
-            void StdSolverInit(float dt, bool isPrimaryInit, SolverInfo solverInfo) { }
-            void StdSolverIteration(int iterationCount, SolverInfo solverInfo) { }
-        }
+        public delegate void StdSolverInit(float dt, SolverInfo solverInfo);
+        public delegate void StdSolverIteration(int iterCount, SolverInfo solverInfo);
 
-        public interface IStdSolverPrediction
-        {
-            void StdSolverInitPrediction(float dt, bool isPrimaryInit, SolverInfo solverInfo) { }
-            void StdSolverIterationPrediction(int iterationCount, SolverInfo solverInfo) { }
-        }
+        public delegate void BeforeSolver(float delta, TimeScaleMode timeScaleMode);
+        public delegate void AfterSolver(float delta, TimeScaleMode timeScaleMode);
 
-        public interface IRBPhysObject
-        {
-            void BeforeSolver(float delta, TimeScaleMode timeScaleMode) { }
-            void AfterSolver(float delta, TimeScaleMode timeScaleMode) { }
-        }
-
-        public interface IRBPhysObjectPrediction
-        {
-            void BeforeSolverPrediction(float delta, TimeScaleMode timeScaleMode) { }
-            void AfterSolverPrediction(float delta, TimeScaleMode timeScaleMode) { }
-        }
+        public delegate void ValidatorBeforeSolver();
+        public delegate void ValidatorAfterSolver();
 
         public delegate void OnCollision(RBCollider col, RBCollisionInfo info);
 
@@ -45,6 +30,8 @@ namespace RBPhys
             public readonly int solver_iter_count;
             public readonly int solver_sync_count;
 
+            public readonly bool isPrimaryInit;
+
             public SolverInfo(in RBPhysComputer computer, int iterCount, int syncCount)
             {
                 multiThreadedPrediction = computer.multiThreadPredictionMode;
@@ -54,6 +41,8 @@ namespace RBPhys
 
                 solver_iter_count = iterCount;
                 solver_sync_count = syncCount;
+
+                isPrimaryInit = (iterCount < 0);
             }
         }
 

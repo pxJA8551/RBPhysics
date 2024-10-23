@@ -88,11 +88,14 @@ namespace RBPhys
         List<RBCollision> _collisions = new List<RBCollision>();
         List<RBCollision> _collisionsInSolver = new List<RBCollision>();
 
-        List<IRBPhysObject> _physObjects = new List<IRBPhysObject>();
-        List<IRBPhysObjectPrediction> _physObjectsPredictions = new List<IRBPhysObjectPrediction>();
-        List<IRBPhysObject> _physValidatorObjects = new List<IRBPhysObject>();
-        List<IStdSolver> _stdSolversAsync = new List<IStdSolver>();
-        List<IStdSolverPrediction> _stdSolverAsyncPredictions = new List<IStdSolverPrediction>();
+        StdSolverInit _stdSolverInit;
+        StdSolverIteration _stdSolverIter;
+        
+        BeforeSolver _beforeSolver;
+        AfterSolver _afterSolver;
+
+        ValidatorBeforeSolver _validatorBeforeSolver;
+        ValidatorAfterSolver _validatorAfterSolver;
 
         int[] _collisionIgnoreLayers = new int[32];
         RBCollisionLayerOption[] _layerOptions = new RBCollisionLayerOption[32];
@@ -176,69 +179,40 @@ namespace RBPhys
             if (!_colRemoveQueue.Contains(c)) _colRemoveQueue.Add(c);
         }
 
-        public void AddStdSolver(IStdSolver solver)
+        public void AddStdSolver(StdSolverInit stdInit, StdSolverIteration stdIter)
         {
-            if (!_stdSolversAsync.Contains(solver))
-            {
-                _stdSolversAsync.Add(solver);
-            }
+            if (stdInit != null) _stdSolverInit += stdInit;
+            if (stdIter != null) _stdSolverIter += stdIter;
         }
 
-        public void RemoveStdSolver(IStdSolver solver)
+        public void RemoveStdSolver(StdSolverInit stdInit, StdSolverIteration stdIter)
         {
-            _stdSolversAsync.Remove(solver);
+            if (stdInit != null) _stdSolverInit -= stdInit;
+            if (stdIter != null) _stdSolverIter -= stdIter;
         }
 
-        public void AddPhysObject(IRBPhysObject physObj, bool asyncIteration = true)
+        public void AddPhysObject(BeforeSolver beforeSolver, AfterSolver afterSolver)
         {
-            if (!_physObjects.Contains(physObj))
-            {
-                _physObjects.Add(physObj);
-            }
+            if (beforeSolver != null) _beforeSolver += beforeSolver;
+            if (afterSolver != null) _afterSolver += afterSolver;
         }
 
-        public void RemovePhysObject(IRBPhysObject physObj)
+        public void RemovePhysObject(BeforeSolver beforeSolver, AfterSolver afterSolver)
         {
-            _physObjects.Remove(physObj);
+            if (beforeSolver != null) _beforeSolver -= beforeSolver;
+            if (afterSolver != null) _afterSolver -= afterSolver;
         }
 
-        public void AddPhysValidatorObject(IRBPhysObject physObj)
+        public void AddPhysValidatorObject(ValidatorBeforeSolver beforeSolver, ValidatorAfterSolver afterSolver)
         {
-            if (!_physValidatorObjects.Contains(physObj))
-            {
-                _physValidatorObjects.Add(physObj);
-            }
+            if (beforeSolver != null) _validatorBeforeSolver += beforeSolver;
+            if (afterSolver != null) _validatorAfterSolver += afterSolver;
         }
 
-        public void RemovePhysValidatorObject(IRBPhysObject physObj)
+        public void RemovePhysValidatorObject(ValidatorBeforeSolver beforeSolver, ValidatorAfterSolver afterSolver)
         {
-            _physValidatorObjects.Remove(physObj);
-        }
-
-        public void AddStdSolverPredication(IStdSolverPrediction stdSolver)
-        {
-            if (!_stdSolverAsyncPredictions.Contains(stdSolver))
-            {
-                _stdSolverAsyncPredictions.Add(stdSolver);
-            }
-        }
-
-        public void RemoveStdSolverPredication(IStdSolverPrediction stdSolver)
-        {
-            _stdSolverAsyncPredictions.Remove(stdSolver);
-        }
-
-        public void AddPhysObjectPrediction(IRBPhysObjectPrediction physObject)
-        {
-            if (!_physObjectsPredictions.Contains(physObject))
-            {
-                _physObjectsPredictions.Add(physObject);
-            }
-        }
-
-        public void RemovePhysObjectPrediction(IRBPhysObjectPrediction physObject)
-        {
-            _physObjectsPredictions.Remove(physObject);
+            if (beforeSolver != null) _validatorBeforeSolver -= beforeSolver;
+            if (afterSolver != null) _validatorAfterSolver -= afterSolver;
         }
 
         public void SetCollisionOption(int layer_a, int layer_b, RBCollisionOption option)
@@ -333,30 +307,14 @@ namespace RBPhys
 
             if (!multiThreadPredictionMode)
             {
-                foreach (var p in _physValidatorObjects)
-                {
-                    p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
-                }
+                if (_validatorBeforeSolver != null) _validatorBeforeSolver();
             }
 
             ClearCollisions();
 
             if (!multiThreadPredictionMode) ClearValidators();
 
-            if (!multiThreadPredictionMode)
-            {
-                foreach (var p in _physObjects)
-                {
-                    p.BeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
-                }
-            }
-            else
-            {
-                foreach (var p in _physObjectsPredictions)
-                {
-                    p.BeforeSolverPrediction(_solverDeltaTimeAsFloat, _timeScaleMode);
-                }
-            }
+            if (_beforeSolver != null) _beforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
 
             await _solverIterationSemaphore.WaitAsync(500);
 
@@ -376,30 +334,14 @@ namespace RBPhys
 
                 SolveConstraints(dt);
 
-                if (!multiThreadPredictionMode)
-                {
-                    foreach (var p in _physObjects)
-                    {
-                        p.AfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
-                    }
-                }
-                else
-                {
-                    foreach (var p in _physObjectsPredictions)
-                    {
-                        p.AfterSolverPrediction(_solverDeltaTimeAsFloat, _timeScaleMode);
-                    }
-                }
+                if (_afterSolver != null) _afterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
             }
 
             _solverIterationSemaphore.Release();
 
             if (!multiThreadPredictionMode)
             {
-                foreach (var p in _physValidatorObjects)
-                {
-                    p.AfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
-                }
+                if (_validatorAfterSolver != null) _validatorAfterSolver();
             }
 
             TrySleepRigidbodies();
@@ -1619,19 +1561,11 @@ namespace RBPhys
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-RigidbodyPrepareSolve");
 
-            if (!multiThreadPredictionMode)
             {
-                Parallel.For(0, _stdSolversAsync.Count, j =>
-                {
-                    _stdSolversAsync[j].StdSolverInit(dt, true, GetSolverInfo(-1, -1));
-                });
-            }
-            else
-            {
-                Parallel.For(0, _stdSolverAsyncPredictions.Count, j =>
-                {
-                    _stdSolverAsyncPredictions[j].StdSolverInitPrediction(dt, true, GetSolverInfo(-1, -1));
-                });
+                var solverInfo = GetSolverInfo(-1, -1);
+
+                var asyncResult = _stdSolverInit.BeginInvoke(dt, solverInfo, null, null);
+                _stdSolverInit.EndInvoke(asyncResult);
             }
 
             foreach (RBCollision col in _collisionsInSolver)
@@ -1669,18 +1603,18 @@ namespace RBPhys
                 for (int i = 0; i < cpu_std_solver_internal_sync_per_iteration; i++)
                 {
                     Profiler.BeginSample(name: "SolveConstraints");
-                    int p = _stdSolversAsync.Count;
-                    Parallel.For(0, p + _collisionsInSolver.Count, i =>
+
+                    var solverInfo = GetSolverInfo(iter, i);
+
+                    var asyncResult = _stdSolverIter.BeginInvoke(iter, solverInfo, null, null);
+
+                    Parallel.For(0, _collisionsInSolver.Count, i =>
                     {
-                        if (i < p)
-                        {
-                            _stdSolversAsync[i].StdSolverIteration(iter, GetSolverInfo(iter, i));
-                        }
-                        else
-                        {
-                            if (!_collisionsInSolver[i - p].skipInSolver) SolveCollisionPair(_collisionsInSolver[i - p]);
-                        }
+                        if (!_collisionsInSolver[i].skipInSolver) SolveCollisionPair(_collisionsInSolver[i]);
                     });
+
+                    _stdSolverIter.EndInvoke(asyncResult);
+
                     Profiler.EndSample();
                 }
 
@@ -1695,19 +1629,10 @@ namespace RBPhys
                         if (!_collisionsInSolver[j].skipInSolver) UpdateTrajectoryPair(_collisionsInSolver[j], dt);
                     });
 
-                    if (!multiThreadPredictionMode)
                     {
-                        Parallel.ForEach(_stdSolversAsync, s =>
-                        {
-                            s.StdSolverInit(dt, false, GetSolverInfo(iter, -1));
-                        });
-                    }
-                    else
-                    {
-                        Parallel.ForEach(_stdSolverAsyncPredictions, s =>
-                        {
-                            s.StdSolverInitPrediction(dt, false, GetSolverInfo(iter, -1));
-                        });
+                        var solverInfo = GetSolverInfo(iter, -1);
+                        var asyncResult = _stdSolverInit.BeginInvoke(dt, solverInfo, null, null);
+                        _stdSolverInit.EndInvoke(asyncResult);
                     }
 
                     Profiler.EndSample();

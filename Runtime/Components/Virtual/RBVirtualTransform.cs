@@ -31,6 +31,8 @@ namespace RBPhys
         Quaternion offsetRot;
 
         List<RBVirtualTransform> _children = new List<RBVirtualTransform>();
+        
+        public int ChildCount { get { return _children?.Count ?? 0; } }
 
         public int layer { get { return _layer; } }
         int _layer;

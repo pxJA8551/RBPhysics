@@ -7,7 +7,7 @@ using UnityEngine;
 namespace RBPhys
 {
     [RequireComponent(typeof(RBRigidbody))]
-    public class RBPhysAnimation : MonoBehaviour, RBPhysComputer.IStdSolver, RBPhysComputer.IRBPhysObject
+    public class RBPhysAnimation : MonoBehaviour
     {
         const int PHYS_ANIM_INTERGRADE = 2;
         const float PHYS_ANIM_RESOLUTION_BETA = .25f;
@@ -38,9 +38,11 @@ namespace RBPhys
 
         public float ext_lambda_compensation = 1;
 
-        public float AnimationLength { get { return Mathf.Max(animationClip?.length ?? 0, trsCurve?.length ?? 0); } } 
+        public float AnimationLength { get { return Mathf.Max(animationClip?.length ?? 0, trsCurve?.length ?? 0); } }
 
-        public void Awake()
+        public virtual bool vActive_And_vEnabled { get { return enabled && gameObject.activeSelf; } }
+
+        protected virtual void Awake()
         {
             rbRigidbody = GetComponent<RBRigidbody>();
 
@@ -50,16 +52,16 @@ namespace RBPhys
             }
         }
 
-        void OnEnable()
+        protected virtual void OnEnable()
         {
-            RBPhysController.AddStdSolver(this);
-            RBPhysController.AddPhysObject(this);
+            RBPhysController.AddStdSolver(StdSolverInit, StdSolverIteration);
+            RBPhysController.AddPhysObject(BeforeSolver, AfterSolver);
         }
 
-        void OnDisable()
+        protected virtual void OnDisable()
         {
-            RBPhysController.RemoveStdSolver(this);
-            RBPhysController.RemovePhysObject(this);
+            RBPhysController.RemoveStdSolver(StdSolverInit, StdSolverIteration);
+            RBPhysController.RemovePhysObject(BeforeSolver, AfterSolver);
         }
 
         public void PlayAnimation()
@@ -225,7 +227,7 @@ namespace RBPhys
             }
         }
 
-        public void StdSolverInit(float dt, bool isPrimaryInit, RBPhysComputer.SolverInfo info)
+        public void StdSolverInit(float dt, RBPhysComputer.SolverInfo info)
         {
             _solverDeltaTime = dt;
         }
