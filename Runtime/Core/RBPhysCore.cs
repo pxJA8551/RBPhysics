@@ -1570,17 +1570,15 @@ namespace RBPhys
                 {
                     var solverInfo = GetSolverInfo(-1, -1);
 
-                    if (_stdSolverInit != null)
+                    _stdSolverInitTasks.Clear();
+
+                    foreach (StdSolverInit asyncInit in _stdSolverInit.GetInvocationList()) 
                     {
-                        _stdSolverInitTasks.Clear();
-
-                        foreach (EventHandler<(float dt, SolverInfo solverInfo)> asyncInit in _stdSolverInit.GetInvocationList())
-                        {
-                            var t = Task.Run(() => asyncInit.Invoke(this, (dt, solverInfo)));
-                        }
-
-                        Task.WhenAll(_stdSolverInitTasks).Wait();
+                        var t = Task.Run(() => asyncInit(dt, solverInfo));
+                        _stdSolverInitTasks.Add(t);
                     }
+
+                    Task.WhenAll(_stdSolverInitTasks).Wait();
                 }
             }
 
@@ -1625,9 +1623,9 @@ namespace RBPhys
                     _stdSolverIterTasks.Clear();
                     if (_stdSolverIter != null)
                     {
-                        foreach (EventHandler<(int iterCount, SolverInfo solverInfo)> asyncIter in _stdSolverIter.GetInvocationList())
+                        foreach (StdSolverIteration asyncIter in _stdSolverIter.GetInvocationList())
                         {
-                            var t = Task.Run(() => asyncIter.Invoke(this, (iter, solverInfo)));
+                            var t = Task.Run(() => asyncIter(iter, solverInfo));
                             _stdSolverIterTasks.Add(t);
                         }
                     }
@@ -1660,9 +1658,10 @@ namespace RBPhys
                         {
                             _stdSolverInitTasks.Clear();
 
-                            foreach (EventHandler<(float dt, SolverInfo solverInfo)> asyncInit in _stdSolverInit.GetInvocationList())
+                            foreach (StdSolverInit asyncInit in _stdSolverInit.GetInvocationList())
                             {
-                                var t = Task.Run(() => asyncInit.Invoke(this, (dt, solverInfo)));
+                                var t = Task.Run(() => asyncInit(dt, solverInfo));
+                                _stdSolverInitTasks.Add(t);
                             }
 
                             Task.WhenAll(_stdSolverInitTasks).Wait();
