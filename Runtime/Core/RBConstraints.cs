@@ -15,8 +15,8 @@ namespace RBPhys
         public delegate void BeforeSolver(float delta, TimeScaleMode timeScaleMode);
         public delegate void AfterSolver(float delta, TimeScaleMode timeScaleMode);
 
-        public delegate void ValidatorBeforeSolver();
-        public delegate void ValidatorAfterSolver();
+        public delegate void ValidatorBeforeSolver(float delta, TimeScaleMode timeScaleMode);
+        public delegate void ValidatorAfterSolver(float delta, TimeScaleMode timeScaleMode);
 
         public delegate void OnCollision(RBCollider col, RBCollisionInfo info);
 
