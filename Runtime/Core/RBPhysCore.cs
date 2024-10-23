@@ -307,7 +307,7 @@ namespace RBPhys
 
             if (!multiThreadPredictionMode)
             {
-                if (_validatorBeforeSolver != null) _validatorBeforeSolver();
+                if (_validatorBeforeSolver != null) _validatorBeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
             }
 
             ClearCollisions();
@@ -341,7 +341,7 @@ namespace RBPhys
 
             if (!multiThreadPredictionMode)
             {
-                if (_validatorAfterSolver != null) _validatorAfterSolver();
+                if (_validatorAfterSolver != null) _validatorAfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
             }
 
             TrySleepRigidbodies();
