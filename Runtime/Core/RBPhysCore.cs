@@ -9,6 +9,7 @@ using UnityEngine.Profiling;
 using UnityEditor;
 using Unity.IL2CPP.CompilerServices;
 using System.Threading;
+using static UnityEditor.Progress;
 
 namespace RBPhys
 {
@@ -1000,7 +1001,8 @@ namespace RBPhys
             }
         }
 
-        List<Task> _stdSolverTasks = new List<Task>();
+        List<Task> _stdSolverIterTasks = new List<Task>();
+        List<Task> _stdSolverInitTasks = new List<Task>();
 
         void SortTrajectories()
         {
@@ -1564,12 +1566,21 @@ namespace RBPhys
             Profiler.BeginSample(name: "Physics-CollisionResolution-RigidbodyPrepareSolve");
 
             {
-                var solverInfo = GetSolverInfo(-1, -1);
-
                 if (_stdSolverInit != null)
                 {
-                    var asyncResult = _stdSolverInit.BeginInvoke(dt, solverInfo, null, null);
-                    _stdSolverInit.EndInvoke(asyncResult);
+                    var solverInfo = GetSolverInfo(-1, -1);
+
+                    if (_stdSolverInit != null)
+                    {
+                        _stdSolverInitTasks.Clear();
+
+                        foreach (EventHandler<(float dt, SolverInfo solverInfo)> asyncInit in _stdSolverInit.GetInvocationList())
+                        {
+                            var t = Task.Run(() => asyncInit.Invoke(this, (dt, solverInfo)));
+                        }
+
+                        Task.WhenAll(_stdSolverInitTasks).Wait();
+                    }
                 }
             }
 
@@ -1611,14 +1622,13 @@ namespace RBPhys
 
                     var solverInfo = GetSolverInfo(iter, i);
 
-                    _stdSolverTasks.Clear();
-
+                    _stdSolverIterTasks.Clear();
                     if (_stdSolverIter != null)
                     {
                         foreach (EventHandler<(int iterCount, SolverInfo solverInfo)> asyncIter in _stdSolverIter.GetInvocationList())
                         {
                             var t = Task.Run(() => asyncIter.Invoke(this, (iter, solverInfo)));
-                            _stdSolverTasks.Add(t);
+                            _stdSolverIterTasks.Add(t);
                         }
                     }
 
@@ -1627,7 +1637,7 @@ namespace RBPhys
                         if (!_collisionsInSolver[i].skipInSolver) SolveCollisionPair(_collisionsInSolver[i]);
                     });
 
-                    Task.WhenAll(_stdSolverTasks).Wait();
+                    Task.WhenAll(_stdSolverIterTasks).Wait();
 
                     Profiler.EndSample();
                 }
@@ -1648,8 +1658,14 @@ namespace RBPhys
 
                         if (_stdSolverInit != null)
                         {
-                            var asyncResult = _stdSolverInit.BeginInvoke(dt, solverInfo, null, null);
-                            _stdSolverInit.EndInvoke(asyncResult);
+                            _stdSolverInitTasks.Clear();
+
+                            foreach (EventHandler<(float dt, SolverInfo solverInfo)> asyncInit in _stdSolverInit.GetInvocationList())
+                            {
+                                var t = Task.Run(() => asyncInit.Invoke(this, (dt, solverInfo)));
+                            }
+
+                            Task.WhenAll(_stdSolverInitTasks).Wait();
                         }
                     }
 
