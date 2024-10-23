@@ -129,7 +129,7 @@ namespace RBPhys
         }
 
         float _solverTime = 0;
-        float _solverDeltaTime = 0;
+        protected float _solverDeltaTime = 0;
 
         float _ctrlTimeLast;
         float _ctrlTimeDeltaP;
@@ -276,7 +276,7 @@ namespace RBPhys
             _solverDeltaTime = dt;
         }
 
-        public void StdSolverIteration(int iterationCount, RBPhysComputer.SolverInfo info)
+        public virtual void StdSolverIteration(int iterationCount, RBPhysComputer.SolverInfo info)
         {
             if (enablePhysProceduralAnimation && trsCurve != null)
             {
@@ -314,7 +314,7 @@ namespace RBPhys
             rbRigidbody.ExpAngularVelocity = angVel;
         }
 
-        void CalcTRSAnimVelocity(float solverDelta, int solverIters)
+        protected void CalcTRSAnimVelocity(float solverDelta, int solverIters)
         {
             float intergradeTime = ctrlTime;
 

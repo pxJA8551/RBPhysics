@@ -129,6 +129,19 @@ namespace RBPhys
             }
         }
 
+        public override void StdSolverIteration(int iterationCount, RBPhysComputer.SolverInfo info)
+        {
+            if (enablePhysProceduralAnimation && trsCurve != null)
+            {
+                SampleSetTRSAnimation(ctrlTime, _lsBasePos, _lsBaseRot);
+
+                if (_solverDeltaTime > 0)
+                {
+                    CalcTRSAnimVelocity(_solverDeltaTime, info.solver_iter_max * info.solver_sync_max);
+                }
+            }
+        }
+
         protected override void AddLinkedAnimationTime(float add) { }
         protected override float LinkAnimationTime() { throw new NotImplementedException(); }
     }
