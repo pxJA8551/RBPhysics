@@ -1564,8 +1564,11 @@ namespace RBPhys
             {
                 var solverInfo = GetSolverInfo(-1, -1);
 
-                var asyncResult = _stdSolverInit.BeginInvoke(dt, solverInfo, null, null);
-                _stdSolverInit.EndInvoke(asyncResult);
+                if (_stdSolverInit != null)
+                {
+                    var asyncResult = _stdSolverInit.BeginInvoke(dt, solverInfo, null, null);
+                    _stdSolverInit.EndInvoke(asyncResult);
+                }
             }
 
             foreach (RBCollision col in _collisionsInSolver)
@@ -1606,14 +1609,18 @@ namespace RBPhys
 
                     var solverInfo = GetSolverInfo(iter, i);
 
-                    var asyncResult = _stdSolverIter.BeginInvoke(iter, solverInfo, null, null);
+                    IAsyncResult asyncResult = null;
+                    if (_stdSolverIter != null)
+                    {
+                        asyncResult = _stdSolverIter.BeginInvoke(iter, solverInfo, null, null);
+                    }
 
                     Parallel.For(0, _collisionsInSolver.Count, i =>
                     {
                         if (!_collisionsInSolver[i].skipInSolver) SolveCollisionPair(_collisionsInSolver[i]);
                     });
 
-                    _stdSolverIter.EndInvoke(asyncResult);
+                    if (asyncResult != null) _stdSolverIter.EndInvoke(asyncResult);
 
                     Profiler.EndSample();
                 }
@@ -1631,8 +1638,12 @@ namespace RBPhys
 
                     {
                         var solverInfo = GetSolverInfo(iter, -1);
-                        var asyncResult = _stdSolverInit.BeginInvoke(dt, solverInfo, null, null);
-                        _stdSolverInit.EndInvoke(asyncResult);
+
+                        if (_stdSolverInit != null)
+                        {
+                            var asyncResult = _stdSolverInit.BeginInvoke(dt, solverInfo, null, null);
+                            _stdSolverInit.EndInvoke(asyncResult);
+                        }
                     }
 
                     Profiler.EndSample();
