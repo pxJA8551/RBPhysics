@@ -1000,6 +1000,8 @@ namespace RBPhys
             }
         }
 
+        List<Task> _stdSolverTasks = new List<Task>();
+
         void SortTrajectories()
         {
             Profiler.BeginSample(name: "Physics-CollisionResolution-Sort");
@@ -1609,10 +1611,15 @@ namespace RBPhys
 
                     var solverInfo = GetSolverInfo(iter, i);
 
-                    IAsyncResult asyncResult = null;
+                    _stdSolverTasks.Clear();
+
                     if (_stdSolverIter != null)
                     {
-                        asyncResult = _stdSolverIter.BeginInvoke(iter, solverInfo, null, null);
+                        foreach (EventHandler<(int iterCount, SolverInfo solverInfo)> asyncIter in _stdSolverIter.GetInvocationList())
+                        {
+                            var t = Task.Run(() => asyncIter.Invoke(this, (iter, solverInfo)));
+                            _stdSolverTasks.Add(t);
+                        }
                     }
 
                     Parallel.For(0, _collisionsInSolver.Count, i =>
@@ -1620,7 +1627,7 @@ namespace RBPhys
                         if (!_collisionsInSolver[i].skipInSolver) SolveCollisionPair(_collisionsInSolver[i]);
                     });
 
-                    if (asyncResult != null) _stdSolverIter.EndInvoke(asyncResult);
+                    Task.WhenAll(_stdSolverTasks).Wait();
 
                     Profiler.EndSample();
                 }
