@@ -31,6 +31,7 @@ namespace RBPhys
 
         protected override void OnEnable() { }
         protected override void OnDisable() { }
+        protected override void LateUpdate() { }
 
         public void SetVTransform(RBVirtualTransform vTransform)
         {
@@ -77,5 +78,58 @@ namespace RBPhys
 
             _basePhysAnimation = basePhysAnimation;
         }
+
+        public override void BeforeSolver(float dt, TimeScaleMode timeScaleMode)
+        {
+            if (!enabled) return;
+
+            var parentTransform = _vTransform.parent;
+            if (parentTransform != null)
+            {
+                _useParentTransform = true;
+                _parentTransformPos = parentTransform.Position;
+                _parentTransformRot = parentTransform.Rotation;
+                _parentTransformScale = Vector3.one;
+            }
+            else
+            {
+                _useParentTransform = false;
+            }
+
+            ctrlTime += dt * ctrlSpeed;
+            ctrlTime = Mathf.Clamp(ctrlTime, 0, Mathf.Max(animationClip?.length ?? 0, trsCurve?.length ?? 0));
+
+            if (trsCurve != null)
+            {
+                if (enablePhysProceduralAnimation)
+                {
+                    SetBasePos();
+                    SampleApplyTRSAnimation(ctrlTime, dt, _lsBasePos, _lsBaseRot);
+                }
+                else
+                {
+                    SetBasePos();
+                    SampleSetTRSAnimation(ctrlTime, _lsBasePos, _lsBaseRot);
+                }
+            }
+        }
+
+        void SetBasePos()
+        {
+            var parentTransform = _vTransform.parent;
+            if (parentTransform != null)
+            {
+                _lsBasePos = parentTransform.InverseTransformPoint(_vTransform.Position);
+                _lsBaseRot = Quaternion.Inverse(parentTransform.Rotation) * _vTransform.Rotation;
+            }
+            else
+            {
+                _lsBasePos = _vTransform.Position;
+                _lsBaseRot = _vTransform.Rotation;
+            }
+        }
+
+        protected override void AddLinkedAnimationTime(float add) { }
+        protected override float LinkAnimationTime() { throw new NotImplementedException(); }
     }
 }

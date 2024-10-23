@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 namespace RBPhys
@@ -23,10 +24,10 @@ namespace RBPhys
         [SerializeField] RBPhysAnimationType animationType;
 
         [SerializeField] public Transform parentTransform;
-        bool _useParentTransform;
-        Vector3 _parentTransformPos;
-        Quaternion _parentTransformRot;
-        Vector3 _parentTransformScale;
+        protected bool _useParentTransform;
+        protected Vector3 _parentTransformPos;
+        protected Quaternion _parentTransformRot;
+        protected Vector3 _parentTransformScale;
 
         public RBRigidbody rbRigidbody;
         public bool playing;
@@ -87,6 +88,12 @@ namespace RBPhys
             interpMultiplier = anim.interpMultiplier;
 
             ext_lambda_compensation = anim.ext_lambda_compensation;
+
+            _targetWsPos = anim._targetWsPos;
+            _targetWsRot = anim._targetWsRot;
+
+            _lsBasePos = anim._lsBasePos;
+            _lsBaseRot = anim._lsBaseRot;
         }
 
         protected virtual void OnEnable()
@@ -127,13 +134,13 @@ namespace RBPhys
         float _ctrlTimeLast;
         float _ctrlTimeDeltaP;
 
-        Vector3 _targetWsPos;
-        Quaternion _targetWsRot;
+        protected Vector3 _targetWsPos;
+        protected Quaternion _targetWsRot;
 
-        Vector3 _lsBasePos;
-        Quaternion _lsBaseRot;
+        protected Vector3 _lsBasePos;
+        protected Quaternion _lsBaseRot;
 
-        public void BeforeSolver(float dt, TimeScaleMode timeScaleMode)
+        public virtual void BeforeSolver(float dt, TimeScaleMode timeScaleMode)
         {
             if (!enabled) return;
 
@@ -186,7 +193,7 @@ namespace RBPhys
             }
         }
 
-        void AddLinkedAnimationTime(float add)
+        protected virtual void AddLinkedAnimationTime(float add)
         {
             if (linker != null)
             {
@@ -200,7 +207,7 @@ namespace RBPhys
             LinkAnimationTime();
         }
 
-        float LinkAnimationTime()
+        protected virtual float LinkAnimationTime()
         {
             linker?.LinkCtrlTime();
             return ctrlTime;
@@ -283,13 +290,13 @@ namespace RBPhys
             }
         }
 
-        void SampleApplyTRSAnimation(float time, float deltaTime, Vector3 basePos, Quaternion baseRot)
+        protected void SampleApplyTRSAnimation(float time, float deltaTime, Vector3 basePos, Quaternion baseRot)
         {
             SampleSetTRSAnimation(time, basePos, baseRot);
             CalcTRSAnimBaseVelocity(deltaTime);
         }
 
-        void SampleSetTRSAnimation(float time, Vector3 basePos, Quaternion baseRot)
+        protected void SampleSetTRSAnimation(float time, Vector3 basePos, Quaternion baseRot)
         {
             trsCurve.SampleTRSAnimation(time, basePos, baseRot, animationType, out Vector3 targetLsPos, out Quaternion targetLsRot);
             LsToWs(targetLsPos, targetLsRot, out _targetWsPos, out _targetWsRot);
@@ -448,7 +455,7 @@ namespace RBPhys
             }
         }
 
-        private void LateUpdate()
+        protected virtual void LateUpdate()
         {
             float interpDelta = _solverTime != 0 ? (Time.time - _solverTime) : 0;
             float time = interp ? (ctrlTime + (interpDelta * (velocityInterp ? _ctrlTimeDeltaP : 1)) * interpMultiplier) : ctrlTime;

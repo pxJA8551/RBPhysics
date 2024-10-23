@@ -136,5 +136,15 @@ namespace RBPhys
         {
             return physComputer != null;
         }
+
+        public Vector3 TransformPoint(Vector3 posLs)
+        {
+            return Matrix4x4.TRS(Position, Rotation, Vector3.one).MultiplyPoint3x4(posLs);
+        }
+
+        public Vector3 InverseTransformPoint(Vector3 posWs)
+        {
+            return Matrix4x4.TRS(Position, Rotation, Vector3.one).inverse.MultiplyPoint3x4(posWs);
+        }
     }
 }
