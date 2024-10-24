@@ -2496,28 +2496,28 @@ namespace RBPhys
         public readonly float impulse;
         public readonly float vDiff;
         public readonly bool isTriggerCollision;
-        public readonly bool isSleeping;
+        public readonly bool isStaticOrSleeping;
         
-        public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 velAdd, Vector3 normal, bool isSleeping)
+        public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 velAdd, Vector3 normal, bool isStaticOrSleeping)
         {
             vDiff = Vector3.Project(velAdd, normal).magnitude;
             impulse = (vDiff * rbRigidbody?.mass) ?? 0;
             isTriggerCollision = false;
-            this.isSleeping = isSleeping;
+            this.isStaticOrSleeping = isStaticOrSleeping;
         }
 
-        public RBCollisionInfo(bool isTriggerCollision, bool isSleeping)
+        public RBCollisionInfo(bool isTriggerCollision, bool isStaticOrSleeping)
         {
             this.isTriggerCollision = isTriggerCollision;
-            this.isSleeping = isSleeping;
+            this.isStaticOrSleeping = isStaticOrSleeping;
 
             vDiff = 0;
             impulse = 0;
         }
 
-        public static RBCollisionInfo GetTriggerCollision(bool isSleeping)
+        public static RBCollisionInfo GetTriggerCollision(bool isStaticOrSleeping)
         {
-            return new RBCollisionInfo(true, isSleeping);
+            return new RBCollisionInfo(true, isStaticOrSleeping);
         }
     }
 
