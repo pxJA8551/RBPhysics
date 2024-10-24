@@ -14,11 +14,14 @@ namespace RBPhys
     [DisallowMultipleComponent]
     public class RBRigidbody : MonoBehaviour
     {
-        const float SLEEP_VEL_MAX_SQRT = 0.07f * 0.07f;
-        const float SLEEP_ANGVEL_MAX_SQRT = 0.07f * 0.07f;
+        const float SLEEP_VEL_MAX_SQRT = 0.15f * 0.15f;
+        const float SLEEP_ANGVEL_MAX_SQRT = 1.0f * 1.0f;
         protected const float XZ_VELOCITY_MIN_CUTOUT = .008f;
         protected const float ANG_VELOCITY_MIN_CUTOUT = .05f;
+        const float SLEEP_VEL_ADD_SQRT = .2f * .2f;
         const int SLEEP_GRACE_FRAMES = 5; //, of no practical use
+        const float DRAG_RETG_MULTIPLIER = 1f;
+        const float ANGULAR_DRAG_RETG_MULTIPLIER = .3f;
 
         public float mass = 1;
         public float inertiaTensorMultiplier = 1;
@@ -296,6 +299,20 @@ namespace RBPhys
         {
             if (!IgnoreVelocity)
             {
+                float vm = _expVelocity.magnitude;
+                float avm = _expAngularVelocity.magnitude;
+
+                if (physTimeScaleMode == TimeScaleMode.Prograde)
+                {
+                    _expVelocity = (vm > 0 ? _expVelocity / vm : Vector3.zero) * Mathf.Max(0, vm - drag);
+                    _angularVelocity = (avm > 0 ? _angularVelocity / avm : Vector3.zero) * Mathf.Max(0, avm - angularDrag);
+                }
+                else
+                {
+                    _expVelocity = (vm > 0 ? _expVelocity / vm : Vector3.zero) * Mathf.Max(0, vm + drag * DRAG_RETG_MULTIPLIER);
+                    _angularVelocity = (avm > 0 ? _angularVelocity / avm : Vector3.zero) * Mathf.Max(0, avm + angularDrag * ANGULAR_DRAG_RETG_MULTIPLIER);
+                }
+
                 _expVelocity = Vector3.ClampMagnitude(_expVelocity, rbRigidbody_velocity_max);
                 _expAngularVelocity = Vector3.ClampMagnitude(_expAngularVelocity, rbRigidbody_ang_velocity_max);
 
@@ -305,20 +322,8 @@ namespace RBPhys
                 if (Mathf.Abs(_expAngularVelocity.y) < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.y = 0;
                 if (Mathf.Abs(_expAngularVelocity.z) < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.z = 0;
 
-                if (physTimeScaleMode == TimeScaleMode.Prograde)
-                {
-                    float vm = _expVelocity.magnitude;
-                    float avm = _expAngularVelocity.magnitude;
-                    _velocity = (vm > 0 ? (_expVelocity / vm) : Vector3.zero) * Mathf.Max(0, vm - drag);
-                    _angularVelocity = (avm > 0 ? (_expAngularVelocity / avm) : Vector3.zero) * Mathf.Max(0, avm - angularDrag);
-                }
-                else if (physTimeScaleMode == TimeScaleMode.Retrograde)
-                {
-                    float vm = _expVelocity.magnitude;
-                    float avm = _expAngularVelocity.magnitude;
-                    _velocity = (vm > 0 ? (_expVelocity / vm) : Vector3.zero) * Mathf.Max(0, vm + drag);
-                    _angularVelocity = (avm > 0 ? (_expAngularVelocity / avm) : Vector3.zero) * Mathf.Max(0, avm - angularDrag);
-                }
+                _velocity = _expVelocity;
+                _angularVelocity = _expAngularVelocity;
 
                 transform.position = _position + (_velocity * dt);
                 transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
@@ -453,10 +458,7 @@ namespace RBPhys
         {
             if (IsExpUnderSleepLevel())
             {
-                _expVelocity = Vector3.zero;
-                _expAngularVelocity = Vector3.zero;
-
-                if (sleepGrace < SLEEP_GRACE_FRAMES)
+                if (sleepGrace < SLEEP_GRACE_FRAMES && _expVelocity.sqrMagnitude < _velocity.sqrMagnitude + SLEEP_VEL_ADD_SQRT)
                 {
                     sleepGrace++;
                 }
