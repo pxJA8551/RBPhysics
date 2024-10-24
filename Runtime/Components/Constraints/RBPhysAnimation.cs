@@ -18,7 +18,7 @@ namespace RBPhys
         public AnimationClip AnimationClip { get { return _animationClip; } }
         public float AnimationLength { get { return _animationLength; } }
 
-        AnimationClip _animationClip;
+        [SerializeField] AnimationClip _animationClip;
         float _animationLength;
 
         public RBPhysTRSAnimationCurve trsCurve;
@@ -71,7 +71,7 @@ namespace RBPhys
             baseAnimationClip = anim.baseAnimationClip;
 
             _animationClip = anim.AnimationClip;
-            _animationLength = _animationClip.length;
+            _animationLength = anim.AnimationClip?.length ?? -1;
 
             trsCurve = anim.trsCurve;
 
