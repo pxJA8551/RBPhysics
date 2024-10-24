@@ -1139,7 +1139,7 @@ namespace RBPhys
 
                             if ((_collisionIgnoreLayers[activeTraj.Layer] & (1 << targetTraj.Layer)) == 0)
                             {
-                                if (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping || ((IsTriggerLayer(activeTraj.Layer) || IsTriggerLayer(targetTraj.Layer)) && (activeTraj.SetTempSleeping || targetTraj.SetTempSleeping)))
+                                if (!activeTraj.IsStatic || !targetTraj.IsStatic || ((IsTriggerLayer(activeTraj.Layer) || IsTriggerLayer(targetTraj.Layer)) && (activeTraj.SetTempSleeping || targetTraj.SetTempSleeping)))
                                 {
                                     if (targetTraj.IsValidTrajectory)
                                     {
@@ -1282,6 +1282,7 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
                     }
 
+                    rbc.isStaticOrSleeping = traj1.IsStaticOrSleeping && traj2.IsStaticOrSleeping;
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
@@ -1333,6 +1334,7 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
                     }
 
+                    rbc.isStaticOrSleeping = traj1.IsStaticOrSleeping && traj2.IsStaticOrSleeping;
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
@@ -1384,6 +1386,7 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
                     }
 
+                    rbc.isStaticOrSleeping = traj1.IsStaticOrSleeping && traj2.IsStaticOrSleeping;
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
@@ -1435,6 +1438,7 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
                     }
 
+                    rbc.isStaticOrSleeping = traj1.IsStaticOrSleeping && traj2.IsStaticOrSleeping;
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
@@ -1486,6 +1490,7 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
                     }
 
+                    rbc.isStaticOrSleeping = traj1.IsStaticOrSleeping && traj2.IsStaticOrSleeping;
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
@@ -1537,6 +1542,7 @@ namespace RBPhys
                         rbc = new RBCollision(pair.Item1, pair.Item2, pair.p.p, traj1.Layer, traj2.Layer);
                     }
 
+                    rbc.isStaticOrSleeping = traj1.IsStaticOrSleeping && traj2.IsStaticOrSleeping;
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
                     if (!traj2.IsStatic) rbc.rigidbody_a?.AddVaidator(new RBCollisionValidator(traj2));
@@ -1682,13 +1688,13 @@ namespace RBPhys
 
                 if (rbc.triggerCollision)
                 {
-                    info_a = RBCollisionInfo.GetTriggerCollision();
-                    info_b = RBCollisionInfo.GetTriggerCollision();
+                    info_a = RBCollisionInfo.GetTriggerCollision(rbc.isStaticOrSleeping);
+                    info_b = RBCollisionInfo.GetTriggerCollision(rbc.isStaticOrSleeping);
                 }
                 else
                 {
-                    info_a = new RBCollisionInfo(rbc.rigidbody_a, rbc.solverCache_velAdd_a, rbc.ContactNormal, rbc.cacCount > 0);
-                    info_b = new RBCollisionInfo(rbc.rigidbody_b, rbc.solverCache_velAdd_b, -rbc.ContactNormal, rbc.cacCount > 0);
+                    info_a = new RBCollisionInfo(rbc.rigidbody_a, rbc.solverCache_velAdd_a, rbc.ContactNormal, rbc.isStaticOrSleeping);
+                    info_b = new RBCollisionInfo(rbc.rigidbody_b, rbc.solverCache_velAdd_b, -rbc.ContactNormal, rbc.isStaticOrSleeping);
                 }
 
                 rbc.rigidbody_a?.OnCollision(rbc.collider_b, info_a);
@@ -2129,6 +2135,7 @@ namespace RBPhys
 
         public bool useSoftClip;
         public bool triggerCollision;
+        public bool isStaticOrSleeping;
 
         Jacobian _jN = new Jacobian(Jacobian.Type.Normal); //Normal
         Jacobian _jT = new Jacobian(Jacobian.Type.Tangent); //Tangent
@@ -2488,30 +2495,29 @@ namespace RBPhys
     {
         public readonly float impulse;
         public readonly float vDiff;
-        public readonly bool continuousCollision;
         public readonly bool isTriggerCollision;
+        public readonly bool isSleeping;
         
-        public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 velAdd, Vector3 normal, bool continuous)
+        public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 velAdd, Vector3 normal, bool isSleeping)
         {
             vDiff = Vector3.Project(velAdd, normal).magnitude;
             impulse = (vDiff * rbRigidbody?.mass) ?? 0;
-
-            continuousCollision = continuous;
             isTriggerCollision = false;
+            this.isSleeping = isSleeping;
         }
 
-        public RBCollisionInfo(bool isTriggerCollision)
+        public RBCollisionInfo(bool isTriggerCollision, bool isSleeping)
         {
             this.isTriggerCollision = isTriggerCollision;
+            this.isSleeping = isSleeping;
 
             vDiff = 0;
             impulse = 0;
-            continuousCollision = false;
         }
 
-        public static RBCollisionInfo GetTriggerCollision()
+        public static RBCollisionInfo GetTriggerCollision(bool isSleeping)
         {
-            return new RBCollisionInfo(true);
+            return new RBCollisionInfo(true, isSleeping);
         }
     }
 
@@ -2791,6 +2797,7 @@ namespace RBPhys
         public RBCollider[] Colliders { get { return _colliders; } }
         public bool IsStaticOrSleeping { get { return ((Rigidbody?.isSleeping ?? true) || tempSleeping) || IsStatic; } }
         public bool SetTempSleeping { get { return !(Rigidbody?.isSleeping ?? true) && tempSleeping && !IsStatic; } }
+        public bool IsSleepingOrTempSleeping { get { return (Rigidbody?.isSleeping ?? true) || tempSleeping; } }
         public int Layer { get { return _layer; } }
 
         public bool tempSleeping = false;

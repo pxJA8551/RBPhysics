@@ -21,8 +21,8 @@ namespace RBPhys
         const float SLEEP_VEL_ADD_SQRT = .2f * .2f;
         const int SLEEP_GRACE_FRAMES = 8; //, of no practical use
 
-        protected const float DRAG_RETG_MULTIPLIER = 1f;
-        protected const float ANGULAR_DRAG_RETG_MULTIPLIER = .1f;
+        protected const float DRAG_RETG_MULTIPLIER = 0f;
+        protected const float ANGULAR_DRAG_RETG_MULTIPLIER = 0f;
 
         public float mass = 1;
         public float inertiaTensorMultiplier = 1;
