@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -18,9 +19,9 @@ namespace RBPhys
             Application.targetFrameRate = -1;
         }
 
-        void FixedUpdate()
+        async void FixedUpdate()
         {
-            StartCoroutine(PhysicsFrame());
+            await PhysicsFrame();
 
             if (Physics.autoSimulation != !_disableUnityPhysics) 
             {
@@ -28,13 +29,18 @@ namespace RBPhys
             }
         }
 
-        IEnumerator PhysicsFrame()
+        async Task PhysicsFrame()
         {
-            RBPhysController.MainComputer.OpenPhysicsFrameWindowAsync();
+            await RBPhysController.MainComputer.OpenPhysicsFrameWindowAsync();
 
-            yield return new WaitForFixedUpdate();
+            StartCoroutine(WaitForFixedUpdate());
 
             RBPhysController.MainComputer.ClosePhysicsFrameWindow();
+        }
+
+        IEnumerator WaitForFixedUpdate()
+        {
+            yield return new WaitForFixedUpdate();
         }
 
         private void OnDestroy()

@@ -279,14 +279,6 @@ namespace RBPhys
             InitPredictionComputer();
         }
 
-        public async Task InitIntergradePrediction(int frames)
-        {
-            if (_predictionComputer != null)
-            {
-                await IntergradeComputeFor(frames);
-            }
-        }
-
         public void CreatePrediction(float deltaTime)
         {
             _predictionComputer = new RBPhysComputer(true, deltaTime);
@@ -309,31 +301,28 @@ namespace RBPhys
             _rbColsAddQueue.Clear();
         }
 
-        public async Task IntergradeComputeFor(int frameOffset)
-        {
-            await IntergradePredictionComputer(frameOffset);
-        }
-
-        public async Task IntergradePredictionComputer(int frameOffset)
-        {
-            for (int i = 0; i < frameOffset; i++)
-            {
-                await ComputePredictAsync();
-            }
-        }
-
-        public async Task ComputePredictAsync()
-        {
-            await PhysicsFrame();
-        }
-
-        public async Task PhysicsFrame()
+        public async Task IntergradeComputeFor(int frames, CancellationToken cxlToken)
         {
             await Task.Run(() =>
             {
-                _predictionComputer.OpenPhysicsFrameWindowAsync();
-                _predictionComputer.ClosePhysicsFrameWindow();
-            }).ConfigureAwait(false);
+                for (int i = 0; i < frames; i++)
+                {
+                    if (_predictionComputer != null && !cxlToken.IsCancellationRequested)
+                    {
+                        PhysicsFrame();
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            });
+        }
+
+        public void PhysicsFrame()
+        {
+            _predictionComputer.OpenPhysicsFrameWindowAsync().Wait();
+            _predictionComputer.ClosePhysicsFrameWindow();
         }
 
         public void DisposePredictionComputer()

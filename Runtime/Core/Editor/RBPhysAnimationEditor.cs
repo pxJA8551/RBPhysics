@@ -171,10 +171,10 @@ namespace RBPhys
         {
             bool b = baseAnim != null;
 
-            anim.name = baseName + "_cv.rbAnim";
+            anim.name = baseName + "_cv";
 
             string path = b ? AssetDatabase.GetAssetPath(baseAnim) : ""; // : application.datapath
-            string savePath = EditorUtility.SaveFilePanelInProject(path, b ? baseAnim.name : "animClip", "", "");
+            string savePath = EditorUtility.SaveFilePanelInProject(path, anim.name, ".asset", "");
             if (AssetDatabase.AssetPathToGUID(savePath) != "")
             {
                 if (EditorUtility.DisplayDialog("ファイルの上書き", "AnimationClipを上書きしますか？", "上書き", "キャンセル"))
@@ -194,10 +194,10 @@ namespace RBPhys
         {
             bool b = baseTrsCurve != null;
 
-            trsCurve.name = baseName + "_cv_trs.rbTrsAnim";
+            trsCurve.name = baseName + "_cv_trs";
 
             string path = b ? AssetDatabase.GetAssetPath(baseTrsCurve) : ""; // : application.datapath
-            string savePath = EditorUtility.SaveFilePanelInProject(path, b ? baseTrsCurve.name : "animClip", "", "");
+            string savePath = EditorUtility.SaveFilePanelInProject(path, trsCurve.name, ".asset", "");
             if (AssetDatabase.AssetPathToGUID(savePath) != "")
             {
                 if (EditorUtility.DisplayDialog("ファイルの上書き", "RBPhysTRSAnimationCurveを上書きしますか？", "上書き", "キャンセル"))

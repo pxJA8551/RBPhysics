@@ -53,7 +53,6 @@ namespace RBPhys
             _animationLength = 0;
             if (_animationClip != null) _animationLength = _animationClip.length;
 
-
             if (playing)
             {
                 PlayAnimation();
@@ -171,7 +170,7 @@ namespace RBPhys
             _ctrlTimeLast = ctrlTime;
 
             ctrlTime += dt * ctrlSpeed;
-            ctrlTime = Mathf.Clamp(ctrlTime, 0, Mathf.Max(AnimationClip?.length ?? 0, trsCurve?.length ?? 0));
+            ctrlTime = Mathf.Clamp(ctrlTime, 0, Mathf.Max(AnimationLength, trsCurve?.length ?? 0));
 
             if (trsCurve != null)
             {

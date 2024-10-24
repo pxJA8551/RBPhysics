@@ -298,7 +298,7 @@ namespace RBPhys
             _solverIterationSemaphore.Release();
         }
 
-        public async void OpenPhysicsFrameWindowAsync()
+        public async Task OpenPhysicsFrameWindowAsync()
         {
             UpdateSolverTimeVariables();
 

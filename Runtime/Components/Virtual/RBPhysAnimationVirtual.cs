@@ -23,7 +23,8 @@ namespace RBPhys
 
         protected override void Awake()
         {
-            _animationLength = _animationClip.length;
+            _animationLength = 0;
+            if (_animationClip != null) _animationLength = _animationClip.length;
 
             if (playing)
             {
@@ -99,7 +100,7 @@ namespace RBPhys
             }
 
             ctrlTime += dt * ctrlSpeed;
-            ctrlTime = Mathf.Clamp(ctrlTime, 0, Mathf.Max(AnimationClip?.length ?? 0, trsCurve?.length ?? 0));
+            ctrlTime = Mathf.Clamp(ctrlTime, 0, Mathf.Max(AnimationLength, trsCurve?.length ?? 0));
 
             if (trsCurve != null)
             {
