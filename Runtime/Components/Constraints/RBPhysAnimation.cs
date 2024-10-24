@@ -49,7 +49,10 @@ namespace RBPhys
         protected virtual void Awake()
         {
             rbRigidbody = GetComponent<RBRigidbody>();
-            _animationLength = _animationClip.length;
+
+            _animationLength = 0;
+            if (_animationClip != null) _animationLength = _animationClip.length;
+
 
             if (playing)
             {
@@ -72,7 +75,9 @@ namespace RBPhys
             baseAnimationClip = anim.baseAnimationClip;
 
             _animationClip = anim.AnimationClip;
-            _animationLength = anim.AnimationClip?.length ?? -1;
+
+            _animationLength = 0;
+            if (_animationClip != null) _animationLength = _animationClip.length;
 
             trsCurve = anim.trsCurve;
 
