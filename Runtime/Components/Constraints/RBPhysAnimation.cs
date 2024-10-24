@@ -15,7 +15,12 @@ namespace RBPhys
 
         public AnimationClip baseAnimationClip;
 
-        public AnimationClip animationClip;
+        public AnimationClip AnimationClip { get { return _animationClip; } }
+        public float AnimationLength { get { return _animationLength; } }
+
+        AnimationClip _animationClip;
+        float _animationLength;
+
         public RBPhysTRSAnimationCurve trsCurve;
 
         [NonSerialized] public float ctrlTime = 0;
@@ -38,8 +43,6 @@ namespace RBPhys
         public float interpMultiplier = 1.0f;
 
         public float ext_lambda_compensation = 1;
-
-        public float AnimationLength { get { return Mathf.Max(animationClip?.length ?? 0, trsCurve?.length ?? 0); } }
 
         public virtual bool vActive_And_vEnabled { get { return enabled && gameObject.activeSelf; } }
         
@@ -66,7 +69,10 @@ namespace RBPhys
         public void CopyPhysAnimation(RBPhysAnimation anim)
         {
             baseAnimationClip = anim.baseAnimationClip;
-            animationClip = anim.animationClip;
+
+            _animationClip = anim.AnimationClip;
+            _animationLength = _animationClip.length;
+
             trsCurve = anim.trsCurve;
 
             ctrlTime = anim.ctrlTime;
@@ -159,7 +165,7 @@ namespace RBPhys
             _ctrlTimeLast = ctrlTime;
 
             ctrlTime += dt * ctrlSpeed;
-            ctrlTime = Mathf.Clamp(ctrlTime, 0, Mathf.Max(animationClip?.length ?? 0, trsCurve?.length ?? 0));
+            ctrlTime = Mathf.Clamp(ctrlTime, 0, Mathf.Max(AnimationClip?.length ?? 0, trsCurve?.length ?? 0));
 
             if (trsCurve != null)
             {
@@ -247,7 +253,7 @@ namespace RBPhys
             return (rbRigidbody.InverseInertiaWs);
         }
 
-        public void AfterSolver(float dt, TimeScaleMode timeScaleMode)
+        public virtual void AfterSolver(float dt, TimeScaleMode timeScaleMode)
         {
             if (!enabled) return;
 
@@ -465,9 +471,9 @@ namespace RBPhys
                 time = interp ? (ctrlTime + interpDelta * interpMultiplier) : ctrlTime;
             }
 
-            if (animationClip != null && trsCurve != null)
+            if (AnimationClip != null && trsCurve != null)
             {
-                animationClip.SampleAnimation(gameObject, time);
+                AnimationClip.SampleAnimation(gameObject, time);
             }
 
             CalcTRSAnimFrame(time);

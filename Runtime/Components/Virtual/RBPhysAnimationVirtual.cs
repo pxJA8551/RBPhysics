@@ -81,7 +81,7 @@ namespace RBPhys
 
         public override void BeforeSolver(float dt, TimeScaleMode timeScaleMode)
         {
-            if (!enabled) return;
+            if (!_vEnabled) return;
 
             var parentTransform = _vTransform.parent;
             if (parentTransform != null)
@@ -97,7 +97,7 @@ namespace RBPhys
             }
 
             ctrlTime += dt * ctrlSpeed;
-            ctrlTime = Mathf.Clamp(ctrlTime, 0, Mathf.Max(animationClip?.length ?? 0, trsCurve?.length ?? 0));
+            ctrlTime = Mathf.Clamp(ctrlTime, 0, Mathf.Max(AnimationClip?.length ?? 0, trsCurve?.length ?? 0));
 
             if (trsCurve != null)
             {
@@ -139,6 +139,21 @@ namespace RBPhys
                 {
                     CalcTRSAnimVelocity(_solverDeltaTime, info.solver_iter_max * info.solver_sync_max);
                 }
+            }
+        }
+
+        public override void AfterSolver(float dt, TimeScaleMode timeScaleMode)
+        {
+            if (!_vEnabled) return;
+
+            if (enablePhysProceduralAnimation && trsCurve != null)
+            {
+                SampleApplyTRSAnimation(ctrlTime, dt, _lsBasePos, _lsBaseRot);
+            }
+            else
+            {
+                rbRigidbody.Position = _targetWsPos;
+                rbRigidbody.Rotation = _targetWsRot;
             }
         }
 
