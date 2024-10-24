@@ -1685,8 +1685,8 @@ namespace RBPhys
                 }
                 else
                 {
-                    info_a = new RBCollisionInfo(rbc.rigidbody_a, rbc.solverCache_velAdd_a, rbc.cacCount > 0);
-                    info_b = new RBCollisionInfo(rbc.rigidbody_b, rbc.solverCache_velAdd_b, rbc.cacCount > 0);
+                    info_a = new RBCollisionInfo(rbc.rigidbody_a, rbc.solverCache_velAdd_a, rbc.ContactNormal, rbc.cacCount > 0);
+                    info_b = new RBCollisionInfo(rbc.rigidbody_b, rbc.solverCache_velAdd_b, -rbc.ContactNormal, rbc.cacCount > 0);
                 }
 
                 rbc.rigidbody_a?.OnCollision(rbc.collider_b, info_a);
@@ -2489,9 +2489,9 @@ namespace RBPhys
         public readonly bool continuousCollision;
         public readonly bool isTriggerCollision;
         
-        public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 velAdd, bool continuous)
+        public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 velAdd, Vector3 normal, bool continuous)
         {
-            vDiff = velAdd.magnitude;
+            vDiff = Vector3.Project(velAdd, normal).magnitude;
             impulse = (vDiff * rbRigidbody?.mass) ?? 0;
 
             continuousCollision = continuous;
