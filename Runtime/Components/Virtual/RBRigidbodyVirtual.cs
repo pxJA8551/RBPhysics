@@ -164,12 +164,12 @@ namespace RBPhys
                 if (physTimeScaleMode == TimeScaleMode.Prograde)
                 {
                     _expVelocity = (vm > 0 ? _expVelocity / vm : Vector3.zero) * Mathf.Max(0, vm - drag);
-                    _angularVelocity = (avm > 0 ? _angularVelocity / avm : Vector3.zero) * Mathf.Max(0, avm - angularDrag);
+                    _expAngularVelocity = (avm > 0 ? _expAngularVelocity / avm : Vector3.zero) * Mathf.Max(0, avm - angularDrag);
                 }
                 else
                 {
                     _expVelocity = (vm > 0 ? _expVelocity / vm : Vector3.zero) * Mathf.Max(0, vm + drag * DRAG_RETG_MULTIPLIER);
-                    _angularVelocity = (avm > 0 ? _angularVelocity / avm : Vector3.zero) * Mathf.Max(0, avm + angularDrag * ANGULAR_DRAG_RETG_MULTIPLIER);
+                    _expAngularVelocity = (avm > 0 ? _expAngularVelocity / avm : Vector3.zero) * Mathf.Max(0, avm + angularDrag * ANGULAR_DRAG_RETG_MULTIPLIER);
                 }
 
                 _expVelocity = Vector3.ClampMagnitude(_expVelocity, rbRigidbody_velocity_max);

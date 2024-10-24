@@ -19,7 +19,8 @@ namespace RBPhys
         protected const float XZ_VELOCITY_MIN_CUTOUT = .008f;
         protected const float ANG_VELOCITY_MIN_CUTOUT = .05f;
         const float SLEEP_VEL_ADD_SQRT = .2f * .2f;
-        const int SLEEP_GRACE_FRAMES = 5; //, of no practical use
+        const int SLEEP_GRACE_FRAMES = 8; //, of no practical use
+
         protected const float DRAG_RETG_MULTIPLIER = 1f;
         protected const float ANGULAR_DRAG_RETG_MULTIPLIER = .1f;
 
@@ -173,7 +174,7 @@ namespace RBPhys
             UpdateTransform(0);
             RecalculateInertiaTensor();
 
-            if (!isSleeping || sleepGrace != 5)
+            if (!isSleeping || sleepGrace > 0)
             {
                 isSleeping = false;
                 sleepGrace = 0;
