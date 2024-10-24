@@ -21,12 +21,12 @@ namespace RBPhys
         const float SLEEP_VEL_ADD_SQRT = .2f * .2f;
         const int SLEEP_GRACE_FRAMES = 5; //, of no practical use
         const float DRAG_RETG_MULTIPLIER = 1f;
-        const float ANGULAR_DRAG_RETG_MULTIPLIER = .3f;
+        const float ANGULAR_DRAG_RETG_MULTIPLIER = .1f;
 
         public float mass = 1;
         public float inertiaTensorMultiplier = 1;
-        public float drag = 0.035f;
-        public float angularDrag = 0.07f;
+        public float drag = 0.0001f;
+        public float angularDrag = 0.01f;
 
         [NonSerialized] public Vector3 inertiaTensor;
         [NonSerialized] public Quaternion inertiaTensorRotation;
