@@ -33,7 +33,7 @@ namespace RBPhys
 
         public async Task ReInitializeAsync()
         {
-            await _predictionComputer.WaitSemaphoreAsync(0);
+            await _predictionComputer.WaitSemaphoreAsync(500);
 
             _predictionComputer.ReInitializeComputer();
 

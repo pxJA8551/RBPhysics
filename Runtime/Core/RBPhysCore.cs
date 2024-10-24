@@ -270,10 +270,10 @@ namespace RBPhys
             }
         }
 
-        public async Task WaitSemaphoreAsync(int waitTimeoutMs = 500, int lockTimeoutMs = 500)
+        public async Task<bool> WaitSemaphoreAsync(int waitTimeoutMs = 500, int lockTimeoutMs = 500)
         {
             _lockSemaphoreTimeoutCxlSrc.Cancel();
-            await _solverIterationSemaphore.WaitAsync(waitTimeoutMs);
+            bool semaphore = await _solverIterationSemaphore.WaitAsync(waitTimeoutMs);
 
             if (lockTimeoutMs > 0)
             {
@@ -289,6 +289,8 @@ namespace RBPhys
                     throw new TimeoutException("PhysComputer semaphore locking time outed.");
                 });
             }
+
+            return semaphore;
         }
 
         public void ReleaseSemaphore()
