@@ -313,7 +313,7 @@ namespace RBPhys
                     }
                     else
                     {
-                        break;
+                        return;
                     }
                 }
             });

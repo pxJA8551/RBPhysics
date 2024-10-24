@@ -1606,6 +1606,7 @@ namespace RBPhys
                 if (IsTriggerLayer(col.layer_a) || IsTriggerLayer(col.layer_b))
                 {
                     col.skipInSolver = true;
+                    col.triggerCollision = true;
                 }
             }
             Profiler.EndSample();
@@ -1675,8 +1676,18 @@ namespace RBPhys
 
             foreach(var rbc in _collisionsInSolver)
             {
-                var info_a = new RBCollisionInfo(rbc.rigidbody_a, rbc.solverCache_velAdd_a, rbc.cacCount > 0);
-                var info_b = new RBCollisionInfo(rbc.rigidbody_b, rbc.solverCache_velAdd_b, rbc.cacCount > 0);
+                RBCollisionInfo info_a, info_b;
+
+                if (rbc.triggerCollision)
+                {
+                    info_a = RBCollisionInfo.GetTriggerCollision();
+                    info_b = RBCollisionInfo.GetTriggerCollision();
+                }
+                else
+                {
+                    info_a = new RBCollisionInfo(rbc.rigidbody_a, rbc.solverCache_velAdd_a, rbc.cacCount > 0);
+                    info_b = new RBCollisionInfo(rbc.rigidbody_b, rbc.solverCache_velAdd_b, rbc.cacCount > 0);
+                }
 
                 rbc.rigidbody_a?.OnCollision(rbc.collider_b, info_a);
                 rbc.collider_a?.OnCollision(rbc.collider_b, info_a);
@@ -2115,6 +2126,7 @@ namespace RBPhys
         public int cacCount = 0;
 
         public bool useSoftClip;
+        public bool triggerCollision;
 
         Jacobian _jN = new Jacobian(Jacobian.Type.Normal); //Normal
         Jacobian _jT = new Jacobian(Jacobian.Type.Tangent); //Tangent
@@ -2262,6 +2274,7 @@ namespace RBPhys
             rB = bNearest - cg_b;
 
             skipInSolver = false;
+            triggerCollision = false;
         }
 
         public void IncrCACCount()
@@ -2471,16 +2484,32 @@ namespace RBPhys
 
     public struct RBCollisionInfo
     {
-        public float impulse;
-        public float vDiff;
-        public bool continuousCollision;
-
+        public readonly float impulse;
+        public readonly float vDiff;
+        public readonly bool continuousCollision;
+        public readonly bool isTriggerCollision;
+        
         public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 velAdd, bool continuous)
         {
             vDiff = velAdd.magnitude;
             impulse = (vDiff * rbRigidbody?.mass) ?? 0;
 
             continuousCollision = continuous;
+            isTriggerCollision = false;
+        }
+
+        public RBCollisionInfo(bool isTriggerCollision)
+        {
+            this.isTriggerCollision = isTriggerCollision;
+
+            vDiff = 0;
+            impulse = 0;
+            continuousCollision = false;
+        }
+
+        public static RBCollisionInfo GetTriggerCollision()
+        {
+            return new RBCollisionInfo(true);
         }
     }
 
