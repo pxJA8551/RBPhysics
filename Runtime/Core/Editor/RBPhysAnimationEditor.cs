@@ -29,7 +29,7 @@ namespace RBPhys
         {
             baseAnimationClip = serializedObject.FindProperty("baseAnimationClip");
 
-            animationClip = serializedObject.FindProperty("animationClip");
+            animationClip = serializedObject.FindProperty("_animationClip");
             trsCurve = serializedObject.FindProperty("trsCurve");
             linker = serializedObject.FindProperty("linker");
             animationType = serializedObject.FindProperty("animationType");

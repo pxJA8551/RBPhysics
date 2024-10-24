@@ -18,8 +18,8 @@ namespace RBPhys
         public AnimationClip AnimationClip { get { return _animationClip; } }
         public float AnimationLength { get { return _animationLength; } }
 
-        [SerializeField] AnimationClip _animationClip;
-        float _animationLength;
+        [SerializeField] protected AnimationClip _animationClip;
+        protected float _animationLength;
 
         public RBPhysTRSAnimationCurve trsCurve;
 
@@ -49,6 +49,7 @@ namespace RBPhys
         protected virtual void Awake()
         {
             rbRigidbody = GetComponent<RBRigidbody>();
+            _animationLength = _animationClip.length;
 
             if (playing)
             {

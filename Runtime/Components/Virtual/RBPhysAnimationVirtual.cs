@@ -23,6 +23,8 @@ namespace RBPhys
 
         protected override void Awake()
         {
+            _animationLength = _animationClip.length;
+
             if (playing)
             {
                 PlayAnimation();
