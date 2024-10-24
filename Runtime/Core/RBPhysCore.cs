@@ -9,7 +9,6 @@ using UnityEngine.Profiling;
 using UnityEditor;
 using Unity.IL2CPP.CompilerServices;
 using System.Threading;
-using static UnityEditor.Progress;
 
 namespace RBPhys
 {
