@@ -20,8 +20,8 @@ namespace RBPhys
         protected const float ANG_VELOCITY_MIN_CUTOUT = .05f;
         const float SLEEP_VEL_ADD_SQRT = .2f * .2f;
         const int SLEEP_GRACE_FRAMES = 5; //, of no practical use
-        const float DRAG_RETG_MULTIPLIER = 1f;
-        const float ANGULAR_DRAG_RETG_MULTIPLIER = .1f;
+        protected const float DRAG_RETG_MULTIPLIER = 1f;
+        protected const float ANGULAR_DRAG_RETG_MULTIPLIER = .1f;
 
         public float mass = 1;
         public float inertiaTensorMultiplier = 1;
