@@ -2092,7 +2092,7 @@ namespace RBPhys
             return (retrogradeKeyGuid != Guid.Empty) && ((traj?.RetrogradeKeyGuid ?? Guid.Empty) == retrogradeKeyGuid);
         }
 
-        public RBCollisionValidator(RBTrajectory traj) : base(traj?.trajectoryGuid ?? Guid.Empty)
+        public RBCollisionValidator(RBTrajectory traj) : base(Guid.Empty)
         {
             this.traj = traj;
             this.retrogradeKeyGuid = traj.RetrogradeKeyGuid;
