@@ -695,7 +695,7 @@ namespace RBPhys
 
                 if (xMin < t.trajectoryAABB.MaxX)
                 {
-                    if (!IsTriggerLayer(t.Layer) && layers.Contains(t.Layer))
+                    if (!IsTriggerLayer(t.Layer) && (layers?.Contains(t.Layer) ?? true))
                     {
                         if (t.trajectoryAABB.OverlapAABB(aabb))
                         {
