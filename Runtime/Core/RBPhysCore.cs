@@ -681,7 +681,7 @@ namespace RBPhys
             return hitList;
         }
 
-        public List<RBColliderOverlapInfo> AABBOverlapAABB(RBColliderAABB aabb, ref List<RBColliderOverlapInfo> overlappings, bool clearOverlapping = true)
+        public List<RBColliderOverlapInfo> AABBOverlapAABB(RBColliderAABB aabb, ref List<RBColliderOverlapInfo> overlappings, int[] layers, bool clearOverlapping = true)
         {
             if (clearOverlapping) overlappings.Clear();
 
@@ -695,13 +695,16 @@ namespace RBPhys
 
                 if (xMin < t.trajectoryAABB.MaxX)
                 {
-                    if (t.trajectoryAABB.OverlapAABB(aabb)) 
+                    if (!IsTriggerLayer(t.Layer) && layers.Contains(t.Layer))
                     {
-                        foreach (var c in t.Colliders)
+                        if (t.trajectoryAABB.OverlapAABB(aabb))
                         {
-                            if (c.CalcAABB(0).OverlapAABB(aabb)) 
+                            foreach (var c in t.Colliders)
                             {
-                                overlappings.Add(new RBColliderOverlapInfo(c));
+                                if (c.CalcAABB(0).OverlapAABB(aabb))
+                                {
+                                    overlappings.Add(new RBColliderOverlapInfo(c));
+                                }
                             }
                         }
                     }
