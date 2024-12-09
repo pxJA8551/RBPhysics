@@ -78,6 +78,9 @@ namespace RBPhys
         List<RBRigidbody> _rigidbodies = new List<RBRigidbody>();
         List<RBCollider> _colliders = new List<RBCollider>();
 
+        public RBTrajectory[] Trajectories_OrderByXMin { get { return _trajectories_orderByXMin; } }
+        public float[] Trajectories_XMin { get { return _trajectories_xMin; } }
+
         RBTrajectory[] _trajectories_orderByXMin = new RBTrajectory[0];
         float[] _trajectories_xMin = new float[0];
 
@@ -679,42 +682,6 @@ namespace RBPhys
 
             hitList = hitList.Where(item => item.IsValidHit).OrderBy(item => item.length).ToList();
             return hitList;
-        }
-
-        public void AABBOverlapAABB(RBColliderAABB aabb, ref List<RBColliderOverlapInfo> overlappings, bool clearOverlapping = true, int[] layers = null, List<RBTrajectory> ignoreList = null)
-        {
-            if (clearOverlapping) overlappings.Clear();
-
-            float xMin = aabb.MinX;
-            float xMax = aabb.MaxX;
-
-            for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
-            {
-                var t = _trajectories_orderByXMin[i];
-                var f = _trajectories_xMin[i];
-
-                if (xMin < t.trajectoryAABB.MaxX)
-                {
-                    if (!IsTriggerLayer(t.Layer) && (layers?.Contains(t.Layer) ?? true) && (!(ignoreList?.Contains(t) ?? false))) 
-                    {
-                        if (t.trajectoryAABB.OverlapAABB(aabb))
-                        {
-                            foreach (var c in t.Colliders)
-                            {
-                                if (c.CalcAABB(0).OverlapAABB(aabb))
-                                {
-                                    overlappings.Add(new RBColliderOverlapInfo(c));
-                                }
-                            }
-                        }
-                    }
-                }
-
-                if (xMax < f)
-                {
-                    break;
-                }
-            }
         }
 
         public List<RBColliderOverlapInfo> BoxOverlap(RBColliderOBB obb)
