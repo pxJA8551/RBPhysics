@@ -681,6 +681,41 @@ namespace RBPhys
             return hitList;
         }
 
+        public List<RBColliderOverlapInfo> AABBOverlapAABB(RBColliderAABB aabb, ref List<RBColliderOverlapInfo> overlappings)
+        {
+            overlappings.Clear();
+
+            float xMin = aabb.MinX;
+            float xMax = aabb.MaxX;
+
+            for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
+            {
+                var t = _trajectories_orderByXMin[i];
+                var f = _trajectories_xMin[i];
+
+                if (xMin < t.trajectoryAABB.MaxX)
+                {
+                    if (t.trajectoryAABB.OverlapAABB(aabb))
+                    {
+                        foreach (var c in t.Colliders)
+                        {
+                            if (c.CalcAABB(0).OverlapAABB(aabb))
+                            {
+                                overlappings.Add(new RBColliderOverlapInfo(c));
+                            }
+                        }
+                    }
+                }
+
+                if (xMax < f)
+                {
+                    break;
+                }
+            }
+
+            return overlappings;
+        }
+
         public List<RBColliderOverlapInfo> BoxOverlap(RBColliderOBB obb)
         {
             List<RBColliderOverlapInfo> overlappings = new List<RBColliderOverlapInfo>();
