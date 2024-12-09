@@ -681,9 +681,9 @@ namespace RBPhys
             return hitList;
         }
 
-        public List<RBColliderOverlapInfo> AABBOverlapAABB(RBColliderAABB aabb, ref List<RBColliderOverlapInfo> overlappings)
+        public List<RBColliderOverlapInfo> AABBOverlapAABB(RBColliderAABB aabb, ref List<RBColliderOverlapInfo> overlappings, bool clearOverlapping = true)
         {
-            overlappings.Clear();
+            if (clearOverlapping) overlappings.Clear();
 
             float xMin = aabb.MinX;
             float xMax = aabb.MaxX;
@@ -695,11 +695,11 @@ namespace RBPhys
 
                 if (xMin < t.trajectoryAABB.MaxX)
                 {
-                    if (t.trajectoryAABB.OverlapAABB(aabb))
+                    if (t.trajectoryAABB.OverlapAABB(aabb)) 
                     {
                         foreach (var c in t.Colliders)
                         {
-                            if (c.CalcAABB(0).OverlapAABB(aabb))
+                            if (c.CalcAABB(0).OverlapAABB(aabb)) 
                             {
                                 overlappings.Add(new RBColliderOverlapInfo(c));
                             }
