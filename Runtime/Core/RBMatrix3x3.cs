@@ -13,64 +13,64 @@ namespace RBPhys
     public struct RBMatrix3x3
     {
         //I(Row)(Column)
-        float I00;
-        float I01;
-        float I02;
-        float I10;
-        float I11;
-        float I12;
-        float I20;
-        float I21;
-        float I22;
+        public float m00;
+        public float m01;
+        public float m02;
+        public float m10;
+        public float m11;
+        public float m12;
+        public float m20;
+        public float m21;
+        public float m22;
 
-        public Vector3 C0 { get { return new Vector3(I00, I10, I20); } set { (I00, I10, I20) = (value.x, value.y, value.z); } }
-        public Vector3 C1 { get { return new Vector3(I01, I11, I21); } set { (I01, I11, I21) = (value.x, value.y, value.z); } }
-        public Vector3 C2 { get { return new Vector3(I02, I12, I22); } set { (I02, I12, I22) = (value.x, value.y, value.z); } }
+        public Vector3 C0 { get { return new Vector3(m00, m10, m20); } set { (m00, m10, m20) = (value.x, value.y, value.z); } }
+        public Vector3 C1 { get { return new Vector3(m01, m11, m21); } set { (m01, m11, m21) = (value.x, value.y, value.z); } }
+        public Vector3 C2 { get { return new Vector3(m02, m12, m22); } set { (m02, m12, m22) = (value.x, value.y, value.z); } }
 
-        public Vector3 R0 { get { return new Vector3(I00, I01, I02); } set { (I00, I01, I02) = (value.x, value.y, value.z); } }
-        public Vector3 R1 { get { return new Vector3(I10, I11, I12); } set { (I10, I11, I12) = (value.x, value.y, value.z); } }
-        public Vector3 R2 { get { return new Vector3(I20, I21, I22); } set { (I20, I21, I22) = (value.x, value.y, value.z); } }
+        public Vector3 R0 { get { return new Vector3(m00, m01, m02); } set { (m00, m01, m02) = (value.x, value.y, value.z); } }
+        public Vector3 R1 { get { return new Vector3(m10, m11, m12); } set { (m10, m11, m12) = (value.x, value.y, value.z); } }
+        public Vector3 R2 { get { return new Vector3(m20, m21, m22); } set { (m20, m21, m22) = (value.x, value.y, value.z); } }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBMatrix3x3(float[] values)
         {
-            I00 = values[0];
-            I01 = values[1];
-            I02 = values[2];
-            I10 = values[3];
-            I11 = values[4];
-            I12 = values[5];
-            I20 = values[6];
-            I21 = values[7];
-            I22 = values[8];
+            m00 = values[0];
+            m01 = values[1];
+            m02 = values[2];
+            m10 = values[3];
+            m11 = values[4];
+            m12 = values[5];
+            m20 = values[6];
+            m21 = values[7];
+            m22 = values[8];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBMatrix3x3(float i00, float i01, float i02, float i10, float i11, float i12, float i20, float i21, float i22)
         {
-            I00 = i00;
-            I01 = i01;
-            I02 = i02;
-            I10 = i10;
-            I11 = i11;
-            I12 = i12;
-            I20 = i20;
-            I21 = i21;
-            I22 = i22;
+            this.m00 = i00;
+            this.m01 = i01;
+            this.m02 = i02;
+            this.m10 = i10;
+            this.m11 = i11;
+            this.m12 = i12;
+            this.m20 = i20;
+            this.m21 = i21;
+            this.m22 = i22;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBMatrix3x3(Vector3 c0, Vector3 c1, Vector3 c2)
         {
-            I00 = c0.x;
-            I10 = c0.y;
-            I20 = c0.z;
-            I01 = c1.x;
-            I11 = c1.y;
-            I21 = c1.z;
-            I02 = c2.x;
-            I12 = c2.y;
-            I22 = c2.z;
+            m00 = c0.x;
+            m10 = c0.y;
+            m20 = c0.z;
+            m01 = c1.x;
+            m11 = c1.y;
+            m21 = c1.z;
+            m02 = c2.x;
+            m12 = c2.y;
+            m22 = c2.z;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -201,25 +201,25 @@ namespace RBPhys
         public RBMatrix3x3 Inverted()
         {
             float det = 0;
-            det += I00 * I11 * I22;
-            det += I01 * I12 * I20;
-            det += I10 * I21 * I02;
-            det -= I02 * I11 * I20;
-            det -= I01 * I10 * I22;
-            det -= I12 * I21 * I00;
+            det += m00 * m11 * m22;
+            det += m01 * m12 * m20;
+            det += m10 * m21 * m02;
+            det -= m02 * m11 * m20;
+            det -= m01 * m10 * m22;
+            det -= m12 * m21 * m00;
 
             float detInv = 1 / det;
 
             float[] values = new float[9];
-            values[0] = (I11 * I22 - I21 * I12) * detInv;
-            values[1] = (I12 * I20 - I10 * I22) * detInv;
-            values[2] = (I10 * I21 - I20 * I11) * detInv;
-            values[3] = (I02 * I21 - I01 * I22) * detInv;
-            values[4] = (I00 * I22 - I02 * I20) * detInv;
-            values[5] = (I20 * I01 - I00 * I21) * detInv;
-            values[6] = (I01 * I12 - I02 * I11) * detInv;
-            values[7] = (I10 * I02 - I00 * I12) * detInv;
-            values[8] = (I00 * I11 - I10 * I01) * detInv;
+            values[0] = (m11 * m22 - m21 * m12) * detInv;
+            values[1] = (m12 * m20 - m10 * m22) * detInv;
+            values[2] = (m10 * m21 - m20 * m11) * detInv;
+            values[3] = (m02 * m21 - m01 * m22) * detInv;
+            values[4] = (m00 * m22 - m02 * m20) * detInv;
+            values[5] = (m20 * m01 - m00 * m21) * detInv;
+            values[6] = (m01 * m12 - m02 * m11) * detInv;
+            values[7] = (m10 * m02 - m00 * m12) * detInv;
+            values[8] = (m00 * m11 - m10 * m01) * detInv;
 
             return new RBMatrix3x3(values);
         }
@@ -227,7 +227,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBMatrix3x3 Transposed()
         {
-            return new RBMatrix3x3(I00, I10, I20, I01, I11, I21, I02, I12, I22);
+            return new RBMatrix3x3(m00, m10, m20, m01, m11, m21, m02, m12, m22);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
