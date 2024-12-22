@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace RBPhys
@@ -18,12 +19,14 @@ namespace RBPhys
         public Vector3 CenterOfGravity { get { return _cg; } set { _cg = value; } }
         public float Mass { get { return _mass; } set { _mass = value; } }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RBInertiaTensor CreateIdentity()
         {
             RBInertiaTensor t = new RBInertiaTensor();
             return t;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetInertiaOBB(RBColliderOBB obb, Vector3 pos, Quaternion rot)
         {
             Vector3 extents = obb.size / 2f;
@@ -40,6 +43,7 @@ namespace RBPhys
             ApplyTransform(pos, rot);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetInertiaSphere(RBColliderSphere sphere, Vector3 pos, Quaternion rot)
         {
             float r = sphere.radius;
@@ -50,6 +54,7 @@ namespace RBPhys
             ApplyTransform(pos, rot);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetInertiaCapsule(RBColliderCapsule capsule, Vector3 pos, Quaternion rot)
         {
             float r = capsule.radius;
@@ -64,6 +69,7 @@ namespace RBPhys
             ApplyTransform(pos, rot);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ApplyTransform(Vector3 pos, Quaternion rot)
         {
             RBMatrix3x3 rotM = new RBMatrix3x3(rot);
@@ -79,7 +85,6 @@ namespace RBPhys
 
             if (pos != Vector3.zero)
             {
-
                 Vector3 sum = _cg + pos;
 
                 if (sum == Vector3.zero)
@@ -101,6 +106,7 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void SetDiagonal(float mass, Vector3 dv)
         {
             _mass = mass;
@@ -108,12 +114,14 @@ namespace RBPhys
             _cg = Vector3.zero;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ScaleDensity(float densityScale)
         {
             _inertiaTensor *= densityScale;
             _mass *= densityScale;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Merge(RBInertiaTensor t)
         {
             if (t.Mass > 0)
