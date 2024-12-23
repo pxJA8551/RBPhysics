@@ -525,14 +525,14 @@ namespace RBPhys
                 RBInertiaTensor geometryIt = new RBInertiaTensor();
                 float m = mass * r;
 
+                Vector3 relPos = transform.InverseTransformPoint(c.GameObjectPos);
+                Quaternion relRot = c.GameObjectRot * Quaternion.Inverse(Rotation);
+
                 switch (c.GeometryType)
                 {
                     case RBGeometryType.OBB:
                         {
                             var box = c as RBBoxCollider;
-
-                            Vector3 relPos = transform.InverseTransformPoint(box.GetColliderCenter());
-                            Quaternion relRot = box.LocalRot * Quaternion.Inverse(box.GameObjectRot);
 
                             geometryIt.SetInertiaOBB(c.CalcOBB(0), relPos, relRot);
                         }
@@ -540,8 +540,6 @@ namespace RBPhys
 
                     case RBGeometryType.Sphere:
                         {
-                            Vector3 relPos = transform.InverseTransformPoint(c.GetColliderCenter());
-
                             geometryIt.SetInertiaSphere(c.CalcSphere(0), relPos, Quaternion.identity);
                         }
                         break;
@@ -549,9 +547,6 @@ namespace RBPhys
                     case RBGeometryType.Capsule:
                         {
                             var capsule = c as RBCapsuleCollider;
-
-                            Vector3 relPos = transform.InverseTransformPoint(capsule.GetColliderCenter());
-                            Quaternion relRot = capsule.LocalRot * Quaternion.Inverse(capsule.GameObjectRot);
 
                             geometryIt.SetInertiaCapsule(c.CalcCapsule(0), relPos, relRot);
                         }
