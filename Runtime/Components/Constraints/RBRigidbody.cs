@@ -15,9 +15,9 @@ namespace RBPhys
     [DisallowMultipleComponent]
     public class RBRigidbody : MonoBehaviour
     {
-        const float SLEEP_VEL_MAX_SQRT = 0.10f * 0.10f;
+        const float SLEEP_VEL_MAX_SQRT = 0.20f * 0.20f;
         const float SLEEP_ANGVEL_MAX_SQRT = 1.0f * 1.0f;
-        protected const float XZ_VELOCITY_MIN_CUTOUT = .008f;
+        protected const float XZ_VELOCITY_MIN_CUTOUT = .016f;
         protected const float ANG_VELOCITY_MIN_CUTOUT = .05f;
         const float SLEEP_VEL_ADD_SQRT = .2f * .2f;
         const int SLEEP_GRACE_FRAMES = 5; //, of no practical use
