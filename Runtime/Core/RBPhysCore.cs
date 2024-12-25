@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Profiling;
-using UnityEditor;
 using Unity.IL2CPP.CompilerServices;
 using System.Threading;
 
@@ -2321,6 +2319,7 @@ namespace RBPhys
         }
 
         const float COLLISION_ERROR_SLOP = 0.0001f;
+        public const float GROUND_IGNORE_RESTITUTION_VEL_MAX = .25f; // = 9.81 * DELTA
 
         struct Jacobian
         {
@@ -2430,6 +2429,8 @@ namespace RBPhys
 
                     _bias = vp + vi + vd;
                     _restitutionBias = restitution * closingVelocity;
+
+                    if (closingVelocity <= GROUND_IGNORE_RESTITUTION_VEL_MAX) _restitutionBias = 0; //接地補助
 
                     _useSoftClip = col.useSoftClip;
 
