@@ -43,7 +43,7 @@ namespace RBPhys
 
         internal override void UpdateExpTrajectoryMultiThreaded(float dt, bool updateColliders = true)
         {
-            (Vector3 pos, Quaternion rot) r = GetIntergrated(dt);
+            (Vector3 pos, Quaternion rot) r = GetIntergrated(0);
 
             if (updateColliders)
             {
@@ -58,7 +58,7 @@ namespace RBPhys
 
         internal override void UpdateExpTrajectory(float dt, bool updateColliders = true)
         {
-            (Vector3 pos, Quaternion rot) r = GetIntergrated(dt);
+            (Vector3 pos, Quaternion rot) r = GetIntergrated(0);
 
             if (updateColliders)
             {
