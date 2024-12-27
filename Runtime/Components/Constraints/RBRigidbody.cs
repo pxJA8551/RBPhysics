@@ -371,7 +371,7 @@ namespace RBPhys
 
         internal virtual void UpdateExpTrajectory(float dt, bool updateColliders = true)
         {
-            (Vector3 pos, Quaternion rot) r = GetIntergrated(dt);
+            (Vector3 pos, Quaternion rot) r = GetIntergrated(0);
 
             if (updateColliders)
             {
@@ -386,7 +386,7 @@ namespace RBPhys
 
         internal void UpdateColliderExpTrajectory(float dt)
         {
-            (Vector3 pos, Quaternion rot) r = GetIntergrated(dt);
+            (Vector3 pos, Quaternion rot) r = GetIntergrated(0);
 
             for (int i = 0; i < _colliders.Length; i++)
             {
