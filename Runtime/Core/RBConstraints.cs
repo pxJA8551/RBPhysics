@@ -57,18 +57,21 @@ namespace RBPhys
         {
             public abstract bool Validate();
 
+            public readonly bool permanentBranch;
+
             public Guid ValidatorSrcGuid { get { return _validatorSrcGuid; } }
 
             readonly Guid _validatorSrcGuid;
 
-            public RBPhysStateValidator(Guid validatorSrcGuid)
+            public RBPhysStateValidator(Guid validatorSrcGuid, bool permanentBranch)
             {
                 _validatorSrcGuid = validatorSrcGuid;
+                this.permanentBranch = permanentBranch;
             }
 
             public bool ValidateSrc(Guid validatorSrcGuid)
             {
-                return _validatorSrcGuid != default && _validatorSrcGuid == validatorSrcGuid;
+                return !permanentBranch && _validatorSrcGuid != default && _validatorSrcGuid == validatorSrcGuid;
             }
         }
     }

@@ -2077,8 +2077,8 @@ namespace RBPhys
 
     public class RBEmptyValidator : RBPhysComputer.RBPhysStateValidator
     {
-        public RBEmptyValidator() : base(Guid.Empty) { }
-        public RBEmptyValidator(Guid guid) : base(guid) { }
+        public RBEmptyValidator() : base(Guid.Empty, true) { }
+        public RBEmptyValidator(Guid guid) : base(guid, true) { }
 
         public override bool Validate()
         {
@@ -2093,7 +2093,7 @@ namespace RBPhys
             return (retrogradeKeyGuid != Guid.Empty) && ((traj?.RetrogradeKeyGuid ?? Guid.Empty) == retrogradeKeyGuid);
         }
 
-        public RBCollisionValidator(RBTrajectory traj) : base(Guid.Empty)
+        public RBCollisionValidator(RBTrajectory traj) : base(Guid.Empty, false)
         {
             this.traj = traj;
             this.retrogradeKeyGuid = traj.RetrogradeKeyGuid;
