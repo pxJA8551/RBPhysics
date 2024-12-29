@@ -22,8 +22,6 @@ namespace RBPhys
 
         public struct SolverInfo
         {
-            public readonly bool multiThreadedPrediction;
-
             public readonly int solver_iter_max;
             public readonly int solver_sync_max;
 
@@ -34,8 +32,6 @@ namespace RBPhys
 
             public SolverInfo(in RBPhysComputer computer, int iterCount, int syncCount)
             {
-                multiThreadedPrediction = computer.multiThreadPredictionMode;
-
                 solver_iter_max = computer.cpu_std_solver_max_iter;
                 solver_sync_max = computer.cpu_std_solver_internal_sync_per_iteration;
 

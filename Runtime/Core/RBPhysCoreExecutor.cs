@@ -9,8 +9,6 @@ namespace RBPhys
 {
     public class RBPhysCoreExecutor : MonoBehaviour
     {
-        [SerializeField] bool _disableUnityPhysics = true;
-
         private void Awake()
         {
             Debug.Log(string.Format("CPU: {0} / {1}cores", SystemInfo.processorType, SystemInfo.processorCount));
@@ -22,11 +20,6 @@ namespace RBPhys
         async void FixedUpdate()
         {
             await PhysicsFrame();
-
-            if (Physics.autoSimulation != !_disableUnityPhysics) 
-            {
-                Physics.autoSimulation = !_disableUnityPhysics;
-            }
         }
 
         async Task PhysicsFrame()

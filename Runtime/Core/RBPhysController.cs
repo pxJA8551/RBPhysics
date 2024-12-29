@@ -71,66 +71,6 @@ namespace RBPhys
             }
         }
 
-        public static void AddRigidbody(RBRigidbody rb)
-        {
-            _mainComputer.AddRigidbody(rb);
-        }
-
-        public static void RemoveRigidbody(RBRigidbody rb)
-        {
-            _mainComputer.RemoveRigidbody(rb);
-        }
-
-        public static void AddCollider(RBCollider c)
-        {
-            _mainComputer.AddCollider(c);
-        }
-
-        public static void RemoveCollider(RBCollider c)
-        {
-            _mainComputer.RemoveCollider(c);
-        }
-
-        public static void SwitchToCollider(RBCollider c)
-        {
-            _mainComputer.SwitchToCollider(c);
-        }
-
-        public static void SwitchToRigidbody(RBCollider c)
-        {
-            _mainComputer.SwitchToRigidbody(c);
-        }
-
-        public static void AddStdSolver(StdSolverInit stdInit, StdSolverIteration stdIter)
-        {
-            _mainComputer.AddStdSolver(stdInit, stdIter);
-        }
-
-        public static void RemoveStdSolver(StdSolverInit stdInit, StdSolverIteration stdIter)
-        {
-            _mainComputer.RemoveStdSolver(stdInit, stdIter);
-        }
-
-        public static void AddPhysObject(BeforeSolver beforeSolver, AfterSolver afterSolver)
-        {
-            _mainComputer.AddPhysObject(beforeSolver, afterSolver);
-        }
-
-        public static void RemovePhysObject(BeforeSolver beforeSolver, AfterSolver afterSolver)
-        {
-            _mainComputer.RemovePhysObject(beforeSolver, afterSolver);
-        }
-
-        public static void AddPhysValidatorObject(ValidatorBeforeSolver beforeSolver, ValidatorAfterSolver afterSolver)
-        {
-            _mainComputer.AddPhysValidatorObject(beforeSolver, afterSolver);
-        }
-
-        public static void RemovePhysValidatorObject(ValidatorBeforeSolver beforeSolver, ValidatorAfterSolver afterSolver)
-        {
-            _mainComputer.RemovePhysValidatorObject(beforeSolver, afterSolver);
-        }
-
         public static void InitMainComputer()
         {
             _mainComputer?.Dispose();
@@ -140,6 +80,11 @@ namespace RBPhys
         public static void DisposeMainComputer()
         {
             _mainComputer?.Dispose();
+        }
+
+        public static void ReInitializeMainComputer()
+        {
+            _mainComputer.ReInitializeComputer();
         }
     }
 }

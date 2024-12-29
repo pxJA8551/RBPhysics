@@ -13,7 +13,7 @@ using static RBPhys.RBPhysUtil;
 namespace RBPhys
 {
     [DisallowMultipleComponent]
-    public class RBRigidbody : MonoBehaviour
+    public class RBRigidbody : RBVirtualComponent
     {
         const float SLEEP_VEL_MAX_SQRT = 0.10f * 0.10f;
         const float SLEEP_ANGVEL_MAX_SQRT = 1.0f * 1.0f;
@@ -33,22 +33,21 @@ namespace RBPhys
         [NonSerialized] public Vector3 inertiaTensor;
         [NonSerialized] public Quaternion inertiaTensorRotation;
 
-        public virtual bool vActive_And_vEnabled { get { return enabled && gameObject.activeSelf; } }
-
         public bool IgnoreVelocity { get { return _stackVal_ignoreVelocity_ifGreaterThanZero > 0; } }
 
         int _stackVal_ignoreVelocity_ifGreaterThanZero = 0;
 
-        protected Vector3 _centerOfGravity;
+        Vector3 _centerOfGravity;
 
-        protected Vector3 _velocity;
-        protected Vector3 _angularVelocity;
-        protected Vector3 _expVelocity;
-        protected Vector3 _expAngularVelocity;
-        protected Vector3 _position;
-        protected Quaternion _rotation;
+        Vector3 _velocity;
+        Vector3 _angularVelocity;
+        Vector3 _expVelocity;
+        Vector3 _expAngularVelocity;
 
-        protected RBCollider[] _colliders;
+        Vector3 _position;
+        Quaternion _rotation;
+
+        List<RBCollider> _colliders;
 
         public Vector3 Velocity { get { return _velocity; } }
         public Vector3 AngularVelocity { get { return _angularVelocity; } }
@@ -99,44 +98,6 @@ namespace RBPhys
 
         public List<RBPhysStateValidator> validators = new List<RBPhysStateValidator>();
 
-        List<RBRigidbodyVirtual> _virtualRigidbodies = new List<RBRigidbodyVirtual>();
-
-        public void AddVirtualRigidbody(RBRigidbodyVirtual rb)
-        {
-            if (!_virtualRigidbodies.Contains(rb))
-            {
-                _virtualRigidbodies.Add(rb);
-            }
-        }
-
-        public void RemoveVirtualRigidbody(RBRigidbodyVirtual rb)
-        {
-            _virtualRigidbodies.Remove(rb);
-        }
-
-        public int VirtualRigidbodies(ref RBRigidbodyVirtual[] rigidbodies)
-        {
-            if (rigidbodies == null) rigidbodies = new RBRigidbodyVirtual[Mathf.Max(_virtualRigidbodies.Count, 1)];
-            if (rigidbodies.Length < _virtualRigidbodies.Count) Array.Resize(ref rigidbodies, _virtualRigidbodies.Count);
-
-            for (int i = 0; i < rigidbodies.Length; i++)
-            {
-                rigidbodies[i] = _virtualRigidbodies.ElementAtOrDefault(i);
-            }
-
-            return _virtualRigidbodies.Count;
-        }
-
-        public RBRigidbodyVirtual CreateVirtual(RBVirtualTransform vTransform)
-        {
-            var r = vTransform.AddRigidbody();
-            r.CopyRigidbody(this);
-            r.SetVTransform(vTransform);
-            r.VInititalize(this);
-
-            return r;
-        }
-
         public void CopyRigidbody(RBRigidbody rb)
         {
             mass = rb.mass;
@@ -169,9 +130,9 @@ namespace RBPhys
             }
         }
 
-        protected virtual void Awake()
+        protected override void ComponentAwake()
         {
-            FindColliders();
+            UpdateColliders();
             UpdateTransform(0);
             RecalculateInertiaTensor();
 
@@ -201,24 +162,24 @@ namespace RBPhys
             }
         }
 
-        protected virtual void OnEnable()
+        protected override void ComponentOnEnable()
         {
-            RBPhysController.AddRigidbody(this);
+            PhysComputer.AddRigidbody(this);
 
             foreach (var c in _colliders)
             {
-                RBPhysController.SwitchToRigidbody(c);
+                PhysComputer.SwitchToRigidbody(c);
                 c.UpdateTransform(0);
             }
         }
 
-        protected virtual void OnDisable()
+        protected override void ComponentOnDisable()
         {
-            RBPhysController.RemoveRigidbody(this);
+            PhysComputer.RemoveRigidbody(this);
 
             foreach (var c in _colliders)
             {
-                RBPhysController.SwitchToCollider(c);
+                PhysComputer.SwitchToCollider(c);
                 c.UpdateTransform(0);
             }
         }
@@ -233,29 +194,57 @@ namespace RBPhys
             _expObjTrajectory = new RBTrajectory();
         }
 
-        protected void FindColliders()
+        void UpdateColliders()
         {
-            _colliders = GetComponentsInChildren<RBCollider>(true).ToArray();
-
-            foreach (var c in _colliders)
-            {
-                if (c != null)
-                {
-                    c.SetParentRigidbody(this);
-                }
-            }
+            List<RBCollider> colliders = new List<RBCollider>();
+            FindChildrenRecursive(transform);
+            _colliders = colliders.ToList();
         }
 
-        public virtual void AddCollider(RBCollider c)
+        public void AddCollider(RBCollider collider)
         {
-            Array.Resize(ref _colliders, _colliders.Length + 1);
-            _colliders[_colliders.Length - 1] = c;
+            if (_colliders == null) _colliders = new List<RBCollider>();
 
-            RBPhysController.SwitchToRigidbody(c);
-            c.UpdateTransform(0);
-            c.SetParentRigidbody(this);
+            if(!_colliders.Contains(collider))
+            {
+                _colliders.Add(collider);
+            }
+
+            PhysComputer.SwitchToRigidbody(collider);
+            collider.UpdateTransform(0);
 
             RecalculateInertiaTensor();
+        }
+
+        public void RemoveCollider(RBCollider collider)
+        {
+            _colliders?.Remove(collider);
+            RecalculateInertiaTensor();
+        }
+
+        void FindChildrenRecursive(Transform transform)
+        {
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                var t = transform.GetChild(i);
+                var rb = t.GetComponent<RBRigidbody>();
+                if (rb == null) 
+                {
+                    var c = t.GetComponent<RBCollider>();
+                    if (c != null && c.VEnabled) 
+                    {
+                        c.SetParentRigidbody(this);
+                    }
+                    else
+                    {
+                        FindChildrenRecursive(t);
+                    }
+                }
+                else
+                {
+                    Debug.Assert(false);
+                }
+            }
         }
 
         void ReleaseColliders()
@@ -271,12 +260,12 @@ namespace RBPhys
 
         public void ReinitializeColliders()
         {
-            FindColliders();
+            UpdateColliders();
         }
 
         public RBCollider[] GetColliders()
         {
-            return _colliders;
+            return _colliders.ToArray();
         }
 
         public void SetColliderSizeMultiplier(float multiplier)
@@ -327,8 +316,10 @@ namespace RBPhys
                 _velocity = _expVelocity;
                 _angularVelocity = _expAngularVelocity;
 
-                transform.position = _position + (_velocity * dt);
-                transform.rotation = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
+                var setPos = _position + (_velocity * dt);
+                var setRot = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
+
+                VTransform.SetWsPositionAndRotation(setPos, setRot);
             }
 
             UpdateTransform(dt);
@@ -337,8 +328,8 @@ namespace RBPhys
 
         internal virtual void UpdateTransform(float delta, bool updateColliders = true)
         {
-            Position = transform.position;
-            Rotation = transform.rotation;
+            Position = VTransform.WsPosition;
+            Rotation = VTransform.WsRotation;
 
             if (updateColliders)
             {
@@ -354,21 +345,6 @@ namespace RBPhys
             validators.Clear();
         }
 
-        internal virtual void UpdateExpTrajectoryMultiThreaded(float dt, bool updateColliders = true)
-        {
-            (Vector3 pos, Quaternion rot) r = GetIntergrated(0);
-
-            if (updateColliders)
-            {
-                foreach (RBCollider c in _colliders)
-                {
-                    c.UpdateExpTrajectoryMultiThreaded(dt, Position, Rotation, r.pos, r.rot);
-                }
-            }
-
-            _expObjTrajectory.Update(this, gameObject.layer);
-        }
-
         internal virtual void UpdateExpTrajectory(float dt, bool updateColliders = true)
         {
             (Vector3 pos, Quaternion rot) r = GetIntergrated(0);
@@ -381,14 +357,14 @@ namespace RBPhys
                 }
             }
 
-            _expObjTrajectory.Update(this, gameObject.layer);
+            _expObjTrajectory.Update(this, VTransform.Layer);
         }
 
         internal void UpdateColliderExpTrajectory(float dt)
         {
             (Vector3 pos, Quaternion rot) r = GetIntergrated(0);
 
-            for (int i = 0; i < _colliders.Length; i++)
+            for (int i = 0; i < _colliders.Count; i++)
             {
                 _colliders[i].UpdateExpTrajectoryMultiThreaded(dt, Position, Rotation, r.pos, r.rot);
             }
@@ -505,10 +481,19 @@ namespace RBPhys
 
         public void RecalculateInertiaTensor()
         {
-            ComputeMassAndInertia(_colliders, out inertiaTensor, out inertiaTensorRotation, out _centerOfGravity);
+            if (_colliders?.Any() ?? false)
+            {
+                ComputeMassAndInertia(_colliders, out inertiaTensor, out inertiaTensorRotation, out _centerOfGravity);
+            }
+            else
+            {
+                inertiaTensor = Vector3.one;
+                inertiaTensorRotation = Quaternion.identity;
+                _centerOfGravity = default;
+            }
         }
 
-        void ComputeMassAndInertia(RBCollider[] colliders, out Vector3 inertiaTensor, out Quaternion inertiaTensorRotation, out Vector3 cg)
+        void ComputeMassAndInertia(List<RBCollider> colliders, out Vector3 inertiaTensor, out Quaternion inertiaTensorRotation, out Vector3 cg)
         {
             inertiaTensor = Vector3.zero;
             inertiaTensorRotation = Quaternion.identity;
@@ -525,8 +510,8 @@ namespace RBPhys
                 RBInertiaTensor geometryIt = new RBInertiaTensor();
                 float m = mass * r;
 
-                Vector3 relPos = transform.InverseTransformPoint(c.GameObjectPos);
-                Quaternion relRot = c.GameObjectRot * Quaternion.Inverse(Rotation);
+                Vector3 relPos = VTransform.InverseTransformPoint(c.VTransform.WsPosition);
+                Quaternion relRot = c.VTransform.WsRotation * Quaternion.Inverse(Rotation);
 
                 switch (c.GeometryType)
                 {

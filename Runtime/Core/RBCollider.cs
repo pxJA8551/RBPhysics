@@ -1,25 +1,26 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using Unity.Android.Types;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static RBPhys.RBPhysComputer;
 
 namespace RBPhys
 {
-    public abstract class RBCollider : MonoBehaviour
+    public abstract class RBCollider : RBVirtualComponent
     {
         protected RBRigidbody _parent;
 
-        public RBRigidbody ParentRigidbody { get { return _hasParentRigidbodyInFrame ? _parent : null; } }
-        public abstract RBGeometryType GeometryType { get; }
+        public bool HasEnabledParent { get { return _parent?.VEnabled ?? false; } }
+        public RBRigidbody ParentRigidbody { get { return HasEnabledParent ? _parent : null; } }
 
-        public Vector3 GameObjectPos { get; protected set; }
-        public Quaternion GameObjectRot { get; protected set; }
+        public abstract RBGeometryType GeometryType { get; }
 
         List<RBCollider> _virtualColliders = new List<RBCollider>();
 
-        public virtual bool vActive_And_vEnabled { get { return enabled && gameObject.activeSelf; } }
+        public virtual bool vActive_And_vEnabled { get { return VEnabled; } }
 
         [NonSerialized] public float cr_kp = .45f; //è’ìÀâè¡èàóù PÉQÉCÉì
         [NonSerialized] public float cr_ki = .03f; //è’ìÀâè¡èàóù IÉQÉCÉì
@@ -43,12 +44,11 @@ namespace RBPhys
         protected Vector3 _expPos;
         protected Quaternion _expRot;
 
-        protected bool _hasParentRigidbodyInFrame = false;
-
         public OnCollision onCollision;
 
         public virtual int Layer { get; }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddVirtualCollider(RBCollider collider)
         {
             if (!_virtualColliders.Contains(collider))
@@ -57,11 +57,13 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveVirtualCollider(RBCollider collider)
         {
             _virtualColliders.Remove(collider);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int VirtualColliders(ref RBCollider[] colliders)
         {
             if (colliders == null) colliders = new RBCollider[Mathf.Max(_virtualColliders.Count, 1)];
@@ -75,82 +77,120 @@ namespace RBPhys
             return _virtualColliders.Count;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetIgnoreCollision()
         {
             _stackVal_ignoreCollision_ifGreaterThanZero++;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetDecrIgnoreCollision()
         {
             _stackVal_ignoreCollision_ifGreaterThanZero--;
         }
 
-        protected virtual void Awake()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected override void ComponentAwake()
         {
             UpdateTransform(0);
         }
 
-        protected virtual void OnEnable()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected override void ComponentOnEnable()
         {
-            RBPhysController.AddCollider(this);
+            PhysComputer.AddCollider(this);
 
+            FindParent();
             if (ParentRigidbody != null)
             {
-                RBPhysController.SwitchToRigidbody(this);
+                PhysComputer.SwitchToRigidbody(this);
             }
         }
 
-        protected virtual void OnDisable()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected override void ComponentOnDisable()
         {
-            RBPhysController.RemoveCollider(this);
+            ReleaseParent();
+            PhysComputer.RemoveCollider(this);
         }
 
-        public void FixedUpdate() { }
+        private void FixedUpdate() { }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBCollider()
         {
             _expTrajectory = new RBTrajectory();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void FindParent()
+        {
+            var parent = GetComponentInParent<RBRigidbody>();
+            if (parent != null)
+            {
+                SetParentRigidbody(parent);
+            }
+            else
+            {
+                ClearParentRigidbody();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ReleaseParent()
+        {
+            if (_parent != null)
+            {
+                _parent.RemoveCollider(this);
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetParentRigidbody(RBRigidbody r)
         {
             if (r != null)
             {
                 _parent = r;
+                r.AddCollider(this);
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ClearParentRigidbody()
         {
             _parent = null;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual void UpdateTransform(float delta)
         {
-            GameObjectPos = gameObject?.transform.position ?? Vector3.zero;
-            GameObjectRot = gameObject?.transform.rotation ?? Quaternion.identity;
+            var pos = VTransform.WsPosition;
+            var rot = VTransform.WsRotation;
 
-            _expPos = GameObjectPos;
-            _expRot = GameObjectRot;
+            _expPos = pos;
+            _expRot = rot;
 
-            _hasParentRigidbodyInFrame = _parent?.vActive_And_vEnabled ?? false;
-
-            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, GameObjectPos, GameObjectRot, gameObject?.layer ?? 0, delta);
-            else _expTrajectory.Update(this, _expPos, _expRot, gameObject?.layer ?? 0, delta);
+            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, pos, rot, gameObject?.layer ?? 0, delta);
+            else _expTrajectory.Update(this, _expPos, _expRot, VTransform.Layer, delta);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void UpdateExpTrajectoryMultiThreaded(float delta, Vector3 rbPos, Quaternion rbRot, Vector3 intergratedPos, Quaternion intergratedRot)
         {
-            Vector3 relPos = GameObjectPos - rbPos;
-            Quaternion relRot = GameObjectRot * Quaternion.Inverse(rbRot);
+            var pos = VTransform.WsPosition;
+            var rot = VTransform.WsRotation;
+
+            Vector3 relPos = pos - rbPos;
+            Quaternion relRot = rot * Quaternion.Inverse(rbRot);
 
             _expPos = intergratedPos + relPos;
             _expRot = intergratedRot * relRot;
 
-            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, GameObjectPos, GameObjectRot, _expTrajectory.Layer, delta);
+            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, pos, rot, _expTrajectory.Layer, delta);
             else _expTrajectory.Update(this, _expPos, _expRot, _expTrajectory.Layer, delta);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void OnCollision(RBCollider col, RBCollisionInfo info)
         {
             if(onCollision != null) onCollision(col, info);
@@ -163,61 +203,72 @@ namespace RBPhys
         public abstract RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot, float delta);
         public abstract RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot, float delta);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual RBColliderSphere CalcSphere(float delta)
         {
-            return CalcSphere(GameObjectPos, GameObjectRot, delta);
+            return CalcSphere(VTransform.WsPosition, VTransform.WsRotation, delta);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual RBColliderAABB CalcAABB(float delta)
         {
-            return CalcAABB(GameObjectPos, GameObjectRot, delta);
+            return CalcAABB(VTransform.WsPosition, VTransform.WsRotation, delta);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual RBColliderOBB CalcOBB(float delta)
         {
-            return CalcOBB(GameObjectPos, GameObjectRot, delta);
+            return CalcOBB(VTransform.WsPosition, VTransform.WsRotation, delta);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual RBColliderCapsule CalcCapsule(float delta)
         {
-            return CalcCapsule(GameObjectPos, GameObjectRot, delta);
+            return CalcCapsule(VTransform.WsPosition, VTransform.WsRotation, delta);
         }
 
         public abstract Vector3 GetColliderCenter(Vector3 pos, Quaternion rot);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual Vector3 GetColliderCenter()
         {
-            return GetColliderCenter(GameObjectPos, GameObjectRot);
+            return GetColliderCenter(VTransform.WsPosition, VTransform.WsRotation);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual RBColliderSphere CalcExpSphere(float delta)
         {
             return CalcSphere(_expPos, _expRot, delta);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual RBColliderAABB CalcExpAABB(float delta)
         {
             return CalcAABB(_expPos, _expRot, delta);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual RBColliderOBB CalcExpOBB(float delta)
         {
             return CalcOBB(_expPos, _expRot, delta);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual RBColliderCapsule CalcExpCapsule(float delta)
         {
             return CalcCapsule(_expPos, _expRot, delta);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3 ExpToCurrent(Vector3 expPos)
         {
-            return GameObjectPos + GameObjectRot * (Quaternion.Inverse(_expRot) * (expPos - _expPos));
+            return VTransform.WsPosition + VTransform.WsRotation * (Quaternion.Inverse(_expRot) * (expPos - _expPos));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3 ExpToCurrentVector(Vector3 expVector)
         {
-            return GameObjectRot * (Quaternion.Inverse(_expRot) * expVector);
+            return VTransform.WsRotation * (Quaternion.Inverse(_expRot) * expVector);
         }
     }
 }

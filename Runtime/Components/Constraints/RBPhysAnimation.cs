@@ -8,7 +8,7 @@ using UnityEngine;
 namespace RBPhys
 {
     [RequireComponent(typeof(RBRigidbody))]
-    public class RBPhysAnimation : MonoBehaviour
+    public class RBPhysAnimation : RBVirtualComponent
     {
         const int PHYS_ANIM_INTERGRADE = 2;
         const float PHYS_ANIM_RESOLUTION_BETA = .25f;
@@ -59,16 +59,6 @@ namespace RBPhys
             }
         }
 
-        public RBPhysAnimationVirtual CreateVirtual(RBVirtualTransform vTransform, RBRigidbodyVirtual rbRigidbody)
-        {
-            var v = vTransform.AddPhysAnimation();
-            v.CopyPhysAnimation(this);
-            v.SetVTransform(vTransform);
-            v.VInititalize(this, rbRigidbody);
-
-            return v;
-        }
-
         public void CopyPhysAnimation(RBPhysAnimation anim)
         {
             baseAnimationClip = anim.baseAnimationClip;
@@ -109,14 +99,14 @@ namespace RBPhys
 
         protected virtual void OnEnable()
         {
-            RBPhysController.AddStdSolver(StdSolverInit, StdSolverIteration);
-            RBPhysController.AddPhysObject(BeforeSolver, AfterSolver);
+            PhysComputer.AddStdSolver(StdSolverInit, StdSolverIteration);
+            PhysComputer.AddPhysObject(BeforeSolver, AfterSolver);
         }
 
         protected virtual void OnDisable()
         {
-            RBPhysController.RemoveStdSolver(StdSolverInit, StdSolverIteration);
-            RBPhysController.RemovePhysObject(BeforeSolver, AfterSolver);
+            PhysComputer.RemoveStdSolver(StdSolverInit, StdSolverIteration);
+            PhysComputer.RemovePhysObject(BeforeSolver, AfterSolver);
         }
 
         public void PlayAnimation()

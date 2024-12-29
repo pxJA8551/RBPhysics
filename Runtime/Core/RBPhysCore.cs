@@ -107,7 +107,6 @@ namespace RBPhys
 
         public ComputerTimeParams timeParams;
         public PhysComputerTime physComputerTime;
-        public bool multiThreadPredictionMode = false;
 
         SemaphoreSlim _solverIterationSemaphore = new SemaphoreSlim(1, 1);
         CancellationTokenSource _lockSemaphoreTimeoutCxlSrc = new CancellationTokenSource();
@@ -116,13 +115,14 @@ namespace RBPhys
         {
             physComputerTime = new PhysComputerTime(this);
             timeParams = ComputerTimeParams.GetDefault();
+            ReInitializeComputer();
         }
 
-        public RBPhysComputer(bool multiThreadPrediction, float deltaTime)
+        public RBPhysComputer(float deltaTime)
         {
             physComputerTime = new PhysComputerTime(this);
-            multiThreadPredictionMode = multiThreadPrediction;
             timeParams = new ComputerTimeParams(deltaTime, 1, false);
+            ReInitializeComputer();
         }
 
         public RBPhysComputer.SolverInfo GetSolverInfo(int iterCount, int syncCount)
@@ -132,12 +132,16 @@ namespace RBPhys
 
         public void ReInitializeComputer()
         {
+            this.WaitSemaphore();
+
             physComputerTime = new PhysComputerTime(this);
 
             ReInitializeSolverTime();
 
             _collisions.Clear();
             _collisionsInSolver.Clear();
+
+            this.ReleaseSemaphore();
         }
 
         public void AddRigidbody(RBRigidbody rb)
@@ -302,20 +306,15 @@ namespace RBPhys
 
         public async Task OpenPhysicsFrameWindowAsync()
         {
-            UpdateSolverTimeVariables();
-
             float dt = _solverDeltaTimeAsFloat;
 
             if (dt == 0) return;
 
-            if (!multiThreadPredictionMode)
-            {
-                if (_validatorBeforeSolver != null) _validatorBeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
-            }
+            if (_validatorBeforeSolver != null) _validatorBeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
 
             ClearCollisions();
 
-            if (!multiThreadPredictionMode) ClearValidators();
+            ClearValidators();
 
             if (_beforeSolver != null) _beforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
 
@@ -335,17 +334,14 @@ namespace RBPhys
                     }
                 }
 
-                SolveConstraints(dt);
+                await SolveConstraints(dt);
 
                 if (_afterSolver != null) _afterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
             }
 
             _solverIterationSemaphore.Release();
 
-            if (!multiThreadPredictionMode)
-            {
-                if (_validatorAfterSolver != null) _validatorAfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
-            }
+            if (_validatorAfterSolver != null) _validatorAfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
 
             TrySleepRigidbodies();
             TryAwakeRigidbodies();
@@ -360,10 +356,10 @@ namespace RBPhys
             _solverUnscaledTime = 0;
             _solverUnscaledDeltaTime = 0;
 
-            UpdateSolverTimeVariables();
+            SetSolverTimeVariables();
         }
 
-        void UpdateSolverTimeVariables()
+        void SetSolverTimeVariables()
         {
             if (timeParams.enableAutoTimeIntergrading)
             {
@@ -918,7 +914,7 @@ namespace RBPhys
                     for (int i = 0; i < rb.collidingCount; i++)
                     {
                         var c = rb.colliding[i];
-                        if (c.ParentRigidbody != null && ((c.ParentRigidbody.vActive_And_vEnabled && !c.ParentRigidbody.isSleeping) || !c.ParentRigidbody.vActive_And_vEnabled))
+                        if (c.ParentRigidbody != null && ((c.ParentRigidbody.VEnabled && !c.ParentRigidbody.isSleeping) || !c.ParentRigidbody.VEnabled))
                         {
                             rb.PhysAwake();
                             break;
@@ -1117,7 +1113,7 @@ namespace RBPhys
         List<(RBCollider col_a, RBCollider col_b, RBDetailCollision.Penetration p, RBCollision col)> _sphere_capsule_cols = new List<(RBCollider, RBCollider, RBDetailCollision.Penetration p, RBCollision col)>();
         List<(RBCollider col_a, RBCollider col_b, RBDetailCollision.Penetration p, RBCollision col)> _capsule_capsule_cols = new List<(RBCollider, RBCollider, RBDetailCollision.Penetration p, RBCollision col)>();
 
-        public void SolveConstraints(float dt)
+        public async Task SolveConstraints(float dt)
         {
             //�Փˌ��m�i�u���[�h�t�F�[�Y�j
 
@@ -1644,7 +1640,7 @@ namespace RBPhys
                         if (!_collisionsInSolver[i].skipInSolver) SolveCollisionPair(_collisionsInSolver[i]);
                     });
 
-                    Task.WhenAll(_stdSolverIterTasks).Wait();
+                    await Task.WhenAll(_stdSolverIterTasks);
 
                     Profiler.EndSample();
                 }
@@ -1673,7 +1669,7 @@ namespace RBPhys
                                 _stdSolverInitTasks.Add(t);
                             }
 
-                            Task.WhenAll(_stdSolverInitTasks).Wait();
+                            await Task.WhenAll(_stdSolverInitTasks);
                         }
                     }
 
@@ -2858,7 +2854,7 @@ namespace RBPhys
 
         public RBTrajectory(RBCollider collider, int layer, float delta)
         {
-            trajectoryAABB = collider.CalcAABB(collider.GameObjectPos, collider.GameObjectRot, delta);
+            trajectoryAABB = collider.CalcAABB(collider.VTransform.WsPosition, collider.VTransform.WsRotation, delta);
             _rigidbody = null;
             _collider = collider;
             _isStatic = true;

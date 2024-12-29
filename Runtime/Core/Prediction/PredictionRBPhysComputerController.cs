@@ -29,66 +29,64 @@ namespace RBPhys
         List<(StdSolverInit init, StdSolverIteration iter)> _prdSolversAddQueue = new List<(StdSolverInit init, StdSolverIteration iter)>();
         List<(BeforeSolver beforeSolver, AfterSolver afterSolver)> _prdPhysObjsAddQueue = new List<(BeforeSolver beforeSolver, AfterSolver afterSolver)>();
 
-        List<RBVirtualTransform> _vTransforms = new List<RBVirtualTransform>();
-
         public async Task ReInitializeAsync()
         {
-            await _predictionComputer.WaitSemaphoreAsync(500);
+            //await _predictionComputer.WaitSemaphoreAsync(500);
 
-            _predictionComputer.ReInitializeComputer();
+            //_predictionComputer.ReInitializeComputer();
 
-            foreach (var vt in _vTransforms)
-            {
-                vt.ReInitialize();
-            }
+            //foreach (var vt in _vTransforms)
+            //{
+            //    vt.ReInitialize();
+            //}
 
-            foreach (var rb in _rbRigidbody)
-            {
-                var vRb = rb as RBRigidbodyVirtual;
-                if (vRb)
-                {
-                    vRb.ReInitialize();
-                }
-            }
+            //foreach (var rb in _rbRigidbody)
+            //{
+            //    var vRb = rb as RBRigidbodyVirtual;
+            //    if (vRb)
+            //    {
+            //        vRb.ReInitialize();
+            //    }
+            //}
 
-            foreach (var c in _rbCols)
-            {
-                if (c.GeometryType == RBGeometryType.OBB)
-                {
-                    var vOBB = c as RBBoxColliderVirtual;
-                    if (vOBB != null)
-                    {
-                        vOBB.ReInitialize();
-                    }
-                }
-                else if (c.GeometryType == RBGeometryType.Sphere)
-                {
-                    var vSphere = c as RBSphereColliderVirtual;
-                    if (vSphere != null)
-                    {
-                        vSphere.ReInitialize();
-                    }
-                }
-                else if (c.GeometryType == RBGeometryType.Capsule)
-                {
-                    var vCapsule = c as RBCapsuleColliderVirtual;
-                    if (vCapsule != null)
-                    {
-                        vCapsule.ReInitialize();
-                    }
-                }
-            }
+            //foreach (var c in _rbCols)
+            //{
+            //    if (c.GeometryType == RBGeometryType.OBB)
+            //    {
+            //        var vOBB = c as RBBoxColliderVirtual;
+            //        if (vOBB != null)
+            //        {
+            //            vOBB.ReInitialize();
+            //        }
+            //    }
+            //    else if (c.GeometryType == RBGeometryType.Sphere)
+            //    {
+            //        var vSphere = c as RBSphereColliderVirtual;
+            //        if (vSphere != null)
+            //        {
+            //            vSphere.ReInitialize();
+            //        }
+            //    }
+            //    else if (c.GeometryType == RBGeometryType.Capsule)
+            //    {
+            //        var vCapsule = c as RBCapsuleColliderVirtual;
+            //        if (vCapsule != null)
+            //        {
+            //            vCapsule.ReInitialize();
+            //        }
+            //    }
+            //}
 
-            foreach (var a in _rbAnims)
-            {
-                var vAnim = a as RBPhysAnimationVirtual;
-                if (vAnim != null)
-                {
-                    vAnim.ReInitialize();
-                }
-            }
+            //foreach (var a in _rbAnims)
+            //{
+            //    var vAnim = a as RBPhysAnimationVirtual;
+            //    if (vAnim != null)
+            //    {
+            //        vAnim.ReInitialize();
+            //    }
+            //}
 
-            _predictionComputer.ReleaseSemaphore();
+            //_predictionComputer.ReleaseSemaphore();
         }
 
         public void AddRigidbody(RBRigidbody rb)
@@ -195,83 +193,83 @@ namespace RBPhys
             }
         }
 
-        public RBVirtualTransform CreateVirtual(GameObject obj, RBVirtualTransform vParent, bool recursive = false, bool ignoreRigidbody = false)
-        {
-            GameObject vObj = new GameObject();
-            vObj.transform.parent = vParent?.transform;
-            vObj.name = "rbvt_" + obj.name;
-            var vTransform = vObj.AddComponent<RBVirtualTransform>();
-            vTransform.Initialize(_predictionComputer, obj, vParent);
-            _vTransforms.Add(vTransform);
+        //public RBVirtualTransformObsolete CreateVirtual(GameObject obj, RBVirtualTransformObsolete vParent, bool recursive = false, bool ignoreRigidbody = false)
+        //{
+        //    GameObject vObj = new GameObject();
+        //    vObj.transform.parent = vParent?.transform;
+        //    vObj.name = "rbvt_" + obj.name;
+        //    var vTransform = vObj.AddComponent<RBVirtualTransformObsolete>();
+        //    vTransform.Initialize(_predictionComputer, obj, vParent);
+        //    _vTransforms.Add(vTransform);
 
-            bool isObjectEmpty = true;
+        //    bool isObjectEmpty = true;
 
-            RBRigidbodyVirtual vRb = null;
+        //    RBRigidbodyVirtual vRb = null;
 
-            if (!ignoreRigidbody)
-            {
-                if (obj.TryGetComponent(out RBRigidbody r))
-                {
-                    vRb = r.CreateVirtual(vTransform);
-                    AddRigidbody(vRb);
+        //    if (!ignoreRigidbody)
+        //    {
+        //        if (obj.TryGetComponent(out RBRigidbody r))
+        //        {
+        //            vRb = r.CreateVirtual(vTransform);
+        //            AddRigidbody(vRb);
 
-                    isObjectEmpty = false;
-                }
-            }
+        //            isObjectEmpty = false;
+        //        }
+        //    }
 
-            foreach (var c in obj.GetComponents<RBCollider>())
-            {
-                if (c.GeometryType == RBGeometryType.OBB)
-                {
-                    var obb = c as RBBoxCollider;
-                    var vObb = obb.CreateVirtual(vTransform);
-                    AddCollider(vObb);
-                }
-                else if (c.GeometryType == RBGeometryType.Sphere)
-                {
-                    var sphere = c as RBSphereCollider;
-                    var vSphere = sphere.CreateVirtual(vTransform);
-                    AddCollider(vSphere);
-                }
-                else if (c.GeometryType == RBGeometryType.Capsule)
-                {
-                    var capusle = c as RBCapsuleCollider;
-                    var vCapsule = capusle.CreateVirtual(vTransform);
-                    AddCollider(vCapsule);
-                }
+        //    foreach (var c in obj.GetComponents<RBCollider>())
+        //    {
+        //        if (c.GeometryType == RBGeometryType.OBB)
+        //        {
+        //            var obb = c as RBBoxCollider;
+        //            var vObb = obb.CreateVirtual(vTransform);
+        //            AddCollider(vObb);
+        //        }
+        //        else if (c.GeometryType == RBGeometryType.Sphere)
+        //        {
+        //            var sphere = c as RBSphereCollider;
+        //            var vSphere = sphere.CreateVirtual(vTransform);
+        //            AddCollider(vSphere);
+        //        }
+        //        else if (c.GeometryType == RBGeometryType.Capsule)
+        //        {
+        //            var capusle = c as RBCapsuleCollider;
+        //            var vCapsule = capusle.CreateVirtual(vTransform);
+        //            AddCollider(vCapsule);
+        //        }
 
-                isObjectEmpty = false;
-            }
+        //        isObjectEmpty = false;
+        //    }
 
-            if (vRb != null) 
-            {
-                foreach (var a in obj.GetComponents<RBPhysAnimation>())
-                {
-                    a.CreateVirtual(vTransform, vRb);
-                }
-            }
+        //    if (vRb != null) 
+        //    {
+        //        foreach (var a in obj.GetComponents<RBPhysAnimation>())
+        //        {
+        //            a.CreateVirtual(vTransform, vRb);
+        //        }
+        //    }
 
-            if (recursive)
-            {
-                for (int i = 0; i < obj.transform.childCount; i++)
-                {
-                    var childObj = obj.transform.GetChild(i);
-                    if (childObj != null)
-                    {
-                        var vChildTransform = CreateVirtual(childObj.gameObject, vTransform, true);
-                        if (vChildTransform != null) vTransform.AddChildren(vChildTransform);
-                    }
-                }
-            }
+        //    if (recursive)
+        //    {
+        //        for (int i = 0; i < obj.transform.childCount; i++)
+        //        {
+        //            var childObj = obj.transform.GetChild(i);
+        //            if (childObj != null)
+        //            {
+        //                var vChildTransform = CreateVirtual(childObj.gameObject, vTransform, true);
+        //                if (vChildTransform != null) vTransform.AddChildren(vChildTransform);
+        //            }
+        //        }
+        //    }
 
-            if (vTransform.ChildCount == 0 && isObjectEmpty)
-            {
-                GameObject.Destroy(vObj);
-                return null;
-            }
+        //    if (vTransform.ChildCount == 0 && isObjectEmpty)
+        //    {
+        //        GameObject.Destroy(vObj);
+        //        return null;
+        //    }
 
-            return vTransform;
-        }
+        //    return vTransform;
+        //}
 
         public void InitPrediction(float deltaTime)
         {
@@ -281,7 +279,7 @@ namespace RBPhys
 
         public void CreatePrediction(float deltaTime)
         {
-            _predictionComputer = new RBPhysComputer(true, deltaTime);
+            _predictionComputer = new RBPhysComputer(deltaTime);
         }
 
         public void InitPredictionComputer()

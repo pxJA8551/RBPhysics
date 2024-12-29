@@ -28,17 +28,6 @@ namespace RBPhys
 
         public override int Layer { get { return gameObject?.layer ?? 0; } }
 
-        public RBSphereColliderVirtual CreateVirtual(RBVirtualTransform vTransform)
-        {
-            var v = vTransform.AddCollider<RBSphereColliderVirtual>();
-            AddVirtualCollider(v);
-            v.CopyCollider(this);
-            v.SetVTransform(vTransform);
-            v.VInititalize(this);
-
-            return v;
-        }
-
         public void CopyCollider(RBSphereCollider c)
         {
             useCCD = c.useCCD;
