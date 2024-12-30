@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Xml.Schema;
 using UnityEngine;
 
 public class RBVirtualTransform : MonoBehaviour
@@ -164,7 +165,17 @@ public class RBVirtualTransform : MonoBehaviour
     {
         if (_baseObject == null) throw new System.Exception();
 
-        SetWsTRS(_baseObject.transform.localToWorldMatrix);
+        if (_parent == null)
+        {
+            var wsTrs = _baseObject.transform.localToWorldMatrix;
+            SetWsTRS(wsTrs);
+        }
+        else
+        {
+            var rawTrs = _parent.BaseTransform.localToWorldMatrix.inverse * _baseObject.transform.localToWorldMatrix;
+
+            SetRawTRS(rawTrs);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -172,10 +183,20 @@ public class RBVirtualTransform : MonoBehaviour
     {
         if (_baseObject == null) throw new System.Exception();
 
-        var wsTrs = _wsTrs;
+        if (_parent == null)
+        {
+            var wsTrs = _wsTrs;
 
-        _baseObject.transform.position = wsTrs.GetPosition();
-        _baseObject.transform.rotation = wsTrs.rotation;
+            _baseObject.transform.position = wsTrs.GetPosition();
+            _baseObject.transform.rotation = wsTrs.rotation;
+        }
+        else
+        {
+            var wsTrs = _parent.BaseObject.transform.localToWorldMatrix * _rawTrs;
+
+            _baseObject.transform.position = wsTrs.GetPosition();
+            _baseObject.transform.rotation = wsTrs.rotation;
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -228,7 +249,10 @@ public class RBVirtualTransform : MonoBehaviour
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void SetParentWsTRS(Matrix4x4 parentWsTRS)
     {
-        _wsTrs = parentWsTRS * _rawTrs;
+        var wsTrs = parentWsTRS * _rawTrs;
+        _wsTrs = wsTrs;
+        _wsTrsInv = wsTrs.inverse;
+
         SetChildrenWsTRS();
         Debug.Assert(ValidTRS());
     }

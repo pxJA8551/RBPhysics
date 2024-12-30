@@ -539,11 +539,6 @@ namespace RBPhys
             inertiaTensorRotation = itRot;
             cg = it.CenterOfGravity;
 
-            RBMatrix3x3 r0 = new RBMatrix3x3(new Vector3(1, 2, 3), new Vector3(4, 5, 6), new Vector3(7, 8, 9));
-            RBMatrix3x3 r1 = new RBMatrix3x3(new Vector3(7, 8, 9), new Vector3(1, 2, 3), new Vector3(4, 5, 6));
-
-            RBMatrix3x3 cp = r0 * r1;
-
             if (inertiaTensor == Vector3.zero)
             {
                 Debug.LogError("No collider found. Error initializing InertiaTensor/InertiaTensorRotation.");
