@@ -191,8 +191,8 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PredictPosRot(RBRigidbody rb, out Vector3 position, out Quaternion rotation, float dt)
         {
-            position = rb.Position + rb.ExpVelocity * dt;
-            rotation = rb.Rotation * Quaternion.AngleAxis(rb.ExpAngularVelocity.magnitude * Mathf.Rad2Deg * dt, rb.ExpAngularVelocity.normalized);
+            position = rb.VTransform.WsPosition + rb.ExpVelocity * dt;
+            rotation = rb.VTransform.WsRotation * Quaternion.AngleAxis(rb.ExpAngularVelocity.magnitude * Mathf.Rad2Deg * dt, rb.ExpAngularVelocity.normalized);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -12,6 +12,8 @@ namespace RBPhys
 {
     public struct RBMatrix3x3
     {
+        //https://github.com/sharpdx/SharpDX/blob/master/Source/SharpDX.Mathematics/Matrix3x3.cs
+
         //I(Row)(Column)
         public float m00;
         public float m01;
@@ -146,55 +148,53 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RBMatrix3x3 operator -(RBMatrix3x3 a, RBMatrix3x3 b)
         {
-            return new RBMatrix3x3(a.C0 + b.C0, a.C1 + b.C1, a.C2 + b.C2);
+            return new RBMatrix3x3(a.C0 - b.C0, a.C1 - b.C1, a.C2 - b.C2);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static RBMatrix3x3 operator *(float s, RBMatrix3x3 m)
+        static RBMatrix3x3 Multiply(RBMatrix3x3 mat, float v)
         {
-            return new RBMatrix3x3(s * m.C0, s * m.C1, s * m.C2);
+            var ret = new RBMatrix3x3();
+            ret.m00 = mat.m00 * v;
+            ret.m01 = mat.m01 * v;
+            ret.m02 = mat.m02 * v;
+            ret.m10 = mat.m10 * v;
+            ret.m11 = mat.m11 * v;
+            ret.m12 = mat.m12 * v;
+            ret.m20 = mat.m20 * v;
+            ret.m21 = mat.m21 * v;
+            ret.m22 = mat.m22 * v;
+
+            return ret;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static RBMatrix3x3 operator *(RBMatrix3x3 m, float s)
+        public static RBMatrix3x3 operator *(RBMatrix3x3 left, float right)
         {
-            return s * m;
+            return Multiply(left, right);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 operator *(RBMatrix3x3 m, Vector3 v)
+        public static RBMatrix3x3 operator *(float right, RBMatrix3x3 left)
         {
-            float x = Vector3.Dot(m.R0, v);
-            float y = Vector3.Dot(m.R1, v);
-            float z = Vector3.Dot(m.R2, v);
-
-            return new Vector3(x, y, z);
+            return Multiply(left, right);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Vector3 operator *(Vector3 v, RBMatrix3x3 m)
+        public static RBMatrix3x3 operator *(RBMatrix3x3 left, RBMatrix3x3 right)
         {
-            float x = Vector3.Dot(v, m.C0);
-            float y = Vector3.Dot(v, m.C1);
-            float z = Vector3.Dot(v, m.C2);
+            RBMatrix3x3 m = new RBMatrix3x3();
+            m.m00 = (left.m00 * right.m00) + (left.m01 * right.m10) + (left.m02 * right.m20);
+            m.m01 = (left.m00 * right.m01) + (left.m01 * right.m11) + (left.m02 * right.m21);
+            m.m02 = (left.m00 * right.m02) + (left.m01 * right.m12) + (left.m02 * right.m22);
+            m.m10 = (left.m10 * right.m00) + (left.m11 * right.m10) + (left.m12 * right.m20);
+            m.m11 = (left.m10 * right.m01) + (left.m11 * right.m11) + (left.m12 * right.m21);
+            m.m12 = (left.m10 * right.m02) + (left.m11 * right.m12) + (left.m12 * right.m22);
+            m.m20 = (left.m20 * right.m00) + (left.m21 * right.m10) + (left.m22 * right.m20);
+            m.m21 = (left.m20 * right.m01) + (left.m21 * right.m11) + (left.m22 * right.m21);
+            m.m22 = (left.m20 * right.m02) + (left.m21 * right.m12) + (left.m22 * right.m22);
 
-            return new Vector3(x, y, z);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static RBMatrix3x3 operator *(RBMatrix3x3 a, RBMatrix3x3 b)
-        {
-            Vector3 c0 = a * b.C0;
-            Vector3 c1 = a * b.C1;
-            Vector3 c2 = a * b.C2;
-
-            return CreateFromCols(c0, c1, c2);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float Mul(Vector3 a, RBMatrix3x3 m, Vector3 b)
-        {
-            return Vector3.Dot(a * m, b);
+            return right;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -264,8 +264,6 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Vector3 Diagonalize(RBMatrix3x3 matrix, out Quaternion rotation)
         {
-            rotation = Quaternion.identity;
-
             Quaternion q = Quaternion.identity;
 
             RBMatrix3x3 d = new RBMatrix3x3();
@@ -280,7 +278,7 @@ namespace RBPhys
                 float d0 = Mathf.Abs(d[1][2]);
                 float d1 = Mathf.Abs(d[0][2]);
                 float d2 = Mathf.Abs(d[0][1]);
-                int a = d0 > d1 && d0 > d2 ? 0 : d1 > d2 ? 1 : 2;
+                int a = (d0 > d1 && d0 > d2) ? 0 : (d1 > d2 ? 1 : 2);
 
                 int a1 = (a + 1) % 3;
                 int a2 = (a1 + 1) % 3;
@@ -300,8 +298,8 @@ namespace RBPhys
                 }
                 else
                 {
-                    float t = 1 / (absw + Mathf.Sqrt(w * w + 1));
-                    float h = 1 / Mathf.Sqrt(t * t + 1);
+                    float t = 1f / (absw + Mathf.Sqrt(w * w + 1));
+                    float h = 1f / Mathf.Sqrt(t * t + 1);
 
                     r = IndexedRotation(a, Mathf.Sqrt((1 - h) / 2f) * RBPhysUtil.F32Sign11(w), Mathf.Sqrt((1 + h) / 2f));
                 }

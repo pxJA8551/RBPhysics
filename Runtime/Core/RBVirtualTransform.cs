@@ -55,12 +55,7 @@ public class RBVirtualTransform : MonoBehaviour
             vTransform.CopyBaseObjectTransform();
             vTransform.OnCreate();
 
-            vTransform._physComputer = physComputer ?? vTransform._physComputer;
-        }
-
-        if (vTransform._physComputer == null)
-        {
-            vTransform._physComputer = RBPhysController.MainComputer;
+            vTransform._physComputer = physComputer ?? RBPhysController.MainComputer;
         }
 
         return vTransform;
@@ -71,6 +66,18 @@ public class RBVirtualTransform : MonoBehaviour
     {
         if (_physComputer == null) throw new NotImplementedException();
         return _physComputer;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void PhysComputerInit()
+    {
+        _physComputer.AddVirtualTransform(this);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void PhysComputerDetach()
+    {
+        _physComputer.RemoveVirtualTransform(this);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -91,6 +98,11 @@ public class RBVirtualTransform : MonoBehaviour
         }
 
         if (_parent != null) _parent.FindChildren();
+    }
+
+    private void OnDisable()
+    {
+        PhysComputerDetach();
     }
 
     private void OnDestroy()
@@ -180,7 +192,7 @@ public class RBVirtualTransform : MonoBehaviour
         }
         else
         {
-            _rawTrs = wsTrs * _parent.WsTRS.inverse;
+            _rawTrs = _parent._wsTrs.inverse * wsTrs;
         }
 
         SetChildrenWsTRS();
@@ -202,7 +214,7 @@ public class RBVirtualTransform : MonoBehaviour
         }
         else
         {
-            wsTrs = rawTrs * _parent.WsTRS;
+            wsTrs = _parent._wsTrs * rawTrs;
         }
 
         _wsTrs = wsTrs;
@@ -210,6 +222,14 @@ public class RBVirtualTransform : MonoBehaviour
 
         SetChildrenWsTRS();
 
+        Debug.Assert(ValidTRS());
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void SetParentWsTRS(Matrix4x4 parentWsTRS)
+    {
+        _wsTrs = parentWsTRS * _rawTrs;
+        SetChildrenWsTRS();
         Debug.Assert(ValidTRS());
     }
 
@@ -251,12 +271,6 @@ public class RBVirtualTransform : MonoBehaviour
         {
             vt.SetParentWsTRS(_wsTrs);
         }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void SetParentWsTRS(Matrix4x4 parentWsTRS)
-    {
-        SetWsTRS(_rawTrs * parentWsTRS);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

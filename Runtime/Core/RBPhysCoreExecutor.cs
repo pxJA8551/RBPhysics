@@ -24,11 +24,13 @@ namespace RBPhys
 
         async Task PhysicsFrame()
         {
+            RBPhysController.MainComputer.SyncVirtualTransforms();
             await RBPhysController.MainComputer.OpenPhysicsFrameWindowAsync();
 
             StartCoroutine(WaitForFixedUpdate());
 
             RBPhysController.MainComputer.ClosePhysicsFrameWindow();
+            RBPhysController.MainComputer.ApplyVirtualTransforms();
         }
 
         IEnumerator WaitForFixedUpdate()

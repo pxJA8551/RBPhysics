@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using Unity.IL2CPP.CompilerServices;
 using System.Threading;
+using UnityEngine.UIElements;
 
 namespace RBPhys
 {
@@ -89,6 +90,8 @@ namespace RBPhys
         List<RBCollision> _collisions = new List<RBCollision>();
         List<RBCollision> _collisionsInSolver = new List<RBCollision>();
 
+        List<RBVirtualTransform> _vTransforms = new List<RBVirtualTransform>();
+
         StdSolverInit _stdSolverInit;
         StdSolverIteration _stdSolverIter;
         
@@ -142,6 +145,16 @@ namespace RBPhys
             _collisionsInSolver.Clear();
 
             this.ReleaseSemaphore();
+        }
+
+        public void AddVirtualTransform(RBVirtualTransform vt)
+        {
+            if (!_vTransforms.Contains(vt)) _vTransforms.Add(vt);
+        }
+
+        public void RemoveVirtualTransform(RBVirtualTransform vt)
+        {
+            _vTransforms.Remove(vt);
         }
 
         public void AddRigidbody(RBRigidbody rb)
@@ -302,6 +315,30 @@ namespace RBPhys
         {
             _lockSemaphoreTimeoutCxlSrc.Cancel();
             _solverIterationSemaphore.Release();
+        }
+
+        public void SyncVirtualTransforms()
+        {
+            WaitSemaphore();
+
+            foreach (var v in _vTransforms)
+            {
+                v.CopyBaseObjectTransform();
+            }
+
+            ReleaseSemaphore();
+        }
+
+        public void ApplyVirtualTransforms()
+        {
+            WaitSemaphore();
+
+            foreach (var v in _vTransforms)
+            {
+                v.ApplyBaseObjectTransform();
+            }
+
+            ReleaseSemaphore();
         }
 
         public async Task OpenPhysicsFrameWindowAsync()
@@ -931,7 +968,7 @@ namespace RBPhys
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                rb.UpdateTransform(_solverDeltaTimeAsFloat);
+                rb.UpdateExpTrajectory(_solverDeltaTimeAsFloat);
             }
 
             Profiler.EndSample();
@@ -1914,7 +1951,7 @@ namespace RBPhys
             {
                 var collider_a = trajAABB_a[i];
 
-                if (collider_a.collider.vActive_And_vEnabled && !collider_a.collider.IgnoreCollision)
+                if (collider_a.collider.VEnabled&& !collider_a.collider.IgnoreCollision)
                 {
                     float a_x_min = collider_a.aabb.MinX;
                     float a_x_max = collider_a.aabb.MaxX;
@@ -1925,7 +1962,7 @@ namespace RBPhys
                         float b_x_min = collider_b.aabb.MinX;
                         float b_x_max = collider_b.aabb.MaxX;
 
-                        if (collider_b.collider.vActive_And_vEnabled && !collider_b.collider.IgnoreCollision)
+                        if (collider_b.collider.VEnabled && !collider_b.collider.IgnoreCollision)
                         {
                             Vector3 cg = traj_a.IsStatic ? traj_b.IsStatic ? Vector3.zero : traj_b.Rigidbody.CenterOfGravityWorld : traj_a.Rigidbody.CenterOfGravityWorld;
 
@@ -2834,7 +2871,7 @@ namespace RBPhys
 
             foreach (RBCollider c in rigidbody.GetColliders())
             {
-                if (c.vActive_And_vEnabled && !c.IgnoreCollision)
+                if (c.VEnabled && !c.IgnoreCollision)
                 {
                     aabb.Encapsulate(c.ExpTrajectory.trajectoryAABB);
                 }
@@ -2872,7 +2909,7 @@ namespace RBPhys
 
             foreach (RBCollider c in rigidbody.GetColliders())
             {
-                if (c.vActive_And_vEnabled && !c.IgnoreCollision)
+                if (c.VEnabled && !c.IgnoreCollision)
                 {
                     aabb.Encapsulate(c.ExpTrajectory.trajectoryAABB);
                 }

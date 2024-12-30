@@ -2,6 +2,7 @@ using RBPhys;
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public abstract class RBVirtualComponent : MonoBehaviour
 {
@@ -18,6 +19,7 @@ public abstract class RBVirtualComponent : MonoBehaviour
     void Awake()
     {
         CreateVirtualTransform();
+        _vTransform.PhysComputerInit();
         ComponentAwake();
     }
 
@@ -30,20 +32,21 @@ public abstract class RBVirtualComponent : MonoBehaviour
     void OnDisable()
     {
         _vEnabled = false;
+        _vTransform?.PhysComputerDetach();
         ComponentOnDisable();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RBVirtualTransform GetVirtualTransform()
     {
-        if (_vTransform == null) CreateVirtualTransform();
+        if (_vTransform == null) throw new NotImplementedException();
         return _vTransform;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public RBPhysComputer GetPhysComputer()
     {
-        if (_vTransform == null) CreateVirtualTransform();
+        if (_vTransform == null) throw new NotImplementedException();
         return _vTransform.PhysComputer;
     }
 

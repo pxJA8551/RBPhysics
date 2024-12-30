@@ -16,10 +16,6 @@ namespace RBPhys
 
         public abstract RBGeometryType GeometryType { get; }
 
-        List<RBCollider> _virtualColliders = new List<RBCollider>();
-
-        public virtual bool vActive_And_vEnabled { get { return VEnabled; } }
-
         [NonSerialized] public float cr_kp = .45f; //Õ“Ë‰ğÁˆ— PƒQƒCƒ“
         [NonSerialized] public float cr_ki = .03f; //Õ“Ë‰ğÁˆ— IƒQƒCƒ“
         [NonSerialized] public float cr_kd = .005f; //Õ“Ë‰ğÁˆ— DƒQƒCƒ“
@@ -45,35 +41,6 @@ namespace RBPhys
         public OnCollision onCollision;
 
         public virtual int Layer { get; }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddVirtualCollider(RBCollider collider)
-        {
-            if (!_virtualColliders.Contains(collider))
-            {
-                _virtualColliders.Add(collider);
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RemoveVirtualCollider(RBCollider collider)
-        {
-            _virtualColliders.Remove(collider);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int VirtualColliders(ref RBCollider[] colliders)
-        {
-            if (colliders == null) colliders = new RBCollider[Mathf.Max(_virtualColliders.Count, 1)];
-            if (colliders.Length < _virtualColliders.Count) Array.Resize(ref colliders, _virtualColliders.Count);
-
-            for (int i = 0; i < colliders.Length; i++)
-            {
-                colliders[i] = _virtualColliders.ElementAtOrDefault(i);
-            }
-
-            return _virtualColliders.Count;
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetIgnoreCollision()
@@ -124,7 +91,7 @@ namespace RBPhys
         public void FindParent()
         {
             var parent = GetComponentInParent<RBRigidbody>();
-            if (parent != null)
+            if (parent != null && parent.VEnabled)
             {
                 SetParentRigidbody(parent);
             }

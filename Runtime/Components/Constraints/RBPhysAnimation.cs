@@ -267,8 +267,7 @@ namespace RBPhys
             }
             else
             {
-                rbRigidbody.Position = _targetWsPos;
-                rbRigidbody.Rotation = _targetWsRot;
+                rbRigidbody.VTransform.SetWsPositionAndRotation(_targetWsPos, _targetWsRot);
             }
         }
 
@@ -305,9 +304,9 @@ namespace RBPhys
 
         void CalcTRSAnimBaseVelocity(float solverDelta)
         {
-            Vector3 vel = (_targetWsPos - rbRigidbody.Position) / solverDelta;
+            Vector3 vel = (_targetWsPos - rbRigidbody.VTransform.WsPosition) / solverDelta;
 
-            (_targetWsRot * Quaternion.Inverse(rbRigidbody.Rotation)).ToAngleAxis(out float angleDeg, out Vector3 axis);
+            (_targetWsRot * Quaternion.Inverse(rbRigidbody.VTransform.WsRotation)).ToAngleAxis(out float angleDeg, out Vector3 axis);
             angleDeg = angleDeg > 180 ? angleDeg - 360 : angleDeg;
             Vector3 angVel = axis * (angleDeg * Mathf.Deg2Rad) / solverDelta;
 
@@ -415,9 +414,10 @@ namespace RBPhys
 
         void CalcDPos(Vector3 pos, Quaternion rot, out Vector3 dPos, out Vector3 dRot)
         {
-            dPos = pos - rbRigidbody.Position;
 
-            (rot * Quaternion.Inverse(rbRigidbody.Rotation)).ToAngleAxis(out float angleDeg, out Vector3 axis);
+            dPos = pos - rbRigidbody.VTransform.WsPosition;
+
+            (rot * Quaternion.Inverse(rbRigidbody.VTransform.WsRotation)).ToAngleAxis(out float angleDeg, out Vector3 axis);
             angleDeg = angleDeg > 180 ? angleDeg - 360 : angleDeg;
             dRot = axis * (angleDeg * Mathf.Deg2Rad);
         }

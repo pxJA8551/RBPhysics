@@ -44,20 +44,15 @@ namespace RBPhys
         Vector3 _expVelocity;
         Vector3 _expAngularVelocity;
 
-        Vector3 _position;
-        Quaternion _rotation;
-
         List<RBCollider> _colliders;
 
         public Vector3 Velocity { get { return _velocity; } }
         public Vector3 AngularVelocity { get { return _angularVelocity; } }
         public Vector3 ExpVelocity { get { return _expVelocity; } set { _expVelocity = value; } }
         public Vector3 ExpAngularVelocity { get { return _expAngularVelocity; } set { _expAngularVelocity = value; } }
-        public Vector3 Position { get { return _position; } set { _position = value; } }
-        public Quaternion Rotation { get { return _rotation; } set { _rotation = value; } }
 
         public Vector3 CenterOfGravity { get { return _centerOfGravity; } set { _centerOfGravity = value; } }
-        public Vector3 CenterOfGravityWorld { get { return Position + Rotation * _centerOfGravity; } }
+        public Vector3 CenterOfGravityWorld { get { return VTransform.WsPosition + VTransform.WsRotation * _centerOfGravity; } }
 
         public float InverseMass { get { return 1 / mass; } }
 
@@ -111,8 +106,6 @@ namespace RBPhys
             _angularVelocity = rb._angularVelocity;
             _expVelocity = rb._expVelocity;
             _expAngularVelocity = rb._expAngularVelocity;
-            _position = rb._position;
-            _rotation = rb._rotation;
         }
 
         public void AddVaidator(RBPhysStateValidator validator)
@@ -125,7 +118,7 @@ namespace RBPhys
             get
             {
                 Vector3 i = Vector3.Scale(inertiaTensor * inertiaTensorMultiplier, _invInertiaLsScale);
-                Quaternion r = Rotation * inertiaTensorRotation;
+                Quaternion r = VTransform.WsRotation * inertiaTensorRotation;
                 return Vector3.Scale(r * (Quaternion.Inverse(r) * V3Rcp(i)), _invInertiaWsScale);
             }
         }
@@ -133,7 +126,6 @@ namespace RBPhys
         protected override void ComponentAwake()
         {
             UpdateColliders();
-            UpdateTransform(0);
             RecalculateInertiaTensor();
 
             if (!isSleeping || sleepGrace > 0)
@@ -166,6 +158,7 @@ namespace RBPhys
         {
             PhysComputer.AddRigidbody(this);
 
+            UpdateColliders();
             foreach (var c in _colliders)
             {
                 PhysComputer.SwitchToRigidbody(c);
@@ -196,9 +189,14 @@ namespace RBPhys
 
         void UpdateColliders()
         {
-            List<RBCollider> colliders = new List<RBCollider>();
+            _colliders = new List<RBCollider>();
+
+            foreach (var c in GetComponents<RBCollider>())
+            {
+                if (c.VEnabled) c.SetParentRigidbody(this);
+            }
+
             FindChildrenRecursive(transform);
-            _colliders = colliders.ToList();
         }
 
         public void AddCollider(RBCollider collider)
@@ -316,28 +314,17 @@ namespace RBPhys
                 _velocity = _expVelocity;
                 _angularVelocity = _expAngularVelocity;
 
-                var setPos = _position + (_velocity * dt);
-                var setRot = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized) * _rotation;
+                //var dCg = _centerOfGravity * VTransform.WsRotation;
+
+                var rot = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized);
+                var vd = VTransform.WsRotation * _centerOfGravity;
+                var setRot = rot * VTransform.WsRotation;
+                var setPos = VTransform.WsPosition + (_velocity * dt) + (vd - (rot * vd));
 
                 VTransform.SetWsPositionAndRotation(setPos, setRot);
             }
 
-            UpdateTransform(dt);
             UpdateExpTrajectory(dt);
-        }
-
-        internal virtual void UpdateTransform(float delta, bool updateColliders = true)
-        {
-            Position = VTransform.WsPosition;
-            Rotation = VTransform.WsRotation;
-
-            if (updateColliders)
-            {
-                foreach (RBCollider c in _colliders)
-                {
-                    c.UpdateTransform(delta);
-                }
-            }
         }
 
         internal void ClearValidators()
@@ -353,7 +340,7 @@ namespace RBPhys
             {
                 foreach (RBCollider c in _colliders)
                 {
-                    c.UpdateExpTrajectoryMultiThreaded(dt, Position, Rotation, r.pos, r.rot);
+                    c.UpdateExpTrajectoryMultiThreaded(dt, VTransform.WsPosition, VTransform.WsRotation, r.pos, r.rot);
                 }
             }
 
@@ -366,7 +353,7 @@ namespace RBPhys
 
             for (int i = 0; i < _colliders.Count; i++)
             {
-                _colliders[i].UpdateExpTrajectoryMultiThreaded(dt, Position, Rotation, r.pos, r.rot);
+                _colliders[i].UpdateExpTrajectoryMultiThreaded(dt, VTransform.WsPosition, VTransform.WsRotation, r.pos, r.rot);
             }
         }
 
@@ -382,7 +369,7 @@ namespace RBPhys
 
         public (Vector3 pos, Quaternion rot) GetIntergrated(float dt)
         {
-            return (_position + _expVelocity * dt, Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * dt, _expAngularVelocity.normalized) * _rotation);
+            return (VTransform.WsPosition + _expVelocity * dt, Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * dt, _expAngularVelocity.normalized) * VTransform.WsRotation);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -470,13 +457,13 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3 CalcExpPos(float dt)
         {
-            return _position + _expVelocity * dt;
+            return VTransform.WsPosition + _expVelocity * dt;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Quaternion CalcExpRot(float dt)
         {
-            return Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * dt, _expAngularVelocity.normalized) * _rotation;
+            return Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * dt, _expAngularVelocity.normalized) * VTransform.WsRotation;
         }
 
         public void RecalculateInertiaTensor()
@@ -487,7 +474,7 @@ namespace RBPhys
             }
             else
             {
-                inertiaTensor = Vector3.one;
+                inertiaTensor = Vector3.zero;
                 inertiaTensorRotation = Quaternion.identity;
                 _centerOfGravity = default;
             }
@@ -510,21 +497,22 @@ namespace RBPhys
                 RBInertiaTensor geometryIt = new RBInertiaTensor();
                 float m = mass * r;
 
-                Vector3 relPos = VTransform.InverseTransformPoint(c.VTransform.WsPosition);
-                Quaternion relRot = c.VTransform.WsRotation * Quaternion.Inverse(Rotation);
-
                 switch (c.GeometryType)
                 {
                     case RBGeometryType.OBB:
                         {
                             var box = c as RBBoxCollider;
 
-                            geometryIt.SetInertiaOBB(c.CalcOBB(0), relPos, relRot);
+                            Vector3 relPos = VTransform.InverseTransformPoint(box.GetColliderCenter());
+                            Quaternion relRot = (box.VTransform.WsRotation * box.LocalRot) * Quaternion.Inverse(VTransform.WsRotation);
+
+                            geometryIt.SetInertiaOBB(box.CalcOBB(0), relPos, relRot);
                         }
                         break;
 
                     case RBGeometryType.Sphere:
                         {
+                            Vector3 relPos = VTransform.InverseTransformPoint(c.GetColliderCenter());
                             geometryIt.SetInertiaSphere(c.CalcSphere(0), relPos, Quaternion.identity);
                         }
                         break;
@@ -533,7 +521,10 @@ namespace RBPhys
                         {
                             var capsule = c as RBCapsuleCollider;
 
-                            geometryIt.SetInertiaCapsule(c.CalcCapsule(0), relPos, relRot);
+                            Vector3 relPos = VTransform.InverseTransformPoint(capsule.GetColliderCenter());
+                            Quaternion relRot = (capsule.VTransform.WsRotation * capsule.LocalRot) * Quaternion.Inverse(VTransform.WsRotation);
+
+                            geometryIt.SetInertiaCapsule(capsule.CalcCapsule(0), relPos, relRot);
                         }
                         break;
                 }
@@ -547,6 +538,11 @@ namespace RBPhys
             inertiaTensor = diagonalizedIt;
             inertiaTensorRotation = itRot;
             cg = it.CenterOfGravity;
+
+            RBMatrix3x3 r0 = new RBMatrix3x3(new Vector3(1, 2, 3), new Vector3(4, 5, 6), new Vector3(7, 8, 9));
+            RBMatrix3x3 r1 = new RBMatrix3x3(new Vector3(7, 8, 9), new Vector3(1, 2, 3), new Vector3(4, 5, 6));
+
+            RBMatrix3x3 cp = r0 * r1;
 
             if (inertiaTensor == Vector3.zero)
             {
