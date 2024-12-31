@@ -357,26 +357,35 @@ namespace RBPhys
 
             await _solverIterationSemaphore.WaitAsync(500);
 
-            UpdateTransforms();
-            UpdateExtTrajectories(_solverDeltaTimeAsFloat);
-            SortTrajectories();
-
-            if (_trajectories_orderByXMin.Length > 0)
+            try
             {
-                foreach (RBRigidbody rb in _rigidbodies)
+                UpdateTransforms();
+                UpdateExtTrajectories(_solverDeltaTimeAsFloat);
+                SortTrajectories();
+
+                if (_trajectories_orderByXMin.Length > 0)
                 {
-                    if (!rb.isSleeping && rb.useGravity && !rb.IgnoreVelocity)
+                    foreach (RBRigidbody rb in _rigidbodies)
                     {
-                        rb.ExpVelocity += gravityAcceleration * dt;
+                        if (!rb.isSleeping && rb.useGravity && !rb.IgnoreVelocity)
+                        {
+                            rb.ExpVelocity += gravityAcceleration * dt;
+                        }
                     }
+
+                    await SolveConstraints(dt);
+
+                    if (_afterSolver != null) _afterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
                 }
-
-                await SolveConstraints(dt);
-
-                if (_afterSolver != null) _afterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
             }
-
-            _solverIterationSemaphore.Release();
+            catch(Exception e)
+            {
+                throw e;
+            }
+            finally
+            {
+                _solverIterationSemaphore.Release();
+            }
 
             if (_validatorAfterSolver != null) _validatorAfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
 
@@ -1677,7 +1686,7 @@ namespace RBPhys
                         if (!_collisionsInSolver[i].skipInSolver) SolveCollisionPair(_collisionsInSolver[i]);
                     });
 
-                    await Task.WhenAll(_stdSolverIterTasks);
+                    Task.WhenAll(_stdSolverIterTasks).Wait();
 
                     Profiler.EndSample();
                 }
@@ -1706,7 +1715,7 @@ namespace RBPhys
                                 _stdSolverInitTasks.Add(t);
                             }
 
-                            await Task.WhenAll(_stdSolverInitTasks);
+                            Task.WhenAll(_stdSolverInitTasks).Wait();
                         }
                     }
 

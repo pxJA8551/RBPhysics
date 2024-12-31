@@ -197,7 +197,7 @@ namespace RBPhys
 
         public void SampleTRSAnimation(float time, Vector3 pos, Quaternion rot, RBPhysAnimationType animType, out Vector3 lsPos, out Quaternion lsRot)
         {
-            float cTime = EvaluateTime(time, animType);
+            float cTime = EvaluateTime(time, RBPhysAnimationType.Once);
 
             lsPos = pos;
             lsRot = rot;
@@ -214,7 +214,7 @@ namespace RBPhys
 
         public void SampleTRSAnimation(float time, Vector3 pos, Quaternion rot, Vector3 scale, RBPhysAnimationType animType, out Vector3 lsPos, out Quaternion lsRot, out Vector3 lsScale)
         {
-            float cTime = EvaluateTime(time, animType);
+            float cTime = EvaluateTime(time, RBPhysAnimationType.Once);
 
             lsPos = pos;
             lsRot = rot;

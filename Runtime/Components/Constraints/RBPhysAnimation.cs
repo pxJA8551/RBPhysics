@@ -18,8 +18,8 @@ namespace RBPhys
         public AnimationClip AnimationClip { get { return _animationClip; } }
         public float AnimationLength { get { return _animationLength; } }
 
-        [SerializeField] protected AnimationClip _animationClip;
-        protected float _animationLength;
+        [SerializeField] AnimationClip _animationClip;
+        float _animationLength;
 
         public RBPhysTRSAnimationCurve trsCurve;
 
@@ -28,9 +28,9 @@ namespace RBPhys
         [HideInInspector] public RBPhysAnimationLinker linker;
         [SerializeField] RBPhysAnimationType animationType;
 
-        [SerializeField] public RBVirtualTransform parentVTransform;
-        protected bool _useParentTransform;
-
+        [SerializeField] public Transform parentTransform;
+        Matrix4x4 _parentOffset;
+        
         public RBRigidbody rbRigidbody;
         public bool playing;
         public bool enablePhysProceduralAnimation = true;
@@ -44,6 +44,7 @@ namespace RBPhys
         protected override void ComponentAwake()
         {
             rbRigidbody = GetComponent<RBRigidbody>();
+            SetParentTransformOffset();
 
             _animationLength = 0;
             if (_animationClip != null) _animationLength = _animationClip.length;
@@ -51,6 +52,18 @@ namespace RBPhys
             if (playing)
             {
                 PlayAnimation();
+            }
+        }
+
+        void SetParentTransformOffset()
+        {
+            if (parentTransform != null)
+            {
+                _parentOffset = parentTransform.localToWorldMatrix;
+            }
+            else
+            {
+                _parentOffset = Matrix4x4.identity;
             }
         }
 
@@ -66,12 +79,11 @@ namespace RBPhys
             var rba = vComponent as RBPhysAnimation;
             if (rba == null) throw new Exception();
             CopyPhysAnimation(rba);
+            SetParentTransformOffset();
         }
 
         public void CopyPhysAnimation(RBPhysAnimation anim)
         {
-            throw new NotImplementedException();
-
             baseAnimationClip = anim.baseAnimationClip;
 
             _animationClip = anim.AnimationClip;
@@ -85,8 +97,6 @@ namespace RBPhys
             ctrlSpeed = anim.ctrlSpeed;
             linker = anim.linker;
             animationType = anim.animationType;
-
-            _useParentTransform = anim._useParentTransform;
 
             rbRigidbody = anim.rbRigidbody;
             playing = anim.playing;
@@ -103,6 +113,8 @@ namespace RBPhys
 
             _lsBasePos = anim._lsBasePos;
             _lsBaseRot = anim._lsBaseRot;
+
+            parentTransform = anim.parentTransform;
         }
 
         protected override void ComponentOnEnable()
@@ -151,18 +163,11 @@ namespace RBPhys
 
         public virtual void BeforeSolver(float dt, TimeScaleMode timeScaleMode)
         {
-            if (!enabled) return;
-
-            if (parentVTransform != null)
-            {
-                _useParentTransform = true;
-            }
-            else
-            {
-                _useParentTransform = false;
-            }
+            if (!VEnabled) return;
 
             _ctrlTimeLast = ctrlTime;
+
+            SetAnim();
 
             ctrlTime += dt * ctrlSpeed;
             ctrlTime = Mathf.Clamp(ctrlTime, 0, Mathf.Max(AnimationLength, trsCurve?.length ?? 0));
@@ -185,18 +190,45 @@ namespace RBPhys
             LinkAnimationTime();
         }
 
+        void SetAnim()
+        {
+            if (animationType == RBPhysAnimationType.Loop) SetAnimSpeed_Loop();
+            else if (animationType == RBPhysAnimationType.Ping_Pong) SetAnimSpeed_PingPong();
+        }
+
+        void SetAnimSpeed_Loop()
+        {
+            const float EPSILON = .01f;
+
+            if (ctrlSpeed > 0 && trsCurve.length - EPSILON < ctrlTime)
+            {
+                ctrlTime = 0;
+            }
+            else if (ctrlSpeed < 0 && ctrlTime < EPSILON) 
+            {
+                ctrlTime = trsCurve.length;
+            }
+        }
+
+        void SetAnimSpeed_PingPong()
+        {
+            const float EPSILON = .01f;
+
+            if (ctrlSpeed > 0 && trsCurve.length - EPSILON < ctrlTime)
+            {
+                ctrlSpeed = -ctrlSpeed;
+            }
+            else if (ctrlSpeed < 0 && ctrlTime < EPSILON)
+            {
+                ctrlSpeed = -ctrlSpeed;
+            }
+        }
+
         void SetBasePos()
         {
-            if (parentVTransform != null)
-            {
-                _lsBasePos = parentVTransform.InverseTransformPoint(VTransform.WsPosition);
-                _lsBaseRot = Quaternion.Inverse(parentVTransform.WsRotation) * VTransform.WsRotation;
-            }
-            else
-            {
-                _lsBasePos = VTransform.WsPosition;
-                _lsBaseRot = VTransform.WsRotation;
-            }
+            var parentOffsetInv = _parentOffset.inverse;
+            _lsBasePos = parentOffsetInv.MultiplyPoint3x4(VTransform.WsPosition);
+            _lsBaseRot = parentOffsetInv.rotation * VTransform.WsRotation;
         }
 
         protected virtual void AddLinkedAnimationTime(float add)
@@ -255,7 +287,7 @@ namespace RBPhys
 
         public virtual void AfterSolver(float dt, TimeScaleMode timeScaleMode)
         {
-            if (!enabled) return;
+            if (!VEnabled) return;
 
             if (ctrlSpeed == 0)
             {
@@ -381,10 +413,10 @@ namespace RBPhys
                         lambda += Vector3.Dot(velResist, evalVDirN) / rbRigidbody.InverseMass + Vector3.Scale(Vector3.Dot(angVelResist, evalAVDirN) * evalAVDirN, RBPhysUtil.V3Rcp(rbRigidbody.InverseInertiaWs)).magnitude;
                     }
 
-                    float dc = lambda / lambdaAnim;
+                    float dc = (RBPhysUtil.F32Sign11(lambda) * Mathf.Max(0, Mathf.Abs(lambda) - ext_lambda_compensation)) / lambdaAnim;
                     dc = float.IsNaN(dc) || float.IsInfinity(dc) ? 0 : dc;
 
-                    AddLinkedAnimationTime(Mathf.Clamp(dc + dc, -1, 1) * delta * PHYS_ANIM_RESOLUTION_BETA);
+                    AddLinkedAnimationTime(dc * delta * PHYS_ANIM_RESOLUTION_BETA);
                     intergradeTime = ctrlTime;
                 }
             }
@@ -406,20 +438,12 @@ namespace RBPhys
 
         void LsToWs(Vector3 lsPos, Quaternion lsRot, out Vector3 wsPos, out Quaternion wsRot)
         {
-            if (_useParentTransform)
-            {
-                wsPos = parentVTransform.TransformPoint(lsPos);
-                wsRot = parentVTransform.WsRotation * lsRot;
-                return;
-            }
-
-            wsPos = lsPos;
-            wsRot = lsRot;
+            wsPos = _parentOffset.MultiplyPoint3x4(lsPos);
+            wsRot = _parentOffset.rotation * lsRot;
         }
 
         void CalcDPos(Vector3 pos, Quaternion rot, out Vector3 dPos, out Vector3 dRot)
         {
-
             dPos = pos - rbRigidbody.VTransform.WsPosition;
 
             (rot * Quaternion.Inverse(rbRigidbody.VTransform.WsRotation)).ToAngleAxis(out float angleDeg, out Vector3 axis);

@@ -63,7 +63,7 @@ public abstract class RBVirtualComponent : MonoBehaviour
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void FindOrCreateVirtualTransform()
+    public void FindOrCreateVirtualTransform()
     {
         _vTransform = RBVirtualTransform.FindOrCreate(gameObject);
         if (_vTransform == null) throw new Exception();
