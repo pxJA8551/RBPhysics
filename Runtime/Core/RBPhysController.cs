@@ -11,7 +11,7 @@ namespace RBPhys
 {
     public static class RBPhysController
     {
-        static RBPhysComputer _mainComputer = new RBPhysComputer();
+        static RBPhysComputer _mainComputer = new RBPhysComputer(false);
 
         public static RBPhysComputer MainComputer { get { return _mainComputer; } }
 
@@ -74,7 +74,7 @@ namespace RBPhys
         public static void InitMainComputer()
         {
             _mainComputer?.Dispose();
-            _mainComputer = new RBPhysComputer();
+            _mainComputer = new RBPhysComputer(false);
         }
 
         public static void DisposeMainComputer()

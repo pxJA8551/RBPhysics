@@ -114,17 +114,23 @@ namespace RBPhys
         SemaphoreSlim _solverIterationSemaphore = new SemaphoreSlim(1, 1);
         CancellationTokenSource _lockSemaphoreTimeoutCxlSrc = new CancellationTokenSource();
 
-        public RBPhysComputer()
+        public readonly bool isPredictionComputer;
+
+        public RBPhysComputer(bool isPredictionComputer)
         {
             physComputerTime = new PhysComputerTime(this);
             timeParams = ComputerTimeParams.GetDefault();
+            this.isPredictionComputer = isPredictionComputer;
+
             ReInitializeComputer();
         }
 
-        public RBPhysComputer(float deltaTime)
+        public RBPhysComputer(float deltaTime, bool isPredictionComputer)
         {
             physComputerTime = new PhysComputerTime(this);
             timeParams = new ComputerTimeParams(deltaTime, 1, false);
+            this.isPredictionComputer = isPredictionComputer;
+
             ReInitializeComputer();
         }
 

@@ -14,7 +14,7 @@ namespace RBPhys
 
         public void CreatePhysComputer(float deltaTime)
         {
-            _physComputer = new RBPhysComputer(deltaTime);
+            _physComputer = new RBPhysComputer(deltaTime, true);
         }
 
         public void DisposePhysComputer()

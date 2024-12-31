@@ -41,9 +41,13 @@ public class RBVirtualTransform : MonoBehaviour
     public GameObject BaseObject { get { return _baseObject; } }
     public Transform BaseTransform { get { return _baseObject?.transform; } }
 
+    public bool IsPredictionVTransform { get { return GetPhysComputer().isPredictionComputer; } }
+
     public int Layer { get { return _layer; } }
 
     List<RBVirtualTransform> _children;
+
+    public bool IsMainVTransform;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static RBVirtualTransform FindOrCreate(GameObject baseObject, RBPhysComputer physComputer = null)

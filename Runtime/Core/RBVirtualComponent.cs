@@ -33,6 +33,8 @@ public abstract class RBVirtualComponent : MonoBehaviour
 
     void OnDisable()
     {
+        if (_vTransform != null) Debug.Assert(_vTransform.IsPredictionVTransform);
+
         _vEnabled = false;
         ComponentOnDisable();
     }
