@@ -12,7 +12,6 @@ using static RBPhys.RBPhysUtil;
 
 namespace RBPhys
 {
-    [DisallowMultipleComponent]
     public class RBRigidbody : RBVirtualComponent
     {
         const float SLEEP_VEL_MAX_SQRT = 0.10f * 0.10f;
