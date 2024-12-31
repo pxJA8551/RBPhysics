@@ -41,9 +41,7 @@ namespace RBPhys
 
         public float ext_lambda_compensation = 1;
 
-        public virtual bool vActive_And_vEnabled { get { return enabled && gameObject.activeSelf; } }
-        
-        protected virtual void Awake()
+        protected override void ComponentAwake()
         {
             rbRigidbody = GetComponent<RBRigidbody>();
 
@@ -107,13 +105,13 @@ namespace RBPhys
             _lsBaseRot = anim._lsBaseRot;
         }
 
-        protected virtual void OnEnable()
+        protected override void ComponentOnEnable()
         {
             PhysComputer.AddStdSolver(StdSolverInit, StdSolverIteration);
             PhysComputer.AddPhysObject(BeforeSolver, AfterSolver);
         }
 
-        protected virtual void OnDisable()
+        protected override void ComponentOnDisable()
         {
             PhysComputer.RemoveStdSolver(StdSolverInit, StdSolverIteration);
             PhysComputer.RemovePhysObject(BeforeSolver, AfterSolver);
