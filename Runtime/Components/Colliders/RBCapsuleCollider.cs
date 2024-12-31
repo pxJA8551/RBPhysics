@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -132,7 +131,7 @@ namespace RBPhys
             if (g.TryGetComponent(out MeshRenderer mr))
             {
 #if UNITY_EDITOR
-                Undo.RecordObject(this, "Aligned RBSphereCollider");
+                UnityEditor.Undo.RecordObject(this, "Aligned RBCapsuleCollider");
 #endif
 
                 Vector3 aabbSize = Vector3.Scale(mr.localBounds.size, gameObject.transform.lossyScale);
