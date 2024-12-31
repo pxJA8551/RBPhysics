@@ -52,7 +52,7 @@ public class RBVirtualTransform : MonoBehaviour
 
         var comp = physComputer ?? RBPhysController.MainComputer;
 
-        var vt = vTransforms.First(item => IsDuplicatingVTransform(item, baseObject.transform, comp));
+        var vt = vTransforms.FirstOrDefault(item => IsDuplicatingVTransform(item, baseObject.transform, comp));
         if (vt != null) return vt;
 
         return Create(baseObject, comp);
