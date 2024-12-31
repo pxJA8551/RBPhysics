@@ -30,6 +30,20 @@ namespace RBPhys
 
         public override int Layer { get { return gameObject?.layer ?? 0; } }
 
+        protected override RBVirtualComponent CreateVirtual(GameObject obj)
+        {
+            var rbc = obj.AddComponent<RBCapsuleCollider>();
+            rbc.CopyCollider(this);
+            return rbc;
+        }
+
+        protected override void SyncVirtual(RBVirtualComponent vComponent)
+        {
+            var rbc = vComponent as RBCapsuleCollider;
+            if (rbc == null) throw new Exception();
+            CopyCollider(rbc);
+        }
+
         public void CopyCollider(RBCapsuleCollider c)
         {
             useCCD = c.useCCD;

@@ -192,6 +192,7 @@ namespace RBPhys
             return CalcCapsule(VTransform.WsPosition, VTransform.WsRotation, delta);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public abstract Vector3 GetColliderCenter(Vector3 pos, Quaternion rot);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

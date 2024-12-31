@@ -26,9 +26,11 @@ public class RBVirtualTransform : MonoBehaviour
     
     public Vector3 WsPosition { get { return _wsTrs.GetPosition(); } }
     public Quaternion WsRotation { get { return _wsTrs.rotation; } }
+    public Vector3 WsLossyScale { get { return _wsTrs.lossyScale; } }
 
     public Vector3 RawPosition { get { return _rawTrs.GetPosition(); } }
     public Quaternion RawRotation { get { return _rawTrs.rotation; } }
+    public Vector3 RawLossyScale { get { return _rawTrs.lossyScale; } }
 
     int _layer;
 

@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -23,6 +24,20 @@ namespace RBPhys
         public Vector3 MutipliedCenter { get { return _center * colliderSizeMultiplier; } }
 
         public override int Layer { get { return gameObject?.layer ?? 0; } }
+
+        protected override RBVirtualComponent CreateVirtual(GameObject obj)
+        {
+            var rbc = obj.AddComponent<RBBoxCollider>();
+            rbc.CopyCollider(this);
+            return rbc;
+        }
+
+        protected override void SyncVirtual(RBVirtualComponent vComponent)
+        {
+            var rbc = vComponent as RBBoxCollider;
+            if (rbc == null) throw new Exception();
+            CopyCollider(rbc);
+        }
 
         public void CopyCollider(RBBoxCollider c)
         {

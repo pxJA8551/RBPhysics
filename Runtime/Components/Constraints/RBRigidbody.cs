@@ -93,21 +93,6 @@ namespace RBPhys
 
         public List<RBPhysStateValidator> validators = new List<RBPhysStateValidator>();
 
-        public void CopyRigidbody(RBRigidbody rb)
-        {
-            mass = rb.mass;
-            inertiaTensorMultiplier = rb.inertiaTensorMultiplier;
-            drag = rb.drag;
-            angularDrag = rb.angularDrag;
-            inertiaTensor = rb.inertiaTensor;
-            inertiaTensorRotation = rb.inertiaTensorRotation;
-            _centerOfGravity = rb._centerOfGravity;
-            _velocity = rb._velocity;
-            _angularVelocity = rb._angularVelocity;
-            _expVelocity = rb._expVelocity;
-            _expAngularVelocity = rb._expAngularVelocity;
-        }
-
         public void AddVaidator(RBPhysStateValidator validator)
         {
             validators.Add(validator);
@@ -175,6 +160,35 @@ namespace RBPhys
                 PhysComputer.SwitchToCollider(c);
                 c.UpdateTransform(0);
             }
+        }
+
+        protected override RBVirtualComponent CreateVirtual(GameObject obj)
+        {
+            var rb = obj.AddComponent<RBRigidbody>();
+            rb.CopyRigidbody(this);
+            return rb;
+        }
+
+        protected override void SyncVirtual(RBVirtualComponent vComponent)
+        {
+            var rb = vComponent as RBRigidbody;
+            if (rb == null) throw new Exception();
+            CopyRigidbody(rb);
+        }
+
+        public void CopyRigidbody(RBRigidbody rb)
+        {
+            mass = rb.mass;
+            inertiaTensorMultiplier = rb.inertiaTensorMultiplier;
+            drag = rb.drag;
+            angularDrag = rb.angularDrag;
+            inertiaTensor = rb.inertiaTensor;
+            inertiaTensorRotation = rb.inertiaTensorRotation;
+            _centerOfGravity = rb._centerOfGravity;
+            _velocity = rb._velocity;
+            _angularVelocity = rb._angularVelocity;
+            _expVelocity = rb._expVelocity;
+            _expAngularVelocity = rb._expAngularVelocity;
         }
 
         void OnDestroy()

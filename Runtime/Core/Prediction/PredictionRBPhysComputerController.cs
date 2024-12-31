@@ -31,7 +31,7 @@ namespace RBPhys
             var vComps = obj.GetComponents<RBVirtualComponent>();
             foreach (var c in vComps) 
             {
-                c.CreateVirtual(vt);
+                c.CreateVirtualComponent(vt);
             }
 
             if (recursive)

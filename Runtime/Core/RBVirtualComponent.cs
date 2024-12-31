@@ -8,12 +8,16 @@ public abstract class RBVirtualComponent : MonoBehaviour
     public bool VEnabled { get { return _vEnabled; } }
     bool _vEnabled;
 
-    protected abstract RBVirtualComponent CreateVirtualInternal();
+    protected abstract RBVirtualComponent CreateVirtual(GameObject obj);
+    protected abstract void SyncVirtual(RBVirtualComponent vComponent);
 
     public RBPhysComputer PhysComputer { get { return GetPhysComputer(); } }
 
     public RBVirtualTransform VTransform { get { return GetVirtualTransform(); } }
     RBVirtualTransform _vTransform;
+
+    public RBVirtualComponent BaseVComponent { get { return _baseVComponent; } }
+    RBVirtualComponent _baseVComponent;
 
     void Awake()
     {
@@ -66,13 +70,24 @@ public abstract class RBVirtualComponent : MonoBehaviour
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public RBVirtualComponent CreateVirtual(RBVirtualTransform vTransform)
+    public RBVirtualComponent CreateVirtualComponent(RBVirtualTransform vTransform)
     {
         if (vTransform == null) throw new NotImplementedException();
 
-        var vc = CreateVirtualInternal();
+        var vc = CreateVirtual(gameObject);
         vc.SetVirtualTransform(vTransform);
+        vc._baseVComponent = this;
+
         return vc;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SyncVirtualComponent()
+    {
+        Debug.Assert(_baseVComponent != null);
+        if (_baseVComponent == null) return;
+
+        SyncVirtual(_baseVComponent);
     }
 
     protected virtual void ComponentAwake() { }

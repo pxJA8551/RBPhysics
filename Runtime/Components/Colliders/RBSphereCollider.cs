@@ -5,6 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEditor;
+using UnityEditor.Graphs;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static UnityEngine.GraphicsBuffer;
@@ -27,6 +28,20 @@ namespace RBPhys
         public Vector3 MultipliedCenter { get { return _center * colliderSizeMultiplier; } }
 
         public override int Layer { get { return gameObject?.layer ?? 0; } }
+
+        protected override RBVirtualComponent CreateVirtual(GameObject obj)
+        {
+            var rbc = obj.AddComponent<RBSphereCollider>();
+            rbc.CopyCollider(this);
+            return rbc;
+        }
+
+        protected override void SyncVirtual(RBVirtualComponent vComponent)
+        {
+            var rbc = vComponent as RBSphereCollider;
+            if (rbc == null) throw new Exception();
+            CopyCollider(rbc);
+        }
 
         public void CopyCollider(RBSphereCollider c)
         {

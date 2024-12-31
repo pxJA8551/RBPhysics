@@ -28,11 +28,8 @@ namespace RBPhys
         [HideInInspector] public RBPhysAnimationLinker linker;
         [SerializeField] RBPhysAnimationType animationType;
 
-        [SerializeField] public Transform parentTransform;
+        [SerializeField] public RBVirtualTransform parentVTransform;
         protected bool _useParentTransform;
-        protected Vector3 _parentTransformPos;
-        protected Quaternion _parentTransformRot;
-        protected Vector3 _parentTransformScale;
 
         public RBRigidbody rbRigidbody;
         public bool playing;
@@ -59,8 +56,24 @@ namespace RBPhys
             }
         }
 
+        protected override RBVirtualComponent CreateVirtual(GameObject obj)
+        {
+            var rba = obj.AddComponent<RBPhysAnimation>();
+            rba.CopyPhysAnimation(this);
+            return rba;
+        }
+
+        protected override void SyncVirtual(RBVirtualComponent vComponent)
+        {
+            var rba = vComponent as RBPhysAnimation;
+            if (rba == null) throw new Exception();
+            CopyPhysAnimation(rba);
+        }
+
         public void CopyPhysAnimation(RBPhysAnimation anim)
         {
+            throw new NotImplementedException();
+
             baseAnimationClip = anim.baseAnimationClip;
 
             _animationClip = anim.AnimationClip;
@@ -76,9 +89,6 @@ namespace RBPhys
             animationType = anim.animationType;
 
             _useParentTransform = anim._useParentTransform;
-            _parentTransformPos = anim._parentTransformPos;
-            _parentTransformRot = anim._parentTransformRot;
-            _parentTransformScale = anim._parentTransformScale;
 
             rbRigidbody = anim.rbRigidbody;
             playing = anim.playing;
@@ -145,12 +155,9 @@ namespace RBPhys
         {
             if (!enabled) return;
 
-            if (parentTransform != null)
+            if (parentVTransform != null)
             {
                 _useParentTransform = true;
-                _parentTransformPos = parentTransform.position;
-                _parentTransformRot = parentTransform.rotation;
-                _parentTransformScale = parentTransform.lossyScale;
             }
             else
             {
@@ -182,15 +189,15 @@ namespace RBPhys
 
         void SetBasePos()
         {
-            if (parentTransform != null)
+            if (parentVTransform != null)
             {
-                _lsBasePos = parentTransform.InverseTransformPoint(transform.position);
-                _lsBaseRot = Quaternion.Inverse(parentTransform.rotation) * transform.rotation;
+                _lsBasePos = parentVTransform.InverseTransformPoint(VTransform.WsPosition);
+                _lsBaseRot = Quaternion.Inverse(parentVTransform.WsRotation) * VTransform.WsRotation;
             }
             else
             {
-                _lsBasePos = transform.position;
-                _lsBaseRot = transform.rotation;
+                _lsBasePos = VTransform.WsPosition;
+                _lsBaseRot = VTransform.WsRotation;
             }
         }
 
@@ -403,8 +410,8 @@ namespace RBPhys
         {
             if (_useParentTransform)
             {
-                wsPos = _parentTransformPos + _parentTransformRot * Vector3.Scale(_parentTransformScale, lsPos);
-                wsRot = _parentTransformRot * lsRot;
+                wsPos = parentVTransform.TransformPoint(lsPos);
+                wsRot = parentVTransform.WsRotation * lsRot;
                 return;
             }
 
@@ -434,25 +441,14 @@ namespace RBPhys
         void CalcTRSAnimFrame(float time)
         {
             SetBasePos();
-            Vector3 lsBaseScale;
-
-            if (parentTransform != null)
-            {
-                lsBaseScale = transform.localScale;
-            }
-            else
-            {
-                lsBaseScale = transform.localScale;
-            }
+            Vector3 lsBaseScale = VTransform.WsLossyScale;
 
             if (trsCurve != null)
             {
                 trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, lsBaseScale, animationType, out Vector3 lsPos, out Quaternion lsRot, out Vector3 lsScale);
                 LsToWs(lsPos, lsRot, out Vector3 wsPos, out Quaternion wsRot);
 
-                transform.position = wsPos;
-                transform.rotation = wsRot;
-                transform.localScale = lsScale;
+                VTransform.SetWsPositionAndRotation(wsPos, wsRot);
             }
         }
 
