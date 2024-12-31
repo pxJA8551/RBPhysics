@@ -1,331 +1,71 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEditor;
 using UnityEngine;
-
-using static RBPhys.RBPhysComputer;
 
 namespace RBPhys
 {
     public class PredictionRBPhysComputerController
     {
-        public RBPhysComputer PredictionComputer { get { return _predictionComputer; } }
-        RBPhysComputer _predictionComputer;
+        public RBPhysComputer PhysComputer { get { return _physComputer; } }
+        RBPhysComputer _physComputer;
 
-        List<RBRigidbody> _rbRigidbody = new List<RBRigidbody>();
-        List<RBCollider> _rbCols = new List<RBCollider>();
-        List<RBPhysAnimation> _rbAnims = new List<RBPhysAnimation>();
-
-        List<(StdSolverInit init, StdSolverIteration iter)> _prdSolvers = new List<(StdSolverInit init, StdSolverIteration iter)>();
-        List<(BeforeSolver beforeSolver, AfterSolver afterSolver)> _prdPhysObjs = new List<(BeforeSolver beforeSolver, AfterSolver afterSolver)>();
-
-        List<RBRigidbody> _rbRigidbodyAddQueue = new List<RBRigidbody>();
-        List<RBCollider> _rbColsAddQueue = new List<RBCollider>();
-        List<RBPhysAnimation> _rbAnimsAddQueue = new List<RBPhysAnimation>();
-        List<(StdSolverInit init, StdSolverIteration iter)> _prdSolversAddQueue = new List<(StdSolverInit init, StdSolverIteration iter)>();
-        List<(BeforeSolver beforeSolver, AfterSolver afterSolver)> _prdPhysObjsAddQueue = new List<(BeforeSolver beforeSolver, AfterSolver afterSolver)>();
-
-        public async Task ReInitializeAsync()
+        public void CreatePhysComputer(float deltaTime)
         {
-            //await _predictionComputer.WaitSemaphoreAsync(500);
-
-            //_predictionComputer.ReInitializeComputer();
-
-            //foreach (var vt in _vTransforms)
-            //{
-            //    vt.ReInitialize();
-            //}
-
-            //foreach (var rb in _rbRigidbody)
-            //{
-            //    var vRb = rb as RBRigidbodyVirtual;
-            //    if (vRb)
-            //    {
-            //        vRb.ReInitialize();
-            //    }
-            //}
-
-            //foreach (var c in _rbCols)
-            //{
-            //    if (c.GeometryType == RBGeometryType.OBB)
-            //    {
-            //        var vOBB = c as RBBoxColliderVirtual;
-            //        if (vOBB != null)
-            //        {
-            //            vOBB.ReInitialize();
-            //        }
-            //    }
-            //    else if (c.GeometryType == RBGeometryType.Sphere)
-            //    {
-            //        var vSphere = c as RBSphereColliderVirtual;
-            //        if (vSphere != null)
-            //        {
-            //            vSphere.ReInitialize();
-            //        }
-            //    }
-            //    else if (c.GeometryType == RBGeometryType.Capsule)
-            //    {
-            //        var vCapsule = c as RBCapsuleColliderVirtual;
-            //        if (vCapsule != null)
-            //        {
-            //            vCapsule.ReInitialize();
-            //        }
-            //    }
-            //}
-
-            //foreach (var a in _rbAnims)
-            //{
-            //    var vAnim = a as RBPhysAnimationVirtual;
-            //    if (vAnim != null)
-            //    {
-            //        vAnim.ReInitialize();
-            //    }
-            //}
-
-            //_predictionComputer.ReleaseSemaphore();
+            _physComputer = new RBPhysComputer(deltaTime);
         }
 
-        public void AddRigidbody(RBRigidbody rb)
+        public void DisposePhysComputer()
         {
-            if (_predictionComputer != null)
+            _physComputer?.Dispose();
+        }
+
+        public void CreateVirtual(GameObject obj, bool recursive)
+        {
+            if (_physComputer == null) throw new Exception();
+
+            var vt = RBVirtualTransform.FindOrCreate(obj, _physComputer);
+
+            var vComps = obj.GetComponents<RBVirtualComponent>();
+            foreach (var c in vComps) 
             {
-                _predictionComputer.AddRigidbody(rb);
-                if (!_rbRigidbody.Contains(rb)) _rbRigidbody.Add(rb);
+                c.CreateVirtual(vt);
             }
-            else
+
+            if (recursive)
             {
-                _rbRigidbodyAddQueue.Add(rb);
+                for (int i = 0; i < obj.transform.childCount; i++)
+                {
+                    var cg = obj.transform.GetChild(i);
+                    CreateVirtual(cg.gameObject, recursive);
+                }
             }
         }
 
-        public void RemoveRigidbody(RBRigidbody rb)
-        {
-            if (_predictionComputer != null)
-            {
-                _predictionComputer.RemoveRigidbody(rb);
-                _rbRigidbody.Remove(rb);
-            }
-            else
-            {
-                _rbRigidbodyAddQueue.Remove(rb);
-            }
-        }
-
-        public void AddCollider(RBCollider c)
-        {
-            if (_predictionComputer != null)
-            {
-                _predictionComputer.AddCollider(c);
-                if (!_rbCols.Contains(c)) _rbCols.Add(c);
-            }
-            else
-            {
-                _rbColsAddQueue.Add(c);
-            }
-        }
-
-        public void RemoveCollider(RBCollider c)
-        {
-            if (_predictionComputer != null)
-            {
-                _predictionComputer.RemoveCollider(c);
-                _rbCols.Remove(c);
-            }
-            else
-            {
-                _rbColsAddQueue.Remove(c);
-            }
-        }
-
-        public void AddSolverPrediction(StdSolverInit initPrd, StdSolverIteration iterPrd)
-        {
-            if (_predictionComputer != null)
-            {
-                _predictionComputer.AddStdSolver(initPrd, iterPrd);
-                _prdSolvers.Add((initPrd, iterPrd));
-            }
-            else
-            {
-                _prdSolversAddQueue.Add((initPrd, iterPrd));
-            }
-        }
-
-        public void RemoveSolverPrediction(StdSolverInit initPrd, StdSolverIteration iterPrd)
-        {
-            if (_predictionComputer != null)
-            {
-                _predictionComputer.RemoveStdSolver(initPrd, iterPrd);
-                _prdSolvers.Remove((initPrd, iterPrd));
-            }
-            else
-            {
-                _prdSolversAddQueue.Remove((initPrd, iterPrd));
-            }
-        }
-
-        public void AddPhysObjectPrediction(BeforeSolver beforePrd, AfterSolver afterPrd)
-        {
-            if (_predictionComputer != null)
-            {
-                _predictionComputer.AddPhysObject(beforePrd, afterPrd);
-                _prdPhysObjs.Add((beforePrd, afterPrd));
-            }
-            else
-            {
-                _prdPhysObjsAddQueue.Add((beforePrd, afterPrd));
-            }
-        }
-
-        public void RemovePhysObjectPrediction(BeforeSolver beforePrd, AfterSolver afterPrd)
-        {
-            if (_predictionComputer != null)
-            {
-                _predictionComputer.RemovePhysObject(beforePrd, afterPrd);
-                _prdPhysObjs.Remove((beforePrd, afterPrd));
-            }
-            else
-            {
-                _prdPhysObjsAddQueue.Remove((beforePrd, afterPrd));
-            }
-        }
-
-        //public RBVirtualTransformObsolete CreateVirtual(GameObject obj, RBVirtualTransformObsolete vParent, bool recursive = false, bool ignoreRigidbody = false)
-        //{
-        //    GameObject vObj = new GameObject();
-        //    vObj.transform.parent = vParent?.transform;
-        //    vObj.name = "rbvt_" + obj.name;
-        //    var vTransform = vObj.AddComponent<RBVirtualTransformObsolete>();
-        //    vTransform.Initialize(_predictionComputer, obj, vParent);
-        //    _vTransforms.Add(vTransform);
-
-        //    bool isObjectEmpty = true;
-
-        //    RBRigidbodyVirtual vRb = null;
-
-        //    if (!ignoreRigidbody)
-        //    {
-        //        if (obj.TryGetComponent(out RBRigidbody r))
-        //        {
-        //            vRb = r.CreateVirtual(vTransform);
-        //            AddRigidbody(vRb);
-
-        //            isObjectEmpty = false;
-        //        }
-        //    }
-
-        //    foreach (var c in obj.GetComponents<RBCollider>())
-        //    {
-        //        if (c.GeometryType == RBGeometryType.OBB)
-        //        {
-        //            var obb = c as RBBoxCollider;
-        //            var vObb = obb.CreateVirtual(vTransform);
-        //            AddCollider(vObb);
-        //        }
-        //        else if (c.GeometryType == RBGeometryType.Sphere)
-        //        {
-        //            var sphere = c as RBSphereCollider;
-        //            var vSphere = sphere.CreateVirtual(vTransform);
-        //            AddCollider(vSphere);
-        //        }
-        //        else if (c.GeometryType == RBGeometryType.Capsule)
-        //        {
-        //            var capusle = c as RBCapsuleCollider;
-        //            var vCapsule = capusle.CreateVirtual(vTransform);
-        //            AddCollider(vCapsule);
-        //        }
-
-        //        isObjectEmpty = false;
-        //    }
-
-        //    if (vRb != null) 
-        //    {
-        //        foreach (var a in obj.GetComponents<RBPhysAnimation>())
-        //        {
-        //            a.CreateVirtual(vTransform, vRb);
-        //        }
-        //    }
-
-        //    if (recursive)
-        //    {
-        //        for (int i = 0; i < obj.transform.childCount; i++)
-        //        {
-        //            var childObj = obj.transform.GetChild(i);
-        //            if (childObj != null)
-        //            {
-        //                var vChildTransform = CreateVirtual(childObj.gameObject, vTransform, true);
-        //                if (vChildTransform != null) vTransform.AddChildren(vChildTransform);
-        //            }
-        //        }
-        //    }
-
-        //    if (vTransform.ChildCount == 0 && isObjectEmpty)
-        //    {
-        //        GameObject.Destroy(vObj);
-        //        return null;
-        //    }
-
-        //    return vTransform;
-        //}
-
-        public void InitPrediction(float deltaTime)
-        {
-            CreatePrediction(deltaTime);
-            InitPredictionComputer();
-        }
-
-        public void CreatePrediction(float deltaTime)
-        {
-            _predictionComputer = new RBPhysComputer(deltaTime);
-        }
-
-        public void InitPredictionComputer()
-        {
-            if (_predictionComputer == null) return;
-
-            foreach (var r in _rbRigidbodyAddQueue)
-            {
-                _predictionComputer.AddRigidbody(r);
-            }
-            _rbRigidbodyAddQueue.Clear();
-
-            foreach (var c in _rbColsAddQueue)
-            {
-                _predictionComputer.AddCollider(c);
-            }
-            _rbColsAddQueue.Clear();
-        }
-
-        public async Task IntergradeComputeFor(int frames, CancellationToken cxlToken)
+        public async Task IntergradeComputeFor(int frames, CancellationToken cxl)
         {
             await Task.Run(() =>
             {
                 for (int i = 0; i < frames; i++)
                 {
-                    if (_predictionComputer != null && !cxlToken.IsCancellationRequested)
-                    {
-                        PhysicsFrame();
-                    }
-                    else
-                    {
-                        return;
-                    }
+                    if (_physComputer == null || cxl.IsCancellationRequested) return;
+                    PhysicsFrame();
                 }
             });
         }
 
-        public void PhysicsFrame()
+        void PhysicsFrame()
         {
-            _predictionComputer.OpenPhysicsFrameWindowAsync().Wait();
-            _predictionComputer.ClosePhysicsFrameWindow();
+            _physComputer.OpenPhysicsFrameWindowAsync().Wait();
+            _physComputer.ClosePhysicsFrameWindow();
         }
 
-        public void DisposePredictionComputer()
+        public void SyncVirtual()
         {
-            _predictionComputer?.Dispose();
+            if (_physComputer == null) throw new Exception();
+            _physComputer.SyncVirtualTransforms();
         }
     }
 }

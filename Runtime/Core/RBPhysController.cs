@@ -79,6 +79,7 @@ namespace RBPhys
 
         public static void DisposeMainComputer()
         {
+            _mainComputer?.WaitSemaphore(1500);
             _mainComputer?.Dispose();
         }
 

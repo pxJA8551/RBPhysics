@@ -1,10 +1,13 @@
+using JetBrains.Annotations;
 using RBPhys;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Xml.Schema;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class RBVirtualTransform : MonoBehaviour
 {
@@ -41,25 +44,38 @@ public class RBVirtualTransform : MonoBehaviour
     List<RBVirtualTransform> _children;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static RBVirtualTransform CreateVirtual(GameObject baseObject, RBPhysComputer physComputer = null)
+    public static RBVirtualTransform FindOrCreate(GameObject baseObject, RBPhysComputer physComputer = null)
     {
-        var vTransform = baseObject.GetComponent<RBVirtualTransform>();
+        var vTransforms = baseObject.GetComponents<RBVirtualTransform>();
 
-        if (vTransform == null)
-        {
-            vTransform = baseObject.AddComponent<RBVirtualTransform>();
+        var comp = physComputer ?? RBPhysController.MainComputer;
 
-            vTransform._wsTrs = Matrix4x4.identity;
-            vTransform._rawTrs = Matrix4x4.identity;
-            vTransform._baseObject = baseObject;
+        var vt = vTransforms.First(item => IsDuplicatingVTransform(item, baseObject.transform, comp));
+        if (vt != null) return vt;
 
-            vTransform.CopyBaseObjectTransform();
-            vTransform.OnCreate();
+        return Create(baseObject, comp);
+    }
 
-            vTransform._physComputer = physComputer ?? RBPhysController.MainComputer;
-        }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static RBVirtualTransform Create(GameObject baseObject, RBPhysComputer physComputer)
+    {
+        var vTransform = baseObject.AddComponent<RBVirtualTransform>();
+        vTransform.Init(baseObject, physComputer);
+
+        Debug.Assert(vTransform._physComputer != null);
+        vTransform.PhysComputerInit();
 
         return vTransform;
+    }
+
+    private void Init(GameObject baseObject, RBPhysComputer physComputer)
+    {
+        _baseObject = baseObject;
+        _physComputer = physComputer;
+        _wsTrs = Matrix4x4.identity;
+        _rawTrs = Matrix4x4.identity;
+        CopyBaseObjectTransform();
+        OnCreate();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -101,13 +117,9 @@ public class RBVirtualTransform : MonoBehaviour
         if (_parent != null) _parent.FindChildren();
     }
 
-    private void OnDisable()
-    {
-        PhysComputerDetach();
-    }
-
     private void OnDestroy()
     {
+        PhysComputerDetach();
         OnRemove();
     }
 
@@ -327,5 +339,29 @@ public class RBVirtualTransform : MonoBehaviour
     public Vector3 InverseTransformPoint(Vector3 p)
     {
         return _wsTrsInv.MultiplyPoint(p);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsDuplicatingVTransform(RBVirtualTransform vt0, RBVirtualTransform vt1)
+    {
+        if (vt0?.BaseTransform == null) throw new NotImplementedException();
+        if (vt1?.BaseTransform == null) throw new NotImplementedException();
+
+        if (vt0.BaseTransform != vt1.BaseTransform) return false;
+        if (vt0.PhysComputer != vt1.PhysComputer) return false;
+
+        return true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static bool IsDuplicatingVTransform(RBVirtualTransform vt, Transform baseTransform, RBPhysComputer physComputer)
+    {
+        if (vt?.BaseTransform == null) throw new NotImplementedException();
+        if (baseTransform == null) throw new NotImplementedException();
+
+        if (vt.BaseTransform != baseTransform) return false;
+        if (vt.PhysComputer != physComputer) return false;
+
+        return true;
     }
 }

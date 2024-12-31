@@ -2,14 +2,13 @@ using RBPhys;
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public abstract class RBVirtualComponent : MonoBehaviour
 {
     public bool VEnabled { get { return _vEnabled; } }
     bool _vEnabled;
 
-    //public abstract RBVirtualComponent CreateVirtual();
+    protected abstract RBVirtualComponent CreateVirtualInternal();
 
     public RBPhysComputer PhysComputer { get { return GetPhysComputer(); } }
 
@@ -18,8 +17,7 @@ public abstract class RBVirtualComponent : MonoBehaviour
 
     void Awake()
     {
-        CreateVirtualTransform();
-        _vTransform.PhysComputerInit();
+        FindOrCreateVirtualTransform();
         ComponentAwake();
     }
 
@@ -32,8 +30,18 @@ public abstract class RBVirtualComponent : MonoBehaviour
     void OnDisable()
     {
         _vEnabled = false;
-        _vTransform?.PhysComputerDetach();
         ComponentOnDisable();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetVirtualTransform(RBVirtualTransform vTransform)
+    {
+        if (vTransform == null) throw new NotImplementedException();
+
+        OnDisable();
+
+        _vTransform = vTransform;
+        OnEnable();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -51,10 +59,20 @@ public abstract class RBVirtualComponent : MonoBehaviour
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    void CreateVirtualTransform()
+    void FindOrCreateVirtualTransform()
     {
-        _vTransform = RBVirtualTransform.CreateVirtual(gameObject);
+        _vTransform = RBVirtualTransform.FindOrCreate(gameObject);
         if (_vTransform == null) throw new Exception();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public RBVirtualComponent CreateVirtual(RBVirtualTransform vTransform)
+    {
+        if (vTransform == null) throw new NotImplementedException();
+
+        var vc = CreateVirtualInternal();
+        vc.SetVirtualTransform(vTransform);
+        return vc;
     }
 
     protected virtual void ComponentAwake() { }

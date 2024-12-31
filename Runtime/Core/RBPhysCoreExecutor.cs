@@ -27,6 +27,7 @@ namespace RBPhys
             RBPhysController.MainComputer.SyncVirtualTransforms();
             await Task.Run(RBPhysController.MainComputer.OpenPhysicsFrameWindowAsync);
 
+            if (this == null) return;
             StartCoroutine(WaitForFixedUpdate());
 
             RBPhysController.MainComputer.ClosePhysicsFrameWindow();

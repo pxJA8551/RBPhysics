@@ -284,7 +284,7 @@ namespace RBPhys
             if (_stackVal_ignoreVelocity_ifGreaterThanZero > 0) _stackVal_ignoreVelocity_ifGreaterThanZero--;
         }
 
-        internal virtual void ApplyTransform(float dt, RBPhys.TimeScaleMode physTimeScaleMode)
+        internal virtual void ApplyTransform(float dt, TimeScaleMode physTimeScaleMode)
         {
             if (!IgnoreVelocity)
             {
@@ -314,12 +314,11 @@ namespace RBPhys
                 _velocity = _expVelocity;
                 _angularVelocity = _expAngularVelocity;
 
-                //var dCg = _centerOfGravity * VTransform.WsRotation;
-
                 var rot = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized);
                 var vd = VTransform.WsRotation * _centerOfGravity;
-                var setRot = rot * VTransform.WsRotation;
+
                 var setPos = VTransform.WsPosition + (_velocity * dt) + (vd - (rot * vd));
+                var setRot = rot * VTransform.WsRotation;
 
                 VTransform.SetWsPositionAndRotation(setPos, setRot);
             }
