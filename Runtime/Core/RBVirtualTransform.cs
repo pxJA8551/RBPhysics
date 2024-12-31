@@ -47,8 +47,6 @@ public class RBVirtualTransform : MonoBehaviour
 
     List<RBVirtualTransform> _children;
 
-    public bool IsMainVTransform;
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static RBVirtualTransform FindOrCreate(GameObject baseObject, RBPhysComputer physComputer = null)
     {
