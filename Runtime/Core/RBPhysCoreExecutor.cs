@@ -25,7 +25,7 @@ namespace RBPhys
         async Task PhysicsFrame()
         {
             RBPhysController.MainComputer.SyncVirtualTransforms();
-            await Task.Run(RBPhysController.MainComputer.OpenPhysicsFrameWindowAsync);
+            await RBPhysController.MainComputer.OpenPhysicsFrameWindowAsync();
 
             if (this == null) return;
             StartCoroutine(WaitForFixedUpdate());
