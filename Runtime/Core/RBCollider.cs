@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static RBPhys.RBPhysComputer;
 
 namespace RBPhys
@@ -135,7 +136,7 @@ namespace RBPhys
             _expPos = pos;
             _expRot = rot;
 
-            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, pos, rot, gameObject?.layer ?? 0, delta);
+            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, pos, rot, VTransform.Layer, delta);
             else _expTrajectory.Update(this, _expPos, _expRot, VTransform.Layer, delta);
         }
 
@@ -151,8 +152,8 @@ namespace RBPhys
             _expPos = intergratedPos + relPos;
             _expRot = intergratedRot * relRot;
 
-            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, pos, rot, _expTrajectory.Layer, delta);
-            else _expTrajectory.Update(this, _expPos, _expRot, _expTrajectory.Layer, delta);
+            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, pos, rot, VTransform.Layer, delta);
+            else _expTrajectory.Update(this, _expPos, _expRot, VTransform.Layer, delta);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

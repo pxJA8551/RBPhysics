@@ -190,6 +190,8 @@ public class RBVirtualTransform : MonoBehaviour
 
             SetRawTRS(rawTrs);
         }
+
+        _layer = _baseObject.layer;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
