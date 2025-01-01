@@ -226,7 +226,29 @@ public class RBVirtualTransform : MonoBehaviour
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void SetTempTransform(Vector3 tempPos, Quaternion tempRot)
+    public void SetTempPosition(Vector3 tempPos)
+    {
+        var local2WorldTrs = Matrix4x4.TRS(tempPos, _wsTrs.rotation, Vector3.one);
+
+        Debug.Assert(local2WorldTrs.ValidTRS());
+        if (local2WorldTrs.ValidTRS()) _tempOffsetTrs = local2WorldTrs * Matrix4x4.TRS(_wsTrs.GetPosition(), _wsTrs.rotation, Vector3.one).inverse;
+
+        _baseObject.transform.position = tempPos;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetTempRotation(Quaternion tempRot)
+    {
+        var local2WorldTrs = Matrix4x4.TRS(_wsTrs.GetPosition(), tempRot, Vector3.one);
+
+        Debug.Assert(local2WorldTrs.ValidTRS());
+        if (local2WorldTrs.ValidTRS()) _tempOffsetTrs = local2WorldTrs * Matrix4x4.TRS(_wsTrs.GetPosition(), _wsTrs.rotation, Vector3.one).inverse;
+
+        _baseObject.transform.rotation = tempRot;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetTempPositionAndRotation(Vector3 tempPos, Quaternion tempRot)
     {
         var local2WorldTrs = Matrix4x4.TRS(tempPos, tempRot, Vector3.one);
 

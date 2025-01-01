@@ -34,8 +34,8 @@ public class RBRigidbodyInterp : MonoBehaviour
 
         rbRigidbody.CalcVel2Ws(rbRigidbody.Velocity, rbRigidbody.AngularVelocity, d * Time.fixedDeltaTime, out var wsPos, out var wsRot);
 
-        if (!interpPosition) wsPos = rbRigidbody.transform.position;
-        if (!interpRotation) wsRot = rbRigidbody.transform.rotation;
+        if (!interpPosition) wsPos = rbRigidbody.VTransform.WsPosition;
+        if (!interpRotation) wsRot = rbRigidbody.VTransform.WsRotation;
 
         rbRigidbody.VTransform.SetTempTransform(wsPos, wsRot);
     }
