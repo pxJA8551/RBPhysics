@@ -2,6 +2,7 @@ using RBPhys;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Transactions;
 using Unity.Collections;
 using UnityEngine;
 
@@ -34,8 +35,7 @@ public class RBRigidbodyInterp : MonoBehaviour
 
         rbRigidbody.CalcVel2Ws(rbRigidbody.Velocity, rbRigidbody.AngularVelocity, d * Time.fixedDeltaTime, out var wsPos, out var wsRot);
 
-        if (interpPosition && interpRotation) rbRigidbody.VTransform.SetTempPositionAndRotation(wsPos, wsRot);
-        else if (interpPosition) rbRigidbody.VTransform.SetTempPosition(wsPos);
-        else if (interpRotation) rbRigidbody.VTransform.SetTempRotation(wsRot);
+        if (interpPosition) rbRigidbody.transform.position = wsPos;
+        if (interpRotation) rbRigidbody.transform.rotation = wsRot;
     }
 }
