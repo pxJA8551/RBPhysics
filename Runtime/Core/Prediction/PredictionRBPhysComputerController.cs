@@ -22,7 +22,7 @@ namespace RBPhys
             _physComputer?.Dispose();
         }
 
-        public void CreateVirtual(GameObject obj, bool recursive)
+        public RBVirtualTransform CreateVirtual(GameObject obj, bool recursive)
         {
             if (_physComputer == null) throw new Exception();
 
@@ -42,6 +42,8 @@ namespace RBPhys
                     CreateVirtual(cg.gameObject, recursive);
                 }
             }
+
+            return vt; 
         }
 
         public async Task IntergradeComputeFor(int frames, CancellationToken cxl)
