@@ -25,6 +25,8 @@ public class RBRigidbodyInterp : MonoBehaviour
         _lastFixedUpdate = 0;
     }
 
+    Vector3 _lastVel;
+    Vector3 _lastAngVel;
     private void LateUpdate()
     {
         if (rbRigidbody == null || !rbRigidbody.VEnabled || (_lastFixedUpdate == 0) || (Time.fixedDeltaTime <= 0)) return;
@@ -33,7 +35,10 @@ public class RBRigidbodyInterp : MonoBehaviour
         double elapsed = Time.timeAsDouble - _lastFixedUpdate;
         float d = (float)(elapsed / Time.fixedDeltaTime);
 
-        rbRigidbody.CalcVel2Ws(rbRigidbody.Velocity, rbRigidbody.AngularVelocity, d * Time.fixedDeltaTime, out var wsPos, out var wsRot);
+        var vel = rbRigidbody.Velocity;
+        var angVel = rbRigidbody.AngularVelocity;
+
+        rbRigidbody.CalcVel2Ws(vel, angVel, d * Time.fixedDeltaTime, out var wsPos, out var wsRot);
 
         if (interpPosition) rbRigidbody.transform.position = wsPos;
         if (interpRotation) rbRigidbody.transform.rotation = wsRot;
