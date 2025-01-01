@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Xml.Schema;
+using System.Xml.Serialization;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -15,6 +16,9 @@ public class RBVirtualTransform : MonoBehaviour
 
     RBVirtualTransform _parent;
     GameObject _baseObject;
+
+    public Matrix4x4 TempOffsetTrs { get { return _tempOffsetTrs; } }
+    Matrix4x4 _tempOffsetTrs;
 
     Matrix4x4 _rawTrs;
     Matrix4x4 _wsTrs;
@@ -78,6 +82,8 @@ public class RBVirtualTransform : MonoBehaviour
         _physComputer = physComputer;
         _wsTrs = Matrix4x4.identity;
         _rawTrs = Matrix4x4.identity;
+        _tempOffsetTrs = Matrix4x4.identity;
+
         CopyBaseObjectTransform();
         OnCreate();
     }
@@ -183,12 +189,12 @@ public class RBVirtualTransform : MonoBehaviour
 
         if (_parent == null)
         {
-            var wsTrs = _baseObject.transform.localToWorldMatrix;
+            var wsTrs = _tempOffsetTrs.inverse * _baseObject.transform.localToWorldMatrix;
             SetWsTRS(wsTrs);
         }
         else
         {
-            var rawTrs = _parent.BaseTransform.localToWorldMatrix.inverse * _baseObject.transform.localToWorldMatrix;
+            var rawTrs = _parent.BaseTransform.localToWorldMatrix.inverse * (_tempOffsetTrs.inverse * _baseObject.transform.localToWorldMatrix);
 
             SetRawTRS(rawTrs);
         }
@@ -215,6 +221,20 @@ public class RBVirtualTransform : MonoBehaviour
             _baseObject.transform.position = wsTrs.GetPosition();
             _baseObject.transform.rotation = wsTrs.rotation;
         }
+
+        _tempOffsetTrs = Matrix4x4.identity;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void SetTempTransform(Vector3 tempPos, Quaternion tempRot)
+    {
+        var local2WorldTrs = Matrix4x4.TRS(tempPos, tempRot, Vector3.one);
+
+        Debug.Assert(local2WorldTrs.ValidTRS());
+        if (local2WorldTrs.ValidTRS()) _tempOffsetTrs = local2WorldTrs * Matrix4x4.TRS(_wsTrs.GetPosition(), _wsTrs.rotation, Vector3.one).inverse;
+
+        _baseObject.transform.position = tempPos;
+        _baseObject.transform.rotation = tempRot;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

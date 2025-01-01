@@ -327,16 +327,20 @@ namespace RBPhys
                 _velocity = _expVelocity;
                 _angularVelocity = _expAngularVelocity;
 
-                var rot = Quaternion.AngleAxis(_angularVelocity.magnitude * Mathf.Rad2Deg * dt, _angularVelocity.normalized);
-                var vd = VTransform.WsRotation * _centerOfGravity;
-
-                var setPos = VTransform.WsPosition + (_velocity * dt) + (vd - (rot * vd));
-                var setRot = rot * VTransform.WsRotation;
-
-                VTransform.SetWsPositionAndRotation(setPos, setRot);
+                CalcVel2Ws(_velocity, _angularVelocity, dt, out var wsPos, out var wsRot);
+                VTransform.SetWsPositionAndRotation(wsPos, wsRot);
             }
 
             UpdateExpTrajectory(dt);
+        }
+
+        public void CalcVel2Ws(Vector3 vel, Vector3 angVel, float dt, out Vector3 wsPos, out Quaternion wsRot)
+        {
+            var rot = Quaternion.AngleAxis(angVel.magnitude * Mathf.Rad2Deg * dt, angVel.normalized);
+            var vd = VTransform.WsRotation * _centerOfGravity;
+
+            wsPos = VTransform.WsPosition + (vel * dt) + (vd - (rot * vd));
+            wsRot = rot * VTransform.WsRotation;
         }
 
         internal void ClearValidators()

@@ -72,9 +72,6 @@ namespace RBPhys
             EditorGUILayout.PropertyField(enablePhysProceduralAnimation);
             EditorGUILayout.PropertyField(linker);
             EditorGUILayout.Space();
-            EditorGUILayout.PropertyField(interp);
-            EditorGUILayout.PropertyField(velocityInterp);
-            EditorGUILayout.PropertyField(interpMultiplier);
             EditorGUILayout.PropertyField(ext_lambda_compensation);
 
             serializedObject.ApplyModifiedProperties();

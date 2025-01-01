@@ -35,10 +35,6 @@ namespace RBPhys
         public bool playing;
         public bool enablePhysProceduralAnimation = true;
 
-        public bool interp = true;
-        public bool velocityInterp = true;
-        public float interpMultiplier = 1.0f;
-
         public float ext_lambda_compensation = 1;
 
         protected override void ComponentAwake()
@@ -101,10 +97,6 @@ namespace RBPhys
             rbRigidbody = anim.rbRigidbody;
             playing = anim.playing;
             enablePhysProceduralAnimation = anim.enablePhysProceduralAnimation;
-
-            interp = anim.interp;
-            velocityInterp = anim.velocityInterp;
-            interpMultiplier = anim.interpMultiplier;
 
             ext_lambda_compensation = anim.ext_lambda_compensation;
 
@@ -479,24 +471,6 @@ namespace RBPhys
 
                 VTransform.SetWsPositionAndRotation(wsPos, wsRot);
             }
-        }
-
-        protected virtual void LateUpdate()
-        {
-            float interpDelta = _solverTime != 0 ? (Time.time - _solverTime) : 0;
-            float time = interp ? (ctrlTime + (interpDelta * (velocityInterp ? _ctrlTimeDeltaP : 1)) * interpMultiplier) : ctrlTime;
-
-            if (!enablePhysProceduralAnimation)
-            {
-                time = interp ? (ctrlTime + interpDelta * interpMultiplier) : ctrlTime;
-            }
-
-            if (AnimationClip != null && trsCurve != null)
-            {
-                AnimationClip.SampleAnimation(gameObject, time);
-            }
-
-            CalcTRSAnimFrame(time);
         }
 
         public void OnDestroy()
