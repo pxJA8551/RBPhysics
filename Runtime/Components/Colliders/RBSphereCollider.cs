@@ -72,10 +72,10 @@ namespace RBPhys
             if (useCCD)
             {
                 Vector3 pos_current = pos;
-                Vector3 pos_exp = pos + ((ParentRigidbody?.Velocity * delta) ?? Vector3.zero);
+                Vector3 pos_last = pos - ((ParentRigidbody?.Velocity * delta) ?? Vector3.zero);
 
-                Vector3 size = RBPhysUtil.V3Abs(pos_current - pos_exp) + Vector3.one * MultipliedRadius * 2;
-                Vector3 avgPos = (pos_current + pos_exp) / 2f;
+                Vector3 size = RBPhysUtil.V3Abs(pos_last - pos_current) + Vector3.one * MultipliedRadius * 2;
+                Vector3 avgPos = (pos_current + pos_last) / 2f;
 
                 return new RBColliderAABB(avgPos, size);
             }

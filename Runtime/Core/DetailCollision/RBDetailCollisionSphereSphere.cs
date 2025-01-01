@@ -40,7 +40,8 @@ namespace RBPhys
                     return CalcDetailCollisionInfo(sphere_a, sphere_b);
                 }
 
-                var p = RBSphereCast.SphereCastSphere.CalcSphereCollision(sphere_a, sphere_b.pos, dirN, length, sphere_b.radius, false);
+                Vector3 org = sphere_b.pos - velocity;
+                var p = RBSphereCast.SphereCastSphere.CalcSphereCollision(sphere_a, org, dirN, length, sphere_b.radius, false);
 
                 Vector3 pA = p.position;
                 Vector3 pB = (p.position + velocityB * delta);

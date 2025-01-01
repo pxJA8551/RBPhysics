@@ -80,8 +80,8 @@ namespace RBPhys
                 }
 
                 Vector3 dirN = velocity / length;
-
-                var p = RBSphereCast.SphereCastOBB.CalcSphereCollision(obb_a, sphere_b.pos, dirN, length, sphere_b.radius, false);
+                Vector3 org = sphere_b.pos + velocity;
+                var p = RBSphereCast.SphereCastOBB.CalcSphereCollision(obb_a, org, dirN, length, sphere_b.radius, false);
 
                 if (!p.IsValidHit || (0 < p.length && length < p.length))
                 {

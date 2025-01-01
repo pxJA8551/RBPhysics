@@ -1777,7 +1777,7 @@ namespace RBPhys
 
                     if (col_b.useCCD)
                     {
-                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(delta, col_a.CalcExpOBB(delta), col_b.CalcSphere(delta), col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(delta, col_a.CalcExpOBB(delta), col_b.CalcSphere(delta), col_b?.ParentRigidbody?.Velocity ?? Vector3.zero);
                         (p, pA, pB) = (pc.p, pc.pA, pc.pB);
                     }
                     else
@@ -1793,7 +1793,7 @@ namespace RBPhys
 
                     if (col_a.useCCD)
                     {
-                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(delta, col_b.CalcExpOBB(delta), col_a.CalcSphere(delta), col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(delta, col_b.CalcExpOBB(delta), col_a.CalcSphere(delta), col_a?.ParentRigidbody?.Velocity ?? Vector3.zero);
                         (p, pB, pA) = (pc.p, pc.pA, pc.pB);
                     }
                     else
@@ -1810,7 +1810,7 @@ namespace RBPhys
 
                     if (col_a.useCCD || col_b.useCCD)
                     {
-                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfoCCD(delta, col_a.CalcSphere(delta), col_b.CalcSphere(delta), col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero, col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfoCCD(delta, col_a.CalcSphere(delta), col_b.CalcSphere(delta), col_a?.ParentRigidbody?.Velocity ?? Vector3.zero, col_b?.ParentRigidbody?.Velocity ?? Vector3.zero);
                         (p, pA, pB) = (pc.p, pc.pA, pc.pB);
                     }
                     else
@@ -1839,7 +1839,7 @@ namespace RBPhys
 
                     if (col_b.useCCD)
                     {
-                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(delta, col_a.CalcSphere(delta), col_b.CalcExpCapsule(delta), col_a?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(delta, col_a.CalcSphere(delta), col_b.CalcExpCapsule(delta), col_a?.ParentRigidbody?.Velocity ?? Vector3.zero);
                         (p, pA, pB) = (pc.p, pc.pA, pc.pB);
                     }
                     else
@@ -1855,7 +1855,7 @@ namespace RBPhys
 
                     if (col_a.useCCD)
                     {
-                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(delta, col_b.CalcSphere(delta), col_a.CalcExpCapsule(delta), col_b?.ParentRigidbody?.ExpVelocity ?? Vector3.zero);
+                        RBDetailCollision.Penetration pc = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(delta, col_b.CalcSphere(delta), col_a.CalcExpCapsule(delta), col_b?.ParentRigidbody?.Velocity ?? Vector3.zero);
                         (p, pB, pA) = (pc.p, pc.pA, pc.pB);
                     }
                     else
