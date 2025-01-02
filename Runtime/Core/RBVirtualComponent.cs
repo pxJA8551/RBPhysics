@@ -1,5 +1,6 @@
 using RBPhys;
 using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -20,6 +21,9 @@ namespace RBPhys
 
         public RBVirtualComponent BaseVComponent { get { return _baseVComponent; } }
         RBVirtualComponent _baseVComponent;
+
+        public int ChildCount { get { return _children.Count; } }
+        List<RBVirtualComponent> _children = new List<RBVirtualComponent>();
 
         void Awake()
         {
@@ -43,6 +47,8 @@ namespace RBPhys
 
             var physComp = GetPhysComputer();
             if (physComp != null) physComp.RemoveVirtualComponent(this);
+
+            _baseVComponent?.RemoveChild(this);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -86,7 +92,15 @@ namespace RBPhys
             vc._baseVComponent = this;
             vc.SetVirtualTransform(vTransform);
 
+            _children.Add(this);
+
             return vc;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void RemoveChild(RBVirtualComponent child)
+        {
+            _children.Remove(child);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -96,6 +110,28 @@ namespace RBPhys
             if (_baseVComponent == null) return;
 
             SyncVirtual(_baseVComponent);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public RBVirtualComponent GetChild(int index)
+        {
+            if (index < 0 || _children.Count <= index) throw new IndexOutOfRangeException();
+            return _children[index];
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Ident(RBPhysComputer physComp)
+        {
+            if (PhysComputer != physComp) return false;
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IdentEnabled(RBPhysComputer physComp)
+        {
+            if (!VEnabled) return false;
+            if (!Ident(physComp)) return false;
+            return true;
         }
 
         protected virtual void ComponentAwake() { }
