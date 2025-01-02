@@ -263,6 +263,8 @@ namespace RBPhys
                     c.ClearParentRigidbody();
                 }
             }
+
+            _colliders.Clear();
         }
 
         public void ReinitializeColliders()
