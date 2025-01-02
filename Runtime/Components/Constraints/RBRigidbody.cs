@@ -330,6 +330,11 @@ namespace RBPhys
                 CalcVel2Ws(_velocity, _angularVelocity, dt, out var wsPos, out var wsRot);
                 VTransform.SetWsPositionAndRotation(wsPos, wsRot);
             }
+            else
+            {
+                _velocity = _expVelocity;
+                _angularVelocity = _expAngularVelocity;
+            }
 
             UpdateExpTrajectory(dt);
         }
