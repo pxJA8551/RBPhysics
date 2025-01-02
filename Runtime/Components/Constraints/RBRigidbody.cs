@@ -154,6 +154,7 @@ namespace RBPhys
         {
             PhysComputer.RemoveRigidbody(this);
 
+            ReleaseColliders();
             foreach (var c in _colliders)
             {
                 PhysComputer.SwitchToCollider(c);
@@ -188,11 +189,6 @@ namespace RBPhys
             _angularVelocity = rb._angularVelocity;
             _expVelocity = rb._expVelocity;
             _expAngularVelocity = rb._expAngularVelocity;
-        }
-
-        void OnDestroy()
-        {
-            ReleaseColliders();
         }
 
         public RBRigidbody()
