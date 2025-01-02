@@ -95,7 +95,7 @@ namespace RBPhys
             vc._baseVComponent = this;
             vc.SetVirtualTransform(vTransform);
 
-            _children.Add(this);
+            _children.Add(vc);
 
             return vc;
         }
