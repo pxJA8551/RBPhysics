@@ -2,9 +2,6 @@ using RBPhys;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Transactions;
-using Unity.Collections;
-using UnityEditor;
 using UnityEngine;
 
 namespace RBPhys
@@ -28,8 +25,6 @@ namespace RBPhys
             _lastFixedUpdate = 0;
         }
 
-        Vector3 _lastVel;
-        Vector3 _lastAngVel;
         private void LateUpdate()
         {
             if (rbRigidbody == null || !rbRigidbody.VEnabled || (_lastFixedUpdate == 0) || (Time.fixedDeltaTime <= 0)) return;

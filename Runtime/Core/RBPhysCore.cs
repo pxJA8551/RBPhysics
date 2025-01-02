@@ -91,6 +91,7 @@ namespace RBPhys
         List<RBCollision> _collisionsInSolver = new List<RBCollision>();
 
         List<RBVirtualTransform> _vTransforms = new List<RBVirtualTransform>();
+        List<RBVirtualComponent> _vComponents = new List<RBVirtualComponent>();
 
         StdSolverInit _stdSolverInit;
         StdSolverIteration _stdSolverIter;
@@ -116,6 +117,7 @@ namespace RBPhys
 
         public readonly bool isPredictionComputer;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBPhysComputer(bool isPredictionComputer)
         {
             physComputerTime = new PhysComputerTime(this);
@@ -125,6 +127,7 @@ namespace RBPhys
             ReInitializeComputer();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBPhysComputer(float deltaTime, bool isPredictionComputer)
         {
             physComputerTime = new PhysComputerTime(this);
@@ -134,11 +137,13 @@ namespace RBPhys
             ReInitializeComputer();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBPhysComputer.SolverInfo GetSolverInfo(int iterCount, int syncCount)
         {
             return new SolverInfo(this, iterCount, syncCount);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ReInitializeComputer()
         {
             this.WaitSemaphore();
@@ -153,16 +158,31 @@ namespace RBPhys
             this.ReleaseSemaphore();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddVirtualTransform(RBVirtualTransform vt)
         {
             if (!_vTransforms.Contains(vt)) _vTransforms.Add(vt);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveVirtualTransform(RBVirtualTransform vt)
         {
             _vTransforms.Remove(vt);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddVirtualComponent(RBVirtualComponent vc)
+        {
+            if (!_vComponents.Contains(vc)) _vComponents.Add(vc);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RemoveVirtualComponent(RBVirtualComponent vc)
+        {
+            _vComponents.Remove(vc);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddRigidbody(RBRigidbody rb)
         {
             if (!_rigidbodies.Contains(rb)) _rigidbodies.Add(rb);
@@ -170,6 +190,7 @@ namespace RBPhys
             _rbRemoveQueue.Remove(rb);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveRigidbody(RBRigidbody rb)
         {
             _rigidbodies.Remove(rb);
@@ -177,6 +198,7 @@ namespace RBPhys
             if (!_rbRemoveQueue.Contains(rb)) _rbRemoveQueue.Add(rb);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddCollider(RBCollider c)
         {
             if (!_colliders.Contains(c)) _colliders.Add(c);
@@ -184,6 +206,7 @@ namespace RBPhys
             _colRemoveQueue.Remove(c);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveCollider(RBCollider c)
         {
             _colliders.Remove(c);
@@ -191,54 +214,63 @@ namespace RBPhys
             if (!_colRemoveQueue.Contains(c)) _colRemoveQueue.Add(c);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SwitchToCollider(RBCollider c)
         {
             if (!_colAddQueue.Contains(c)) _colAddQueue.Add(c);
             _colRemoveQueue.Remove(c);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SwitchToRigidbody(RBCollider c)
         {
             _colAddQueue.Remove(c);
             if (!_colRemoveQueue.Contains(c)) _colRemoveQueue.Add(c);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddStdSolver(StdSolverInit stdInit, StdSolverIteration stdIter)
         {
             if (stdInit != null) _stdSolverInit += stdInit;
             if (stdIter != null) _stdSolverIter += stdIter;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveStdSolver(StdSolverInit stdInit, StdSolverIteration stdIter)
         {
             if (stdInit != null) _stdSolverInit -= stdInit;
             if (stdIter != null) _stdSolverIter -= stdIter;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddPhysObject(BeforeSolver beforeSolver, AfterSolver afterSolver)
         {
             if (beforeSolver != null) _beforeSolver += beforeSolver;
             if (afterSolver != null) _afterSolver += afterSolver;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemovePhysObject(BeforeSolver beforeSolver, AfterSolver afterSolver)
         {
             if (beforeSolver != null) _beforeSolver -= beforeSolver;
             if (afterSolver != null) _afterSolver -= afterSolver;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddPhysValidatorObject(ValidatorBeforeSolver beforeSolver, ValidatorAfterSolver afterSolver)
         {
             if (beforeSolver != null) _validatorBeforeSolver += beforeSolver;
             if (afterSolver != null) _validatorAfterSolver += afterSolver;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemovePhysValidatorObject(ValidatorBeforeSolver beforeSolver, ValidatorAfterSolver afterSolver)
         {
             if (beforeSolver != null) _validatorBeforeSolver -= beforeSolver;
             if (afterSolver != null) _validatorAfterSolver -= afterSolver;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetCollisionOption(int layer_a, int layer_b, RBCollisionOption option)
         {
             switch (option)
@@ -255,24 +287,28 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetCollisionLayerOption(int layer, RBCollisionLayerOption option)
         {
             _layerOptions[layer] = (RBCollisionLayerOption)((int)_layerOptions[layer] & (int)~option);
             _layerOptions[layer] = (RBCollisionLayerOption)((int)_layerOptions[layer] + (int)option);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsIgnorePhysCastLayer(int layer)
         {
             int p = (int)_layerOptions[layer];
             return (p & 1) == 1;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsTriggerLayer(int layer)
         {
             int p = (int)_layerOptions[layer];
             return (p & 2) == 2;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WaitSemaphore(int timeoutMs = 500)
         {
             _lockSemaphoreTimeoutCxlSrc.Cancel();
@@ -294,6 +330,7 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task<bool> WaitSemaphoreAsync(int waitTimeoutMs = 500, int lockTimeoutMs = 500)
         {
             _lockSemaphoreTimeoutCxlSrc.Cancel();
@@ -317,48 +354,66 @@ namespace RBPhys
             return semaphore;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ReleaseSemaphore()
         {
             _lockSemaphoreTimeoutCxlSrc.Cancel();
             _solverIterationSemaphore.Release();
         }
 
-        public void SyncObjectTransforms()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SyncObjectTransforms(bool waitSemaphore = true)
         {
-            WaitSemaphore();
+            if (waitSemaphore) WaitSemaphore();
 
             foreach (var v in _vTransforms)
             {
                 v.SyncBaseObjectTransform();
             }
 
-            ReleaseSemaphore();
+            if (waitSemaphore) ReleaseSemaphore();
         }
 
-        public void SyncBaseVTransforms()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SyncBaseVTransforms(bool waitSemaphore = true)
         {
-            WaitSemaphore();
+            if (waitSemaphore) WaitSemaphore();
 
             foreach (var v in _vTransforms)
             {
                 v.SyncBaseVTransform();
             }
 
-            ReleaseSemaphore();
+            if (waitSemaphore) ReleaseSemaphore();
         }
 
-        public void ApplyVirtualTransforms()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ApplyVirtualTransforms(bool waitSemaphore = true)
         {
-            WaitSemaphore();
+            if (waitSemaphore) WaitSemaphore();
 
             foreach (var v in _vTransforms)
             {
                 v.ApplyBaseObjectTransform();
             }
 
-            ReleaseSemaphore();
+            if (waitSemaphore) ReleaseSemaphore();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SyncBaseVComponents(bool waitSemaphore = true)
+        {
+            if (waitSemaphore) WaitSemaphore();
+
+            foreach (var v in _vComponents)
+            {
+                v.SyncVirtualComponent();
+            }
+
+            if (waitSemaphore) ReleaseSemaphore();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task OpenPhysicsFrameWindowAsync()
         {
             float dt = _solverDeltaTimeAsFloat;
@@ -413,6 +468,7 @@ namespace RBPhys
             //OnClosePhysicsFrame��
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void ReInitializeSolverTime()
         {
             _solverTime = 0;
@@ -423,6 +479,7 @@ namespace RBPhys
             SetSolverTimeVariables();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void SetSolverTimeVariables()
         {
             if (timeParams.enableAutoTimeIntergrading)

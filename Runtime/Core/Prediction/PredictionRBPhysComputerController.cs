@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -12,16 +11,19 @@ namespace RBPhys
         public RBPhysComputer PhysComputer { get { return _physComputer; } }
         RBPhysComputer _physComputer;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CreatePhysComputer(float deltaTime)
         {
             _physComputer = new RBPhysComputer(deltaTime, true);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DisposePhysComputer()
         {
             _physComputer?.Dispose();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBVirtualTransform CreateVirtual(GameObject obj, bool recursive)
         {
             if (_physComputer == null) throw new Exception();
@@ -46,6 +48,7 @@ namespace RBPhys
             return vt; 
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task IntergradeComputeFor(int frames, CancellationToken cxl)
         {
             await Task.Run(() =>
@@ -58,16 +61,32 @@ namespace RBPhys
             });
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void PhysicsFrame()
         {
             _physComputer.OpenPhysicsFrameWindowAsync().Wait();
             _physComputer.ClosePhysicsFrameWindow();
         }
 
-        public void SyncVirtual()
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SyncObjectTransforms()
         {
             if (_physComputer == null) throw new Exception();
             _physComputer.SyncObjectTransforms();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SyncBaseVTransforms()
+        {
+            if (_physComputer == null) throw new Exception();
+            _physComputer.SyncBaseVTransforms();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SyncBaseVComponents()
+        {
+            if (_physComputer == null) throw new Exception();
+            _physComputer.SyncBaseVComponents();
         }
     }
 }

@@ -31,12 +31,17 @@ namespace RBPhys
         {
             _vEnabled = true;
             ComponentOnEnable();
+
+            var physComp = GetPhysComputer();
+            physComp.
         }
 
         void OnDisable()
         {
             _vEnabled = false;
             ComponentOnDisable();
+
+            var physComp = GetPhysComputer();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
