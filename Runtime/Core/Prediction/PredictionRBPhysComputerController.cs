@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -24,16 +25,20 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBVirtualTransform CreateVirtual(GameObject obj, bool recursive)
+        public void CreateVirtual(GameObject obj, bool recursive)
         {
             if (_physComputer == null) throw new Exception();
 
-            var vt = RBVirtualTransform.FindOrCreate(obj, _physComputer);
-
             var vComps = obj.GetComponents<RBVirtualComponent>();
-            foreach (var c in vComps) 
+
+            if (vComps.Any())
             {
-                c.CreateVirtualComponent(vt);
+                var vt = RBVirtualTransform.FindOrCreate(obj, _physComputer);
+
+                foreach (var c in vComps)
+                {
+                    c.CreateVirtualComponent(vt);
+                }
             }
 
             if (recursive)
@@ -44,8 +49,28 @@ namespace RBPhys
                     CreateVirtual(cg.gameObject, recursive);
                 }
             }
+        }
 
-            return vt; 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public RBVirtualTransform CreateVirtualTransform(GameObject obj)
+        {
+            if (_physComputer == null) throw new Exception();
+
+            var vt = RBVirtualTransform.FindOrCreate(obj, _physComputer);
+
+            var vComps = obj.GetComponents<RBVirtualComponent>();
+            foreach (var c in vComps)
+            {
+                c.CreateVirtualComponent(vt);
+            }
+
+            for (int i = 0; i < obj.transform.childCount; i++)
+            {
+                var cg = obj.transform.GetChild(i);
+                CreateVirtual(cg.gameObject, true);
+            }
+
+            return vt;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
