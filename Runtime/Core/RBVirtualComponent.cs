@@ -105,7 +105,7 @@ namespace RBPhys
         {
             if(vTransform == null) throw new NotImplementedException();
 
-            foreach (var v in gameObject.GetComponents<RBVirtualComponent>())
+            foreach (var v in _children)
             {
                 if (v.IdentBase(vTransform.PhysComputer, this)) 
                 {

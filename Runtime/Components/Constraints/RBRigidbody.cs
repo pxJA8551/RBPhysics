@@ -109,9 +109,6 @@ namespace RBPhys
 
         protected override void ComponentAwake()
         {
-            UpdateColliders();
-            RecalculateInertiaTensor();
-
             if (!isSleeping || sleepGrace > 0)
             {
                 isSleeping = false;
@@ -143,6 +140,7 @@ namespace RBPhys
             PhysComputer.AddRigidbody(this);
 
             UpdateColliders();
+            RecalculateInertiaTensor();
             foreach (var c in _colliders)
             {
                 PhysComputer.SwitchToRigidbody(c);
