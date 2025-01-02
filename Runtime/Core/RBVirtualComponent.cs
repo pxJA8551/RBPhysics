@@ -107,7 +107,7 @@ namespace RBPhys
 
             foreach (var v in gameObject.GetComponents<RBVirtualComponent>())
             {
-                if (v.Ident(vTransform.PhysComputer)) 
+                if (v.IdentBase(vTransform.PhysComputer, this)) 
                 {
                     return v;
                 }
@@ -143,6 +143,14 @@ namespace RBPhys
         {
             if (!VEnabled) return false;
             if (PhysComputer != physComp) return false;
+            return true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IdentBase(RBPhysComputer physComp, RBVirtualComponent baseVComponent)
+        {
+            if (!Ident(physComp)) return false;
+            if (_baseVComponent != baseVComponent) return false;
             return true;
         }
 
