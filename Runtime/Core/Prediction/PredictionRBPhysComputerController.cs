@@ -38,7 +38,7 @@ namespace RBPhys
 
                 foreach (var c in vComps)
                 {
-                    c.CreateVirtualComponent(vt);
+                    c.FindOrCreateVirtualComponent(vt);
                 }
             }
 
@@ -63,7 +63,7 @@ namespace RBPhys
             var vComps = obj.GetComponents<RBVirtualComponent>();
             foreach (var c in vComps)
             {
-                c.CreateVirtualComponent(vt);
+                c.FindOrCreateVirtualComponent(vt);
             }
 
             for (int i = 0; i < obj.transform.childCount; i++)

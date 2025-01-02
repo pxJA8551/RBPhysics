@@ -84,17 +84,36 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBVirtualComponent CreateVirtualComponent(RBVirtualTransform vTransform)
+        public RBVirtualComponent FindOrCreateVirtualComponent(RBVirtualTransform vTransform)
         {
             if (vTransform == null) throw new NotImplementedException();
 
-            var vc = CreateVirtual(gameObject);
+            var vc = FindVirutalComponent(vTransform);
+            if (vc != null) return vc;
+
+            vc = CreateVirtual(gameObject);
             vc._baseVComponent = this;
             vc.SetVirtualTransform(vTransform);
 
             _children.Add(this);
 
             return vc;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public RBVirtualComponent FindVirutalComponent(RBVirtualTransform vTransform)
+        {
+            if(vTransform == null) throw new NotImplementedException();
+
+            foreach (var v in gameObject.GetComponents<RBVirtualComponent>())
+            {
+                if (v.Ident(vTransform.PhysComputer)) 
+                {
+                    return v;
+                }
+            }
+
+            return null;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
