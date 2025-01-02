@@ -202,7 +202,7 @@ namespace RBPhys
 
             foreach (var c in GetComponents<RBCollider>())
             {
-                if (Ident(PhysComputer)) c.SetParentRigidbody(this);
+                if (c.Ident(PhysComputer)) c.SetParentRigidbody(this);
             }
 
             FindChildrenRecursive(transform);
