@@ -29,11 +29,12 @@ namespace RBPhys
         {
             if (_physComputer == null) throw new Exception();
 
+            var vtBase = RBVirtualTransform.FindOrCreate(obj);
             var vComps = obj.GetComponents<RBVirtualComponent>();
 
             if (vComps.Any())
             {
-                var vt = RBVirtualTransform.FindOrCreate(obj, _physComputer);
+                var vt = RBVirtualTransform.FindOrCreate(obj, _physComputer, vtBase);
 
                 foreach (var c in vComps)
                 {
