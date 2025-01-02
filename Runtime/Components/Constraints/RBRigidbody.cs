@@ -345,7 +345,7 @@ namespace RBPhys
             var vd = VTransform.WsRotation * _centerOfGravity;
 
             wsPos = VTransform.WsPosition + (vel * dt) + (vd - (rot * vd));
-            wsRot = VTransform.WsRotation * rot;
+            wsRot = rot * VTransform.WsRotation;
         }
 
         internal void ClearValidators()
