@@ -304,14 +304,14 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetWsRotation(Quaternion wsRot)
         {
-            var trs = Matrix4x4.Rotate(wsRot * Quaternion.Inverse(_wsTrs.rotation)) * _wsTrs;
+            var trs = _wsTrs * Matrix4x4.Rotate(Quaternion.Inverse(_wsTrs.rotation) * wsRot);
             SetWsTRS(trs);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetWsPositionAndRotation(Vector3 wsPos, Quaternion wsRot)
         {
-            var trs = Matrix4x4.Rotate(wsRot * Quaternion.Inverse(_wsTrs.rotation)) * _wsTrs;
+            var trs = _wsTrs * Matrix4x4.Rotate(Quaternion.Inverse(_wsTrs.rotation) * wsRot);
             trs.m03 = wsPos.x;
             trs.m13 = wsPos.y;
             trs.m23 = wsPos.z;

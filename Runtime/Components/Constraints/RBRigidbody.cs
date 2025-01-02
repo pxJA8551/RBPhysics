@@ -341,7 +341,10 @@ namespace RBPhys
 
         public void CalcVel2Ws(Vector3 vel, Vector3 angVel, float dt, out Vector3 wsPos, out Quaternion wsRot)
         {
-            var rot = Quaternion.AngleAxis(angVel.magnitude * Mathf.Rad2Deg * dt, angVel.normalized);
+            float length = angVel.magnitude;
+            var rot = Quaternion.AngleAxis(length * Mathf.Rad2Deg * dt, angVel / length);
+            if (length == 0) rot = Quaternion.identity;
+
             var vd = VTransform.WsRotation * _centerOfGravity;
 
             wsPos = VTransform.WsPosition + (vel * dt) + (vd - (rot * vd));
