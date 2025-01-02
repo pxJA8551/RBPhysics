@@ -67,7 +67,7 @@ namespace RBPhys
         public void SyncVirtual()
         {
             if (_physComputer == null) throw new Exception();
-            _physComputer.SyncVirtualTransforms();
+            _physComputer.SyncObjectTransforms();
         }
     }
 }

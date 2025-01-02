@@ -84,7 +84,7 @@ namespace RBPhys
             _wsTrs = Matrix4x4.identity;
             _rawTrs = Matrix4x4.identity;
 
-            CopyBaseObjectTransform();
+            SyncBaseObjectTransform();
             OnCreate();
         }
 
@@ -165,7 +165,7 @@ namespace RBPhys
         public RBVirtualTransform(GameObject baseObject)
         {
             _baseObject = baseObject;
-            CopyBaseObjectTransform();
+            SyncBaseObjectTransform();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -183,32 +183,31 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void CopyBaseObjectTransform()
+        public RBVirtualTransform(RBVirtualTransform baseVTransform)
+        {
+            if (baseVTransform == null) throw new Exception();
+            _baseVTransform = baseVTransform;
+            SyncBaseVTransform();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SyncBaseObjectTransform()
         {
             if (_baseObject == null) throw new System.Exception();
 
-            if (_baseVTransform == null)
+            if (_parent == null)
             {
-                if (_parent == null)
-                {
-                    var wsTrs = _baseObject.transform.localToWorldMatrix;
-                    SetWsTRS(wsTrs);
-                }
-                else
-                {
-                    var rawTrs = _parent.BaseTransform.localToWorldMatrix.inverse * (_baseObject.transform.localToWorldMatrix);
-
-                    SetRawTRS(rawTrs);
-                }
-
-                _layer = _baseObject.layer;
+                var wsTrs = _baseObject.transform.localToWorldMatrix;
+                SetWsTRS(wsTrs);
             }
             else
             {
-                _rawTrs = _baseVTransform._rawTrs;
-                _wsTrs = _baseVTransform._wsTrs;
-                _wsTrsInv = _baseVTransform._wsTrsInv;
+                var rawTrs = _parent.BaseTransform.localToWorldMatrix.inverse * (_baseObject.transform.localToWorldMatrix);
+
+                SetRawTRS(rawTrs);
             }
+
+            _layer = _baseObject.layer;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -229,6 +228,19 @@ namespace RBPhys
 
                 _baseObject.transform.position = wsTrs.GetPosition();
                 _baseObject.transform.rotation = wsTrs.rotation;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SyncBaseVTransform()
+        {
+            if (_baseVTransform != null)
+            {
+                _rawTrs = _baseVTransform._rawTrs;
+                _wsTrs = _baseVTransform._wsTrs;
+                _wsTrsInv = _baseVTransform._wsTrsInv;
+
+                _layer = _baseVTransform._layer;
             }
         }
 

@@ -323,13 +323,25 @@ namespace RBPhys
             _solverIterationSemaphore.Release();
         }
 
-        public void SyncVirtualTransforms()
+        public void SyncObjectTransforms()
         {
             WaitSemaphore();
 
             foreach (var v in _vTransforms)
             {
-                v.CopyBaseObjectTransform();
+                v.SyncBaseObjectTransform();
+            }
+
+            ReleaseSemaphore();
+        }
+
+        public void SyncBaseVTransforms()
+        {
+            WaitSemaphore();
+
+            foreach (var v in _vTransforms)
+            {
+                v.SyncBaseVTransform();
             }
 
             ReleaseSemaphore();
