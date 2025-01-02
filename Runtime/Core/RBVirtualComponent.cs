@@ -141,15 +141,8 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Ident(RBPhysComputer physComp)
         {
-            if (PhysComputer != physComp) return false;
-            return true;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IdentEnabled(RBPhysComputer physComp)
-        {
             if (!VEnabled) return false;
-            if (!Ident(physComp)) return false;
+            if (PhysComputer != physComp) return false;
             return true;
         }
 
