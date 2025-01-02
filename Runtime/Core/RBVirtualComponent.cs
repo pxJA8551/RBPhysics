@@ -33,7 +33,7 @@ namespace RBPhys
             ComponentOnEnable();
 
             var physComp = GetPhysComputer();
-            physComp.
+            if (physComp != null) physComp.AddVirtualComponent(this);
         }
 
         void OnDisable()
@@ -42,6 +42,7 @@ namespace RBPhys
             ComponentOnDisable();
 
             var physComp = GetPhysComputer();
+            if (physComp != null) physComp.RemoveVirtualComponent(this);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
