@@ -92,7 +92,7 @@ namespace RBPhys
         public void FindParent()
         {
             var parent = GetComponentInParent<RBRigidbody>();
-            if (parent != null && parent.VEnabled)
+            if (parent != null && parent.VEnabled && parent.PhysComputer == PhysComputer) 
             {
                 SetParentRigidbody(parent);
             }

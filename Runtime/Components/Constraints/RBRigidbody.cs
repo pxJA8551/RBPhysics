@@ -242,7 +242,7 @@ namespace RBPhys
                 if (rb == null) 
                 {
                     var c = t.GetComponent<RBCollider>();
-                    if (c != null && c.VEnabled) 
+                    if (c != null && c.VEnabled && c.PhysComputer == PhysComputer) 
                     {
                         c.SetParentRigidbody(this);
                     }
