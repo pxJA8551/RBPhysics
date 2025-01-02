@@ -59,15 +59,16 @@ namespace RBPhys
                 Vector3 org = sphere_a.pos - lastVelocity;
                 var p = RBSphereCast.SphereCastCapsule.CalcSphereCollision(capsule_b, org, dirN, length, sphere_a.radius, false);
 
-                Vector3 pA = (p.position + lastVelocity);
-                Vector3 pB = p.position;
-
-                if (!p.IsValidHit || length < Mathf.Abs(p.length))
+                if (!p.IsValidHit || length < p.length)
                 {
-                    return CalcDetailCollisionInfo(sphere_a, capsule_b);
+                    return default;
                 }
 
-                return new Penetration(Vector3.Project(pB - pA, p.normal), pA, pB, default);
+                Vector3 pA = p.position;
+                Vector3 pB = p.position + dirN * (length - p.length);
+
+                float t = Vector3.Dot(pB - pA, p.normal);
+                return new Penetration(p.normal * Mathf.Min(t, 0), pA, pB, default);
             }
         }
     }

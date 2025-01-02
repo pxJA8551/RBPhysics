@@ -6,41 +6,44 @@ using System.Transactions;
 using Unity.Collections;
 using UnityEngine;
 
-public class RBRigidbodyInterp : MonoBehaviour
+namespace RBPhys
 {
-    public RBRigidbody rbRigidbody;
-
-    double _lastFixedUpdate;
-
-    public bool interpPosition = true;
-    public bool interpRotation = true;
-
-    private void FixedUpdate()
+    public class RBRigidbodyInterp : MonoBehaviour
     {
-        _lastFixedUpdate = Time.timeAsDouble;
-    }
+        public RBRigidbody rbRigidbody;
 
-    private void OnEnable()
-    {
-        _lastFixedUpdate = 0;
-    }
+        double _lastFixedUpdate;
 
-    Vector3 _lastVel;
-    Vector3 _lastAngVel;
-    private void LateUpdate()
-    {
-        if (rbRigidbody == null || !rbRigidbody.VEnabled || (_lastFixedUpdate == 0) || (Time.fixedDeltaTime <= 0)) return;
-        if (!interpPosition && !interpRotation) return;
+        public bool interpPosition = true;
+        public bool interpRotation = true;
 
-        double elapsed = Time.timeAsDouble - _lastFixedUpdate;
-        float d = (float)(elapsed / Time.fixedDeltaTime);
+        private void FixedUpdate()
+        {
+            _lastFixedUpdate = Time.timeAsDouble;
+        }
 
-        var vel = rbRigidbody.Velocity;
-        var angVel = rbRigidbody.AngularVelocity;
+        private void OnEnable()
+        {
+            _lastFixedUpdate = 0;
+        }
 
-        rbRigidbody.CalcVel2Ws(vel, angVel, d * Time.fixedDeltaTime, out var wsPos, out var wsRot);
+        Vector3 _lastVel;
+        Vector3 _lastAngVel;
+        private void LateUpdate()
+        {
+            if (rbRigidbody == null || !rbRigidbody.VEnabled || (_lastFixedUpdate == 0) || (Time.fixedDeltaTime <= 0)) return;
+            if (!interpPosition && !interpRotation) return;
 
-        if (interpPosition) rbRigidbody.transform.position = wsPos;
-        if (interpRotation) rbRigidbody.transform.rotation = wsRot;
+            double elapsed = Time.timeAsDouble - _lastFixedUpdate;
+            float d = (float)(elapsed / Time.fixedDeltaTime);
+
+            var vel = rbRigidbody.Velocity;
+            var angVel = rbRigidbody.AngularVelocity;
+
+            rbRigidbody.CalcVel2Ws(vel, angVel, d * Time.fixedDeltaTime, out var wsPos, out var wsRot);
+
+            if (interpPosition) rbRigidbody.transform.position = wsPos;
+            if (interpRotation) rbRigidbody.transform.rotation = wsRot;
+        }
     }
 }

@@ -29,29 +29,34 @@ namespace RBPhys
 
             public static Penetration CalcDetailCollisionInfoCCD(float delta, RBColliderSphere sphere_a, RBColliderSphere sphere_b, Vector3 lastVelocityA, Vector3 lastVelocityB)
             {
-                Vector3 lastVelocity = lastVelocityB - lastVelocityA;
-                lastVelocity *= delta;
+                Vector3 relLastVelocity = lastVelocityB - lastVelocityA;
 
-                float length = lastVelocity.magnitude;
-                Vector3 dirN = lastVelocity / length;
+                float length = relLastVelocity.magnitude;
+                Vector3 dirN = relLastVelocity / length;
 
-                if(length == 0)
+                if (length == 0)
                 {
                     return CalcDetailCollisionInfo(sphere_a, sphere_b);
                 }
 
-                Vector3 org = sphere_b.pos - lastVelocity;
-                var p = RBSphereCast.SphereCastSphere.CalcSphereCollision(sphere_a, org, dirN, length, sphere_b.radius, false);
+                var sphere_a_org = sphere_a;
+                sphere_a_org.pos -= lastVelocityA;
 
-                Vector3 pA = p.position;
-                Vector3 pB = (p.position + lastVelocityB * delta);
+                Vector3 org = sphere_b.pos - lastVelocityB;
+                var p = RBSphereCast.SphereCastSphere.CalcSphereCollision(sphere_a_org, org, dirN, length, sphere_b.radius, false);
 
-                if (!p.IsValidHit || length < Mathf.Abs(p.length))
+                if (!p.IsValidHit || length < p.length) 
                 {
-                    return CalcDetailCollisionInfo(sphere_a, sphere_b);
+                    return default;
                 }
 
-                return new Penetration(Vector3.Project(pA - pB, p.normal), pA, pB, default);
+                float tr = 1 - (p.length / length);
+
+                Vector3 pA = (p.position - lastVelocityA) + lastVelocityA * tr;
+                Vector3 pB = (p.position - lastVelocityA) + lastVelocityB * tr;
+
+                float t = Vector3.Dot(pB - pA, p.normal);
+                return new Penetration(p.normal * t, pA, pB, default);
             }
         }
     }
