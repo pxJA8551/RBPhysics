@@ -53,23 +53,23 @@ namespace RBPhys
         List<RBVirtualTransform> _children;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static RBVirtualTransform FindOrCreate(GameObject baseObject, RBPhysComputer physComputer = null)
+        public static RBVirtualTransform FindOrCreate(GameObject baseObject, RBPhysComputer physComputer = null, RBVirtualTransform baseVTransform = null)
         {
             var vTransforms = baseObject.GetComponents<RBVirtualTransform>();
 
             var comp = physComputer ?? RBPhysController.MainComputer;
 
-            var vt = vTransforms.FirstOrDefault(item => IsDuplicatingVTransform(item, baseObject.transform, comp));
+            var vt = vTransforms.FirstOrDefault(item => IsDuplicatingVTransform(item, baseObject.transform, comp, baseVTransform));
             if (vt != null) return vt;
 
-            return Create(baseObject, comp);
+            return Create(baseObject, comp, baseVTransform);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        static RBVirtualTransform Create(GameObject baseObject, RBPhysComputer physComputer)
+        static RBVirtualTransform Create(GameObject baseObject, RBPhysComputer physComputer, RBVirtualTransform baseVTransform)
         {
             var vTransform = baseObject.AddComponent<RBVirtualTransform>();
-            vTransform.Init(baseObject, physComputer);
+            vTransform.Init(baseObject, physComputer, baseVTransform);
 
             Debug.Assert(vTransform._physComputer != null);
             vTransform.PhysComputerInit();
@@ -77,12 +77,14 @@ namespace RBPhys
             return vTransform;
         }
 
-        private void Init(GameObject baseObject, RBPhysComputer physComputer)
+        private void Init(GameObject baseObject, RBPhysComputer physComputer, RBVirtualTransform baseVTransform)
         {
             _baseObject = baseObject;
             _physComputer = physComputer;
             _wsTrs = Matrix4x4.identity;
             _rawTrs = Matrix4x4.identity;
+
+            _baseVTransform = baseVTransform;
 
             SyncBaseObjectTransform();
             OnCreate();
@@ -159,27 +161,6 @@ namespace RBPhys
                     children.Add(vt);
                 }
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBVirtualTransform(GameObject baseObject)
-        {
-            _baseObject = baseObject;
-            SyncBaseObjectTransform();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBVirtualTransform(Transform transform)
-        {
-            SetRawTRS(transform.localToWorldMatrix);
-            _layer = transform.gameObject.layer;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBVirtualTransform(Vector3 pos, Quaternion rot, Vector3 scale, int layer)
-        {
-            SetRawTRS(Matrix4x4.TRS(pos, rot, scale));
-            _layer = layer;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -387,13 +368,14 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsDuplicatingVTransform(RBVirtualTransform vt, Transform baseTransform, RBPhysComputer physComputer)
+        public static bool IsDuplicatingVTransform(RBVirtualTransform vt, Transform baseTransform, RBPhysComputer physComputer, RBVirtualTransform baseVTransform)
         {
             if (vt?.BaseTransform == null) throw new NotImplementedException();
             if (baseTransform == null) throw new NotImplementedException();
 
             if (vt.BaseTransform != baseTransform) return false;
             if (vt.PhysComputer != physComputer) return false;
+            if (vt.BaseVTransform != baseVTransform) return false;
 
             return true;
         }
