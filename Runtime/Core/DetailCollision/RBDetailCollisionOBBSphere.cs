@@ -83,9 +83,10 @@ namespace RBPhys
                 Vector3 org = sphere_b.pos - lastVelocity;
                 var p = RBSphereCast.SphereCastOBB.CalcSphereCollision(obb_a, org, dirN, length, sphere_b.radius, false);
 
-                if (!p.IsValidHit || length < p.length) 
+                if (!p.IsValidHit || length < p.length)
                 {
-                    return default;
+                    var r = CalcDetailCollision(obb_a, sphere_b);
+                    return new Penetration(r.p, r.pA, r.pB, default);
                 }
 
                 Vector3 pA = p.position;
