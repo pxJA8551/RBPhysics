@@ -151,7 +151,7 @@ namespace RBPhys
                 var t = obj.transform.GetChild(i);
                 var vt = t.GetComponent<RBVirtualTransform>();
 
-                if (vt == null)
+                if (vt == null || vt.PhysComputer != org.PhysComputer) 
                 {
                     FindChildrenRecursive(org, t, ref children);
                 }
@@ -363,6 +363,7 @@ namespace RBPhys
 
             if (vt0.BaseTransform != vt1.BaseTransform) return false;
             if (vt0.PhysComputer != vt1.PhysComputer) return false;
+            if (vt0.BaseVTransform != vt1.BaseVTransform) return false;
 
             return true;
         }
