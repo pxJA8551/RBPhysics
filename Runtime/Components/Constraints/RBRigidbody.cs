@@ -152,12 +152,14 @@ namespace RBPhys
         {
             PhysComputer.RemoveRigidbody(this);
 
-            ReleaseColliders();
             foreach (var c in _colliders)
             {
                 PhysComputer.SwitchToCollider(c);
                 c.UpdateTransform(0);
+                c.ClearParentRigidbody();
             }
+
+            _colliders.Clear();
         }
 
         protected override RBVirtualComponent CreateVirtual(GameObject obj)
@@ -250,19 +252,6 @@ namespace RBPhys
                     Debug.Assert(false);
                 }
             }
-        }
-
-        void ReleaseColliders()
-        {
-            foreach (var c in _colliders)
-            {
-                if (c != null)
-                {
-                    c.ClearParentRigidbody();
-                }
-            }
-
-            _colliders.Clear();
         }
 
         public void ReinitializeColliders()

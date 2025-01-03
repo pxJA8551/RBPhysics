@@ -474,10 +474,6 @@ namespace RBPhys
             }
         }
 
-        public void OnDestroy()
-        {
-        }
-
         public float CalcLinkedAnimLambda(float time, float linkedInvMass, Vector3 linkedInvInertiaTensorWs)
         {
             trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, animationType, out Vector3 intgTargetPos, out Quaternion intgTargetRot);
