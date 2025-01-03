@@ -67,7 +67,7 @@ namespace RBPhys
 
             public bool ValidateSrc(Guid validatorSrcGuid)
             {
-                return !permanentBranch && _validatorSrcGuid != default && _validatorSrcGuid == validatorSrcGuid;
+                return !permanentBranch && _validatorSrcGuid != Guid.Empty && _validatorSrcGuid == validatorSrcGuid;
             }
         }
     }

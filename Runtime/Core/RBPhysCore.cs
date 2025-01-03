@@ -7,7 +7,6 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using Unity.IL2CPP.CompilerServices;
 using System.Threading;
-using UnityEngine.UIElements;
 
 namespace RBPhys
 {
@@ -2177,34 +2176,6 @@ namespace RBPhys
         }
     }
 
-    public class RBEmptyValidator : RBPhysComputer.RBPhysStateValidator
-    {
-        public RBEmptyValidator() : base(Guid.Empty, true) { }
-        public RBEmptyValidator(Guid guid) : base(guid, true) { }
-
-        public override bool Validate()
-        {
-            return false;
-        }
-    }
-
-    public class RBCollisionValidator : RBPhysComputer.RBPhysStateValidator
-    {
-        public override bool Validate()
-        {
-            return (retrogradeKeyGuid != Guid.Empty) && ((traj?.RetrogradeKeyGuid ?? Guid.Empty) == retrogradeKeyGuid);
-        }
-
-        public RBCollisionValidator(RBTrajectory traj) : base(Guid.Empty, false)
-        {
-            this.traj = traj;
-            this.retrogradeKeyGuid = traj.RetrogradeKeyGuid;
-        }
-
-        public readonly RBTrajectory traj;
-        public readonly Guid retrogradeKeyGuid;
-    }
-
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     [Il2CppSetOption(Option.NullChecks, false)]
     [Il2CppSetOption(Option.DivideByZeroChecks, false)]
@@ -2772,6 +2743,7 @@ namespace RBPhys
 
         public Vector3 Center { get { return _center; } }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBColliderOBB(Vector3 pos, Quaternion rot, Vector3 size)
         {
             this.pos = pos;
@@ -2815,6 +2787,7 @@ namespace RBPhys
         public float radius;
         public readonly bool isValidSphere;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBColliderSphere(Vector3 pos, float radius)
         {
             this.pos = pos;
@@ -2831,6 +2804,7 @@ namespace RBPhys
         public float height;
         public readonly bool isValidCapsule;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBColliderCapsule(Vector3 pos, Quaternion rot, float radius, float height)
         {
             this.pos = pos;
@@ -2840,16 +2814,19 @@ namespace RBPhys
             isValidCapsule = true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3 GetHeightAxisN()
         {
             return rot * Vector3.up;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float GetAxisSize(Vector3 axisN)
         {
             return Mathf.Abs(Vector3.Dot(rot * new Vector3(0, height, 0), axisN)) + radius * 2;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float GetCylinderAxisN(Vector3 axisN)
         {
             float fwd = Mathf.Abs(Vector3.Dot(rot * new Vector3(0, 0, radius * 2), axisN));
@@ -2858,6 +2835,7 @@ namespace RBPhys
             return fwd + right + up;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public (Vector3 begin, Vector3 end) GetEdge()
         {
             return (pos + rot * new Vector3(0, height / 2f, 0), pos - rot * new Vector3(0, height / 2f, 0));
@@ -2869,6 +2847,7 @@ namespace RBPhys
         public int[] indices;
         public Vector3[] vertices;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBColliderTriangleMesh(Mesh m)
         {
             if (m.isReadable)
@@ -2918,22 +2897,32 @@ namespace RBPhys
         public Guid RetrogradeKeyGuid { get { return _retrogradeKeyGuid; } }
         Guid _retrogradeKeyGuid = Guid.Empty;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetRetrogradeKeyGuid(Guid guid)
         {
             _retrogradeKeyGuid = guid;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ClearRetrogradeKeyGuid()
         {
             _retrogradeKeyGuid = Guid.Empty;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool ValidateRetrogradeKeyGuid(Guid guid)
+        {
+            return _retrogradeKeyGuid != Guid.Empty && _retrogradeKeyGuid == guid;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBTrajectory()
         {
             _isValidTrajectory = false;
             trajectoryGuid = Guid.NewGuid();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBTrajectory(RBRigidbody rigidbody, int layer)
         {
             RBColliderAABB aabb = new RBColliderAABB();
@@ -2958,6 +2947,7 @@ namespace RBPhys
             trajectoryGuid = Guid.NewGuid();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBTrajectory(RBCollider collider, int layer, float delta)
         {
             trajectoryAABB = collider.CalcAABB(collider.VTransform.WsPosition, collider.VTransform.WsRotation, delta);
@@ -2972,6 +2962,7 @@ namespace RBPhys
             trajectoryGuid = Guid.NewGuid();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Update(RBRigidbody rigidbody, int layer)
         {
             RBColliderAABB aabb = new RBColliderAABB();
@@ -2994,6 +2985,7 @@ namespace RBPhys
             _layer = layer;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Update(RBCollider collider, Vector3 pos, Quaternion rot, int layer, float delta)
         {
             trajectoryAABB = collider.CalcAABB(pos, rot, delta);
@@ -3013,6 +3005,7 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void TryPhysAwake()
         {
             if (_rigidbody != null)

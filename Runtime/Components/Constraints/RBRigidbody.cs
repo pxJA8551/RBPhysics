@@ -91,14 +91,23 @@ namespace RBPhys
         public OnCollision onCollision;
 
         public List<RBPhysStateValidator> validators = new List<RBPhysStateValidator>();
+        public List<RBTrajectoryAlternateValidator> trajAltnValidators = new List<RBTrajectoryAlternateValidator>();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddVaidator(RBPhysStateValidator validator)
         {
             validators.Add(validator);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddTrajectoryAlternateValidator(RBTrajectoryAlternateValidator trajAltnValidator)
+        {
+            trajAltnValidators.Add(trajAltnValidator);
+        }
+
         public Vector3 InverseInertiaWs
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
                 Vector3 i = Vector3.Scale(inertiaTensor * inertiaTensorMultiplier, _invInertiaLsScale);
@@ -162,6 +171,7 @@ namespace RBPhys
             _colliders.Clear();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override RBVirtualComponent CreateVirtual(GameObject obj)
         {
             var rb = obj.AddComponent<RBRigidbody>();
@@ -169,6 +179,7 @@ namespace RBPhys
             return rb;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override void SyncVirtual(RBVirtualComponent vComponent)
         {
             var rb = vComponent as RBRigidbody;
@@ -176,6 +187,7 @@ namespace RBPhys
             CopyRigidbody(rb);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyRigidbody(RBRigidbody rb)
         {
             mass = rb.mass;
@@ -191,11 +203,13 @@ namespace RBPhys
             _expAngularVelocity = rb._expAngularVelocity;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBRigidbody()
         {
             _expObjTrajectory = new RBTrajectory();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void UpdateColliders()
         {
             _colliders = new List<RBCollider>();
@@ -208,6 +222,7 @@ namespace RBPhys
             FindChildrenRecursive(transform);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddCollider(RBCollider collider)
         {
             if (_colliders == null) _colliders = new List<RBCollider>();
@@ -223,6 +238,7 @@ namespace RBPhys
             RecalculateInertiaTensor();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveCollider(RBCollider collider)
         {
             _colliders?.Remove(collider);
@@ -254,16 +270,19 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ReinitializeColliders()
         {
             UpdateColliders();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBCollider[] GetColliders()
         {
             return _colliders.ToArray();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetColliderSizeMultiplier(float multiplier)
         {
             foreach (var c in _colliders)
@@ -272,11 +291,13 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetIgnoreVelocity()
         {
             _stackVal_ignoreVelocity_ifGreaterThanZero++;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetDecrIgnoreVelocity()
         {
             if (_stackVal_ignoreVelocity_ifGreaterThanZero > 0) _stackVal_ignoreVelocity_ifGreaterThanZero--;
@@ -324,6 +345,7 @@ namespace RBPhys
             UpdateExpTrajectory(dt);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CalcVel2Ws(Vector3 vel, Vector3 angVel, float dt, out Vector3 wsPos, out Quaternion wsRot)
         {
             float length = angVel.magnitude;
@@ -336,11 +358,14 @@ namespace RBPhys
             wsRot = rot * VTransform.WsRotation;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void ClearValidators()
         {
             validators.Clear();
+            trajAltnValidators.Clear();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal virtual void UpdateExpTrajectory(float dt, bool updateColliders = true)
         {
             (Vector3 pos, Quaternion rot) r = GetIntergrated(0);
@@ -356,6 +381,7 @@ namespace RBPhys
             _expObjTrajectory.Update(this, VTransform.Layer);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void UpdateColliderExpTrajectory(float dt)
         {
             (Vector3 pos, Quaternion rot) r = GetIntergrated(0);
@@ -366,6 +392,7 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void OnCollision(RBCollider col, RBCollisionInfo info)
         {
             if (onCollision != null) onCollision(col, info);
@@ -376,6 +403,7 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public (Vector3 pos, Quaternion rot) GetIntergrated(float dt)
         {
             return (VTransform.WsPosition + _expVelocity * dt, Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * dt, _expAngularVelocity.normalized) * VTransform.WsRotation);

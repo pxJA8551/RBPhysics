@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
@@ -37,6 +38,10 @@ namespace RBPhys
 
         public float ext_lambda_compensation = 1;
 
+        public Guid ValidatorSrcGuid { get { return _validatorSrcGuid; } }
+        Guid _validatorSrcGuid;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override void ComponentAwake()
         {
             if (rbRigidbody == null) throw new Exception();
@@ -52,6 +57,7 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void SetParentTransformOffset()
         {
             if (parentTransform != null)
@@ -64,6 +70,7 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override RBVirtualComponent CreateVirtual(GameObject obj)
         {
             var rba = obj.AddComponent<RBPhysAnimation>();
@@ -71,6 +78,7 @@ namespace RBPhys
             return rba;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override void SyncVirtual(RBVirtualComponent vComponent)
         {
             var rba = vComponent as RBPhysAnimation;
@@ -79,6 +87,7 @@ namespace RBPhys
             SetParentTransformOffset();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyPhysAnimation(RBPhysAnimation anim)
         {
             baseAnimationClip = anim.baseAnimationClip;
@@ -110,43 +119,49 @@ namespace RBPhys
             parentTransform = anim.parentTransform;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override void ComponentOnEnable()
         {
             PhysComputer.AddStdSolver(StdSolverInit, StdSolverIteration);
             PhysComputer.AddPhysObject(BeforeSolver, AfterSolver);
+
+            _validatorSrcGuid = Guid.NewGuid();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override void ComponentOnDisable()
         {
             PhysComputer.RemoveStdSolver(StdSolverInit, StdSolverIteration);
             PhysComputer.RemovePhysObject(BeforeSolver, AfterSolver);
+
+            _validatorSrcGuid = Guid.Empty;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void PlayAnimation()
         {
             ctrlSpeed = 1;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void StopAnimation()
         {
             ctrlSpeed = 0;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AttachLinker(RBPhysAnimationLinker linker)
         {
             this.linker = linker;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DetachLinker()
         {
             this.linker = null;
         }
 
-        float _solverTime = 0;
         protected float _solverDeltaTime = 0;
-
-        float _ctrlTimeLast;
-        float _ctrlTimeDeltaP;
 
         protected Vector3 _targetWsPos;
         protected Quaternion _targetWsRot;
@@ -158,8 +173,6 @@ namespace RBPhys
         {
             if (!VEnabled) return;
 
-            _ctrlTimeLast = ctrlTime;
-
             SetAnim();
 
             ctrlTime += dt * ctrlSpeed;
@@ -170,7 +183,7 @@ namespace RBPhys
                 if (enablePhysProceduralAnimation)
                 {
                     SetBasePos();
-                    SampleApplyTRSAnimation(ctrlTime, dt, _lsBasePos, _lsBaseRot);
+                    SampleApplyTRSAnimation(ctrlTime, dt, _lsBasePos, _lsBaseRot, false);
                 }
                 else
                 {
@@ -179,16 +192,17 @@ namespace RBPhys
                 }
             }
 
-            _solverTime = Time.time;
             LinkAnimationTime();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void SetAnim()
         {
             if (animationType == RBPhysAnimationType.Loop) SetAnimSpeed_Loop();
             else if (animationType == RBPhysAnimationType.Ping_Pong) SetAnimSpeed_PingPong();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void SetAnimSpeed_Loop()
         {
             const float EPSILON = .01f;
@@ -203,6 +217,7 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void SetAnimSpeed_PingPong()
         {
             const float EPSILON = .01f;
@@ -217,6 +232,7 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void SetBasePos()
         {
             var parentOffsetInv = _parentOffset.inverse;
@@ -224,6 +240,7 @@ namespace RBPhys
             _lsBaseRot = parentOffsetInv.rotation * VTransform.WsRotation;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected virtual void AddLinkedAnimationTime(float add)
         {
             if (linker != null)
@@ -238,12 +255,14 @@ namespace RBPhys
             LinkAnimationTime();
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected virtual float LinkAnimationTime()
         {
             linker?.LinkCtrlTime();
             return ctrlTime;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         float CalcLinkedInvMass()
         {
             if (linker != null)
@@ -256,6 +275,7 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         Vector3 CalcLinkedInvInertiaTensorWs()
         {
             if (linker != null)
@@ -268,11 +288,13 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float GetInvMass()
         {
             return rbRigidbody.InverseMass;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Vector3 GetInvInertiaTensorWs()
         {
             return (rbRigidbody.InverseInertiaWs);
@@ -282,18 +304,9 @@ namespace RBPhys
         {
             if (!VEnabled) return;
 
-            if (ctrlSpeed == 0)
-            {
-                _ctrlTimeDeltaP = 0;
-            }
-            else
-            {
-                _ctrlTimeDeltaP = Mathf.Clamp01((ctrlTime - _ctrlTimeLast) / (dt * ctrlSpeed));
-            }
-
             if (enablePhysProceduralAnimation && trsCurve != null)
             {
-                SampleApplyTRSAnimation(ctrlTime, dt, _lsBasePos, _lsBaseRot);
+                SampleApplyTRSAnimation(ctrlTime, dt, _lsBasePos, _lsBaseRot, true);
             }
             else
             {
@@ -303,6 +316,7 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void StdSolverInit(float dt, RBPhysComputer.SolverInfo info)
         {
             _solverDeltaTime = dt;
@@ -322,19 +336,21 @@ namespace RBPhys
             }
         }
 
-        protected void SampleApplyTRSAnimation(float time, float deltaTime, Vector3 basePos, Quaternion baseRot)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected void SampleApplyTRSAnimation(float time, float deltaTime, Vector3 basePos, Quaternion baseRot, bool createTrajValidator)
         {
             SampleSetTRSAnimation(time, basePos, baseRot);
-            CalcTRSAnimBaseVelocity(deltaTime);
+            CalcTRSAnimBaseVelocity(deltaTime, createTrajValidator);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void SampleSetTRSAnimation(float time, Vector3 basePos, Quaternion baseRot)
         {
             trsCurve.SampleTRSAnimation(time, basePos, baseRot, animationType, out Vector3 targetLsPos, out Quaternion targetLsRot);
             LsToWs(targetLsPos, targetLsRot, out _targetWsPos, out _targetWsRot);
         }
 
-        void CalcTRSAnimBaseVelocity(float solverDelta)
+        void CalcTRSAnimBaseVelocity(float solverDelta, bool createTrajValidator)
         {
             Vector3 objWs2CgWs = rbRigidbody.CenterOfGravityWorld - rbRigidbody.VTransform.WsPosition;
 
@@ -349,8 +365,10 @@ namespace RBPhys
 
             rbRigidbody.ExpVelocity = vel;
             rbRigidbody.ExpAngularVelocity = angVel;
+            if (createTrajValidator) rbRigidbody.AddTrajectoryAlternateValidator(new RBPhysAnimationTrajAltnValidator(this));
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void CalcTRSAnimVelocity(float solverDelta, int solverIters)
         {
             float intergradeTime = ctrlTime;
@@ -422,6 +440,7 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         float CalcAnimLambda(float time, float invMass, Vector3 invInertiaTensor, out Vector3 dPos, out Vector3 dRot)
         {
             trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, animationType, out Vector3 intgTargetPos, out Quaternion intgTargetRot);
@@ -436,12 +455,14 @@ namespace RBPhys
             return linker.CalcLinkedAnimLambda(time);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void LsToWs(Vector3 lsPos, Quaternion lsRot, out Vector3 wsPos, out Quaternion wsRot)
         {
             wsPos = _parentOffset.MultiplyPoint3x4(lsPos);
             wsRot = _parentOffset.rotation * lsRot;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void CalcDPos(Vector3 pos, Quaternion rot, out Vector3 dPos, out Vector3 dRot)
         {
             dPos = pos - rbRigidbody.VTransform.WsPosition;
@@ -451,6 +472,7 @@ namespace RBPhys
             dRot = axis * (angleDeg * Mathf.Deg2Rad);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void CalcDPosTarget(Vector3 pos, Quaternion rot, out Vector3 dPos, out Vector3 dRot)
         {
             dPos = pos - _targetWsPos;
@@ -460,6 +482,7 @@ namespace RBPhys
             dRot = axis * (angleDeg * Mathf.Deg2Rad);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void CalcTRSAnimFrame(float time)
         {
             SetBasePos();
@@ -474,6 +497,7 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float CalcLinkedAnimLambda(float time, float linkedInvMass, Vector3 linkedInvInertiaTensorWs)
         {
             trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, animationType, out Vector3 intgTargetPos, out Quaternion intgTargetRot);
