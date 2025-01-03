@@ -39,7 +39,8 @@ namespace RBPhys
 
         protected override void ComponentAwake()
         {
-            rbRigidbody = GetComponent<RBRigidbody>();
+            if (rbRigidbody == null) throw new Exception();
+
             SetParentTransformOffset();
 
             _animationLength = 0;

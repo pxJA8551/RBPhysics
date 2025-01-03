@@ -20,6 +20,8 @@ namespace RBPhys
         SerializedProperty playing;
         SerializedProperty enablePhysProceduralAnimation;
 
+        SerializedProperty rbRigidbody;
+
         SerializedProperty interp;
         SerializedProperty velocityInterp;
         SerializedProperty interpMultiplier;
@@ -38,6 +40,8 @@ namespace RBPhys
             playing = serializedObject.FindProperty("playing");
             enablePhysProceduralAnimation = serializedObject.FindProperty("enablePhysProceduralAnimation");
 
+            rbRigidbody = serializedObject.FindProperty("rbRigidbody");
+
             interp = serializedObject.FindProperty("interp");
             velocityInterp = serializedObject.FindProperty("velocityInterp");
             interpMultiplier = serializedObject.FindProperty("interpMultiplier");
@@ -48,6 +52,7 @@ namespace RBPhys
         {
             serializedObject.Update();
 
+            EditorGUILayout.PropertyField(rbRigidbody);
             EditorGUILayout.PropertyField(baseAnimationClip);
 
             if (baseAnimationClip.objectReferenceValue != null)
