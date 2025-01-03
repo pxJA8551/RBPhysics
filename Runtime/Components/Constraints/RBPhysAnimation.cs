@@ -138,6 +138,18 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ForceSetCtrlTime(float ctrlTime)
+        {
+            this.ctrlTime = ClampAnimTime(ctrlTime);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public float ClampAnimTime(float time)
+        {
+            return Mathf.Clamp(time, 0, Mathf.Max(AnimationLength, trsCurve?.length ?? 0));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void PlayAnimation()
         {
             ctrlSpeed = 1;
@@ -176,7 +188,7 @@ namespace RBPhys
             SetAnim();
 
             ctrlTime += dt * ctrlSpeed;
-            ctrlTime = Mathf.Clamp(ctrlTime, 0, Mathf.Max(AnimationLength, trsCurve?.length ?? 0));
+            ctrlTime = ClampAnimTime(ctrlTime);
 
             if (trsCurve != null)
             {
