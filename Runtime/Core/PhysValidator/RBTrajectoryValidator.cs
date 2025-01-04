@@ -39,7 +39,7 @@ namespace RBPhys
                     altnValidator = null;
                     altnValidators = null;
                 }
-                else if(tvs.Count == 0)
+                else if (tvs.Count == 1) 
                 {
                     altnValidator = tvs[0];
                     altnValidators = null;

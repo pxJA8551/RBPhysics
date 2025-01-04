@@ -88,7 +88,7 @@ namespace RBPhys
         {
             if (vTransform == null) throw new NotImplementedException();
 
-            var vc = FindVirutalComponent(vTransform);
+            var vc = FindVirtualComponent(vTransform);
             if (vc != null)
             {
                 _children.Add(vc);
@@ -104,7 +104,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBVirtualComponent FindVirutalComponent(RBVirtualTransform vTransform)
+        public RBVirtualComponent FindVirtualComponent(RBVirtualTransform vTransform)
         {
             if(vTransform == null) throw new NotImplementedException();
 
