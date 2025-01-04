@@ -107,7 +107,7 @@ namespace RBPhys
 
             foreach (var v in _children)
             {
-                if (v.IdentBase(vTransform.PhysComputer, this)) 
+                if (v.IdentBase(vTransform.PhysComputer, this, true)) 
                 {
                     return v;
                 }
@@ -139,17 +139,17 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Ident(RBPhysComputer physComp)
+        public bool Ident(RBPhysComputer physComp, bool allowDisabled = false)
         {
-            if (!VEnabled) return false;
+            if (!VEnabled && !allowDisabled) return false;
             if (PhysComputer != physComp) return false;
             return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IdentBase(RBPhysComputer physComp, RBVirtualComponent baseVComponent)
+        public bool IdentBase(RBPhysComputer physComp, RBVirtualComponent baseVComponent, bool allowDisabled = false)
         {
-            if (!Ident(physComp)) return false;
+            if (!Ident(physComp, allowDisabled)) return false;
             if (_baseVComponent != baseVComponent) return false;
             return true;
         }
