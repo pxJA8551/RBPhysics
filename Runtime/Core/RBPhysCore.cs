@@ -1256,7 +1256,7 @@ namespace RBPhys
 
                             if ((_collisionIgnoreLayers[activeTraj.Layer] & (1 << targetTraj.Layer)) == 0)
                             {
-                                if (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping || ((IsTriggerLayer(activeTraj.Layer) || IsTriggerLayer(targetTraj.Layer)) && (activeTraj.SetTempSleeping || targetTraj.SetTempSleeping)))
+                                if (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping || ((IsTriggerLayer(activeTraj.Layer) || IsTriggerLayer(targetTraj.Layer)) && (activeTraj.IsStaticOrSleeping || targetTraj.IsStaticOrSleeping)))
                                 {
                                     if (targetTraj.IsValidTrajectory)
                                     {
