@@ -143,7 +143,7 @@ namespace RBPhys
 
             Init();
             _validatorSrcGuid = Guid.NewGuid();
-            rbRigidbody.ExpObjectTrajectory.tempSleeping = true;
+            if (rbRigidbody != null) rbRigidbody.ExpObjectTrajectory.tempSleeping = true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -152,9 +152,9 @@ namespace RBPhys
             PhysComputer.RemoveStdSolver(StdSolverInit, StdSolverIteration);
             PhysComputer.RemovePhysObject(BeforeSolver, AfterSolver);
 
+            if (rbRigidbody != null) rbRigidbody.ExpObjectTrajectory.tempSleeping = false;
             rbRigidbody = null;
             _validatorSrcGuid = Guid.Empty;
-            rbRigidbody.ExpObjectTrajectory.tempSleeping = false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
