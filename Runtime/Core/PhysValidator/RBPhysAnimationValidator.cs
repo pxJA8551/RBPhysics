@@ -11,7 +11,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Validate()
         {
-            return vPhysAnimation != null && RBPhysUtil.IsF32EpsilonEqual(vPhysAnimation.ctrlTime, animCtrlSpeed);
+            return vPhysAnimation != null && RBPhysUtil.IsF32EpsilonEqual(vPhysAnimation.ctrlSpeed, animCtrlSpeed);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
