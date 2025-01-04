@@ -216,7 +216,7 @@ namespace RBPhys
 
             foreach (var c in GetComponents<RBCollider>())
             {
-                if (c.Ident(PhysComputer)) c.SetParentRigidbody(this);
+                if (c.Ident(PhysComputer) && c.ParentRigidbody == null) c.SetParentRigidbody(this);
             }
 
             FindChildrenRecursive(transform);
@@ -254,7 +254,7 @@ namespace RBPhys
                 if (rb == null) 
                 {
                     var c = t.GetComponent<RBCollider>();
-                    if (c != null && c.Ident(PhysComputer)) 
+                    if (c != null && c.Ident(PhysComputer) && c.ParentRigidbody == null) 
                     {
                         c.SetParentRigidbody(this);
                     }
