@@ -24,6 +24,8 @@ namespace RBPhys
         {
             if (_mainComputer == null) return;
 
+            await _mainComputer.WaitSemaphoreAsync(500);
+
             if (fadeLengthMs > 0)
             {
                 if (_mainComputer.PhysTimeScaleMode == timeScaleMode) return;
@@ -69,6 +71,8 @@ namespace RBPhys
             {
                 _mainComputer.PhysTimeScaleMode = timeScaleMode;
             }
+
+            _mainComputer.ReleaseSemaphore();
         }
 
         public static void InitMainComputer()
