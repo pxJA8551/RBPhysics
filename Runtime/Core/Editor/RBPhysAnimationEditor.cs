@@ -27,6 +27,9 @@ namespace RBPhys
         SerializedProperty interpMultiplier;
         SerializedProperty ext_lambda_compensation;
 
+        SerializedProperty destabilizeSpd;
+        SerializedProperty destabilizeSpdSlop;
+
         private void OnEnable()
         {
             baseAnimationClip = serializedObject.FindProperty("baseAnimationClip");
@@ -46,6 +49,9 @@ namespace RBPhys
             velocityInterp = serializedObject.FindProperty("velocityInterp");
             interpMultiplier = serializedObject.FindProperty("interpMultiplier");
             ext_lambda_compensation = serializedObject.FindProperty("ext_lambda_compensation");
+
+            destabilizeSpd = serializedObject.FindProperty("destabilizeSpd");
+            destabilizeSpdSlop = serializedObject.FindProperty("destabilizeSpdSlop");
         }
 
         public override void OnInspectorGUI()
@@ -78,6 +84,12 @@ namespace RBPhys
             EditorGUILayout.PropertyField(linker);
             EditorGUILayout.Space();
             EditorGUILayout.PropertyField(ext_lambda_compensation);
+            EditorGUILayout.Space();
+            EditorGUILayout.PropertyField(destabilizeSpd);
+
+            GUI.enabled = destabilizeSpd.boolValue;
+            EditorGUILayout.PropertyField(destabilizeSpdSlop);
+            GUI.enabled = true;
 
             serializedObject.ApplyModifiedProperties();
         }
