@@ -84,9 +84,9 @@ namespace RBPhys
             EditorGUILayout.PropertyField(linker);
             EditorGUILayout.Space();
             EditorGUILayout.PropertyField(ext_lambda_compensation);
+
             EditorGUILayout.Space();
             EditorGUILayout.PropertyField(destabilizeSpd);
-
             GUI.enabled = destabilizeSpd.boolValue;
             EditorGUILayout.PropertyField(destabilizeSpdSlop);
             GUI.enabled = true;

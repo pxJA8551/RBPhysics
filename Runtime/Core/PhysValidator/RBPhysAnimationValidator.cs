@@ -6,7 +6,7 @@ namespace RBPhys
 {
     public class RBPhysAnimationTrajAltnValidator : RBTrajectoryAlternateValidator
     {
-        public const float CTRL_TIME_EPSILON = .01f;
+        public const float CTRL_TIME_EPSILON = .025f;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Validate()
