@@ -136,6 +136,7 @@ namespace RBPhys
             PhysComputer.AddPhysObject(BeforeSolver, AfterSolver);
 
             _validatorSrcGuid = Guid.NewGuid();
+            rbRigidbody.ExpObjectTrajectory.tempSleeping = true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -145,6 +146,7 @@ namespace RBPhys
             PhysComputer.RemovePhysObject(BeforeSolver, AfterSolver);
 
             _validatorSrcGuid = Guid.Empty;
+            rbRigidbody.ExpObjectTrajectory.tempSleeping = false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
