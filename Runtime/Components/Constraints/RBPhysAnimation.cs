@@ -195,7 +195,7 @@ namespace RBPhys
                 if (enablePhysProceduralAnimation)
                 {
                     SetBasePos();
-                    SampleApplyTRSAnimation(ctrlTime, dt, _lsBasePos, _lsBaseRot, false);
+                    SampleApplyTRSAnimation(ctrlTime, dt, _lsBasePos, _lsBaseRot, true);
                 }
                 else
                 {
@@ -318,7 +318,7 @@ namespace RBPhys
 
             if (enablePhysProceduralAnimation && trsCurve != null)
             {
-                SampleApplyTRSAnimation(ctrlTime, dt, _lsBasePos, _lsBaseRot, true);
+                SampleApplyTRSAnimation(ctrlTime, dt, _lsBasePos, _lsBaseRot, false);
             }
             else
             {
