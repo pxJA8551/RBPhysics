@@ -1,9 +1,6 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 namespace RBPhys
@@ -38,6 +35,9 @@ namespace RBPhys
 
         public float ext_lambda_compensation = 1;
 
+        public bool destabilizeSpd = false;
+        public float destabilizeSpdSlop = .15f;
+
         public Guid ValidatorSrcGuid { get { return _validatorSrcGuid; } }
         Guid _validatorSrcGuid;
 
@@ -68,6 +68,13 @@ namespace RBPhys
             {
                 _parentOffset = Matrix4x4.identity;
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        float CalcAnimSpd(float ctrlSpd)
+        {
+            if (destabilizeSpd) return (ctrlSpd * UnityEngine.Random.Range(1 - destabilizeSpdSlop, 1 + destabilizeSpdSlop));
+            else return ctrlSpd;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -117,6 +124,9 @@ namespace RBPhys
             _lsBaseRot = anim._lsBaseRot;
 
             parentTransform = anim.parentTransform;
+
+            destabilizeSpdSlop = anim.destabilizeSpdSlop;
+            destabilizeSpd = anim.destabilizeSpd;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -187,7 +197,7 @@ namespace RBPhys
 
             SetAnim();
 
-            ctrlTime += dt * ctrlSpeed;
+            ctrlTime += dt * CalcAnimSpd(ctrlSpeed);
             ctrlTime = ClampAnimTime(ctrlTime);
 
             if (trsCurve != null)

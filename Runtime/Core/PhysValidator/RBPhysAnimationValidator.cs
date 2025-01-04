@@ -11,17 +11,17 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Validate()
         {
-            return vPhysAnimation != null && RBPhysUtil.IsF32EpsilonEqual(vPhysAnimation.ctrlTime, animCtrlTime);
+            return vPhysAnimation != null && RBPhysUtil.IsF32EpsilonEqual(vPhysAnimation.ctrlTime, animCtrlSpeed);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBPhysAnimationTrajAltnValidator(RBPhysAnimation physAnim) : base(physAnim?.ValidatorSrcGuid ?? Guid.Empty)
         {
             vPhysAnimation = physAnim;
-            animCtrlTime = physAnim?.ctrlTime ?? -1;
+            animCtrlSpeed = physAnim?.ctrlSpeed ?? 0;
         }
 
         public readonly RBPhysAnimation vPhysAnimation;
-        public readonly float animCtrlTime;
+        public readonly float animCtrlSpeed;
     }
 }
