@@ -26,7 +26,7 @@ namespace RBPhys
 
         void GetAltnValidators(RBTrajectory traj)
         {
-            if (!traj.IsStatic) return;
+            if (traj.IsStatic) return;
 
             var rb = traj?.Rigidbody;
 
