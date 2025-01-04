@@ -44,8 +44,6 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override void ComponentAwake()
         {
-            if (rbRigidbody == null) throw new Exception();
-
             SetParentTransformOffset();
 
             _animationLength = 0;
@@ -95,6 +93,15 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void Init()
+        {
+            var vp = BaseVComponent as RBPhysAnimation;
+            if (vp == null) return;
+
+            rbRigidbody = vp.rbRigidbody.FindOrCreateVirtualComponent(VTransform) as RBRigidbody;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CopyPhysAnimation(RBPhysAnimation anim)
         {
             baseAnimationClip = anim.baseAnimationClip;
@@ -111,7 +118,6 @@ namespace RBPhys
             linker = anim.linker;
             animationType = anim.animationType;
 
-            rbRigidbody = anim.rbRigidbody;
             playing = anim.playing;
             enablePhysProceduralAnimation = anim.enablePhysProceduralAnimation;
 
@@ -135,6 +141,7 @@ namespace RBPhys
             PhysComputer.AddStdSolver(StdSolverInit, StdSolverIteration);
             PhysComputer.AddPhysObject(BeforeSolver, AfterSolver);
 
+            Init();
             _validatorSrcGuid = Guid.NewGuid();
             rbRigidbody.ExpObjectTrajectory.tempSleeping = true;
         }
@@ -145,6 +152,7 @@ namespace RBPhys
             PhysComputer.RemoveStdSolver(StdSolverInit, StdSolverIteration);
             PhysComputer.RemovePhysObject(BeforeSolver, AfterSolver);
 
+            rbRigidbody = null;
             _validatorSrcGuid = Guid.Empty;
             rbRigidbody.ExpObjectTrajectory.tempSleeping = false;
         }
