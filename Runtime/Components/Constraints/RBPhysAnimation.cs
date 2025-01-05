@@ -71,8 +71,15 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         float CalcAnimSpd(float ctrlSpd)
         {
-            if (destabilizeSpd) return (ctrlSpd * UnityEngine.Random.Range(1 - destabilizeSpdSlop, 1 + destabilizeSpdSlop));
-            else return ctrlSpd;
+            if (VTransform.IsPredictionVTransform)
+            {
+                return ctrlSpd;
+            }
+            else
+            {
+                if (destabilizeSpd) return (ctrlSpd * UnityEngine.Random.Range(1 - destabilizeSpdSlop, 1 + destabilizeSpdSlop));
+                else return ctrlSpd;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

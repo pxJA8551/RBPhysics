@@ -63,6 +63,7 @@ namespace RBPhys
             {
                 _validatorSrcGuid = validatorSrcGuid;
                 this.permanentBranch = permanentBranch;
+                RBPhysComputer c;
             }
 
             public bool ValidateSrc(Guid validatorSrcGuid)
