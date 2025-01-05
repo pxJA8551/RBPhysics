@@ -7,9 +7,6 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using Unity.IL2CPP.CompilerServices;
 using System.Threading;
-using Unity.Collections.LowLevel.Unsafe;
-using Unity.Android.Types;
-using static RBPhys.RBPhysComputer;
 
 namespace RBPhys
 {

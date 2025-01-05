@@ -77,8 +77,8 @@ namespace RBPhys
             }
             else
             {
-                if (destabilizeSpd) return (ctrlSpd * UnityEngine.Random.Range(1 - destabilizeSpdSlop, 1 + destabilizeSpdSlop));
-                else return ctrlSpd;
+                //if (destabilizeSpd) return (ctrlSpd * UnityEngine.Random.Range(1 - destabilizeSpdSlop, 1 + destabilizeSpdSlop));
+                return ctrlSpd;
             }
         }
 
