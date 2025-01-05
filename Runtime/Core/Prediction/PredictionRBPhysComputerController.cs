@@ -78,20 +78,20 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task IntergradeComputeFor(int frames, CancellationToken cxl)
         {
-            await Task.Run(() =>
+            await Task.Run(async () =>
             {
                 for (int i = 0; i < frames; i++)
                 {
                     if (_physComputer == null || cxl.IsCancellationRequested) return;
-                    PhysicsFrame();
+                    await PhysicsFrame();
                 }
             });
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void PhysicsFrame()
+        async Task PhysicsFrame()
         {
-            _physComputer.OpenPhysicsFrameWindowAsync().Wait();
+            await _physComputer.OpenPhysicsFrameWindowAsync();
             _physComputer.ClosePhysicsFrameWindow();
         }
 

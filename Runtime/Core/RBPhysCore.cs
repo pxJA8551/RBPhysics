@@ -34,7 +34,7 @@ namespace RBPhys
         public const float VELOCITY_MAX = 50f;
         public const float ANG_VELOCITY_MAX = 20f;
 
-        public const bool PHYS_SUBTHREAD = false;
+        public const bool PHYS_SUBTHREAD = true;
 
         public int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
         public int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
@@ -1705,7 +1705,7 @@ namespace RBPhys
                         _stdSolverInitTasks.Add(t);
                     }
 
-                    Task.WhenAll(_stdSolverInitTasks).Wait();
+                    await Task.WhenAll(_stdSolverInitTasks);
                 }
             }
 
@@ -1763,7 +1763,7 @@ namespace RBPhys
                         if (!_collisionsInSolver[i].skipInSolver) SolveCollisionPair(_collisionsInSolver[i]);
                     });
 
-                    Task.WhenAll(_stdSolverIterTasks).Wait();
+                    await Task.WhenAll(_stdSolverIterTasks);
 
                     Profiler.EndSample();
                 }
@@ -1792,7 +1792,7 @@ namespace RBPhys
                                 _stdSolverInitTasks.Add(t);
                             }
 
-                            Task.WhenAll(_stdSolverInitTasks).Wait();
+                            await Task.WhenAll(_stdSolverInitTasks);
                         }
                     }
 
