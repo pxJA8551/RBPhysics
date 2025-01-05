@@ -33,7 +33,7 @@ namespace RBPhys
         public const float VELOCITY_MAX = 50f;
         public const float ANG_VELOCITY_MAX = 20f;
 
-        public const bool PHYS_SUBTHREAD = false;
+        public const bool PHYS_SUBTHREAD = true;
 
         public int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
         public int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
@@ -341,114 +341,86 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public async Task SyncObjectTransforms(bool waitSemaphore = true)
+        public async Task SyncObjectTransformsAsync(bool waitSemaphore = true)
         {
-            if (waitSemaphore)
-            {
-                if (await WaitSemaphoreAsync(500))
-                {
-                    foreach (var v in _vTransforms)
-                    {
-                        v.SyncBaseObjectTransform();
-                    }
-
-                    ReleaseSemaphore();
-                }
-                else
-                {
-                    throw new Exception();
-                }
-            }
-            else
+            if (waitSemaphore) await WaitSemaphoreAsync();
+            try
             {
                 foreach (var v in _vTransforms)
                 {
                     v.SyncBaseObjectTransform();
                 }
             }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                if (waitSemaphore) ReleaseSemaphore();
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public async Task SyncBaseVTransforms(bool waitSemaphore = true)
+        public async Task SyncBaseVTransformsAsync(bool waitSemaphore = true)
         {
-            if (waitSemaphore)
-            {
-                if (await WaitSemaphoreAsync(500))
-                {
-                    foreach (var v in _vTransforms)
-                    {
-                        v.SyncBaseVTransform();
-                    }
-
-                    ReleaseSemaphore();
-                }
-                else
-                {
-                    throw new Exception();
-                }
-            }
-            else
+            if (waitSemaphore) await WaitSemaphoreAsync();
+            try
             {
                 foreach (var v in _vTransforms)
                 {
                     v.SyncBaseVTransform();
                 }
             }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                if (waitSemaphore) ReleaseSemaphore();
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public async Task ApplyObjectTransforms(bool waitSemaphore = true)
+        public async Task ApplyObjectTransformsAsync(bool waitSemaphore = true)
         {
-            if (waitSemaphore)
-            {
-                if (await WaitSemaphoreAsync(500))
-                {
-                    foreach (var v in _vTransforms)
-                    {
-                        v.ApplyBaseObjectTransform();
-                    }
-
-                    ReleaseSemaphore();
-                }
-                else
-                {
-                    throw new Exception();
-                }
-            }
-            else
+            if (waitSemaphore) await WaitSemaphoreAsync();
+            try
             {
                 foreach (var v in _vTransforms)
                 {
                     v.ApplyBaseObjectTransform();
                 }
             }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                if (waitSemaphore) ReleaseSemaphore();
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public async Task SyncBaseVComponents(bool waitSemaphore = true)
+        public async Task SyncBaseVComponentsAsync(bool waitSemaphore = true)
         {
-            if (waitSemaphore)
-            {
-                if (await WaitSemaphoreAsync(500))
-                {
-                    foreach (var v in _vComponents)
-                    {
-                        v.SyncVirtualComponent();
-                    }
-
-                    ReleaseSemaphore();
-                }
-                else
-                {
-                    throw new Exception();
-                }
-            }
-            else
+            if (waitSemaphore) await WaitSemaphoreAsync();
+            try
             {
                 foreach (var v in _vComponents)
                 {
                     v.SyncVirtualComponent();
                 }
+            }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                if (waitSemaphore) ReleaseSemaphore();
             }
         }
 

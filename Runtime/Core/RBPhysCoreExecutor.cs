@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -8,6 +9,8 @@ namespace RBPhys
 {
     public class RBPhysCoreExecutor : MonoBehaviour
     {
+        SemaphoreSlim _mainPhysLoopSemaphore = new SemaphoreSlim(1, 1);
+
         private void Awake()
         {
             Debug.Log(string.Format("CPU: {0} / {1}cores", SystemInfo.processorType, SystemInfo.processorCount));
@@ -18,10 +21,23 @@ namespace RBPhys
 
         async void FixedUpdate()
         {
-            await PhysicsFrame();
+            await _mainPhysLoopSemaphore.WaitAsync();
+
+            try
+            {
+                await PhysicsFrameAsync();
+            }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                _mainPhysLoopSemaphore.Release();
+            }
         }
 
-        async Task PhysicsFrame()
+        async Task PhysicsFrameAsync()
         {
             await RBPhysController.MainComputer.OpenPhysicsFrameWindowAsync();
 
@@ -29,7 +45,7 @@ namespace RBPhys
             StartCoroutine(WaitForFixedUpdate());
 
             await RBPhysController.MainComputer.ClosePhysicsFrameWindow();
-            await RBPhysController.MainComputer.ApplyObjectTransforms();
+            await RBPhysController.MainComputer.ApplyObjectTransformsAsync();
         }
 
         IEnumerator WaitForFixedUpdate()

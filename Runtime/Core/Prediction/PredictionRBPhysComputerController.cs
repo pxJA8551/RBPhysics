@@ -99,28 +99,28 @@ namespace RBPhys
         public async Task SyncObjectTransforms()
         {
             if (_physComputer == null) throw new Exception();
-            await _physComputer.SyncObjectTransforms();
+            await _physComputer.SyncObjectTransformsAsync();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task SyncBaseVTransforms()
         {
             if (_physComputer == null) throw new Exception();
-            await _physComputer.SyncBaseVTransforms();
+            await _physComputer.SyncBaseVTransformsAsync();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task ApplyObjectTransforms()
         {
             if (_physComputer == null) throw new Exception();
-            await _physComputer.ApplyObjectTransforms();
+            await _physComputer.ApplyObjectTransformsAsync();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task SyncBaseVComponents()
         {
             if (_physComputer == null) throw new Exception();
-            await _physComputer.SyncBaseVComponents();
+            await _physComputer.SyncBaseVComponentsAsync();
         }
     }
 }
