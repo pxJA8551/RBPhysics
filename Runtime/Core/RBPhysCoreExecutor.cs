@@ -29,8 +29,8 @@ namespace RBPhys
             if (this == null) return;
             StartCoroutine(WaitForFixedUpdate());
 
-            RBPhysController.MainComputer.ClosePhysicsFrameWindow();
-            RBPhysController.MainComputer.ApplyVirtualTransforms();
+            await RBPhysController.MainComputer.ClosePhysicsFrameWindow();
+            await RBPhysController.MainComputer.ApplyObjectTransforms();
         }
 
         IEnumerator WaitForFixedUpdate()
@@ -38,9 +38,9 @@ namespace RBPhys
             yield return new WaitForFixedUpdate();
         }
 
-        private async void OnDestroy()
+        private void OnDestroy()
         {
-            await RBPhysController.DisposeMainComputerAsync();
+            RBPhysController.DisposeMainComputer();
         }
     }
 }

@@ -486,7 +486,7 @@ namespace RBPhys
 
                 if (sMin >= SLEEP_GRACE_FRAMES)
                 {
-                    PhysSleep();
+                    //PhysSleep();
                 }
             }
         }

@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Rendering;
 using static RBPhys.RBPhysComputer;
 
 namespace RBPhys
@@ -24,55 +26,60 @@ namespace RBPhys
         {
             if (_mainComputer == null) return;
 
-            await _mainComputer.WaitSemaphoreAsync(500).ConfigureAwait(false);
-
-            if (fadeLengthMs > 0)
+            if (await _mainComputer.WaitSemaphoreAsync(500))
             {
-                if (_mainComputer.PhysTimeScaleMode == timeScaleMode) return;
-
-                float wt0 = Time.unscaledTime * 1000f;
-                while (true)
+                if (fadeLengthMs > 0)
                 {
-                    float s = (Time.unscaledTime * 1000f) - wt0;
+                    if (_mainComputer.PhysTimeScaleMode == timeScaleMode) return;
 
-                    float ts = ((float)s / fadeLengthMs);
-                    Time.timeScale = Mathf.Lerp(1, 0, ts);
-
-                    if (_mainComputer == null) return;
-
-                    if (fadeLengthMs < s)
+                    float wt0 = Time.unscaledTime * 1000f;
+                    while (true)
                     {
-                        _mainComputer.PhysTimeScaleMode = timeScaleMode;
-                        break;
+                        float s = (Time.unscaledTime * 1000f) - wt0;
+
+                        float ts = ((float)s / fadeLengthMs);
+                        Time.timeScale = Mathf.Lerp(1, 0, ts);
+
+                        if (_mainComputer == null) return;
+
+                        if (fadeLengthMs < s)
+                        {
+                            _mainComputer.PhysTimeScaleMode = timeScaleMode;
+                            break;
+                        }
+
+                        await Task.Delay(1);
                     }
 
-                    await Task.Delay(1);
-                }
-
-                float wt1 = Time.unscaledTime * 1000f;
-                while (true)
-                {
-                    float s = (Time.unscaledTime * 1000f) - wt1;
-
-                    float ts = (s / fadeLengthMs);
-                    Time.timeScale = Mathf.Lerp(1, 0, (1 - ts));
-
-                    if (fadeLengthMs < s)
+                    float wt1 = Time.unscaledTime * 1000f;
+                    while (true)
                     {
-                        Time.timeScale = 1;
-                        break;
-                    }
+                        float s = (Time.unscaledTime * 1000f) - wt1;
 
-                    await Task.Delay(1);
-                    wt1++;
+                        float ts = (s / fadeLengthMs);
+                        Time.timeScale = Mathf.Lerp(1, 0, (1 - ts));
+
+                        if (fadeLengthMs < s)
+                        {
+                            Time.timeScale = 1;
+                            break;
+                        }
+
+                        await Task.Delay(1);
+                        wt1++;
+                    }
                 }
+                else
+                {
+                    _mainComputer.PhysTimeScaleMode = timeScaleMode;
+                }
+
+                _mainComputer.ReleaseSemaphore();
             }
             else
             {
-                _mainComputer.PhysTimeScaleMode = timeScaleMode;
+                throw new Exception();
             }
-
-            _mainComputer.ReleaseSemaphore();
         }
 
         public static void InitMainComputer()
@@ -81,10 +88,12 @@ namespace RBPhys
             _mainComputer = new RBPhysComputer(false);
         }
 
-        public static async Task DisposeMainComputerAsync()
+        public static void DisposeMainComputer()
         {
-            await _mainComputer?.WaitSemaphoreAsync();
-            _mainComputer?.Dispose();
+            if (_mainComputer?.WaitSemaphore(500) ?? false) 
+            {
+                _mainComputer.Dispose();
+            }
         }
 
         public static void ReInitializeMainComputer()

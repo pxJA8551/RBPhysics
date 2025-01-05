@@ -361,7 +361,7 @@ namespace RBPhys
             _solverDeltaTime = dt;
         }
 
-        public virtual void StdSolverIteration(int iterationCount, RBPhysComputer.SolverInfo info)
+        public void StdSolverIteration(int iterationCount, RBPhysComputer.SolverInfo info)
         {
             if (enablePhysProceduralAnimation && trsCurve != null)
             {

@@ -8,6 +8,8 @@ using UnityEngine.Profiling;
 using Unity.IL2CPP.CompilerServices;
 using System.Threading;
 using Unity.Collections.LowLevel.Unsafe;
+using Unity.Android.Types;
+using static RBPhys.RBPhysComputer;
 
 namespace RBPhys
 {
@@ -34,7 +36,7 @@ namespace RBPhys
         public const float VELOCITY_MAX = 50f;
         public const float ANG_VELOCITY_MAX = 20f;
 
-        public const bool PHYS_SUBTHREAD = true;
+        public const bool PHYS_SUBTHREAD = false;
 
         public int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
         public int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
@@ -318,10 +320,21 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public async Task<bool> WaitSemaphoreAsync(int waitTimeoutMs = 500)
+        public bool WaitSemaphore(int timeoutMs)
         {
-            bool semaphore = await _solverIterationSemaphore.WaitAsync(waitTimeoutMs).ConfigureAwait(false);
-            return semaphore;
+            return _solverIterationSemaphore.Wait(timeoutMs);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public async Task WaitSemaphoreAsync()
+        {
+            await _solverIterationSemaphore.WaitAsync();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public async Task<bool> WaitSemaphoreAsync(int timeoutMs)
+        {
+            return await _solverIterationSemaphore.WaitAsync(timeoutMs);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -331,62 +344,122 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SyncObjectTransforms(bool waitSemaphore = true)
+        public async Task SyncObjectTransforms(bool waitSemaphore = true)
         {
-            if (waitSemaphore) WaitSemaphore();
-
-            foreach (var v in _vTransforms)
+            if (waitSemaphore)
             {
-                v.SyncBaseObjectTransform();
-            }
+                if (await WaitSemaphoreAsync(500))
+                {
+                    foreach (var v in _vTransforms)
+                    {
+                        v.SyncBaseObjectTransform();
+                    }
 
-            if (waitSemaphore) ReleaseSemaphore();
+                    ReleaseSemaphore();
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            else
+            {
+                foreach (var v in _vTransforms)
+                {
+                    v.SyncBaseObjectTransform();
+                }
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SyncBaseVTransforms(bool waitSemaphore = true)
+        public async Task SyncBaseVTransforms(bool waitSemaphore = true)
         {
-            if (waitSemaphore) WaitSemaphore();
-
-            foreach (var v in _vTransforms)
+            if (waitSemaphore)
             {
-                v.SyncBaseVTransform();
-            }
+                if (await WaitSemaphoreAsync(500))
+                {
+                    foreach (var v in _vTransforms)
+                    {
+                        v.SyncBaseVTransform();
+                    }
 
-            if (waitSemaphore) ReleaseSemaphore();
+                    ReleaseSemaphore();
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            else
+            {
+                foreach (var v in _vTransforms)
+                {
+                    v.SyncBaseVTransform();
+                }
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ApplyVirtualTransforms(bool waitSemaphore = true)
+        public async Task ApplyObjectTransforms(bool waitSemaphore = true)
         {
-            if (waitSemaphore) WaitSemaphore();
-
-            foreach (var v in _vTransforms)
+            if (waitSemaphore)
             {
-                v.ApplyBaseObjectTransform();
-            }
+                if (await WaitSemaphoreAsync(500))
+                {
+                    foreach (var v in _vTransforms)
+                    {
+                        v.ApplyBaseObjectTransform();
+                    }
 
-            if (waitSemaphore) ReleaseSemaphore();
+                    ReleaseSemaphore();
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            else
+            {
+                foreach (var v in _vTransforms)
+                {
+                    v.ApplyBaseObjectTransform();
+                }
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SyncBaseVComponents(bool waitSemaphore = true)
+        public async Task SyncBaseVComponents(bool waitSemaphore = true)
         {
-            if (waitSemaphore) WaitSemaphore();
-
-            foreach (var v in _vComponents)
+            if (waitSemaphore)
             {
-                v.SyncVirtualComponent();
-            }
+                if (await WaitSemaphoreAsync(500))
+                {
+                    foreach (var v in _vComponents)
+                    {
+                        v.SyncVirtualComponent();
+                    }
 
-            if (waitSemaphore) ReleaseSemaphore();
+                    ReleaseSemaphore();
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            else
+            {
+                foreach (var v in _vComponents)
+                {
+                    v.SyncVirtualComponent();
+                }
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task OpenPhysicsFrameWindowAsync()
         {
             if (physSubthread) await Task.Run(OpenPhysFrame).ConfigureAwait(false);
-            else await OpenPhysFrame().ConfigureAwait(false);
+            else await OpenPhysFrame();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -404,38 +477,42 @@ namespace RBPhys
 
             if (_beforeSolver != null) _beforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
 
-            await _solverIterationSemaphore.WaitAsync(500).ConfigureAwait(false);
-
-            try
+            if (await _solverIterationSemaphore.WaitAsync(500))
             {
-                UpdateTransforms();
-                UpdateExtTrajectories(_solverDeltaTimeAsFloat);
-                SortTrajectories();
-
-                if (_trajectories_orderByXMin.Length > 0)
+                try
                 {
-                    foreach (RBRigidbody rb in _rigidbodies)
+                    UpdateTransforms();
+                    UpdateExtTrajectories(_solverDeltaTimeAsFloat);
+                    SortTrajectories();
+
+                    if (_trajectories_orderByXMin.Length > 0)
                     {
-                        if (!rb.isSleeping && rb.useGravity && !rb.IgnoreVelocity)
+                        foreach (RBRigidbody rb in _rigidbodies)
                         {
-                            rb.ExpVelocity += gravityAcceleration * dt;
+                            if (!rb.isSleeping && rb.useGravity && !rb.IgnoreVelocity)
+                            {
+                                rb.ExpVelocity += gravityAcceleration * dt;
+                            }
                         }
+
+                        await SolveConstraints(dt);
                     }
-
-                    await SolveConstraints(dt).ConfigureAwait(false);
-
-                    if (_afterSolver != null) _afterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                }
+                catch
+                {
+                    throw;
+                }
+                finally
+                {
+                    _solverIterationSemaphore.Release();
                 }
             }
-            catch (Exception e)
+            else
             {
-                throw;
-            }
-            finally
-            {
-                _solverIterationSemaphore.Release();
+                throw new Exception();
             }
 
+            if (_afterSolver != null) _afterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
             if (_validatorAfterSolver != null) _validatorAfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
 
             TrySleepRigidbodies();
@@ -972,9 +1049,9 @@ namespace RBPhys
             return overlappings;
         }
 
-        public async void ClosePhysicsFrameWindow()
+        public async Task ClosePhysicsFrameWindow()
         {
-            if (physSubthread) await Task.Run(ClosePhysFrame).ConfigureAwait(false);
+            if (physSubthread) await Task.Run(ClosePhysFrame);
             else ClosePhysFrame();
         }
 
@@ -1101,9 +1178,6 @@ namespace RBPhys
                 rb.UpdateExpTrajectory(dt, updateColliders);
             }
         }
-
-        List<Task> _stdSolverIterTasks = new List<Task>();
-        List<Task> _stdSolverInitTasks = new List<Task>();
 
         void SortTrajectories()
         {
@@ -1658,20 +1732,8 @@ namespace RBPhys
             Profiler.BeginSample(name: "Physics-CollisionResolution-RigidbodyPrepareSolve");
 
             {
-                if (_stdSolverInit != null)
-                {
-                    var solverInfo = GetSolverInfo(-1, -1);
-
-                    _stdSolverInitTasks.Clear();
-
-                    foreach (StdSolverInit asyncInit in _stdSolverInit.GetInvocationList()) 
-                    {
-                        var t = Task.Run(() => asyncInit(dt, solverInfo));
-                        _stdSolverInitTasks.Add(t);
-                    }
-
-                    await Task.WhenAll(_stdSolverInitTasks).ConfigureAwait(false);
-                }
+                var solverInfo = GetSolverInfo(-1, -1);
+                if (_stdSolverInit != null) _stdSolverInit(dt, solverInfo);
             }
 
             foreach (RBCollision col in _collisionsInSolver)
@@ -1712,23 +1774,12 @@ namespace RBPhys
                     Profiler.BeginSample(name: "SolveConstraints");
 
                     var solverInfo = GetSolverInfo(iter, i);
-
-                    _stdSolverIterTasks.Clear();
-                    if (_stdSolverIter != null)
-                    {
-                        foreach (StdSolverIteration asyncIter in _stdSolverIter.GetInvocationList())
-                        {
-                            var t = Task.Run(() => asyncIter(iter, solverInfo));
-                            _stdSolverIterTasks.Add(t);
-                        }
-                    }
+                    if (_stdSolverIter != null) _stdSolverIter(iter, solverInfo);
 
                     Parallel.For(0, _collisionsInSolver.Count, i =>
                     {
                         if (!_collisionsInSolver[i].skipInSolver) SolveCollisionPair(_collisionsInSolver[i]);
                     });
-
-                    await Task.WhenAll(_stdSolverIterTasks).ConfigureAwait(false);
 
                     Profiler.EndSample();
                 }
@@ -1746,19 +1797,7 @@ namespace RBPhys
 
                     {
                         var solverInfo = GetSolverInfo(iter, -1);
-
-                        if (_stdSolverInit != null)
-                        {
-                            _stdSolverInitTasks.Clear();
-
-                            foreach (StdSolverInit asyncInit in _stdSolverInit.GetInvocationList())
-                            {
-                                var t = Task.Run(() => asyncInit(dt, solverInfo));
-                                _stdSolverInitTasks.Add(t);
-                            }
-
-                            await Task.WhenAll(_stdSolverInitTasks).ConfigureAwait(false);
-                        }
+                        if (_stdSolverInit != null) _stdSolverInit(dt, solverInfo);
                     }
 
                     Profiler.EndSample();

@@ -83,7 +83,7 @@ namespace RBPhys
                 for (int i = 0; i < frames; i++)
                 {
                     if (_physComputer == null || cxl.IsCancellationRequested) return;
-                    await PhysicsFrame().ConfigureAwait(false);
+                    await PhysicsFrame();
                 }
             });
         }
@@ -91,29 +91,36 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         async Task PhysicsFrame()
         {
-            await _physComputer.OpenPhysicsFrameWindowAsync().ConfigureAwait(false);
-            _physComputer.ClosePhysicsFrameWindow();
+            await _physComputer.OpenPhysicsFrameWindowAsync();
+            await _physComputer.ClosePhysicsFrameWindow();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SyncObjectTransforms()
+        public async Task SyncObjectTransforms()
         {
             if (_physComputer == null) throw new Exception();
-            _physComputer.SyncObjectTransforms();
+            await _physComputer.SyncObjectTransforms();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SyncBaseVTransforms()
+        public async Task SyncBaseVTransforms()
         {
             if (_physComputer == null) throw new Exception();
-            _physComputer.SyncBaseVTransforms();
+            await _physComputer.SyncBaseVTransforms();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SyncBaseVComponents()
+        public async Task ApplyObjectTransforms()
         {
             if (_physComputer == null) throw new Exception();
-            _physComputer.SyncBaseVComponents();
+            await _physComputer.ApplyObjectTransforms();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public async Task SyncBaseVComponents()
+        {
+            if (_physComputer == null) throw new Exception();
+            await _physComputer.SyncBaseVComponents();
         }
     }
 }
