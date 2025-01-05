@@ -92,7 +92,7 @@ namespace RBPhys
         async Task PhysicsFrame()
         {
             await _physComputer.OpenPhysicsFrameWindowAsync();
-            await _physComputer.ClosePhysicsFrameWindow();
+            _physComputer.ClosePhysicsFrameWindow();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

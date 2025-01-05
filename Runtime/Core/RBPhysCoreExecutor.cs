@@ -44,7 +44,7 @@ namespace RBPhys
             if (this == null) return;
             StartCoroutine(WaitForFixedUpdate());
 
-            await RBPhysController.MainComputer.ClosePhysicsFrameWindow();
+            RBPhysController.MainComputer.ClosePhysicsFrameWindow();
             await RBPhysController.MainComputer.ApplyObjectTransformsAsync();
         }
 

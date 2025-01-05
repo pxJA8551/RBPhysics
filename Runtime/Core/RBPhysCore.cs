@@ -33,8 +33,6 @@ namespace RBPhys
         public const float VELOCITY_MAX = 50f;
         public const float ANG_VELOCITY_MAX = 20f;
 
-        public const bool PHYS_SUBTHREAD = true;
-
         public int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
         public int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
         public float cpu_solver_abort_veladd_sqrt = CPU_SOLVER_ABORT_VELADD_SQRT;
@@ -47,8 +45,6 @@ namespace RBPhys
         public static float softClip_lambda_multiplier = SOFTCLIP_LAMBDA_MULTIPLIER;
 
         public Vector3 gravityAcceleration = new Vector3(0, -9.81f, 0);
-
-        public bool physSubthread = PHYS_SUBTHREAD;
 
         public TimeScaleMode PhysTimeScaleMode
         {
@@ -343,92 +339,119 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task SyncObjectTransformsAsync(bool waitSemaphore = true)
         {
-            if (waitSemaphore) await WaitSemaphoreAsync();
-            try
+            if (waitSemaphore)
+            {
+                if (await WaitSemaphoreAsync(500))
+                {
+                    foreach (var v in _vTransforms)
+                    {
+                        v.SyncBaseObjectTransform();
+                    }
+
+                    ReleaseSemaphore();
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            else
             {
                 foreach (var v in _vTransforms)
                 {
                     v.SyncBaseObjectTransform();
                 }
             }
-            catch
-            {
-                throw;
-            }
-            finally
-            {
-                if (waitSemaphore) ReleaseSemaphore();
-            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task SyncBaseVTransformsAsync(bool waitSemaphore = true)
         {
-            if (waitSemaphore) await WaitSemaphoreAsync();
-            try
+            if (waitSemaphore)
+            {
+                if (await WaitSemaphoreAsync(500))
+                {
+                    foreach (var v in _vTransforms)
+                    {
+                        v.SyncBaseVTransform();
+                    }
+
+                    ReleaseSemaphore();
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            else
             {
                 foreach (var v in _vTransforms)
                 {
                     v.SyncBaseVTransform();
                 }
             }
-            catch
-            {
-                throw;
-            }
-            finally
-            {
-                if (waitSemaphore) ReleaseSemaphore();
-            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task ApplyObjectTransformsAsync(bool waitSemaphore = true)
         {
-            if (waitSemaphore) await WaitSemaphoreAsync();
-            try
+            if (waitSemaphore)
+            {
+                if (await WaitSemaphoreAsync(500))
+                {
+                    foreach (var v in _vTransforms)
+                    {
+                        v.ApplyBaseObjectTransform();
+                    }
+
+                    ReleaseSemaphore();
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            else
             {
                 foreach (var v in _vTransforms)
                 {
                     v.ApplyBaseObjectTransform();
                 }
             }
-            catch
-            {
-                throw;
-            }
-            finally
-            {
-                if (waitSemaphore) ReleaseSemaphore();
-            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task SyncBaseVComponentsAsync(bool waitSemaphore = true)
         {
-            if (waitSemaphore) await WaitSemaphoreAsync();
-            try
+            if (waitSemaphore)
+            {
+                if (await WaitSemaphoreAsync(500))
+                {
+                    foreach (var v in _vComponents)
+                    {
+                        v.SyncVirtualComponent();
+                    }
+
+                    ReleaseSemaphore();
+                }
+                else
+                {
+                    throw new Exception();
+                }
+            }
+            else
             {
                 foreach (var v in _vComponents)
                 {
                     v.SyncVirtualComponent();
                 }
             }
-            catch
-            {
-                throw;
-            }
-            finally
-            {
-                if (waitSemaphore) ReleaseSemaphore();
-            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task OpenPhysicsFrameWindowAsync()
         {
-            if (physSubthread) await Task.Run(OpenPhysFrame).ConfigureAwait(false);
-            else await OpenPhysFrame();
+            await OpenPhysFrame();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1018,10 +1041,9 @@ namespace RBPhys
             return overlappings;
         }
 
-        public async Task ClosePhysicsFrameWindow()
+        public void ClosePhysicsFrameWindow()
         {
-            if (physSubthread) await Task.Run(ClosePhysFrame);
-            else ClosePhysFrame();
+            ClosePhysFrame();
         }
 
         void ClosePhysFrame()
@@ -1267,7 +1289,7 @@ namespace RBPhys
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-TrajectoryAABBTest");
             {
-                for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
+                Parallel.For(0, _trajectories_orderByXMin.Length, i =>
                 {
                     RBTrajectory activeTraj = _trajectories_orderByXMin[i];
 
@@ -1296,15 +1318,19 @@ namespace RBPhys
 
                                         if (activeTraj.trajectoryAABB.OverlapAABB(targetTraj.trajectoryAABB))
                                         {
-                                            collidingTrajs.Add((activeTraj, targetTraj));
+                                            lock (collidingTrajs)
+                                            {
+                                                collidingTrajs.Add((activeTraj, targetTraj));
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
+                });
             }
+
             Profiler.EndSample();
 
             //�Փˌ��m�i�i���[�t�F�[�Y�j�Ɖ��
@@ -1318,10 +1344,10 @@ namespace RBPhys
             _sphere_capsule_cols.Clear();
             _capsule_capsule_cols.Clear();
 
-            foreach (var trajPair in collidingTrajs)
+            Parallel.ForEach(collidingTrajs, trajPair =>
             {
-                DetectCollisions(trajPair.Item1, trajPair.Item2, ref _obb_obb_cols, ref _obb_sphere_cols, ref _sphere_sphere_cols, ref _obb_capsule_cols, ref _sphere_capsule_cols, ref _capsule_capsule_cols);
-            }
+                LockedDetectCollisions(trajPair.Item1, trajPair.Item2, ref _obb_obb_cols, ref _obb_sphere_cols, ref _sphere_sphere_cols, ref _obb_capsule_cols, ref _sphere_capsule_cols, ref _capsule_capsule_cols);
+            });
 
             Profiler.EndSample();
 
@@ -1982,7 +2008,7 @@ namespace RBPhys
             }
         }
 
-        void DetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b, ref List<(RBCollider, RBCollider, RBDetailCollision.Penetration, RBCollision)> obb_obb_cols, ref List<(RBCollider, RBCollider, RBDetailCollision.Penetration, RBCollision)> obb_sphere_cols, ref List<(RBCollider, RBCollider, RBDetailCollision.Penetration, RBCollision)> sphere_sphere_cols, ref List<(RBCollider, RBCollider, RBDetailCollision.Penetration, RBCollision)> obb_capsule_cols, ref List<(RBCollider, RBCollider, RBDetailCollision.Penetration, RBCollision)> _sphere_capsule_cols, ref List<(RBCollider, RBCollider, RBDetailCollision.Penetration, RBCollision)> capsule_capsule_cols)
+        void LockedDetectCollisions(RBTrajectory traj_a, RBTrajectory traj_b, ref List<(RBCollider, RBCollider, RBDetailCollision.Penetration, RBCollision)> obb_obb_cols, ref List<(RBCollider, RBCollider, RBDetailCollision.Penetration, RBCollision)> obb_sphere_cols, ref List<(RBCollider, RBCollider, RBDetailCollision.Penetration, RBCollision)> sphere_sphere_cols, ref List<(RBCollider, RBCollider, RBDetailCollision.Penetration, RBCollision)> obb_capsule_cols, ref List<(RBCollider, RBCollider, RBDetailCollision.Penetration, RBCollision)> _sphere_capsule_cols, ref List<(RBCollider, RBCollider, RBDetailCollision.Penetration, RBCollision)> capsule_capsule_cols)
         {
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_a;
             (RBCollider collider, RBColliderAABB aabb)[] trajAABB_b;
@@ -2032,47 +2058,74 @@ namespace RBPhys
                                 if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.OBB)
                                 {
                                     //OBB-OBB衝突
-                                    obb_obb_cols.Add((collider_a.collider, collider_b.collider, default, null));
+                                    lock (obb_obb_cols)
+                                    {
+                                        obb_obb_cols.Add((collider_a.collider, collider_b.collider, default, null));
+                                    }
                                 }
                                 else if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.Sphere)
                                 {
                                     //Sphere-OBB衝突
-                                    obb_sphere_cols.Add((collider_a.collider, collider_b.collider, default, null));
+                                    lock (obb_sphere_cols)
+                                    {
+                                        obb_sphere_cols.Add((collider_a.collider, collider_b.collider, default, null));
+                                    }
                                 }
                                 else if (collider_a.collider.GeometryType == RBGeometryType.Sphere && collider_b.collider.GeometryType == RBGeometryType.OBB)
                                 {
                                     //Sphere-OBB衝突（逆転）
-                                    obb_sphere_cols.Add((collider_b.collider, collider_a.collider, default, null));
+                                    lock (obb_sphere_cols)
+                                    {
+                                        obb_sphere_cols.Add((collider_b.collider, collider_a.collider, default, null));
+                                    }
                                 }
                                 else if (collider_a.collider.GeometryType == RBGeometryType.Sphere && collider_b.collider.GeometryType == RBGeometryType.Sphere)
                                 {
                                     //Sphere-Sphere衝突
-                                    sphere_sphere_cols.Add((collider_a.collider, collider_b.collider, default, null));
+                                    lock (sphere_sphere_cols)
+                                    {
+                                        sphere_sphere_cols.Add((collider_a.collider, collider_b.collider, default, null));
+                                    }
                                 }
                                 else if (collider_a.collider.GeometryType == RBGeometryType.OBB && collider_b.collider.GeometryType == RBGeometryType.Capsule)
                                 {
                                     //OBB-Capsule衝突
-                                    obb_capsule_cols.Add((collider_a.collider, collider_b.collider, default, null));
+                                    lock (obb_capsule_cols)
+                                    {
+                                        obb_capsule_cols.Add((collider_a.collider, collider_b.collider, default, null));
+                                    }
                                 }
                                 else if (collider_a.collider.GeometryType == RBGeometryType.Capsule && collider_b.collider.GeometryType == RBGeometryType.OBB)
                                 {
                                     //OBB-Capsule衝突（逆転）
-                                    obb_capsule_cols.Add((collider_b.collider, collider_a.collider, default, null));
+                                    lock (obb_capsule_cols)
+                                    {
+                                        obb_capsule_cols.Add((collider_b.collider, collider_a.collider, default, null));
+                                    }
                                 }
                                 else if (collider_a.collider.GeometryType == RBGeometryType.Sphere && collider_b.collider.GeometryType == RBGeometryType.Capsule)
                                 {
                                     //Sphere-Capsule衝突
-                                    _sphere_capsule_cols.Add((collider_a.collider, collider_b.collider, default, null));
+                                    lock (_sphere_capsule_cols)
+                                    {
+                                        _sphere_capsule_cols.Add((collider_a.collider, collider_b.collider, default, null));
+                                    }
                                 }
                                 else if (collider_a.collider.GeometryType == RBGeometryType.Capsule && collider_b.collider.GeometryType == RBGeometryType.Sphere)
                                 {
                                     //Sphere-Capsule衝突（逆転）
-                                    _sphere_capsule_cols.Add((collider_b.collider, collider_a.collider, default, null));
+                                    lock (_sphere_capsule_cols)
+                                    {
+                                        _sphere_capsule_cols.Add((collider_b.collider, collider_a.collider, default, null));
+                                    }
                                 }
                                 else if (collider_a.collider.GeometryType == RBGeometryType.Capsule && collider_b.collider.GeometryType == RBGeometryType.Capsule)
                                 {
                                     //Capsule-Capsule衝突
-                                    capsule_capsule_cols.Add((collider_a.collider, collider_b.collider, default, null));
+                                    lock (capsule_capsule_cols)
+                                    {
+                                        capsule_capsule_cols.Add((collider_a.collider, collider_b.collider, default, null));
+                                    }
                                 }
                             }
                         }
