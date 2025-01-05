@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using Unity.IL2CPP.CompilerServices;
 using System.Threading;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace RBPhys
 {
@@ -33,6 +34,8 @@ namespace RBPhys
         public const float VELOCITY_MAX = 50f;
         public const float ANG_VELOCITY_MAX = 20f;
 
+        public const bool PHYS_SUBTHREAD = false;
+
         public int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
         public int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
         public float cpu_solver_abort_veladd_sqrt = CPU_SOLVER_ABORT_VELADD_SQRT;
@@ -45,6 +48,8 @@ namespace RBPhys
         public static float softClip_lambda_multiplier = SOFTCLIP_LAMBDA_MULTIPLIER;
 
         public Vector3 gravityAcceleration = new Vector3(0, -9.81f, 0);
+
+        public bool physSubthread = PHYS_SUBTHREAD;
 
         public TimeScaleMode PhysTimeScaleMode
         {
@@ -415,6 +420,13 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task OpenPhysicsFrameWindowAsync()
         {
+            if (physSubthread) await Task.Run(OpenPhysFrame);
+            else await OpenPhysFrame();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        async Task OpenPhysFrame()
+        {
             float dt = _solverDeltaTimeAsFloat;
 
             if (dt == 0) return;
@@ -450,7 +462,7 @@ namespace RBPhys
                     if (_afterSolver != null) _afterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 throw;
             }
@@ -995,7 +1007,13 @@ namespace RBPhys
             return overlappings;
         }
 
-        public void ClosePhysicsFrameWindow()
+        public async void ClosePhysicsFrameWindow()
+        {
+            if (physSubthread) await Task.Run(ClosePhysFrame);
+            else ClosePhysFrame();
+        }
+
+        void ClosePhysFrame()
         {
             float dt = _solverDeltaTimeAsFloat;
 
