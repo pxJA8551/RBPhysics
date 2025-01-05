@@ -83,7 +83,7 @@ namespace RBPhys
                 for (int i = 0; i < frames; i++)
                 {
                     if (_physComputer == null || cxl.IsCancellationRequested) return;
-                    await PhysicsFrame();
+                    await PhysicsFrame().ConfigureAwait(false);
                 }
             });
         }
@@ -91,7 +91,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         async Task PhysicsFrame()
         {
-            await _physComputer.OpenPhysicsFrameWindowAsync();
+            await _physComputer.OpenPhysicsFrameWindowAsync().ConfigureAwait(false);
             _physComputer.ClosePhysicsFrameWindow();
         }
 
