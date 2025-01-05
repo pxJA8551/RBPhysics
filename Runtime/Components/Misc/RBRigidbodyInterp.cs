@@ -31,7 +31,7 @@ namespace RBPhys
             if (!interpPosition && !interpRotation) return;
 
             double elapsed = Time.timeAsDouble - _lastFixedUpdate;
-            float t = (float)(elapsed / Time.fixedDeltaTime);
+            float t = (float)(elapsed / RBPhysController.MainComputer.timeParams.fixedDeltaTime);
 
             var wsPos = Vector3.Lerp(rbRigidbody.interpTraj.PositionLast, rbRigidbody.VTransform.WsPosition, t);
             var wsRot = Quaternion.Lerp(rbRigidbody.interpTraj.RotationLast, rbRigidbody.VTransform.WsRotation, t);
