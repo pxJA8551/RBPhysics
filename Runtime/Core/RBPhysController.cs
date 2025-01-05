@@ -20,11 +20,11 @@ namespace RBPhys
             InitMainComputer();
         }
 
-        public static async Task ChangeTimeScaleMode(TimeScaleMode timeScaleMode, int fadeLengthMs = 0)
+        public static async Task ChangeTimeScaleModeAsync(TimeScaleMode timeScaleMode, int fadeLengthMs = 0)
         {
             if (_mainComputer == null) return;
 
-            await _mainComputer.WaitSemaphoreAsync(500);
+            await _mainComputer.WaitSemaphoreAsync(500).ConfigureAwait(false);
 
             if (fadeLengthMs > 0)
             {
@@ -81,9 +81,9 @@ namespace RBPhys
             _mainComputer = new RBPhysComputer(false);
         }
 
-        public static void DisposeMainComputer()
+        public static async Task DisposeMainComputerAsync()
         {
-            _mainComputer?.WaitSemaphore(1500);
+            await _mainComputer?.WaitSemaphoreAsync();
             _mainComputer?.Dispose();
         }
 

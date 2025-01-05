@@ -117,7 +117,6 @@ namespace RBPhys
         public PhysComputerTime physComputerTime;
 
         SemaphoreSlim _solverIterationSemaphore = new SemaphoreSlim(1, 1);
-        CancellationTokenSource _lockSemaphoreTimeoutCxlSrc = new CancellationTokenSource();
 
         public readonly bool isPredictionComputer;
 
@@ -313,55 +312,21 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void WaitSemaphore(int timeoutMs = 500)
+        public void WaitSemaphore()
         {
-            _lockSemaphoreTimeoutCxlSrc.Cancel();
             _solverIterationSemaphore.Wait();
-
-            if (timeoutMs > 0)
-            {
-                Task.Run(() =>
-                {
-                    for (int p = 0; p < timeoutMs; p += 3)
-                    {
-                        Task.Delay(3);
-                        if (_lockSemaphoreTimeoutCxlSrc.IsCancellationRequested) return;
-                    }
-
-                    _solverIterationSemaphore.Release();
-                    throw new TimeoutException("PhysComputer semaphore locking time outed.");
-                });
-            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public async Task<bool> WaitSemaphoreAsync(int waitTimeoutMs = 500, int lockTimeoutMs = 500)
+        public async Task<bool> WaitSemaphoreAsync(int waitTimeoutMs = 500)
         {
-            _lockSemaphoreTimeoutCxlSrc.Cancel();
-            bool semaphore = await _solverIterationSemaphore.WaitAsync(waitTimeoutMs);
-
-            if (lockTimeoutMs > 0)
-            {
-                _ = Task.Run(() =>
-                {
-                    for (int p = 0; p < lockTimeoutMs; p += 1)
-                    {
-                        Task.Delay(1);
-                        if (_lockSemaphoreTimeoutCxlSrc.IsCancellationRequested) return;
-                    }
-
-                    _solverIterationSemaphore.Release();
-                    throw new TimeoutException("PhysComputer semaphore locking time outed.");
-                });
-            }
-
+            bool semaphore = await _solverIterationSemaphore.WaitAsync(waitTimeoutMs).ConfigureAwait(false);
             return semaphore;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ReleaseSemaphore()
         {
-            _lockSemaphoreTimeoutCxlSrc.Cancel();
             _solverIterationSemaphore.Release();
         }
 

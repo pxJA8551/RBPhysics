@@ -38,9 +38,9 @@ namespace RBPhys
             yield return new WaitForFixedUpdate();
         }
 
-        private void OnDestroy()
+        private async void OnDestroy()
         {
-            RBPhysController.DisposeMainComputer();
+            await RBPhysController.DisposeMainComputerAsync();
         }
     }
 }
