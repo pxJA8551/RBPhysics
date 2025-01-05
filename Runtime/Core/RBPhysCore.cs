@@ -46,30 +46,7 @@ namespace RBPhys
 
         public Vector3 gravityAcceleration = new Vector3(0, -9.81f, 0);
 
-        public TimeScaleMode PhysTimeScaleMode
-        {
-            get
-            {
-                return _timeScaleMode;
-            }
-
-            set
-            {
-                if ((int)_timeScaleMode + (int)value == 1)
-                {
-                    Parallel.ForEach(_rigidbodies, rb =>
-                    {
-                        if (rb != null)
-                        {
-                            rb.ExpVelocity *= -1;
-                            rb.ExpAngularVelocity *= -1;
-                        }
-                    });
-                }   
-
-                _timeScaleMode = value;
-            }
-        }
+        public TimeScaleMode PhysTimeScaleMode { get { return _timeScaleMode; } set { SetTimeScale(value); } }
 
         TimeScaleMode _timeScaleMode = TimeScaleMode.Prograde;
 
@@ -154,6 +131,24 @@ namespace RBPhys
             _collisionsInSolver.Clear();
 
             this.ReleaseSemaphore();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetTimeScale(TimeScaleMode tsm)
+        {
+            if ((int)_timeScaleMode + (int)tsm == 1)
+            {
+                Parallel.ForEach(_rigidbodies, rb =>
+                {
+                    if (rb != null)
+                    {
+                        rb.ExpVelocity *= -1;
+                        rb.ExpAngularVelocity *= -1;
+                    }
+                });
+            }
+
+            _timeScaleMode = tsm;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1475,7 +1470,7 @@ namespace RBPhys
                     rbc?.ClearCACCount();
                     rbc?.ClearSolverCache();
 
-                    if (isInverted && rbc != null)
+                    if (isInverted && rbc != null) 
                     {
                         rbc.SwapTo(pair.Item1, pair.Item2);
                     }

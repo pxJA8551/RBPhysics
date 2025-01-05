@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -80,6 +81,8 @@ namespace RBPhys
 
         public bool sleepUntilInteraction;
         public bool setInfInertiaTensorOnInit;
+
+        public InterpTrajectory interpTraj;
 
         [NonSerialized] public RBCollider[] colliding = new RBCollider[2];
         [NonSerialized] public int collidingCount = 0;
@@ -333,6 +336,8 @@ namespace RBPhys
                 _velocity = _expVelocity;
                 _angularVelocity = _expAngularVelocity;
 
+                PushInterpTraj(VTransform.WsPosition, VTransform.WsRotation);
+
                 CalcVel2Ws(_velocity, _angularVelocity, dt, out var wsPos, out var wsRot);
                 VTransform.SetWsPositionAndRotation(wsPos, wsRot);
             }
@@ -346,16 +351,30 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void CalcVel2Ws(Vector3 vel, Vector3 angVel, float dt, out Vector3 wsPos, out Quaternion wsRot)
+        void PushInterpTraj(Vector3 pos, Quaternion rot)
+        {
+            var pushInterp = interpTraj;
+            pushInterp.PushLast(pos, rot);
+            interpTraj = pushInterp;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CalcVel2Ws(Vector3 vel, Vector3 angVel, float dt, out Vector3 wsPosOut, out Quaternion wsRotOut)
+        {
+            CalcVel2Ws(VTransform.WsPosition, VTransform.WsRotation, vel, angVel, dt, out wsPosOut, out wsRotOut);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void CalcVel2Ws(Vector3 wsPos, Quaternion wsRot, Vector3 vel, Vector3 angVel, float dt, out Vector3 wsPosOut, out Quaternion wsRotOut)
         {
             float length = angVel.magnitude;
             var rot = Quaternion.AngleAxis(length * Mathf.Rad2Deg * dt, angVel / length);
             if (length == 0) rot = Quaternion.identity;
 
-            var vd = VTransform.WsRotation * _centerOfGravity;
+            var vd = wsRot * _centerOfGravity;
 
-            wsPos = VTransform.WsPosition + (vel * dt) + (vd - (rot * vd));
-            wsRot = rot * VTransform.WsRotation;
+            wsPosOut = wsPos + (vel * dt) + (vd - (rot * vd));
+            wsRotOut = rot * wsRot;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -581,6 +600,36 @@ namespace RBPhys
                 Debug.LogError("No collider found. Error initializing InertiaTensor/InertiaTensorRotation.");
                 inertiaTensor = Vector3.one;
                 inertiaTensorRotation = Quaternion.identity;
+            }
+        }
+
+        public struct InterpTrajectory
+        {
+            Vector3 _positionLast;
+            Quaternion _rotationLast;
+            bool _pushedLast;
+
+            Vector3 _positionLast2;
+            Quaternion _rotationLast2;
+            bool _pushedLast2;
+
+            public Vector3 PositionLast { get { return _positionLast; } }
+            public Quaternion RotationLast { get { return _rotationLast; } }
+            public bool PushedLast { get { return _pushedLast; } }
+
+            public Vector3 PositionLast2 { get { return _positionLast2; } }
+            public Quaternion RotationLast2 { get { return _rotationLast2; } }
+            public bool PushedLast2 { get { return _pushedLast2; } }
+
+            public void PushLast(Vector3 pos, Quaternion rot)
+            {
+                _pushedLast2 = _pushedLast;
+                _positionLast2 = _positionLast;
+                _rotationLast2 = _rotationLast;
+
+                _pushedLast = true;
+                _positionLast = pos;
+                _rotationLast = rot;
             }
         }
     }

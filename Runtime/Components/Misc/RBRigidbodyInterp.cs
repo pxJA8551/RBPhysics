@@ -31,12 +31,10 @@ namespace RBPhys
             if (!interpPosition && !interpRotation) return;
 
             double elapsed = Time.timeAsDouble - _lastFixedUpdate;
-            float d = (float)(elapsed / Time.fixedDeltaTime);
+            float t = (float)(elapsed / Time.fixedDeltaTime);
 
-            var vel = rbRigidbody.Velocity;
-            var angVel = rbRigidbody.AngularVelocity;
-
-            rbRigidbody.CalcVel2Ws(vel, angVel, d * Time.fixedDeltaTime, out var wsPos, out var wsRot);
+            var wsPos = Vector3.Lerp(rbRigidbody.interpTraj.PositionLast, rbRigidbody.VTransform.WsPosition, t);
+            var wsRot = Quaternion.Lerp(rbRigidbody.interpTraj.RotationLast, rbRigidbody.VTransform.WsRotation, t);
 
             if (interpPosition) rbRigidbody.transform.position = wsPos;
             if (interpRotation) rbRigidbody.transform.rotation = wsRot;
