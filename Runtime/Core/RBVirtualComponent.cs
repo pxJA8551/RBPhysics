@@ -2,6 +2,7 @@ using RBPhys;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.WindowsRuntime;
 using UnityEngine;
 
 namespace RBPhys
@@ -116,6 +117,20 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static RBVirtualComponent FindComponent<VCType>(GameObject obj, RBPhysComputer physComputer, bool allowDisabled = true) 
+        {
+            var components = obj.GetComponents<VCType>();
+
+            foreach (var c in components)
+            {
+                var vc = c as RBVirtualComponent;
+                if (vc != null && vc.Ident(physComputer, allowDisabled)) return vc;
+            }
+
+            return null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void RemoveChild(RBVirtualComponent child)
         {
             _children.Remove(child);
@@ -138,17 +153,17 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool Ident(RBPhysComputer physComp, bool allowDisabled = false)
+        public bool Ident(RBPhysComputer physComputer, bool allowDisabled = false)
         {
             if (!VEnabled && !allowDisabled) return false;
-            if (PhysComputer != physComp) return false;
+            if (PhysComputer != physComputer) return false;
             return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool IdentBase(RBPhysComputer physComp, RBVirtualComponent baseVComponent, bool allowDisabled = false)
+        public bool IdentBase(RBPhysComputer physComputer, RBVirtualComponent baseVComponent, bool allowDisabled = false)
         {
-            if (!Ident(physComp, allowDisabled)) return false;
+            if (!Ident(physComputer, allowDisabled)) return false;
             if (_baseVComponent != baseVComponent) return false;
             return true;
         }
