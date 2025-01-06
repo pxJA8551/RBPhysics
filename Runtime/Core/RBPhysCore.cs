@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using Unity.IL2CPP.CompilerServices;
 using System.Threading;
+using UnityEditor.Build;
 
 namespace RBPhys
 {
@@ -2936,16 +2937,21 @@ namespace RBPhys
         public Guid RetrogradeKeyGuid { get { return _retrogradeKeyGuid; } }
         Guid _retrogradeKeyGuid = Guid.Empty;
 
+        public int RetrogradeFrame { get { return _retrogradeFrame; } }
+        int _retrogradeFrame = 0;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetRetrogradeKeyGuid(Guid guid)
+        public void SetRetrogradeKeyGuid(Guid guid, int frame)
         {
             _retrogradeKeyGuid = guid;
+            _retrogradeFrame = frame;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ClearRetrogradeKeyGuid()
         {
             _retrogradeKeyGuid = Guid.Empty;
+            _retrogradeFrame = 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
