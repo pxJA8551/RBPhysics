@@ -2940,11 +2940,15 @@ namespace RBPhys
         public int RetrogradeFrame { get { return _retrogradeFrame; } }
         int _retrogradeFrame = 0;
 
+        public bool RetrogradeValid { get { return _retrogradeValid; } }
+        bool _retrogradeValid;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetRetrogradeKeyGuid(Guid guid, int frame)
         {
             _retrogradeKeyGuid = guid;
             _retrogradeFrame = frame;
+            _retrogradeValid = true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -2952,6 +2956,7 @@ namespace RBPhys
         {
             _retrogradeKeyGuid = Guid.Empty;
             _retrogradeFrame = 0;
+            _retrogradeValid = false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
