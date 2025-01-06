@@ -1803,13 +1803,15 @@ namespace RBPhys
 
                 if (rbc.triggerCollision)
                 {
-                    info_a = RBCollisionInfo.GetTriggerCollision(rbc.isStaticOrSleeping);
-                    info_b = RBCollisionInfo.GetTriggerCollision(rbc.isStaticOrSleeping);
+                    info_a = RBCollisionInfo.GetTriggerCollision(rbc.isStaticOrSleeping, -rbc.penetration);
+                    info_b = RBCollisionInfo.GetTriggerCollision(rbc.isStaticOrSleeping, rbc.penetration);
                 }
                 else
                 {
-                    info_a = new RBCollisionInfo(rbc.rigidbody_a, rbc.solverCache_velAdd_a, rbc.ContactNormal, rbc.isStaticOrSleeping);
-                    info_b = new RBCollisionInfo(rbc.rigidbody_b, rbc.solverCache_velAdd_b, -rbc.ContactNormal, rbc.isStaticOrSleeping);
+                    Vector3 contact = (rbc.aNearest + rbc.bNearest) / 2f;
+
+                    info_a = new RBCollisionInfo(rbc.rigidbody_a, contact, -rbc.penetration, rbc.solverCache_velAdd_a, rbc.ContactNormal, rbc.isStaticOrSleeping);
+                    info_b = new RBCollisionInfo(rbc.rigidbody_b, contact, rbc.penetration, rbc.solverCache_velAdd_b, -rbc.ContactNormal, rbc.isStaticOrSleeping);
                 }
 
                 rbc.rigidbody_a?.OnCollision(rbc.collider_b, info_a);
@@ -2274,23 +2276,6 @@ namespace RBPhys
 
         Vector3 _contactNormal;
 
-        public RBCollision(RBTrajectory traj_a, RBCollider col_a, RBTrajectory traj_b, RBCollider col_b, Vector3 penetration)
-        {
-            collider_a = col_a;
-            rigidbody_a = traj_a.Rigidbody;
-            collider_b = col_b;
-            rigidbody_b = traj_b.Rigidbody;
-
-            cg_a = traj_a.IsStatic ? col_a.GetColliderCenter() : traj_a.Rigidbody.CenterOfGravityWorld;
-            cg_b = traj_b.IsStatic ? col_b.GetColliderCenter() : traj_b.Rigidbody.CenterOfGravityWorld;
-
-            this.penetration = penetration;
-            _contactNormal = (traj_b.IsStatic ? Vector3.zero : traj_b.Rigidbody.Velocity) - (traj_a.IsStatic ? Vector3.zero : traj_a.Rigidbody.Velocity);
-
-            layer_a = traj_a.Layer;
-            layer_b = traj_b.Layer;
-        }
-
         public RBCollision(RBCollider col_a, RBCollider col_b, Vector3 penetration, int layer_a, int layer_b)
         {
             collider_a = col_a;
@@ -2614,27 +2599,40 @@ namespace RBPhys
         public readonly float vDiff;
         public readonly bool isTriggerCollision;
         public readonly bool isStaticOrSleeping;
-        
-        public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 velAdd, Vector3 normal, bool isStaticOrSleeping)
+
+        public readonly Vector3 penetration;
+        public readonly Vector3 contactPoint;
+        public readonly Vector3 normal;
+
+        public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 contactPoint, Vector3 penetration, Vector3 velAdd, Vector3 normal, bool isStaticOrSleeping)
         {
             vDiff = Vector3.Project(velAdd, normal).magnitude;
             impulse = (vDiff * rbRigidbody?.mass) ?? 0;
             isTriggerCollision = false;
             this.isStaticOrSleeping = isStaticOrSleeping;
+
+            this.normal = normal;
+            this.penetration = penetration;
+            this.contactPoint = contactPoint;
         }
 
-        public RBCollisionInfo(bool isTriggerCollision, bool isStaticOrSleeping)
+        public RBCollisionInfo(bool isTriggerCollision, bool isStaticOrSleeping, Vector3 penetration)
         {
             this.isTriggerCollision = isTriggerCollision;
             this.isStaticOrSleeping = isStaticOrSleeping;
 
+            this.penetration = penetration;
+
             vDiff = 0;
             impulse = 0;
+
+            normal = default;
+            contactPoint = default;
         }
 
-        public static RBCollisionInfo GetTriggerCollision(bool isStaticOrSleeping)
+        public static RBCollisionInfo GetTriggerCollision(bool isStaticOrSleeping, Vector3 penetration)
         {
-            return new RBCollisionInfo(true, isStaticOrSleeping);
+            return new RBCollisionInfo(true, isStaticOrSleeping, penetration);
         }
     }
 
