@@ -89,10 +89,7 @@ namespace RBPhys
             if (vTransform == null) throw new NotImplementedException();
 
             var vc = FindVirtualComponent(vTransform);
-            if (vc != null)
-            {
-                return vc;
-            }
+            if (vc != null) return vc;
 
             vc = CreateVirtual(gameObject);
             vc._baseVComponent = this;
