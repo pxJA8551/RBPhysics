@@ -38,7 +38,7 @@ namespace RBPhys
 
                 foreach (var c in vComps)
                 {
-                    c.FindOrCreateVirtualComponent(vt);
+                    if (c.BaseVComponent == null) c.FindOrCreateVirtualComponent(vt);
                 }
             }
 
