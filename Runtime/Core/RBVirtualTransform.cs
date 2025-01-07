@@ -92,12 +92,12 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public VCType FindVComponent<VCType>(RBPhysComputer physComputer, bool allowDisabled = true) where VCType : class
+        public RBVirtualComponent FindVComponent<VCType>(RBPhysComputer physComputer, bool allowDisabled = true) where VCType : class
         {
             foreach (var c in _vComponents)
             {
                 var vc = c as VCType;
-                if (vc != null && c != null && c.Ident(physComputer, allowDisabled)) return vc;
+                if (vc != null && c != null && c.Ident(physComputer, allowDisabled)) return c;
             }
 
             return null;
