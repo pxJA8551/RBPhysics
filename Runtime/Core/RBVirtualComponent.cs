@@ -108,8 +108,6 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBVirtualComponent FindVirtualComponent(RBPhysComputer physComputer)
         {
-            if (_vTransform == null) throw new NotImplementedException();
-
             foreach (var v in _derivedChildren)
             {
                 if (v.IdentBase(physComputer, this, true)) 
