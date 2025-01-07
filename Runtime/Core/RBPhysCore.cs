@@ -281,10 +281,12 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetCollisionLayerOption(int layer, RBCollisionLayerOption option)
+        public void SetCollisionLayerOption(int layer, RBCollisionLayerOption option, bool state)
         {
-            _layerOptions[layer] = (RBCollisionLayerOption)((int)_layerOptions[layer] & (int)~option);
-            _layerOptions[layer] = (RBCollisionLayerOption)((int)_layerOptions[layer] + (int)option);
+            int p0 = (int)_layerOptions[layer];
+            int sel = (int)option;
+
+            _layerOptions[layer] = (RBCollisionLayerOption)((p0 & ~sel) | (state ? sel : 0));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -625,12 +627,12 @@ namespace RBPhys
 
         public RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d, bool ignoreBackFaceCollision = true)
         {
-            return Raycast(org, dir, d, null, null, ignoreBackFaceCollision);
+            return Raycast(org, dir, d, false, null, null, ignoreBackFaceCollision);
         }
 
-        public RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d, List<RBCollider> ignoreCols, List<RBTrajectory> ignoreTrajs, bool ignoreBackFaceCollision = true)
+        public RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d, bool allowTriggerCollision, List<RBCollider> ignoreCols, List<RBTrajectory> ignoreTrajs, bool ignoreBackFaceCollision = true)
         {
-            var hitList = RaycastAll(org, dir, d, ignoreCols, ignoreTrajs, ignoreBackFaceCollision);
+            var hitList = RaycastAll(org, dir, d, allowTriggerCollision, ignoreCols, ignoreTrajs, ignoreBackFaceCollision);
 
             RBColliderCastHitInfo fMinOverlap = default;
 
@@ -645,14 +647,14 @@ namespace RBPhys
             return fMinOverlap;
         }
 
-        public List<RBColliderCastHitInfo> RaycastAll(Vector3 org, Vector3 dir, float d, List<RBCollider> ignoreCols, List<RBTrajectory> ignoreTrajs, bool ignoreBackFaceCollision = true)
+        public List<RBColliderCastHitInfo> RaycastAll(Vector3 org, Vector3 dir, float d, bool allowTriggerCollision, List<RBCollider> ignoreCols, List<RBTrajectory> ignoreTrajs, bool ignoreBackFaceCollision = true)
         {
             var hitList = new List<RBColliderCastHitInfo>();
-            RaycastAll(org, dir, d, ignoreCols, ignoreTrajs, ref hitList, ignoreBackFaceCollision);
+            RaycastAll(org, dir, d, allowTriggerCollision, ignoreCols, ignoreTrajs, ref hitList, ignoreBackFaceCollision);
             return hitList;
         }
 
-        public void RaycastAll(Vector3 org, Vector3 dir, float d, List<RBCollider> ignoreCols, List<RBTrajectory> ignoreTrajs, ref List<RBColliderCastHitInfo> hitInfos, bool ignoreBackFaceCollision = true)
+        public void RaycastAll(Vector3 org, Vector3 dir, float d, bool allowTriggerCollision, List<RBCollider> ignoreCols, List<RBTrajectory> ignoreTrajs, ref List<RBColliderCastHitInfo> hitInfos, bool ignoreBackFaceCollision = true)
         {
             dir = dir.normalized;
 
@@ -692,7 +694,7 @@ namespace RBPhys
                         {
                             if (c.gameObject.activeInHierarchy && c.enabled && !c.IgnoreCollision)
                             {
-                                if (!(selectCols && ignoreCols.Contains(c)) && !IsIgnorePhysCastLayer(t.Layer))
+                                if (!(selectCols && ignoreCols.Contains(c)) && !IsIgnorePhysCastLayer(t.Layer) && (!IsTriggerLayer(t.Layer) || allowTriggerCollision)) 
                                 {
                                     hitList.Add(new RBColliderCastHitInfo(c, t, RBColliderCastHitInfo.PhysCastType.Raycast));
                                 }
@@ -745,15 +747,15 @@ namespace RBPhys
 
         public RBColliderCastHitInfo SphereCast(float delta, Vector3 org, Vector3 dir, float length, float radius, bool allowNegativeValue = true)
         {
-            return SphereCast(delta, org, dir, length, radius, null, null, allowNegativeValue);
+            return SphereCast(delta, org, dir, length, radius, false, null, null, allowNegativeValue);
         }
 
-        public RBColliderCastHitInfo SphereCast(float delta, Vector3 org, Vector3 dir, float length, float radius, RBCollider[] ignoreCols, RBTrajectory[] ignoreTrajs, bool allowNegativeValue = true)
+        public RBColliderCastHitInfo SphereCast(float delta, Vector3 org, Vector3 dir, float length, float radius, bool allowTriggerCollision, RBCollider[] ignoreCols, RBTrajectory[] ignoreTrajs, bool allowNegativeValue = true)
         {
-            return SphereCastAll(delta, org, dir, length, radius, ignoreCols, ignoreTrajs, allowNegativeValue).FirstOrDefault();
+            return SphereCastAll(delta, org, dir, length, radius, allowTriggerCollision, ignoreCols, ignoreTrajs, allowNegativeValue).FirstOrDefault();
         }
 
-        public List<RBColliderCastHitInfo> SphereCastAll(float delta, Vector3 org, Vector3 dir, float length, float radius, RBCollider[] ignoreCols, RBTrajectory[] ignoreTrajs, bool allowNegativeValue = true)
+        public List<RBColliderCastHitInfo> SphereCastAll(float delta, Vector3 org, Vector3 dir, float length, float radius, bool allowTriggerCollision, RBCollider[] ignoreCols, RBTrajectory[] ignoreTrajs, bool allowNegativeValue = true)
         {
             dir = dir.normalized;
 
@@ -787,7 +789,7 @@ namespace RBPhys
                         {
                             if (c.gameObject.activeInHierarchy && c.enabled && !c.IgnoreCollision)
                             {
-                                if (!(selectCols && ignoreCols.Contains(c)) && !IsIgnorePhysCastLayer(t.Layer))
+                                if (!(selectCols && ignoreCols.Contains(c)) && !IsIgnorePhysCastLayer(t.Layer) && (!IsTriggerLayer(t.Layer) || allowTriggerCollision))
                                 {
                                     hitList.Add(new RBColliderCastHitInfo(c, t, RBColliderCastHitInfo.PhysCastType.SphereCast));
                                 }
