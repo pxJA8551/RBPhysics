@@ -304,6 +304,13 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsPlayerLayer(int layer)
+        {
+            int p = (int)_layerOptions[layer];
+            return (p & 4) == 4;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WaitSemaphore()
         {
             _solverIterationSemaphore.Wait();
@@ -2931,6 +2938,7 @@ namespace RBPhys
         public int Layer { get { return _layer; } }
 
         public bool tempSleeping = false;
+        public bool activeTraj = false;
 
         bool _isValidTrajectory;
         RBRigidbody _rigidbody;

@@ -16,7 +16,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBTrajectoryValidator(RBTrajectory traj) : base(Guid.Empty, false)
+        public RBTrajectoryValidator(RBTrajectory traj) : base(Guid.Empty, !traj.activeTraj)
         {
             this.traj = traj;
             this.retrogradeKeyGuid = traj.RetrogradeKeyGuid;
