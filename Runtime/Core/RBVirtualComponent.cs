@@ -23,8 +23,8 @@ namespace RBPhys
         public RBVirtualComponent BaseVComponent { get { return _baseVComponent; } }
         RBVirtualComponent _baseVComponent;
 
-        public int ChildCount { get { return _children.Count; } }
-        List<RBVirtualComponent> _children = new List<RBVirtualComponent>();
+        public int DerivedChildCount { get { return _derivedChildren.Count; } }
+        List<RBVirtualComponent> _derivedChildren = new List<RBVirtualComponent>();
 
         void Awake()
         {
@@ -85,29 +85,31 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBVirtualComponent FindOrCreateVirtualComponent(RBVirtualTransform vTransform)
+        public RBVirtualComponent FindOrCreateVirtualComponent(RBPhysComputer physComputer)
         {
-            if (vTransform == null) throw new NotImplementedException();
+            if (physComputer == null) throw new NotImplementedException();
 
-            var vc = FindVirtualComponent(vTransform);
+            var vt = VTransform.FindOrCreateVirtualTransform(physComputer);
+
+            var vc = FindVirtualComponent(physComputer);
             if (vc != null) return vc;
 
             vc = CreateVirtual(gameObject);
             vc._baseVComponent = this;
-            vc.SetVirtualTransform(vTransform);
+            vc.SetVirtualTransform(vt);
 
-            _children.Add(vc);
+            _derivedChildren.Add(vc);
             return vc;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBVirtualComponent FindVirtualComponent(RBVirtualTransform vTransform)
+        public RBVirtualComponent FindVirtualComponent(RBPhysComputer physComputer)
         {
-            if (vTransform == null) throw new NotImplementedException();
+            if (_vTransform == null) throw new NotImplementedException();
 
-            foreach (var v in _children)
+            foreach (var v in _derivedChildren)
             {
-                if (v.IdentBase(vTransform.PhysComputer, this, true)) 
+                if (v.IdentBase(physComputer, this, true)) 
                 {
                     return v;
                 }
@@ -133,7 +135,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void RemoveChild(RBVirtualComponent child)
         {
-            _children.Remove(child);
+            _derivedChildren.Remove(child);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -148,8 +150,8 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBVirtualComponent GetChild(int index)
         {
-            if (index < 0 || _children.Count <= index) throw new IndexOutOfRangeException();
-            return _children[index];
+            if (index < 0 || _derivedChildren.Count <= index) throw new IndexOutOfRangeException();
+            return _derivedChildren[index];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

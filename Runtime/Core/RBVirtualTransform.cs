@@ -74,6 +74,7 @@ namespace RBPhys
             return vTransform;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Init(GameObject baseObject, RBPhysComputer physComputer, RBVirtualTransform baseVTransform)
         {
             _baseObject = baseObject;
@@ -85,6 +86,12 @@ namespace RBPhys
 
             SyncBaseObjectTransform();
             OnCreate();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public RBVirtualTransform FindOrCreateVirtualTransform(RBPhysComputer physComputer)
+        {
+            return FindOrCreate(gameObject, physComputer, this);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

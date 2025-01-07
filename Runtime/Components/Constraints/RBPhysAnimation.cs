@@ -105,7 +105,7 @@ namespace RBPhys
             var vp = BaseVComponent as RBPhysAnimation;
             if (vp == null) return;
 
-            rbRigidbody = vp.rbRigidbody.FindOrCreateVirtualComponent(VTransform) as RBRigidbody;
+            rbRigidbody = vp.rbRigidbody.FindOrCreateVirtualComponent(PhysComputer) as RBRigidbody;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -33,12 +33,9 @@ namespace RBPhys
 
             if (vComps.Any())
             {
-                var vtBase = RBVirtualTransform.FindOrCreate(obj);
-                var vt = RBVirtualTransform.FindOrCreate(obj, _physComputer, vtBase);
-
                 foreach (var c in vComps)
                 {
-                    if (c.BaseVComponent == null) c.FindOrCreateVirtualComponent(vt);
+                    if (c.BaseVComponent == null) c.FindOrCreateVirtualComponent(_physComputer);
                 }
             }
 
@@ -63,7 +60,7 @@ namespace RBPhys
             var vComps = obj.GetComponents<RBVirtualComponent>();
             foreach (var c in vComps)
             {
-                if (c.BaseVComponent == null) c.FindOrCreateVirtualComponent(vt);
+                if (c.BaseVComponent == null) c.FindOrCreateVirtualComponent(_physComputer);
             }
 
             for (int i = 0; i < obj.transform.childCount; i++)
