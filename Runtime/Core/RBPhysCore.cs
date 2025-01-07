@@ -1804,15 +1804,15 @@ namespace RBPhys
 
                 if (rbc.triggerCollision)
                 {
-                    info_a = RBCollisionInfo.GetTriggerCollision(rbc.isStaticOrSleeping, -rbc.penetration);
-                    info_b = RBCollisionInfo.GetTriggerCollision(rbc.isStaticOrSleeping, rbc.penetration);
+                    info_a = RBCollisionInfo.GetTriggerCollision(rbc.isStaticOrSleeping, -rbc.penetration, rbc.layer_b);
+                    info_b = RBCollisionInfo.GetTriggerCollision(rbc.isStaticOrSleeping, rbc.penetration, rbc.layer_a);
                 }
                 else
                 {
                     Vector3 contact = (rbc.aNearest + rbc.bNearest) / 2f;
 
-                    info_a = new RBCollisionInfo(rbc.rigidbody_a, contact, -rbc.penetration, rbc.solverCache_velAdd_a, rbc.ContactNormal, rbc.isStaticOrSleeping);
-                    info_b = new RBCollisionInfo(rbc.rigidbody_b, contact, rbc.penetration, rbc.solverCache_velAdd_b, -rbc.ContactNormal, rbc.isStaticOrSleeping);
+                    info_a = new RBCollisionInfo(rbc.rigidbody_a, contact, -rbc.penetration, rbc.solverCache_velAdd_a, rbc.ContactNormal, rbc.isStaticOrSleeping, rbc.layer_b);
+                    info_b = new RBCollisionInfo(rbc.rigidbody_b, contact, rbc.penetration, rbc.solverCache_velAdd_b, -rbc.ContactNormal, rbc.isStaticOrSleeping, rbc.layer_b);
                 }
 
                 rbc.rigidbody_a?.OnCollision(rbc.collider_b, info_a);
@@ -2605,7 +2605,9 @@ namespace RBPhys
         public readonly Vector3 contactPoint;
         public readonly Vector3 normal;
 
-        public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 contactPoint, Vector3 penetration, Vector3 velAdd, Vector3 normal, bool isStaticOrSleeping)
+        public readonly int layer_other;
+
+        public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 contactPoint, Vector3 penetration, Vector3 velAdd, Vector3 normal, bool isStaticOrSleeping, int layer_other)
         {
             vDiff = Vector3.Project(velAdd, normal).magnitude;
             impulse = (vDiff * rbRigidbody?.mass) ?? 0;
@@ -2615,9 +2617,11 @@ namespace RBPhys
             this.normal = normal;
             this.penetration = penetration;
             this.contactPoint = contactPoint;
+
+            this.layer_other = layer_other;
         }
 
-        public RBCollisionInfo(bool isTriggerCollision, bool isStaticOrSleeping, Vector3 penetration)
+        public RBCollisionInfo(bool isTriggerCollision, bool isStaticOrSleeping, Vector3 penetration, int layer_other)
         {
             this.isTriggerCollision = isTriggerCollision;
             this.isStaticOrSleeping = isStaticOrSleeping;
@@ -2629,11 +2633,13 @@ namespace RBPhys
 
             normal = default;
             contactPoint = default;
+
+            this.layer_other = layer_other;
         }
 
-        public static RBCollisionInfo GetTriggerCollision(bool isStaticOrSleeping, Vector3 penetration)
+        public static RBCollisionInfo GetTriggerCollision(bool isStaticOrSleeping, Vector3 penetration, int layer_other)
         {
-            return new RBCollisionInfo(true, isStaticOrSleeping, penetration);
+            return new RBCollisionInfo(true, isStaticOrSleeping, penetration, layer_other);
         }
     }
 
