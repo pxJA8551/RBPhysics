@@ -49,8 +49,8 @@ namespace RBPhys
 
         List<RBVirtualTransform> _children;
 
-        public int VComponentCount { get { return _vComponents.Count; } }
-        List<RBVirtualComponent> _vComponents = new List<RBVirtualComponent>();
+        public int VComponentCount { get { return _vComponents?.Count ?? 0; } }
+        List<RBVirtualComponent> _vComponents;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RBVirtualTransform FindOrCreate(GameObject baseObject, RBPhysComputer physComputer = null, RBVirtualTransform baseVTransform = null)
@@ -94,6 +94,8 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBVirtualComponent FindVComponent<VCType>(RBPhysComputer physComputer, bool allowDisabled = true) where VCType : class
         {
+            if (_vComponents == null) _vComponents = new List<RBVirtualComponent>();
+
             foreach (var c in _vComponents)
             {
                 var vc = c as VCType;
@@ -119,6 +121,8 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IEnumerable<RBVirtualComponent> GetVComponents()
         {
+            if (_vComponents == null) _vComponents = new List<RBVirtualComponent>();
+
             foreach (var v in _vComponents)
             {
                 yield return v;
@@ -128,18 +132,24 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBVirtualComponent GetVComponent(int index)
         {
+            if (_vComponents == null) return null;
+
             return _vComponents[index];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddVComponent(RBVirtualComponent vComponent)
         {
+            if (_vComponents == null) _vComponents = new List<RBVirtualComponent>();
+
             if (!_vComponents.Contains(vComponent)) _vComponents.Add(vComponent);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveVComponent(RBVirtualComponent vComponent)
         {
+            if (_vComponents == null) return;
+
             _vComponents.Remove(vComponent);
         }
 
