@@ -351,7 +351,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void PushInterpTraj(Vector3 pos, Quaternion rot)
+        public void PushInterpTraj(Vector3 pos, Quaternion rot)
         {
             var pushInterp = interpTraj;
             pushInterp.PushLast(pos, rot);
