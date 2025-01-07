@@ -39,6 +39,8 @@ namespace RBPhys
 
             var physComp = GetPhysComputer();
             if (physComp != null) physComp.AddVirtualComponent(this);
+
+            _vTransform.AddVComponent(this);
         }
 
         void OnDisable()
@@ -50,6 +52,7 @@ namespace RBPhys
             if (physComp != null) physComp.RemoveVirtualComponent(this);
 
             _baseVComponent?.RemoveChild(this);
+            _vTransform.RemoveVComponent(this);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -81,6 +84,8 @@ namespace RBPhys
         public void FindOrCreateVirtualTransform()
         {
             _vTransform = RBVirtualTransform.FindOrCreate(gameObject);
+            _vTransform.AddVComponent(this);
+
             if (_vTransform == null) throw new Exception();
         }
 
@@ -114,20 +119,6 @@ namespace RBPhys
                 {
                     return v;
                 }
-            }
-
-            return null;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static RBVirtualComponent FindComponent<VCType>(GameObject obj, RBPhysComputer physComputer, bool allowDisabled = true) 
-        {
-            var components = obj.GetComponents<VCType>();
-
-            foreach (var c in components)
-            {
-                var vc = c as RBVirtualComponent;
-                if (vc != null && vc.Ident(physComputer, allowDisabled)) return vc;
             }
 
             return null;

@@ -49,6 +49,9 @@ namespace RBPhys
 
         List<RBVirtualTransform> _children;
 
+        public int VComponentCount { get { return _vComponents.Count; } }
+        List<RBVirtualComponent> _vComponents = new List<RBVirtualComponent>();
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static RBVirtualTransform FindOrCreate(GameObject baseObject, RBPhysComputer physComputer = null, RBVirtualTransform baseVTransform = null)
         {
@@ -89,6 +92,18 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public VCType FindVComponent<VCType>(RBPhysComputer physComputer, bool allowDisabled = true) where VCType : class
+        {
+            foreach (var c in _vComponents)
+            {
+                var vc = c as VCType;
+                if (vc != null && c != null && c.Ident(physComputer, allowDisabled)) return vc;
+            }
+
+            return null;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBVirtualTransform FindOrCreateVirtualTransform(RBPhysComputer physComputer)
         {
             return FindOrCreate(gameObject, physComputer, this);
@@ -99,6 +114,33 @@ namespace RBPhys
         {
             if (_physComputer == null) throw new NotImplementedException();
             return _physComputer;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IEnumerable<RBVirtualComponent> GetVComponents()
+        {
+            foreach (var v in _vComponents)
+            {
+                yield return v;
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public RBVirtualComponent GetVComponent(int index)
+        {
+            return _vComponents[index];
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void AddVComponent(RBVirtualComponent vComponent)
+        {
+            if (!_vComponents.Contains(vComponent)) _vComponents.Add(vComponent);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RemoveVComponent(RBVirtualComponent vComponent)
+        {
+            _vComponents.Remove(vComponent);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
