@@ -89,7 +89,10 @@ namespace RBPhys
         {
             if (physComputer == null) throw new NotImplementedException();
 
-            var vt = VTransform.FindOrCreateVirtualTransform(physComputer);
+            var vtBase = _vTransform;
+            if (vtBase == null) vtBase = RBVirtualTransform.FindOrCreate(gameObject);
+
+            var vt = RBVirtualTransform.FindOrCreate(gameObject, physComputer, vtBase);
 
             var vc = FindVirtualComponent(physComputer);
             if (vc != null) return vc;
