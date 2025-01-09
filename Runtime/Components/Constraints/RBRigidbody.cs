@@ -6,6 +6,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Android;
 using UnityEngine.Experimental.GlobalIllumination;
 using UnityEngine.UIElements;
 using static RBPhys.RBPhysComputer;
@@ -60,20 +61,11 @@ namespace RBPhys
         public bool infInertiaTensorY { get { return _infInertiaTensorY; } set { _infInertiaTensorY = value; _invInertiaWsScale.y = value ? 0 : 1; } }
         public bool infInertiaTensorZ { get { return _infInertiaTensorZ; } set { _infInertiaTensorZ = value; _invInertiaWsScale.z = value ? 0 : 1; } }
 
-        public bool infInertiaTensorLsX { get { return _infInertiaTensorLsX; } set { _infInertiaTensorLsX = value; _invInertiaLsScale.x = value ? 0 : 1; } }
-        public bool infInertiaTensorLsY { get { return _infInertiaTensorLsY; } set { _infInertiaTensorLsY = value; _invInertiaLsScale.y = value ? 0 : 1; } }
-        public bool infInertiaTensorLsZ { get { return _infInertiaTensorLsZ; } set { _infInertiaTensorLsZ = value; _invInertiaLsScale.z = value ? 0 : 1; } }
-
         bool _infInertiaTensorX;
         bool _infInertiaTensorY;
         bool _infInertiaTensorZ;
 
-        bool _infInertiaTensorLsX;
-        bool _infInertiaTensorLsY;
-        bool _infInertiaTensorLsZ;
-
         Vector3 _invInertiaWsScale = Vector3.one;
-        Vector3 _invInertiaLsScale = Vector3.one;
 
         public bool isSleeping = false;
         public int sleepGrace = 0;
@@ -113,7 +105,7 @@ namespace RBPhys
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                Vector3 i = Vector3.Scale(inertiaTensor * inertiaTensorMultiplier, _invInertiaLsScale);
+                Vector3 i = inertiaTensor * inertiaTensorMultiplier;
                 Quaternion r = VTransform.WsRotation * inertiaTensorRotation;
                 return Vector3.Scale(r * (Quaternion.Inverse(r) * V3Rcp(i)), _invInertiaWsScale);
             }
@@ -141,9 +133,6 @@ namespace RBPhys
                 _infInertiaTensorX = true;
                 _infInertiaTensorY = true;
                 _infInertiaTensorZ = true;
-                _infInertiaTensorLsX = true;
-                _infInertiaTensorLsY = true;
-                _infInertiaTensorLsZ = true;
             }
         }
 
@@ -204,6 +193,18 @@ namespace RBPhys
             _angularVelocity = rb._angularVelocity;
             _expVelocity = rb._expVelocity;
             _expAngularVelocity = rb._expAngularVelocity;
+
+            _infInertiaTensorX = rb._infInertiaTensorX;
+            _infInertiaTensorY = rb._infInertiaTensorY;
+            _infInertiaTensorZ = rb._infInertiaTensorZ;
+
+            _invInertiaWsScale = rb._invInertiaWsScale;
+
+            isSleeping = rb.isSleeping;
+            sleepGrace = rb.sleepGrace;
+            useGravity = rb.useGravity;
+
+            interpTraj = rb.interpTraj;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
