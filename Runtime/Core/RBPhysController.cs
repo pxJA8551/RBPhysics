@@ -76,14 +76,14 @@ namespace RBPhys
                     _mainComputer.PhysTimeScaleMode = timeScaleMode;
                 }
 
+                if (onTimeScaleModeChanged != null) onTimeScaleModeChanged(timeScaleMode);
+
                 _mainComputer.ReleaseSemaphore();
             }
             else
             {
                 throw new Exception();
             }
-
-            if (onTimeScaleModeChanged != null) onTimeScaleModeChanged(timeScaleMode);
         }
 
         public static void InitMainComputer()
