@@ -17,6 +17,8 @@ namespace RBPhys
 
         public static RBPhysComputer MainComputer { get { return _mainComputer; } }
 
+        public static Action<TimeScaleMode> onTimeScaleModeChanged;
+
         static RBPhysController()
         {
             InitMainComputer();
@@ -26,12 +28,12 @@ namespace RBPhys
         {
             if (_mainComputer == null) return;
 
-            if (await _mainComputer.WaitSemaphoreAsync(500))
+            if (_mainComputer.PhysTimeScaleMode == timeScaleMode) return;
+
+            if (await _mainComputer.WaitSemaphoreAsync(500)) 
             {
                 if (fadeLengthMs > 0)
                 {
-                    if (_mainComputer.PhysTimeScaleMode == timeScaleMode) return;
-
                     float wt0 = Time.unscaledTime * 1000f;
                     while (true)
                     {
@@ -80,6 +82,8 @@ namespace RBPhys
             {
                 throw new Exception();
             }
+
+            if (onTimeScaleModeChanged != null) onTimeScaleModeChanged(timeScaleMode);
         }
 
         public static void InitMainComputer()
