@@ -140,11 +140,7 @@ namespace RBPhys
             {
                 Parallel.ForEach(_rigidbodies, rb =>
                 {
-                    if (rb != null)
-                    {
-                        rb.ExpVelocity *= -1;
-                        rb.ExpAngularVelocity *= -1;
-                    }
+                    if (rb != null) rb.InvertVelocity();
                 });
             }
 
@@ -471,12 +467,12 @@ namespace RBPhys
 
             ClearValidators();
 
-            if (_beforeSolver != null) _beforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
-
             if (await _solverIterationSemaphore.WaitAsync(500))
             {
                 try
                 {
+                    if (_beforeSolver != null) _beforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+
                     UpdateTransforms();
                     UpdateExtTrajectories(_solverDeltaTimeAsFloat);
                     SortTrajectories();
@@ -493,6 +489,12 @@ namespace RBPhys
 
                         await SolveConstraints(dt);
                     }
+
+                    if (_afterSolver != null) _afterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                    if (_validatorAfterSolver != null) _validatorAfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+
+                    TrySleepRigidbodies();
+                    TryAwakeRigidbodies();
                 }
                 catch
                 {
@@ -507,12 +509,6 @@ namespace RBPhys
             {
                 throw new Exception();
             }
-
-            if (_afterSolver != null) _afterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
-            if (_validatorAfterSolver != null) _validatorAfterSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
-
-            TrySleepRigidbodies();
-            TryAwakeRigidbodies();
 
             //OnClosePhysicsFrame��
         }

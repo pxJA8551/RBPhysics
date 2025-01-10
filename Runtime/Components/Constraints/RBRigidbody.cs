@@ -189,8 +189,10 @@ namespace RBPhys
             inertiaTensor = rb.inertiaTensor;
             inertiaTensorRotation = rb.inertiaTensorRotation;
             _centerOfGravity = rb._centerOfGravity;
+
             _velocity = rb._velocity;
             _angularVelocity = rb._angularVelocity;
+
             _expVelocity = rb._expVelocity;
             _expAngularVelocity = rb._expAngularVelocity;
 
@@ -305,6 +307,16 @@ namespace RBPhys
         public void SetDecrIgnoreVelocity()
         {
             if (_stackVal_ignoreVelocity_ifGreaterThanZero > 0) _stackVal_ignoreVelocity_ifGreaterThanZero--;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void InvertVelocity()
+        {
+            _velocity = -_velocity;
+            _angularVelocity = -_angularVelocity;
+
+            _expVelocity = -_expVelocity;
+            _expAngularVelocity = -_expAngularVelocity;
         }
 
         internal virtual void ApplyTransform(float dt, TimeScaleMode physTimeScaleMode)
