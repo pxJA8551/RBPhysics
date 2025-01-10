@@ -461,16 +461,14 @@ namespace RBPhys
 
             if (dt == 0) return;
 
-            if (_validatorBeforeSolver != null) _validatorBeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
-
-            ClearCollisions();
-
-            ClearValidators();
-
             if (await _solverIterationSemaphore.WaitAsync(500))
             {
                 try
                 {
+                    if (_validatorBeforeSolver != null) _validatorBeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
+                    ClearCollisions();
+                    ClearValidators();
+
                     if (_beforeSolver != null) _beforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
 
                     UpdateTransforms();
