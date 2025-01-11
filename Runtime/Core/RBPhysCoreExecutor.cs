@@ -39,12 +39,11 @@ namespace RBPhys
 
         async Task PhysicsFrameAsync()
         {
-            await RBPhysController.MainComputer.OpenPhysicsFrameWindowAsync();
+            await RBPhysController.MainComputer.PhysicsFrameAsync();
 
             if (this == null) return;
             StartCoroutine(WaitForFixedUpdate());
 
-            RBPhysController.MainComputer.ClosePhysicsFrameWindow();
             await RBPhysController.MainComputer.ApplyObjectTransformsAsync();
         }
 

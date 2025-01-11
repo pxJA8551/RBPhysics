@@ -449,13 +449,13 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public async Task OpenPhysicsFrameWindowAsync()
+        public async Task PhysicsFrameAsync()
         {
-            await OpenPhysFrame();
+            await PhysFrame();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        async Task OpenPhysFrame()
+        async Task PhysFrame()
         {
             float dt = _solverDeltaTimeAsFloat;
 
@@ -493,6 +493,8 @@ namespace RBPhys
 
                     TrySleepRigidbodies();
                     TryAwakeRigidbodies();
+
+                    ApplyPhysFrame();
                 }
                 catch
                 {
@@ -1039,12 +1041,7 @@ namespace RBPhys
             return overlappings;
         }
 
-        public void ClosePhysicsFrameWindow()
-        {
-            ClosePhysFrame();
-        }
-
-        void ClosePhysFrame()
+        void ApplyPhysFrame()
         {
             float dt = _solverDeltaTimeAsFloat;
 
