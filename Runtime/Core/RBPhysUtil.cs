@@ -165,6 +165,30 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsF32EpsilonGreaterThan(float value, float greaterThan, float epsilon = EPSILON_FLOAT32)
+        {
+            return !IsF32EpsilonEqual(value, epsilon) && value > greaterThan;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsF32EpsilonGreaterThanOrEqual(float value, float greaterThan, float epsilon = EPSILON_FLOAT32)
+        {
+            return IsF32EpsilonEqual(value, epsilon) || value >= greaterThan;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsF32EpsilonLessThan(float value, float lessThan, float epsilon = EPSILON_FLOAT32)
+        {
+            return !IsF32EpsilonEqual(value, epsilon) && value < lessThan;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsF32EpsilonLessThanOrEqual(float value, float lessThan, float epsilon = EPSILON_FLOAT32)
+        {
+            return IsF32EpsilonEqual(value, epsilon) || value <= lessThan;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsInt32Pow2(int x)
         {
             return x != 0 && (x & (x - 1)) == 0;
