@@ -1810,8 +1810,10 @@ namespace RBPhys
                 {
                     Vector3 contact = (rbc.aNearest + rbc.bNearest) / 2f;
 
-                    info_a = new RBCollisionInfo(rbc.rigidbody_a, contact, -rbc.penetration, rbc.solverCache_velAdd_a, rbc.ContactNormal, rbc.isStaticOrSleeping, rbc.layer_b);
-                    info_b = new RBCollisionInfo(rbc.rigidbody_b, contact, rbc.penetration, rbc.solverCache_velAdd_b, -rbc.ContactNormal, rbc.isStaticOrSleeping, rbc.layer_a);
+                    Vector3 relVel = rbc.solverCache_velAdd_a - rbc.solverCache_velAdd_b;
+
+                    info_a = new RBCollisionInfo(rbc.rigidbody_a, contact, -rbc.penetration, relVel, rbc.ContactNormal, rbc.isStaticOrSleeping, rbc.layer_b);
+                    info_b = new RBCollisionInfo(rbc.rigidbody_b, contact, rbc.penetration, -relVel, -rbc.ContactNormal, rbc.isStaticOrSleeping, rbc.layer_a);
                 }
 
                 rbc.rigidbody_a?.OnCollision(rbc.collider_b, info_a);
@@ -2597,6 +2599,7 @@ namespace RBPhys
     {
         public readonly float impulse;
         public readonly float vDiff;
+
         public readonly bool isTriggerCollision;
         public readonly bool isStaticOrSleeping;
 
@@ -2604,11 +2607,13 @@ namespace RBPhys
         public readonly Vector3 contactPoint;
         public readonly Vector3 normal;
 
+        public readonly Vector3 velAddRelative;
+
         public readonly int layer_other;
 
-        public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 contactPoint, Vector3 penetration, Vector3 velAdd, Vector3 normal, bool isStaticOrSleeping, int layer_other)
+        public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 contactPoint, Vector3 penetration, Vector3 velAddRelative, Vector3 normal, bool isStaticOrSleeping, int layer_other)
         {
-            vDiff = Vector3.Project(velAdd, normal).magnitude;
+            vDiff = Vector3.Project(velAddRelative, normal).magnitude;
             impulse = (vDiff * rbRigidbody?.mass) ?? 0;
             isTriggerCollision = false;
             this.isStaticOrSleeping = isStaticOrSleeping;
@@ -2616,6 +2621,8 @@ namespace RBPhys
             this.normal = normal;
             this.penetration = penetration;
             this.contactPoint = contactPoint;
+
+            this.velAddRelative = velAddRelative;
 
             this.layer_other = layer_other;
         }
@@ -2632,6 +2639,7 @@ namespace RBPhys
 
             normal = default;
             contactPoint = default;
+            velAddRelative = default;
 
             this.layer_other = layer_other;
         }
