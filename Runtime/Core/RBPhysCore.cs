@@ -467,7 +467,6 @@ namespace RBPhys
                 {
                     if (_validatorBeforeSolver != null) _validatorBeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
                     ClearCollisions();
-                    ClearValidators();
 
                     if (_beforeSolver != null) _beforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
 
@@ -495,6 +494,8 @@ namespace RBPhys
                     TryAwakeRigidbodies();
 
                     ApplyPhysFrame();
+
+                    ClearValidators();
                 }
                 catch
                 {
