@@ -1812,8 +1812,8 @@ namespace RBPhys
 
                     Vector3 relVel = rbc.solverCache_velAdd_a - rbc.solverCache_velAdd_b;
 
-                    info_a = new RBCollisionInfo(rbc.rigidbody_a, contact, -rbc.penetration, relVel, rbc.ContactNormal, rbc.isStaticOrSleeping, rbc.layer_b);
-                    info_b = new RBCollisionInfo(rbc.rigidbody_b, contact, rbc.penetration, -relVel, -rbc.ContactNormal, rbc.isStaticOrSleeping, rbc.layer_a);
+                    info_a = new RBCollisionInfo(rbc.rigidbody_a, contact, -rbc.penetration, -relVel, rbc.ContactNormal, rbc.isStaticOrSleeping, rbc.layer_b);
+                    info_b = new RBCollisionInfo(rbc.rigidbody_b, contact, rbc.penetration, relVel, -rbc.ContactNormal, rbc.isStaticOrSleeping, rbc.layer_a);
                 }
 
                 rbc.rigidbody_a?.OnCollision(rbc.collider_b, info_a);
