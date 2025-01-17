@@ -1064,8 +1064,8 @@ namespace RBPhys
 
                 if (xMin < t.trajectoryAABB.MaxX)
                 {
-                    bool layerPassed = (_collisionIgnoreLayers[layer] & (1 << t.Layer)) == 0;
-                    layerPassed |= ignoreLayer;
+                    bool layerPassed = ignoreLayer;
+                    if (!ignoreLayer) layerPassed = (_collisionIgnoreLayers[layer] & (1 << t.Layer)) == 0;
 
                     if (t.trajectoryAABB.OverlapAABB(aabbWs) && layerPassed)
                     {
@@ -1100,8 +1100,8 @@ namespace RBPhys
 
                 if (xMin < t.trajectoryAABB.MaxX)
                 {
-                    bool layerPassed = (_collisionIgnoreLayers[layer] & (1 << t.Layer)) == 0;
-                    layerPassed |= ignoreLayer;
+                    bool layerPassed = ignoreLayer;
+                    if (!ignoreLayer) layerPassed = (_collisionIgnoreLayers[layer] & (1 << t.Layer)) == 0;
 
                     if (t.trajectoryAABB.OverlapAABB(aabbWs) && layerPassed)
                     {
@@ -1136,8 +1136,8 @@ namespace RBPhys
 
                 if (xMin < t.trajectoryAABB.MaxX)
                 {
-                    bool layerPassed = (_collisionIgnoreLayers[layer] & (1 << t.Layer)) == 0;
-                    layerPassed |= ignoreLayer;
+                    bool layerPassed = ignoreLayer;
+                    if (!ignoreLayer) layerPassed = (_collisionIgnoreLayers[layer] & (1 << t.Layer)) == 0;
 
                     if (t.trajectoryAABB.OverlapAABB(aabbWs) && layerPassed) 
                     {
