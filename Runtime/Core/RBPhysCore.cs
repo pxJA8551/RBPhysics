@@ -1044,7 +1044,7 @@ namespace RBPhys
             return overlappings;
         }
 
-        public void AreaOverlapTrajectories(Vector3 originWs, Vector3 sizeWs, List<RBTrajectory> trajectories, int layer = -1)
+        public void AreaOverlapTrajectories(Vector3 originWs, Vector3 sizeWs, ref List<RBTrajectory> trajectories, int layer = -1)
         {
             bool ignoreLayer = layer < 0 || 32 <= layer;
 
@@ -1080,7 +1080,7 @@ namespace RBPhys
             }
         }
 
-        public void AreaOverlapRigidbodies(Vector3 originWs, Vector3 sizeWs, List<RBRigidbody> rigidbodies, int layer = -1)
+        public void AreaOverlapRigidbodies(Vector3 originWs, Vector3 sizeWs, ref List<RBRigidbody> rigidbodies, int layer = -1)
         {
             bool ignoreLayer = layer < 0 || 32 <= layer;
 
@@ -1116,7 +1116,7 @@ namespace RBPhys
             }
         }
 
-        public void AreaOverlapStaticColliders(Vector3 originWs, Vector3 sizeWs, List<RBCollider> collider, int layer = -1)
+        public void AreaOverlapStaticColliders(Vector3 originWs, Vector3 sizeWs, ref List<RBCollider> collider, int layer = -1)
         {
             bool ignoreLayer = layer < 0 || 32 <= layer;
 
