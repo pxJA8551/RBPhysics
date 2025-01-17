@@ -7,6 +7,8 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using Unity.IL2CPP.CompilerServices;
 using System.Threading;
+using System.Text.RegularExpressions;
+using System.Security.Cryptography;
 
 namespace RBPhys
 {
@@ -1040,6 +1042,117 @@ namespace RBPhys
             });
 
             return overlappings;
+        }
+
+        public void AreaOverlapTrajectories(Vector3 originWs, Vector3 sizeWs, List<RBTrajectory> trajectories, int layer = -1)
+        {
+            bool ignoreLayer = layer < 0 || 32 <= layer;
+
+            sizeWs = RBPhysUtil.V3Max(sizeWs, 0);
+
+            var centerWs = originWs + (sizeWs / 2f);
+
+            RBColliderAABB aabbWs = new RBColliderAABB(centerWs, sizeWs);
+
+            float xMin = originWs.x;
+            float xMax = originWs.x + sizeWs.x;
+
+            for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
+            {
+                var t = _trajectories_orderByXMin[i];
+                var f = _trajectories_xMin[i];
+
+                if (xMin < t.trajectoryAABB.MaxX)
+                {
+                    bool layerPassed = (_collisionIgnoreLayers[layer] & (1 << t.Layer)) == 0;
+                    layerPassed |= ignoreLayer;
+
+                    if (t.trajectoryAABB.OverlapAABB(aabbWs) && layerPassed)
+                    {
+                        trajectories.Add(t);
+                    }
+                }
+
+                if (xMax < f)
+                {
+                    break;
+                }
+            }
+        }
+
+        public void AreaOverlapRigidbodies(Vector3 originWs, Vector3 sizeWs, List<RBRigidbody> rigidbodies, int layer = -1)
+        {
+            bool ignoreLayer = layer < 0 || 32 <= layer;
+
+            sizeWs = RBPhysUtil.V3Max(sizeWs, 0);
+
+            var centerWs = originWs + (sizeWs / 2f);
+
+            RBColliderAABB aabbWs = new RBColliderAABB(centerWs, sizeWs);
+
+            float xMin = originWs.x;
+            float xMax = originWs.x + sizeWs.x;
+
+            for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
+            {
+                var t = _trajectories_orderByXMin[i];
+                var f = _trajectories_xMin[i];
+
+                if (xMin < t.trajectoryAABB.MaxX)
+                {
+                    bool layerPassed = (_collisionIgnoreLayers[layer] & (1 << t.Layer)) == 0;
+                    layerPassed |= ignoreLayer;
+
+                    if (t.trajectoryAABB.OverlapAABB(aabbWs) && layerPassed)
+                    {
+                        if (!t.IsStatic && t.Rigidbody) rigidbodies.Add(t.Rigidbody);
+                    }
+                }
+
+                if (xMax < f)
+                {
+                    break;
+                }
+            }
+        }
+
+        public void AreaOverlapStaticColliders(Vector3 originWs, Vector3 sizeWs, List<RBCollider> collider, int layer = -1)
+        {
+            bool ignoreLayer = layer < 0 || 32 <= layer;
+
+            sizeWs = RBPhysUtil.V3Max(sizeWs, 0);
+
+            var centerWs = originWs + (sizeWs / 2f);
+
+            RBColliderAABB aabbWs = new RBColliderAABB(centerWs, sizeWs);
+
+            float xMin = originWs.x;
+            float xMax = originWs.x + sizeWs.x;
+
+            for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
+            {
+                var t = _trajectories_orderByXMin[i];
+                var f = _trajectories_xMin[i];
+
+                if (xMin < t.trajectoryAABB.MaxX)
+                {
+                    bool layerPassed = (_collisionIgnoreLayers[layer] & (1 << t.Layer)) == 0;
+                    layerPassed |= ignoreLayer;
+
+                    if (t.trajectoryAABB.OverlapAABB(aabbWs) && layerPassed) 
+                    {
+                        if (t.IsStatic) 
+                        {
+                            collider.Add(t.Collider);
+                        }
+                    }
+                }
+
+                if (xMax < f)
+                {
+                    break;
+                }
+            }
         }
 
         void ApplyPhysFrame()

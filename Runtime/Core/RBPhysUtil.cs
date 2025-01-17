@@ -28,6 +28,24 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 V3Min(Vector3 v, float value)
+        {
+            return new Vector3(Mathf.Min(v.x, value), Mathf.Min(v.y, value), Mathf.Min(v.z, value));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 V3Max(Vector3 v, float value)
+        {
+            return new Vector3(Mathf.Max(v.x, value), Mathf.Max(v.y, value), Mathf.Max(v.z, value));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Vector3 V3Clamp(Vector3 v, float min, float max)
+        {
+            return new Vector3(Mathf.Clamp(v.x, min, max), Mathf.Clamp(v.y, min, max), Mathf.Clamp(v.z, min, max));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsV3NanAny(Vector3 v)
         {
             return float.IsNaN(v.x) || float.IsNaN(v.y) || float.IsNaN(v.z);
