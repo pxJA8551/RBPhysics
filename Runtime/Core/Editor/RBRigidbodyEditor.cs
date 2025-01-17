@@ -61,7 +61,19 @@ namespace RBPhysEditor
             EditorGUILayout.PropertyField(drag);
             EditorGUILayout.PropertyField(angularDrag);
             EditorGUILayout.PropertyField(useGravity);
+
             sleepDefault.boolValue = EditorGUILayout.Toggle("Sleep until interaction", sleepDefault.boolValue);
+
+            if (sleepDefault.boolValue) 
+            {
+                sleepGrace.intValue = 5;
+                sleeping.boolValue = true;
+            }
+            else
+            {
+                sleepGrace.intValue = 0;
+                sleeping.boolValue = false;
+            }
 
             EditorGUILayout.LabelField(string.Format("Sleep:{0}({1})", sleeping.boolValue ? "TRUE" : "FALSE", sleepGrace.intValue));
 
