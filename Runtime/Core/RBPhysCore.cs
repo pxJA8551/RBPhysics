@@ -1414,7 +1414,7 @@ namespace RBPhys
                             {
                                 if (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping || ((IsTriggerLayer(activeTraj.Layer) || IsTriggerLayer(targetTraj.Layer)) && (activeTraj.IsStaticOrSleeping || targetTraj.IsStaticOrSleeping))) 
                                 {
-                                    if (!activeTraj.IsLimitedSleeping || !targetTraj.IsLimitedSleeping) 
+                                    if (!activeTraj.IsLimitedSleepingOrStatic || !targetTraj.IsLimitedSleepingOrStatic) 
                                     {
                                         if (targetTraj.IsValidTrajectory)
                                         {
@@ -3050,6 +3050,7 @@ namespace RBPhys
 
         public bool IsStaticOrSleeping { get { return ((Rigidbody?.isSleeping ?? true) && !limitedSleeping) || forceSleeping || IsStatic; } }
         public bool IsLimitedSleeping { get { return !forceSleeping && limitedSleeping; } }
+        public bool IsLimitedSleepingOrStatic { get { return (!forceSleeping && limitedSleeping) || IsStatic; } }
 
         public int Layer { get { return _layer; } }
 
