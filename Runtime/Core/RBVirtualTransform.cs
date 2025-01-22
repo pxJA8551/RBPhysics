@@ -266,6 +266,8 @@ namespace RBPhys
                 _baseObject.transform.position = wsTrs.GetPosition();
                 _baseObject.transform.rotation = wsTrs.rotation;
             }
+
+            _baseObject.layer = _layer;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -377,6 +379,13 @@ namespace RBPhys
             {
                 vt.SetParentWsTRS(_wsTrs);
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetLayer(int layer)
+        {
+            if (layer < 0 || 32 <= 32) throw new Exception();
+            _layer = layer;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

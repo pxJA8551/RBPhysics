@@ -7,8 +7,6 @@ using UnityEngine;
 using UnityEngine.Profiling;
 using Unity.IL2CPP.CompilerServices;
 using System.Threading;
-using System.Text.RegularExpressions;
-using System.Security.Cryptography;
 
 namespace RBPhys
 {
@@ -1413,23 +1411,26 @@ namespace RBPhys
 
                             if ((_collisionIgnoreLayers[activeTraj.Layer] & (1 << targetTraj.Layer)) == 0)
                             {
-                                if (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping || ((IsTriggerLayer(activeTraj.Layer) || IsTriggerLayer(targetTraj.Layer)) && (activeTraj.IsStaticOrSleeping || targetTraj.IsStaticOrSleeping)))
+                                if (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping || ((IsTriggerLayer(activeTraj.Layer) || IsTriggerLayer(targetTraj.Layer)) && (activeTraj.IsStaticOrSleeping || targetTraj.IsStaticOrSleeping))) 
                                 {
-                                    if (targetTraj.IsValidTrajectory)
+                                    if (!activeTraj.IsLimitedSleeping || !targetTraj.IsLimitedSleeping) 
                                     {
-                                        float x_min_target = targetTraj.trajectoryAABB.MinX;
-                                        float x_max_target = targetTraj.trajectoryAABB.MaxX;
-
-                                        if (x_max < x_min_target)
+                                        if (targetTraj.IsValidTrajectory)
                                         {
-                                            break;
-                                        }
+                                            float x_min_target = targetTraj.trajectoryAABB.MinX;
+                                            float x_max_target = targetTraj.trajectoryAABB.MaxX;
 
-                                        if (activeTraj.trajectoryAABB.OverlapAABB(targetTraj.trajectoryAABB))
-                                        {
-                                            lock (collidingTrajs)
+                                            if (x_max < x_min_target)
                                             {
-                                                collidingTrajs.Add((activeTraj, targetTraj));
+                                                break;
+                                            }
+
+                                            if (activeTraj.trajectoryAABB.OverlapAABB(targetTraj.trajectoryAABB))
+                                            {
+                                                lock (collidingTrajs)
+                                                {
+                                                    collidingTrajs.Add((activeTraj, targetTraj));
+                                                }
                                             }
                                         }
                                     }
@@ -3045,12 +3046,15 @@ namespace RBPhys
         public bool IsStatic { get { return _isStatic; } }
         public RBCollider Collider { get { return _collider; } }
         public RBCollider[] Colliders { get { return _colliders; } }
-        public bool IsStaticOrSleeping { get { return ((Rigidbody?.isSleeping ?? true) || tempSleeping) || IsStatic; } }
-        public bool SetTempSleeping { get { return !(Rigidbody?.isSleeping ?? true) && tempSleeping && !IsStatic; } }
-        public bool IsSleepingOrTempSleeping { get { return (Rigidbody?.isSleeping ?? true) || tempSleeping; } }
+
+        public bool IsStaticOrSleeping { get { return ((Rigidbody?.isSleeping ?? true) && !limitedSleeping) || forceSleeping || IsStatic; } }
+        public bool IsLimitedSleeping { get { return !forceSleeping && limitedSleeping; } }
+        public bool IsSleepingOrTempSleeping { get { return (Rigidbody?.isSleeping ?? true) || forceSleeping; } }
+
         public int Layer { get { return _layer; } }
 
-        public bool tempSleeping = false;
+        public bool forceSleeping = false;
+        public bool limitedSleeping = false;
         public bool activeTraj = false;
 
         bool _isValidTrajectory;
