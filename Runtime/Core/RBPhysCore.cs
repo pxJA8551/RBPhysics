@@ -478,7 +478,7 @@ namespace RBPhys
                     {
                         foreach (RBRigidbody rb in _rigidbodies)
                         {
-                            if (!rb.isSleeping && rb.useGravity && !rb.IgnoreVelocity)
+                            if (!rb.ExpObjectTrajectory.IsStaticOrSleeping && rb.useGravity && !rb.IgnoreVelocity) 
                             {
                                 rb.ExpVelocity += gravityAcceleration * dt;
                             }
@@ -3049,7 +3049,6 @@ namespace RBPhys
 
         public bool IsStaticOrSleeping { get { return ((Rigidbody?.isSleeping ?? true) && !limitedSleeping) || forceSleeping || IsStatic; } }
         public bool IsLimitedSleeping { get { return !forceSleeping && limitedSleeping; } }
-        public bool IsSleepingOrTempSleeping { get { return (Rigidbody?.isSleeping ?? true) || forceSleeping; } }
 
         public int Layer { get { return _layer; } }
 
