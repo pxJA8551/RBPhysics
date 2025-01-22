@@ -479,7 +479,7 @@ namespace RBPhys
                         foreach (RBRigidbody rb in _rigidbodies)
                         {
                             var expTraj = rb.ExpObjectTrajectory;
-                            if ((!expTraj.IsStaticOrSleeping || expTraj.IsLimitedSleeping) && rb.useGravity && !rb.IgnoreVelocity) 
+                            if (!(expTraj.IsStaticOrSleeping || expTraj.IsLimitedSleeping) && rb.useGravity && !rb.IgnoreVelocity) 
                             {
                                 rb.ExpVelocity += gravityAcceleration * dt;
                             }
