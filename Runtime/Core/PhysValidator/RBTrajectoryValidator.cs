@@ -12,7 +12,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Validate()
         {
-            return !traj.IsValidTrajectory && ((traj?.ValidateRetrogradeKeyGuid(retrogradeKeyGuid) ?? false) || ValidateAltnValidators());
+            return !traj.IsIgnoredTrajectory && ((traj?.ValidateRetrogradeKeyGuid(retrogradeKeyGuid) ?? false) || ValidateAltnValidators());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
