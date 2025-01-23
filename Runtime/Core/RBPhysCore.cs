@@ -465,6 +465,8 @@ namespace RBPhys
             {
                 try
                 {
+                    SyncIgnoreTrajectory();
+
                     if (_validatorBeforeSolver != null) _validatorBeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
                     ClearCollisions();
 
@@ -1242,6 +1244,14 @@ namespace RBPhys
                 {
                     ClearCollision(rb);
                 }
+            });
+        }
+
+        void SyncIgnoreTrajectory()
+        {
+            Parallel.ForEach(_trajectories_orderByXMin, traj =>
+            {
+                traj.SyncIgnoreTrajectory();
             });
         }
 
@@ -3056,7 +3066,7 @@ namespace RBPhys
         public bool IsStaticOrSleeping { get { return ((Rigidbody?.IsStaticOrSleeping ?? true) && !limitedSleeping) || forceSleeping || IsStatic || IsIgnoredTrajectory; } }
         public bool IsLimitedSleeping { get { return !forceSleeping && limitedSleeping; } }
         public bool IsLimitedSleepingOrStatic { get { return (!forceSleeping && limitedSleeping) || IsStatic || IsIgnoredTrajectory; } }
-        public bool IsIgnoredTrajectory { get { return ignoreTrajectory; } }
+        public bool IsIgnoredTrajectory { get { return _ignoreTrajectory; } }
 
         public int Layer { get { return _layer; } }
 
@@ -3064,7 +3074,8 @@ namespace RBPhys
         public bool limitedSleeping = false;
         public bool activeTraj = false;
 
-        public bool ignoreTrajectory = false;
+        bool _ignoreTrajectory = false;
+        bool _setIgnoreTrajectory = false;
 
         bool _isValidTrajectory;
         RBRigidbody _rigidbody;
@@ -3119,6 +3130,18 @@ namespace RBPhys
         public bool ValidateRetrogradeKeyGuid(Guid guid)
         {
             return _retrogradeKeyGuid == guid;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetIgnoreTrajectory(bool ignore)
+        {
+            _setIgnoreTrajectory = ignore;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SyncIgnoreTrajectory()
+        {
+            _ignoreTrajectory = _setIgnoreTrajectory;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
