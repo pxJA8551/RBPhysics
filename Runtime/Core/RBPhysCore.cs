@@ -1411,7 +1411,7 @@ namespace RBPhys
                 {
                     RBTrajectory activeTraj = _trajectories_orderByXMin[i];
 
-                    if (activeTraj.IsValidTrajectory)
+                    if (activeTraj.IsValidTrajectory && !activeTraj.IsIgnoredTrajectory)
                     {
                         float x_min = activeTraj.trajectoryAABB.MinX;
                         float x_max = activeTraj.trajectoryAABB.MaxX;
@@ -1422,7 +1422,7 @@ namespace RBPhys
 
                             if ((_collisionIgnoreLayers[activeTraj.Layer] & (1 << targetTraj.Layer)) == 0)
                             {
-                                if (!activeTraj.IsIgnoredTrajectory || !targetTraj.IsIgnoredTrajectory)
+                                if (!targetTraj.IsIgnoredTrajectory)
                                 {
                                     bool isTrigger = IsTriggerLayer(activeTraj.Layer) ^ IsTriggerLayer(targetTraj.Layer);
                                     bool isAwake = !isTrigger && (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping);
