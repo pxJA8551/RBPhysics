@@ -3080,18 +3080,21 @@ namespace RBPhys
         int _retrogradeFrame = 0;
 
         bool _retrogradeValid;
+        bool _fullRetrogradeValid;
 
-        public bool IsFullRetrogradeValid { get { return _retrogradeValid && _retrogradeKeyGuid != Guid.Empty; } }
+        public bool IsFullRetrogradeValid { get { return _retrogradeValid && _fullRetrogradeValid; } }
         public bool IsLimitedRetrogradeVaild { get { return _retrogradeValid; } }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetLimitedRetrograde()
         {
             Debug.Assert(_retrogradeKeyGuid == Guid.Empty);
+            Debug.Assert(!_fullRetrogradeValid);
 
             _retrogradeKeyGuid = Guid.Empty;
             _retrogradeFrame = 0;
             _retrogradeValid = true;
+            _fullRetrogradeValid = false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3100,6 +3103,7 @@ namespace RBPhys
             _retrogradeKeyGuid = guid;
             _retrogradeFrame = frame;
             _retrogradeValid = true;
+            _fullRetrogradeValid = true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3108,6 +3112,7 @@ namespace RBPhys
             _retrogradeKeyGuid = Guid.Empty;
             _retrogradeFrame = 0;
             _retrogradeValid = false;
+            _fullRetrogradeValid = false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
