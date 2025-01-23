@@ -3118,7 +3118,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ValidateRetrogradeKeyGuid(Guid guid)
         {
-            return _retrogradeKeyGuid != Guid.Empty && _retrogradeKeyGuid == guid;
+            return _retrogradeKeyGuid == guid;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
