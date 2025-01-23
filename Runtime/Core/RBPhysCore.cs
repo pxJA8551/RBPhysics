@@ -1555,8 +1555,8 @@ namespace RBPhys
                     rbc.isStaticOrSleeping = traj1.IsStaticOrSleeping && traj2.IsStaticOrSleeping;
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
-                    if (!traj2.IsRetrogradeValid) rbc.rigidbody_a?.AddValidator(new RBCollisionValidator(traj2));
-                    if (!traj1.IsRetrogradeValid) rbc.rigidbody_b?.AddValidator(new RBCollisionValidator(traj1));
+                    if (!traj2.IsStatic || !traj2.IsLimitedRetrogradeVaild) rbc.rigidbody_a?.AddValidator(new RBCollisionValidator(traj2));
+                    if (!traj1.IsStatic || !traj1.IsLimitedRetrogradeVaild) rbc.rigidbody_b?.AddValidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1607,8 +1607,8 @@ namespace RBPhys
                     rbc.isStaticOrSleeping = traj1.IsStaticOrSleeping && traj2.IsStaticOrSleeping;
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
-                    if (!traj2.IsRetrogradeValid) rbc.rigidbody_a?.AddValidator(new RBCollisionValidator(traj2));
-                    if (!traj1.IsRetrogradeValid) rbc.rigidbody_b?.AddValidator(new RBCollisionValidator(traj1));
+                    if (!traj2.IsStatic || !traj2.IsLimitedRetrogradeVaild) rbc.rigidbody_a?.AddValidator(new RBCollisionValidator(traj2));
+                    if (!traj1.IsStatic || !traj1.IsLimitedRetrogradeVaild) rbc.rigidbody_b?.AddValidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1659,8 +1659,8 @@ namespace RBPhys
                     rbc.isStaticOrSleeping = traj1.IsStaticOrSleeping && traj2.IsStaticOrSleeping;
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
-                    if (!traj2.IsRetrogradeValid) rbc.rigidbody_a?.AddValidator(new RBCollisionValidator(traj2));
-                    if (!traj1.IsRetrogradeValid) rbc.rigidbody_b?.AddValidator(new RBCollisionValidator(traj1));
+                    if (!traj2.IsStatic || !traj2.IsLimitedRetrogradeVaild) rbc.rigidbody_a?.AddValidator(new RBCollisionValidator(traj2));
+                    if (!traj1.IsStatic || !traj1.IsLimitedRetrogradeVaild) rbc.rigidbody_b?.AddValidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1711,8 +1711,8 @@ namespace RBPhys
                     rbc.isStaticOrSleeping = traj1.IsStaticOrSleeping && traj2.IsStaticOrSleeping;
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
-                    if (!traj2.IsRetrogradeValid) rbc.rigidbody_a?.AddValidator(new RBCollisionValidator(traj2));
-                    if (!traj1.IsRetrogradeValid) rbc.rigidbody_b?.AddValidator(new RBCollisionValidator(traj1));
+                    if (!traj2.IsStatic || !traj2.IsLimitedRetrogradeVaild) rbc.rigidbody_a?.AddValidator(new RBCollisionValidator(traj2));
+                    if (!traj1.IsStatic || !traj1.IsLimitedRetrogradeVaild) rbc.rigidbody_b?.AddValidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1763,8 +1763,8 @@ namespace RBPhys
                     rbc.isStaticOrSleeping = traj1.IsStaticOrSleeping && traj2.IsStaticOrSleeping;
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
-                    if (!traj2.IsRetrogradeValid) rbc.rigidbody_a?.AddValidator(new RBCollisionValidator(traj2));
-                    if (!traj1.IsRetrogradeValid) rbc.rigidbody_b?.AddValidator(new RBCollisionValidator(traj1));
+                    if (!traj2.IsStatic || !traj2.IsLimitedRetrogradeVaild) rbc.rigidbody_a?.AddValidator(new RBCollisionValidator(traj2));
+                    if (!traj1.IsStatic || !traj1.IsLimitedRetrogradeVaild) rbc.rigidbody_b?.AddValidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -1815,8 +1815,8 @@ namespace RBPhys
                     rbc.isStaticOrSleeping = traj1.IsStaticOrSleeping && traj2.IsStaticOrSleeping;
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
-                    if (!traj2.IsRetrogradeValid) rbc.rigidbody_a?.AddValidator(new RBCollisionValidator(traj2));
-                    if (!traj1.IsRetrogradeValid) rbc.rigidbody_b?.AddValidator(new RBCollisionValidator(traj1));
+                    if (!traj2.IsStatic || !traj2.IsLimitedRetrogradeVaild) rbc.rigidbody_a?.AddValidator(new RBCollisionValidator(traj2));
+                    if (!traj1.IsStatic || !traj1.IsLimitedRetrogradeVaild) rbc.rigidbody_b?.AddValidator(new RBCollisionValidator(traj1));
 
                     var p = pair.col_b.ExpToCurrentVector(pair.p.p);
                     var pA = pair.col_a.ExpToCurrent(pair.p.pA);
@@ -3079,11 +3079,23 @@ namespace RBPhys
         public int RetrogradeFrame { get { return _retrogradeFrame; } }
         int _retrogradeFrame = 0;
 
-        public bool IsRetrogradeValid { get { return _retrogradeValid; } }
         bool _retrogradeValid;
 
+        public bool IsFullRetrogradeValid { get { return _retrogradeValid && _retrogradeKeyGuid != Guid.Empty; } }
+        public bool IsLimitedRetrogradeVaild { get { return _retrogradeValid; } }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetRetrogradeKeyGuid(Guid guid, int frame)
+        public void SetLimitedRetrograde()
+        {
+            Debug.Assert(_retrogradeKeyGuid == Guid.Empty);
+
+            _retrogradeKeyGuid = Guid.Empty;
+            _retrogradeFrame = 0;
+            _retrogradeValid = true;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetFullRetrograde(Guid guid, int frame)
         {
             _retrogradeKeyGuid = guid;
             _retrogradeFrame = frame;
@@ -3091,7 +3103,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void ClearRetrogradeKeyGuid()
+        public void ClearRetrograde()
         {
             _retrogradeKeyGuid = Guid.Empty;
             _retrogradeFrame = 0;
