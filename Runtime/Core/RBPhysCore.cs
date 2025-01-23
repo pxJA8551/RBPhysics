@@ -1415,7 +1415,6 @@ namespace RBPhys
                                 bool isTrigger = IsTriggerLayer(activeTraj.Layer) ^ IsTriggerLayer(targetTraj.Layer);
                                 bool isAwake = !isTrigger && (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping);
 
-                                isAwake &= activeTraj.
                                 isAwake &= !activeTraj.IsLimitedSleepingOrStatic || !targetTraj.IsLimitedSleepingOrStatic;
 
                                 if (isAwake || isTrigger) 
