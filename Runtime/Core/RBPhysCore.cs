@@ -479,7 +479,7 @@ namespace RBPhys
                         foreach (RBRigidbody rb in _rigidbodies)
                         {
                             var expTraj = rb.ExpObjectTrajectory;
-                            if (!(expTraj.IsStaticOrSleeping || expTraj.IsLimitedSleeping) && rb.useGravity && !rb.IgnoreVelocity) 
+                            if (!(expTraj.IsStaticOrSleeping || expTraj.IsLimitedSleeping) && rb.useGravity && !rb.ExpObjectTrajectory.IsIgnoredTrajectory) 
                             {
                                 rb.ExpVelocity += gravityAcceleration * dt;
                             }
@@ -697,7 +697,7 @@ namespace RBPhys
                     {
                         foreach (var c in t.Colliders)
                         {
-                            if (c.gameObject.activeInHierarchy && c.enabled && !c.IgnoreCollision)
+                            if (c.gameObject.activeInHierarchy && c.enabled && !c.ExpTrajectory.IsIgnoredTrajectory)
                             {
                                 if (!(selectCols && ignoreCols.Contains(c)) && !IsIgnorePhysCastLayer(t.Layer) && (!IsTriggerLayer(t.Layer) || allowTriggerCollision)) 
                                 {
@@ -792,7 +792,7 @@ namespace RBPhys
                     {
                         foreach (var c in t.Colliders)
                         {
-                            if (c.gameObject.activeInHierarchy && c.enabled && !c.IgnoreCollision)
+                            if (c.gameObject.activeInHierarchy && c.enabled && !c.ExpTrajectory.IsIgnoredTrajectory)
                             {
                                 if (!(selectCols && ignoreCols.Contains(c)) && !IsIgnorePhysCastLayer(t.Layer) && (!IsTriggerLayer(t.Layer) || allowTriggerCollision))
                                 {
@@ -1188,7 +1188,7 @@ namespace RBPhys
             Profiler.BeginSample(name: "Physics-CollisionResolution-RigidbodyAwakeTest");
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                if (rb.isSleeping && !rb.IgnoreVelocity)
+                if (rb.isSleeping && !rb.ExpObjectTrajectory.IsIgnoredTrajectory) 
                 {
                     for (int i = 0; i < rb.collidingCount; i++)
                     {
@@ -1412,28 +1412,31 @@ namespace RBPhys
 
                             if ((_collisionIgnoreLayers[activeTraj.Layer] & (1 << targetTraj.Layer)) == 0)
                             {
-                                bool isTrigger = IsTriggerLayer(activeTraj.Layer) ^ IsTriggerLayer(targetTraj.Layer);
-                                bool isAwake = !isTrigger && (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping);
-
-                                isAwake &= !activeTraj.IsLimitedSleepingOrStatic || !targetTraj.IsLimitedSleepingOrStatic;
-
-                                if (isAwake || isTrigger) 
+                                if (!activeTraj.IsIgnoredTrajectory || !targetTraj.IsIgnoredTrajectory)
                                 {
-                                    if (targetTraj.IsValidTrajectory)
+                                    bool isTrigger = IsTriggerLayer(activeTraj.Layer) ^ IsTriggerLayer(targetTraj.Layer);
+                                    bool isAwake = !isTrigger && (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping);
+
+                                    isAwake &= !activeTraj.IsLimitedSleepingOrStatic || !targetTraj.IsLimitedSleepingOrStatic;
+
+                                    if (isAwake || isTrigger)
                                     {
-                                        float x_min_target = targetTraj.trajectoryAABB.MinX;
-                                        float x_max_target = targetTraj.trajectoryAABB.MaxX;
-
-                                        if (x_max < x_min_target)
+                                        if (targetTraj.IsValidTrajectory)
                                         {
-                                            break;
-                                        }
+                                            float x_min_target = targetTraj.trajectoryAABB.MinX;
+                                            float x_max_target = targetTraj.trajectoryAABB.MaxX;
 
-                                        if (activeTraj.trajectoryAABB.OverlapAABB(targetTraj.trajectoryAABB))
-                                        {
-                                            lock (collidingTrajs)
+                                            if (x_max < x_min_target)
                                             {
-                                                collidingTrajs.Add((activeTraj, targetTraj));
+                                                break;
+                                            }
+
+                                            if (activeTraj.trajectoryAABB.OverlapAABB(targetTraj.trajectoryAABB))
+                                            {
+                                                lock (collidingTrajs)
+                                                {
+                                                    collidingTrajs.Add((activeTraj, targetTraj));
+                                                }
                                             }
                                         }
                                     }
@@ -2153,7 +2156,7 @@ namespace RBPhys
             {
                 var collider_a = trajAABB_a[i];
 
-                if (collider_a.collider.VEnabled&& !collider_a.collider.IgnoreCollision)
+                if (collider_a.collider.VEnabled) 
                 {
                     float a_x_min = collider_a.aabb.MinX;
                     float a_x_max = collider_a.aabb.MaxX;
@@ -2164,7 +2167,7 @@ namespace RBPhys
                         float b_x_min = collider_b.aabb.MinX;
                         float b_x_max = collider_b.aabb.MaxX;
 
-                        if (collider_b.collider.VEnabled && !collider_b.collider.IgnoreCollision)
+                        if (collider_b.collider.VEnabled)
                         {
                             Vector3 cg = traj_a.IsStatic ? traj_b.IsStatic ? Vector3.zero : traj_b.Rigidbody.CenterOfGravityWorld : traj_a.Rigidbody.CenterOfGravityWorld;
 
@@ -3050,15 +3053,18 @@ namespace RBPhys
         public RBCollider Collider { get { return _collider; } }
         public RBCollider[] Colliders { get { return _colliders; } }
 
-        public bool IsStaticOrSleeping { get { return ((Rigidbody?.IsStaticOrSleeping ?? true) && !limitedSleeping) || forceSleeping || IsStatic; } }
+        public bool IsStaticOrSleeping { get { return ((Rigidbody?.IsStaticOrSleeping ?? true) && !limitedSleeping) || forceSleeping || IsStatic || IsIgnoredTrajectory; } }
         public bool IsLimitedSleeping { get { return !forceSleeping && limitedSleeping; } }
-        public bool IsLimitedSleepingOrStatic { get { return (!forceSleeping && limitedSleeping) || IsStatic; } }
+        public bool IsLimitedSleepingOrStatic { get { return (!forceSleeping && limitedSleeping) || IsStatic || IsIgnoredTrajectory; } }
+        public bool IsIgnoredTrajectory { get { return ignoreTrajectory; } }
 
         public int Layer { get { return _layer; } }
 
         public bool forceSleeping = false;
         public bool limitedSleeping = false;
         public bool activeTraj = false;
+
+        public bool ignoreTrajectory = false;
 
         bool _isValidTrajectory;
         RBRigidbody _rigidbody;
@@ -3112,7 +3118,7 @@ namespace RBPhys
 
             foreach (RBCollider c in rigidbody.GetColliders())
             {
-                if (c.VEnabled && !c.IgnoreCollision)
+                if (c.VEnabled) 
                 {
                     aabb.Encapsulate(c.ExpTrajectory.trajectoryAABB);
                 }
@@ -3152,7 +3158,7 @@ namespace RBPhys
 
             foreach (RBCollider c in rigidbody.GetColliders())
             {
-                if (c.VEnabled && !c.IgnoreCollision)
+                if (c.VEnabled) 
                 {
                     aabb.Encapsulate(c.ExpTrajectory.trajectoryAABB);
                 }

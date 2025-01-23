@@ -12,12 +12,14 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Validate()
         {
-            return (traj?.ValidateRetrogradeKeyGuid(retrogradeKeyGuid) ?? false) || ValidateAltnValidators();
+            return !traj.IsValidTrajectory && ((traj?.ValidateRetrogradeKeyGuid(retrogradeKeyGuid) ?? false) || ValidateAltnValidators());
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBTrajectoryValidator(RBTrajectory traj) : base(Guid.Empty, traj.activeTraj)
         {
+            Debug.Assert(!traj.IsIgnoredTrajectory);
+
             this.traj = traj;
             this.retrogradeKeyGuid = traj.RetrogradeKeyGuid;
 

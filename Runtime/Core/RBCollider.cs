@@ -28,11 +28,8 @@ namespace RBPhys
 
         [NonSerialized] public float colliderSizeMultiplier = 1f;
 
-        public bool IgnoreCollision { get { return _stackVal_ignoreCollision_ifGreaterThanZero > 0; } }
         public bool useCCD;
         public bool allowSoftClip;
-
-        int _stackVal_ignoreCollision_ifGreaterThanZero = 0;
 
         protected RBTrajectory _expTrajectory;
 
@@ -42,18 +39,6 @@ namespace RBPhys
         public OnCollision onCollision;
 
         public virtual int Layer { get; }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetIgnoreCollision()
-        {
-            _stackVal_ignoreCollision_ifGreaterThanZero++;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetDecrIgnoreCollision()
-        {
-            _stackVal_ignoreCollision_ifGreaterThanZero--;
-        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override void ComponentAwake()
@@ -79,8 +64,6 @@ namespace RBPhys
             ReleaseParent();
             PhysComputer.RemoveCollider(this);
         }
-
-        private void FixedUpdate() { }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBCollider()

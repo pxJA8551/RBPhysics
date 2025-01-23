@@ -34,11 +34,8 @@ namespace RBPhys
         [NonSerialized] public Vector3 inertiaTensor;
         [NonSerialized] public Quaternion inertiaTensorRotation;
 
-        public bool IgnoreVelocity { get { return _stackVal_ignoreVelocity_ifGreaterThanZero > 0; } }
-        public bool IsStaticOrSleeping { get { return isSleeping || IgnoreVelocity; } }
-
-        int _stackVal_ignoreVelocity_ifGreaterThanZero = 0;
-
+        public bool IsStaticOrSleeping { get { return isSleeping || _expObjTrajectory.IsIgnoredTrajectory; } }
+        
         Vector3 _centerOfGravity;
 
         Vector3 _velocity;
@@ -299,18 +296,6 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetIgnoreVelocity()
-        {
-            _stackVal_ignoreVelocity_ifGreaterThanZero++;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetDecrIgnoreVelocity()
-        {
-            if (_stackVal_ignoreVelocity_ifGreaterThanZero > 0) _stackVal_ignoreVelocity_ifGreaterThanZero--;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void InvertVelocity()
         {
             _velocity = -_velocity;
@@ -322,7 +307,7 @@ namespace RBPhys
 
         internal virtual void ApplyTransform(float dt, TimeScaleMode physTimeScaleMode)
         {
-            if (!IgnoreVelocity)
+            if (!_expObjTrajectory.IsIgnoredTrajectory)
             {
                 float vm = _expVelocity.magnitude;
                 float avm = _expAngularVelocity.magnitude;
