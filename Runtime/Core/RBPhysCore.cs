@@ -1412,26 +1412,28 @@ namespace RBPhys
 
                             if ((_collisionIgnoreLayers[activeTraj.Layer] & (1 << targetTraj.Layer)) == 0)
                             {
-                                if (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping || ((IsTriggerLayer(activeTraj.Layer) || IsTriggerLayer(targetTraj.Layer)) && (activeTraj.IsStaticOrSleeping || targetTraj.IsStaticOrSleeping))) 
+                                bool isTrigger = IsTriggerLayer(activeTraj.Layer) ^ IsTriggerLayer(targetTraj.Layer);
+                                bool isAwake = !isTrigger && (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping);
+
+                                isAwake &= !activeTraj.IsLimitedSleepingOrStatic || !targetTraj.IsLimitedSleepingOrStatic;
+
+                                if (isAwake || isTrigger) 
                                 {
-                                    if (!activeTraj.IsLimitedSleepingOrStatic || !targetTraj.IsLimitedSleepingOrStatic) 
+                                    if (targetTraj.IsValidTrajectory)
                                     {
-                                        if (targetTraj.IsValidTrajectory)
+                                        float x_min_target = targetTraj.trajectoryAABB.MinX;
+                                        float x_max_target = targetTraj.trajectoryAABB.MaxX;
+
+                                        if (x_max < x_min_target)
                                         {
-                                            float x_min_target = targetTraj.trajectoryAABB.MinX;
-                                            float x_max_target = targetTraj.trajectoryAABB.MaxX;
+                                            break;
+                                        }
 
-                                            if (x_max < x_min_target)
+                                        if (activeTraj.trajectoryAABB.OverlapAABB(targetTraj.trajectoryAABB))
+                                        {
+                                            lock (collidingTrajs)
                                             {
-                                                break;
-                                            }
-
-                                            if (activeTraj.trajectoryAABB.OverlapAABB(targetTraj.trajectoryAABB))
-                                            {
-                                                lock (collidingTrajs)
-                                                {
-                                                    collidingTrajs.Add((activeTraj, targetTraj));
-                                                }
+                                                collidingTrajs.Add((activeTraj, targetTraj));
                                             }
                                         }
                                     }
