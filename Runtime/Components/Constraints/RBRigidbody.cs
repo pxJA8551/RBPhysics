@@ -87,7 +87,7 @@ namespace RBPhys
         public List<RBTrajectoryAlternateValidator> trajAltnValidators = new List<RBTrajectoryAlternateValidator>();
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddVaidator(RBPhysStateValidator validator)
+        public void AddValidator(RBPhysStateValidator validator)
         {
             validators.Add(validator);
         }
