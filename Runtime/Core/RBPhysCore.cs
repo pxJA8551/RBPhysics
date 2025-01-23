@@ -465,7 +465,7 @@ namespace RBPhys
             {
                 try
                 {
-                    SyncIgnoreTrajectory();
+                    SyncTrajectories();
 
                     if (_validatorBeforeSolver != null) _validatorBeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
                     ClearCollisions();
@@ -1247,11 +1247,11 @@ namespace RBPhys
             });
         }
 
-        void SyncIgnoreTrajectory()
+        void SyncTrajectories()
         {
             Parallel.ForEach(_trajectories_orderByXMin, traj =>
             {
-                traj.SyncIgnoreTrajectory();
+                traj.SyncTrajectory();
             });
         }
 
@@ -3085,16 +3085,20 @@ namespace RBPhys
         int _layer;
 
         public Guid RetrogradeKeyGuid { get { return _retrogradeKeyGuid; } }
-        Guid _retrogradeKeyGuid = Guid.Empty;
-
         public int RetrogradeFrame { get { return _retrogradeFrame; } }
-        int _retrogradeFrame = 0;
-
-        bool _retrogradeValid;
-        bool _fullRetrogradeValid;
 
         public bool IsFullRetrogradeValid { get { return _retrogradeValid && _fullRetrogradeValid; } }
         public bool IsLimitedRetrogradeVaild { get { return _retrogradeValid; } }
+
+        Guid _retrogradeKeyGuid = Guid.Empty;
+        int _retrogradeFrame = 0;
+        bool _retrogradeValid;
+        bool _fullRetrogradeValid;
+
+        Guid _setRegrogradeKeyGuid = Guid.Empty;
+        int _setRetrogradeFrame = 0;
+        bool _setRetrogradeValid = false;
+        bool _setFullRetrogradeValid = false;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetLimitedRetrograde()
@@ -3102,28 +3106,28 @@ namespace RBPhys
             Debug.Assert(_retrogradeKeyGuid == Guid.Empty);
             Debug.Assert(!_fullRetrogradeValid);
 
-            _retrogradeKeyGuid = Guid.Empty;
-            _retrogradeFrame = 0;
-            _retrogradeValid = true;
-            _fullRetrogradeValid = false;
+            _setRegrogradeKeyGuid = Guid.Empty;
+            _setRetrogradeFrame = 0;
+            _setRetrogradeValid = true;
+            _setFullRetrogradeValid = false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetFullRetrograde(Guid guid, int frame)
         {
-            _retrogradeKeyGuid = guid;
-            _retrogradeFrame = frame;
-            _retrogradeValid = true;
-            _fullRetrogradeValid = true;
+            _setRegrogradeKeyGuid = guid;
+            _setRetrogradeFrame = frame;
+            _setRetrogradeValid = true;
+            _setFullRetrogradeValid = true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ClearRetrograde()
         {
-            _retrogradeKeyGuid = Guid.Empty;
-            _retrogradeFrame = 0;
-            _retrogradeValid = false;
-            _fullRetrogradeValid = false;
+            _setRegrogradeKeyGuid = Guid.Empty;
+            _setRetrogradeFrame = 0;
+            _setRetrogradeValid = false;
+            _setFullRetrogradeValid = false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3139,9 +3143,14 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SyncIgnoreTrajectory()
+        public void SyncTrajectory()
         {
             _ignoreTrajectory = _setIgnoreTrajectory;
+
+            _retrogradeKeyGuid = _setRegrogradeKeyGuid;
+            _retrogradeFrame = _setRetrogradeFrame;
+            _retrogradeValid = _setRetrogradeValid;
+            _fullRetrogradeValid = _setFullRetrogradeValid;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
