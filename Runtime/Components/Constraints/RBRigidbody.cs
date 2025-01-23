@@ -35,6 +35,7 @@ namespace RBPhys
         [NonSerialized] public Quaternion inertiaTensorRotation;
 
         public bool IgnoreVelocity { get { return _stackVal_ignoreVelocity_ifGreaterThanZero > 0; } }
+        public bool IsStaticOrSleeping { get { return isSleeping || IgnoreVelocity; } }
 
         int _stackVal_ignoreVelocity_ifGreaterThanZero = 0;
 

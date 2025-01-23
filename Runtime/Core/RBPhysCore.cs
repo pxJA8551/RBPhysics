@@ -1188,12 +1188,12 @@ namespace RBPhys
             Profiler.BeginSample(name: "Physics-CollisionResolution-RigidbodyAwakeTest");
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                if (rb.isSleeping)
+                if (rb.isSleeping && !rb.IgnoreVelocity)
                 {
                     for (int i = 0; i < rb.collidingCount; i++)
                     {
                         var c = rb.colliding[i];
-                        if (c.ParentRigidbody != null && ((c.ParentRigidbody.VEnabled && !c.ParentRigidbody.isSleeping) || !c.ParentRigidbody.VEnabled))
+                        if (c.ParentRigidbody != null && ((c.ParentRigidbody.VEnabled && !c.ParentRigidbody.IsStaticOrSleeping) || !c.ParentRigidbody.VEnabled))
                         {
                             rb.PhysAwake();
                             break;
@@ -1415,6 +1415,7 @@ namespace RBPhys
                                 bool isTrigger = IsTriggerLayer(activeTraj.Layer) ^ IsTriggerLayer(targetTraj.Layer);
                                 bool isAwake = !isTrigger && (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping);
 
+                                isAwake &= activeTraj.
                                 isAwake &= !activeTraj.IsLimitedSleepingOrStatic || !targetTraj.IsLimitedSleepingOrStatic;
 
                                 if (isAwake || isTrigger) 
@@ -3050,7 +3051,7 @@ namespace RBPhys
         public RBCollider Collider { get { return _collider; } }
         public RBCollider[] Colliders { get { return _colliders; } }
 
-        public bool IsStaticOrSleeping { get { return ((Rigidbody?.isSleeping ?? true) && !limitedSleeping) || forceSleeping || IsStatic; } }
+        public bool IsStaticOrSleeping { get { return ((Rigidbody?.IsStaticOrSleeping ?? true) && !limitedSleeping) || forceSleeping || IsStatic; } }
         public bool IsLimitedSleeping { get { return !forceSleeping && limitedSleeping; } }
         public bool IsLimitedSleepingOrStatic { get { return (!forceSleeping && limitedSleeping) || IsStatic; } }
 
