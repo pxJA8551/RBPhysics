@@ -3095,39 +3095,34 @@ namespace RBPhys
         bool _retrogradeValid;
         bool _fullRetrogradeValid;
 
-        Guid _setRegrogradeKeyGuid = Guid.Empty;
-        int _setRetrogradeFrame = 0;
-        bool _setRetrogradeValid = false;
-        bool _setFullRetrogradeValid = false;
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetLimitedRetrograde()
         {
             Debug.Assert(_retrogradeKeyGuid == Guid.Empty);
             Debug.Assert(!_fullRetrogradeValid);
 
-            _setRegrogradeKeyGuid = Guid.Empty;
-            _setRetrogradeFrame = 0;
-            _setRetrogradeValid = true;
-            _setFullRetrogradeValid = false;
+            _retrogradeKeyGuid = Guid.Empty;
+            _retrogradeFrame = 0;
+            _retrogradeValid = true;
+            _fullRetrogradeValid = false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetFullRetrograde(Guid guid, int frame)
         {
-            _setRegrogradeKeyGuid = guid;
-            _setRetrogradeFrame = frame;
-            _setRetrogradeValid = true;
-            _setFullRetrogradeValid = true;
+            _retrogradeKeyGuid = guid;
+            _retrogradeFrame = frame;
+            _retrogradeValid = true;
+            _fullRetrogradeValid = true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ClearRetrograde()
         {
-            _setRegrogradeKeyGuid = Guid.Empty;
-            _setRetrogradeFrame = 0;
-            _setRetrogradeValid = false;
-            _setFullRetrogradeValid = false;
+            _retrogradeKeyGuid = Guid.Empty;
+            _retrogradeFrame = 0;
+            _retrogradeValid = false;
+            _fullRetrogradeValid = false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -3146,11 +3141,6 @@ namespace RBPhys
         public void SyncTrajectory()
         {
             _ignoreTrajectory = _setIgnoreTrajectory;
-
-            _retrogradeKeyGuid = _setRegrogradeKeyGuid;
-            _retrogradeFrame = _setRetrogradeFrame;
-            _retrogradeValid = _setRetrogradeValid;
-            _fullRetrogradeValid = _setFullRetrogradeValid;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
