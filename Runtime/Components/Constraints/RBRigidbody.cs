@@ -292,11 +292,8 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void InvertVelocity()
         {
-            _velocity = -_velocity;
-            _angularVelocity = -_angularVelocity;
-
-            _expVelocity = -_expVelocity;
-            _expAngularVelocity = -_expAngularVelocity;
+            (_velocity, _expVelocity) = (-_expVelocity, -_velocity);
+            (_angularVelocity, _expAngularVelocity) = (-_expAngularVelocity, -_angularVelocity);
         }
 
         internal virtual void ApplyTransform(float dt, TimeScaleMode physTimeScaleMode)
