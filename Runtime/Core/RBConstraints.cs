@@ -16,6 +16,7 @@ namespace RBPhys
         public delegate void BeforeSolver(float delta, TimeScaleMode timeScaleMode);
         public delegate void AfterSolver(float delta, TimeScaleMode timeScaleMode);
 
+        public delegate void ValidatorPreBeforeSolver(float delta, TimeScaleMode timeScaleMode);
         public delegate void ValidatorBeforeSolver(float delta, TimeScaleMode timeScaleMode);
         public delegate void ValidatorAfterSolver(float delta, TimeScaleMode timeScaleMode);
 

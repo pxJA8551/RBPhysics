@@ -75,6 +75,7 @@ namespace RBPhys
         BeforeSolver _beforeSolver;
         AfterSolver _afterSolver;
 
+        ValidatorPreBeforeSolver _validatorPreBeforeSolver;
         ValidatorBeforeSolver _validatorBeforeSolver;
         ValidatorAfterSolver _validatorAfterSolver;
 
@@ -246,15 +247,17 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void AddPhysValidatorObject(ValidatorBeforeSolver beforeSolver, ValidatorAfterSolver afterSolver)
+        public void AddPhysValidatorObject(ValidatorPreBeforeSolver preBeforeSolver, ValidatorBeforeSolver beforeSolver, ValidatorAfterSolver afterSolver)
         {
+            if (preBeforeSolver != null) _validatorPreBeforeSolver += preBeforeSolver;
             if (beforeSolver != null) _validatorBeforeSolver += beforeSolver;
             if (afterSolver != null) _validatorAfterSolver += afterSolver;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RemovePhysValidatorObject(ValidatorBeforeSolver beforeSolver, ValidatorAfterSolver afterSolver)
+        public void RemovePhysValidatorObject(ValidatorPreBeforeSolver preBeforeSolver, ValidatorBeforeSolver beforeSolver, ValidatorAfterSolver afterSolver)
         {
+            if (preBeforeSolver != null) _validatorPreBeforeSolver -= preBeforeSolver;
             if (beforeSolver != null) _validatorBeforeSolver -= beforeSolver;
             if (afterSolver != null) _validatorAfterSolver -= afterSolver;
         }
@@ -467,6 +470,7 @@ namespace RBPhys
                 {
                     SyncTrajectories();
 
+                    if (_validatorPreBeforeSolver != null) _validatorPreBeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
                     if (_validatorBeforeSolver != null) _validatorBeforeSolver(_solverDeltaTimeAsFloat, _timeScaleMode);
                     ClearCollisions();
 
