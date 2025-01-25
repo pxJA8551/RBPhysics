@@ -3111,6 +3111,12 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void SetgRetrogradeFrame(int frame)
+        {
+            _retrogradeFrame = frame;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetFullRetrograde(Guid guid, int frame)
         {
             _retrogradeKeyGuid = guid;
