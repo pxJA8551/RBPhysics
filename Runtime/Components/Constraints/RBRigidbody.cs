@@ -352,6 +352,12 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ClearInterpTraj()
+        {
+            interpTraj = default;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void CalcVel2Ws(Vector3 vel, Vector3 angVel, float dt, out Vector3 wsPosOut, out Quaternion wsRotOut)
         {
             CalcVel2Ws(VTransform.WsPosition, VTransform.WsRotation, vel, angVel, dt, out wsPosOut, out wsRotOut);
