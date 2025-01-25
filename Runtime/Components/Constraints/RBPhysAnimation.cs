@@ -361,7 +361,7 @@ namespace RBPhys
             _solverDeltaTime = dt;
         }
 
-        public void StdSolverIteration(int iterationCount, RBPhysComputer.SolverInfo info)
+        public void StdSolverIteration(RBPhysComputer.SolverInfo info)
         {
             if (enablePhysProceduralAnimation && trsCurve != null)
             {
@@ -369,7 +369,7 @@ namespace RBPhys
 
                 if (_solverDeltaTime > 0)
                 {
-                    CalcTRSAnimVelocity(_solverDeltaTime, info.solver_iter_max * info.solver_sync_max);
+                    CalcTRSAnimVelocity(_solverDeltaTime, info.solver_sync_max);
                     LinkAnimationTime();
                 }
             }

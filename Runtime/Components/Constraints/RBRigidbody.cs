@@ -392,7 +392,7 @@ namespace RBPhys
             {
                 foreach (RBCollider c in _colliders)
                 {
-                    c.UpdateExpTrajectoryMultiThreaded(dt, VTransform.WsPosition, VTransform.WsRotation, r.pos, r.rot);
+                    c.UpdateExpTrajectory(dt, VTransform.WsPosition, VTransform.WsRotation, r.pos, r.rot);
                 }
             }
 
@@ -406,7 +406,7 @@ namespace RBPhys
 
             for (int i = 0; i < _colliders.Count; i++)
             {
-                _colliders[i].UpdateExpTrajectoryMultiThreaded(dt, VTransform.WsPosition, VTransform.WsRotation, r.pos, r.rot);
+                _colliders[i].UpdateExpTrajectory(dt, VTransform.WsPosition, VTransform.WsRotation, r.pos, r.rot);
             }
         }
 

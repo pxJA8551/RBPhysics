@@ -17,8 +17,7 @@ namespace RBPhys
     {
         // dt = .01 ms
 
-        public const int CPU_STD_SOLVER_MAX_ITERATION = 2;
-        public const int CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION = 3;
+        public const int CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION = 5;
         public const float CPU_SOLVER_ABORT_VELADD_SQRT = .005f * .005f;
         public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = .002f * .002f;
         public const float COLLISION_AS_CONTINUOUS_FRAMES = 3;
@@ -33,7 +32,6 @@ namespace RBPhys
         public const float VELOCITY_MAX = 50f;
         public const float ANG_VELOCITY_MAX = 20f;
 
-        public int cpu_std_solver_max_iter = CPU_STD_SOLVER_MAX_ITERATION;
         public int cpu_std_solver_internal_sync_per_iteration = CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION;
         public float cpu_solver_abort_veladd_sqrt = CPU_SOLVER_ABORT_VELADD_SQRT;
         public float cpu_solver_abort_angveladd_sqrt = CPU_SOLVER_ABORT_ANGVELADD_SQRT;
@@ -114,9 +112,9 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBPhysComputer.SolverInfo GetSolverInfo(int iterCount, int syncCount)
+        public RBPhysComputer.SolverInfo GetSolverInfo(int syncCount)
         {
-            return new SolverInfo(this, iterCount, syncCount);
+            return new SolverInfo(this, syncCount);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1856,7 +1854,7 @@ namespace RBPhys
             Profiler.BeginSample(name: "Physics-CollisionResolution-RigidbodyPrepareSolve");
 
             {
-                var solverInfo = GetSolverInfo(-1, -1);
+                var solverInfo = GetSolverInfo(-1);
                 if (_stdSolverInit != null) _stdSolverInit(dt, solverInfo);
             }
 
@@ -1891,41 +1889,20 @@ namespace RBPhys
             Profiler.EndSample();
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-SolveCollisions/StdSolver");
-            for (int iter = 0; iter < cpu_std_solver_max_iter; iter++)
+
+            for (int i = 0; i < cpu_std_solver_internal_sync_per_iteration; i++)
             {
-                for (int i = 0; i < cpu_std_solver_internal_sync_per_iteration; i++)
+                Profiler.BeginSample(name: "SolveConstraints");
+
+                var solverInfo = GetSolverInfo(i);
+                if (_stdSolverIter != null) _stdSolverIter(solverInfo);
+
+                Parallel.For(0, _collisionsInSolver.Count, i =>
                 {
-                    Profiler.BeginSample(name: "SolveConstraints");
+                    if (!_collisionsInSolver[i].skipInSolver) SolveCollisionPair(_collisionsInSolver[i]);
+                });
 
-                    var solverInfo = GetSolverInfo(iter, i);
-                    if (_stdSolverIter != null) _stdSolverIter(iter, solverInfo);
-
-                    Parallel.For(0, _collisionsInSolver.Count, i =>
-                    {
-                        if (!_collisionsInSolver[i].skipInSolver) SolveCollisionPair(_collisionsInSolver[i]);
-                    });
-
-                    Profiler.EndSample();
-                }
-
-                if (iter != cpu_std_solver_max_iter - 1)
-                {
-                    Profiler.BeginSample(name: "UpdateTrajectories");
-
-                    UpdateColliderExtTrajectories(dt);
-
-                    Parallel.For(0, _collisionsInSolver.Count, j =>
-                    {
-                        if (!_collisionsInSolver[j].skipInSolver) UpdateTrajectoryPair(_collisionsInSolver[j], dt);
-                    });
-
-                    {
-                        var solverInfo = GetSolverInfo(iter, -1);
-                        if (_stdSolverInit != null) _stdSolverInit(dt, solverInfo);
-                    }
-
-                    Profiler.EndSample();
-                }
+                Profiler.EndSample();
             }
 
             Profiler.EndSample();
