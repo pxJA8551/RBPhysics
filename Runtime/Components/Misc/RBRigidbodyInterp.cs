@@ -27,8 +27,10 @@ namespace RBPhys
 
         private void LateUpdate()
         {
-            if (rbRigidbody == null || !rbRigidbody.VEnabled || (_lastFixedUpdate == 0) || (Time.fixedDeltaTime <= 0)) return;
             if (!interpPosition && !interpRotation) return;
+
+            if (rbRigidbody == null || !rbRigidbody.VEnabled || (_lastFixedUpdate == 0) || (Time.fixedDeltaTime <= 0)) return;
+            if (!rbRigidbody.interpTraj.PushedLast) return;
 
             double elapsed = Time.timeAsDouble - _lastFixedUpdate;
             float t = (float)(elapsed / RBPhysController.MainComputer.timeParams.fixedDeltaTime);
