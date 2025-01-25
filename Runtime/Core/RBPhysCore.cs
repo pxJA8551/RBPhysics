@@ -2633,7 +2633,7 @@ namespace RBPhys
 
                     float restitution = col.collider_a.restitution * col.collider_b.restitution;
                     
-                    if (tMode == TimeScaleMode.Retrograde)
+                    if (tMode.IsRetg())
                     {
                         restitution = (restitution != 0) ? 1 / restitution : 0;
                         restitution *= RBPhysComputer.retrograde_phys_restitution_multiplier;
@@ -2699,14 +2699,14 @@ namespace RBPhys
                     }
 
                     float friction = col.collider_a.friction * col.collider_b.friction;
-                    if (tMode == TimeScaleMode.Retrograde)
+                    if (tMode.IsRetg())
                     {
                         friction *= RBPhysComputer.retrograde_phys_friction_multiplier;
                     }
 
                     float maxFriction = friction * col._jN._totalLambda;
 
-                    if (tMode == TimeScaleMode.Prograde)
+                    if (tMode.IsProg())
                     {
                         _totalLambda = Mathf.Clamp(_totalLambda + lambda, -maxFriction, maxFriction);
                     }
@@ -3250,5 +3250,18 @@ namespace RBPhys
     {
         Prograde = 0,
         Retrograde = 1
+    }
+
+    public static class TimeScaleModeExtentions
+    {
+        public static bool IsProg(this TimeScaleMode tsm)
+        {
+            return tsm == TimeScaleMode.Prograde;
+        }
+
+        public static bool IsRetg(this TimeScaleMode tsm)
+        {
+            return tsm == TimeScaleMode.Retrograde;
+        }
     }
 }

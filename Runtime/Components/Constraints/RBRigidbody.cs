@@ -306,7 +306,7 @@ namespace RBPhys
                 float vm = _expVelocity.magnitude;
                 float avm = _expAngularVelocity.magnitude;
 
-                if (physTimeScaleMode == TimeScaleMode.Prograde)
+                if (physTimeScaleMode.IsProg())
                 {
                     _expVelocity = (vm > 0 ? _expVelocity / vm : Vector3.zero) * Mathf.Max(0, vm - drag);
                     _expAngularVelocity = (avm > 0 ? _expAngularVelocity / avm : Vector3.zero) * Mathf.Max(0, avm - angularDrag);
