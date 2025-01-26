@@ -5,6 +5,8 @@ namespace RBPhys
 {
     public class RBEmptyValidator : RBPhysComputer.RBPhysStateValidator
     {
+        public static readonly RBEmptyValidator emptyValidator = new RBEmptyValidator();
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBEmptyValidator() : base(Guid.Empty, true) { }
 
