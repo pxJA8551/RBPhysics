@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -63,7 +61,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot, float delta)
         {
-            return new RBColliderSphere(pos + rot * MutipliedCenter,  Mathf.Sqrt(Mathf.Pow(MutipliedSize.x, 2) + Mathf.Pow(MutipliedSize.y, 2) + Mathf.Pow(MutipliedSize.z, 2)) / 2f);
+            return new RBColliderSphere(pos + rot * MutipliedCenter, Mathf.Sqrt(Mathf.Pow(MutipliedSize.x, 2) + Mathf.Pow(MutipliedSize.y, 2) + Mathf.Pow(MutipliedSize.z, 2)) / 2f);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -71,7 +69,7 @@ namespace RBPhys
         {
             Quaternion r = rot * LocalRot;
 
-            float size_prjX =  RBPhysUtil.GetOBBAxisSize(MutipliedSize, r, Vector3.right);
+            float size_prjX = RBPhysUtil.GetOBBAxisSize(MutipliedSize, r, Vector3.right);
             float size_prjY = RBPhysUtil.GetOBBAxisSize(MutipliedSize, r, Vector3.up);
             float size_prjZ = RBPhysUtil.GetOBBAxisSize(MutipliedSize, r, Vector3.forward);
 

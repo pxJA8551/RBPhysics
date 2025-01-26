@@ -1,7 +1,3 @@
-using RBPhys;
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace RBPhys
@@ -35,11 +31,17 @@ namespace RBPhys
             double elapsed = Time.timeAsDouble - _lastFixedUpdate;
             float t = (float)(elapsed / RBPhysController.MainComputer.timeParams.fixedDeltaTime);
 
-            var wsPos = Vector3.Lerp(rbRigidbody.interpTraj.PositionLast, rbRigidbody.VTransform.WsPosition, t);
-            var wsRot = Quaternion.Lerp(rbRigidbody.interpTraj.RotationLast, rbRigidbody.VTransform.WsRotation, t);
+            if (interpPosition)
+            {
+                var wsPos = Vector3.Lerp(rbRigidbody.interpTraj.PositionLast, rbRigidbody.VTransform.WsPosition, t);
+                rbRigidbody.transform.position = wsPos;
+            }
 
-            if (interpPosition) rbRigidbody.transform.position = wsPos;
-            if (interpRotation) rbRigidbody.transform.rotation = wsRot;
+            if (interpRotation)
+            {
+                var wsRot = Quaternion.Lerp(rbRigidbody.interpTraj.RotationLast, rbRigidbody.VTransform.WsRotation, t);
+                rbRigidbody.transform.rotation = wsRot;
+            }
         }
     }
 }

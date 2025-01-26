@@ -1,7 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -42,7 +39,7 @@ namespace RBPhys
         {
             if (curve_lsPos_x == null)
             {
-                if(!noLog) Debug.LogWarning("RBPhysAnimation.TRSAnimationCurve -- Validation falied. No LS_POS_X data found.");
+                if (!noLog) Debug.LogWarning("RBPhysAnimation.TRSAnimationCurve -- Validation falied. No LS_POS_X data found.");
                 return false;
             }
 

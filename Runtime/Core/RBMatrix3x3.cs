@@ -1,12 +1,6 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using System.Security.Cryptography;
-using System.Xml.Schema;
 using UnityEngine;
-using UnityEngine.Animations;
 
 namespace RBPhys
 {
@@ -94,7 +88,7 @@ namespace RBPhys
             float xy = x2 * y;
             float xz = x2 * z;
             float xw = x2 * w;
-            
+
             float yz = y2 * z;
             float yw = y2 * w;
             float zw = z2 * w;

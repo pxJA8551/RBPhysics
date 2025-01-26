@@ -1,6 +1,4 @@
 ﻿using RBPhys;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using static RBPhys.RBPhysComputer;
 

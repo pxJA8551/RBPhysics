@@ -30,7 +30,7 @@ namespace RBPhys
 
             var rb = traj?.Rigidbody;
 
-            if (rb != null) 
+            if (rb != null)
             {
                 var tvs = rb.trajAltnValidators;
 
@@ -39,7 +39,7 @@ namespace RBPhys
                     altnValidator = null;
                     altnValidators = null;
                 }
-                else if (tvs.Count == 1) 
+                else if (tvs.Count == 1)
                 {
                     altnValidator = tvs[0];
                     altnValidators = null;

@@ -29,7 +29,7 @@ namespace RBPhys
         [NonSerialized] public Quaternion inertiaTensorRotation;
 
         public bool IsStaticOrSleeping { get { return isSleeping || _expObjTrajectory.IsIgnoredTrajectory; } }
-        
+
         Vector3 _centerOfGravity;
 
         Vector3 _velocity;
@@ -225,7 +225,7 @@ namespace RBPhys
         {
             if (_colliders == null) _colliders = new List<RBCollider>();
 
-            if(!_colliders.Contains(collider))
+            if (!_colliders.Contains(collider))
             {
                 _colliders.Add(collider);
             }
@@ -249,10 +249,10 @@ namespace RBPhys
             {
                 var t = transform.GetChild(i);
                 var rb = t.GetComponent<RBRigidbody>();
-                if (rb == null) 
+                if (rb == null)
                 {
                     var c = t.GetComponent<RBCollider>();
-                    if (c != null && c.Ident(PhysComputer) && c.ParentRigidbody == null) 
+                    if (c != null && c.Ident(PhysComputer) && c.ParentRigidbody == null)
                     {
                         c.SetParentRigidbody(this);
                     }

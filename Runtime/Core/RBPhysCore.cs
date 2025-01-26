@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Threading.Tasks;
+using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
 using UnityEngine.Profiling;
-using Unity.IL2CPP.CompilerServices;
-using System.Threading;
 
 namespace RBPhys
 {
@@ -69,7 +69,7 @@ namespace RBPhys
 
         StdSolverInit _stdSolverInit;
         StdSolverIteration _stdSolverIter;
-        
+
         BeforeSolver _beforeSolver;
         AfterSolver _afterSolver;
 
@@ -483,7 +483,7 @@ namespace RBPhys
                         foreach (RBRigidbody rb in _rigidbodies)
                         {
                             var expTraj = rb.ExpObjectTrajectory;
-                            if (!(expTraj.IsStaticOrSleeping || expTraj.IsLimitedSleeping) && rb.useGravity && !rb.ExpObjectTrajectory.IsIgnoredTrajectory) 
+                            if (!(expTraj.IsStaticOrSleeping || expTraj.IsLimitedSleeping) && rb.useGravity && !rb.ExpObjectTrajectory.IsIgnoredTrajectory)
                             {
                                 rb.ExpVelocity += gravityAcceleration * dt;
                             }
@@ -702,7 +702,7 @@ namespace RBPhys
                         {
                             if (c.gameObject.activeInHierarchy && c.enabled && !c.ExpTrajectory.IsIgnoredTrajectory)
                             {
-                                if (!(selectCols && ignoreCols.Contains(c)) && !IsIgnorePhysCastLayer(t.Layer) && (!IsTriggerLayer(t.Layer) || allowTriggerCollision)) 
+                                if (!(selectCols && ignoreCols.Contains(c)) && !IsIgnorePhysCastLayer(t.Layer) && (!IsTriggerLayer(t.Layer) || allowTriggerCollision))
                                 {
                                     hitList.Add(new RBColliderCastHitInfo(c, t, RBColliderCastHitInfo.PhysCastType.Raycast));
                                 }
@@ -1141,9 +1141,9 @@ namespace RBPhys
                     bool layerPassed = ignoreLayer;
                     if (!ignoreLayer) layerPassed = (_collisionIgnoreLayers[layer] & (1 << t.Layer)) == 0;
 
-                    if (t.trajectoryAABB.OverlapAABB(aabbWs) && layerPassed) 
+                    if (t.trajectoryAABB.OverlapAABB(aabbWs) && layerPassed)
                     {
-                        if (t.IsStatic) 
+                        if (t.IsStatic)
                         {
                             collider.Add(t.Collider);
                         }
@@ -1191,7 +1191,7 @@ namespace RBPhys
             Profiler.BeginSample(name: "Physics-CollisionResolution-RigidbodyAwakeTest");
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                if (rb.isSleeping && !rb.ExpObjectTrajectory.IsIgnoredTrajectory) 
+                if (rb.isSleeping && !rb.ExpObjectTrajectory.IsIgnoredTrajectory)
                 {
                     for (int i = 0; i < rb.collidingCount; i++)
                     {
@@ -1602,7 +1602,7 @@ namespace RBPhys
                     rbc?.ClearCACCount();
                     rbc?.ClearSolverCache();
 
-                    if (isInverted && rbc != null) 
+                    if (isInverted && rbc != null)
                     {
                         rbc.SwapTo(pair.Item1, pair.Item2);
                     }
@@ -1907,7 +1907,7 @@ namespace RBPhys
 
             Profiler.EndSample();
 
-            foreach(var rbc in _collisionsInSolver)
+            foreach (var rbc in _collisionsInSolver)
             {
                 RBCollisionInfo info_a, info_b;
 
@@ -2146,7 +2146,7 @@ namespace RBPhys
             {
                 var collider_a = trajAABB_a[i];
 
-                if (collider_a.collider.VEnabled) 
+                if (collider_a.collider.VEnabled)
                 {
                     float a_x_min = collider_a.aabb.MinX;
                     float a_x_max = collider_a.aabb.MaxX;
@@ -2609,7 +2609,7 @@ namespace RBPhys
                     float cr_kd = (col.collider_a.cr_kd + col.collider_b.cr_kd) / 2f;
 
                     float restitution = col.collider_a.restitution * col.collider_b.restitution;
-                    
+
                     if (tMode.IsRetg())
                     {
                         restitution = (restitution != 0) ? 1 / restitution : 0;
@@ -3143,7 +3143,7 @@ namespace RBPhys
 
             foreach (RBCollider c in rigidbody.GetColliders())
             {
-                if (c.VEnabled) 
+                if (c.VEnabled)
                 {
                     aabb.Encapsulate(c.ExpTrajectory.trajectoryAABB);
                 }
@@ -3183,7 +3183,7 @@ namespace RBPhys
 
             foreach (RBCollider c in rigidbody.GetColliders())
             {
-                if (c.VEnabled) 
+                if (c.VEnabled)
                 {
                     aabb.Encapsulate(c.ExpTrajectory.trajectoryAABB);
                 }

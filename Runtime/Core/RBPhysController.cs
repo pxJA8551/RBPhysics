@@ -1,13 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Rendering;
-using static RBPhys.RBPhysComputer;
 
 namespace RBPhys
 {
@@ -30,7 +23,7 @@ namespace RBPhys
 
             if (_mainComputer.PhysTimeScaleMode == timeScaleMode) return;
 
-            if (await _mainComputer.WaitSemaphoreAsync(500)) 
+            if (await _mainComputer.WaitSemaphoreAsync(500))
             {
                 if (fadeLengthMs > 0)
                 {
@@ -94,7 +87,7 @@ namespace RBPhys
 
         public static void DisposeMainComputer()
         {
-            if (_mainComputer?.WaitSemaphore(500) ?? false) 
+            if (_mainComputer?.WaitSemaphore(500) ?? false)
             {
                 _mainComputer.Dispose();
             }

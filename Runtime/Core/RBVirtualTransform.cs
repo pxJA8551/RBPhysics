@@ -1,6 +1,4 @@
-using RBPhys;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -207,7 +205,7 @@ namespace RBPhys
                 var t = obj.transform.GetChild(i);
                 var vt = t.GetComponent<RBVirtualTransform>();
 
-                if (vt == null || vt.PhysComputer != org.PhysComputer) 
+                if (vt == null || vt.PhysComputer != org.PhysComputer)
                 {
                     FindChildrenRecursive(org, t, ref children);
                 }

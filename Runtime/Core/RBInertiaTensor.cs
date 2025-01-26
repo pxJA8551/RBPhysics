@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -76,7 +74,7 @@ namespace RBPhys
 
             _inertiaTensor = rotM * _inertiaTensor * rotM.Transposed();
             _cg = rot * _cg;
-            
+
             Vector3 c0 = new Vector3(0, _cg.z, -_cg.y);
             Vector3 c1 = new Vector3(-_cg.z, 0, _cg.x);
             Vector3 c2 = new Vector3(_cg.y, -_cg.x, 0);

@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace RBPhys
@@ -43,7 +40,7 @@ namespace RBPhys
                 Vector3 org = sphere_b.pos - lastVelocityB;
                 var p = RBSphereCast.SphereCastSphere.CalcSphereCollision(sphere_a_org, org, dirN, length, sphere_b.radius, false);
 
-                if (!p.IsValidHit || length < p.length) 
+                if (!p.IsValidHit || length < p.length)
                 {
                     return default;
                 }

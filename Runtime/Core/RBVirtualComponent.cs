@@ -1,4 +1,3 @@
-using RBPhys;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -114,7 +113,7 @@ namespace RBPhys
         {
             foreach (var v in _derivedChildren)
             {
-                if (v.IdentBase(physComputer, this, true)) 
+                if (v.IdentBase(physComputer, this, true))
                 {
                     return v;
                 }

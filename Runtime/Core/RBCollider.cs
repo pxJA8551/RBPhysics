@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.UIElements;
 using static RBPhys.RBPhysComputer;
 
 namespace RBPhys
@@ -75,7 +72,7 @@ namespace RBPhys
         public void FindParent()
         {
             var parent = GetComponentInParent<RBRigidbody>();
-            if (parent != null && parent.Ident(PhysComputer)) 
+            if (parent != null && parent.Ident(PhysComputer))
             {
                 SetParentRigidbody(parent);
             }
@@ -142,7 +139,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void OnCollision(RBCollider col, RBCollisionInfo info)
         {
-            if(onCollision != null) onCollision(col, info);
+            if (onCollision != null) onCollision(col, info);
         }
 
         public abstract float CalcVolume();

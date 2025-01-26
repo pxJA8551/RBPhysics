@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -28,7 +27,7 @@ namespace RBPhys
 
         [SerializeField] public Transform parentTransform;
         Matrix4x4 _parentOffset;
-        
+
         public RBRigidbody rbRigidbody;
         public bool playing;
         public bool enablePhysProceduralAnimation = true;
@@ -250,7 +249,7 @@ namespace RBPhys
             {
                 ctrlTime = 0;
             }
-            else if (ctrlSpeed < 0 && ctrlTime < EPSILON) 
+            else if (ctrlSpeed < 0 && ctrlTime < EPSILON)
             {
                 ctrlTime = trsCurve.length;
             }
