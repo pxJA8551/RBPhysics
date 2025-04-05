@@ -101,6 +101,10 @@ namespace RBPhys
             if (vc != null) return vc;
 
             vc = CreateVirtual(gameObject);
+
+            if (vc._vTransform == null) vc.FindOrCreateVirtualTransform();
+            if (vc._vTransform == null) throw new NotImplementedException();
+
             vc._baseVComponent = this;
             vc.SetVirtualTransform(vt);
 
