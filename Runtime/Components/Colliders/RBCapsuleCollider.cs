@@ -29,7 +29,6 @@ namespace RBPhys
         protected override RBVirtualComponent CreateVirtual(GameObject obj)
         {
             var rbc = obj.AddComponent<RBCapsuleCollider>();
-            rbc.CopyCollider(this);
             return rbc;
         }
 

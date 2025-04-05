@@ -16,9 +16,6 @@ namespace RBPhys
         public AnimationCurve curve_lsRotQuat_y;
         public AnimationCurve curve_lsRotQuat_z;
         public AnimationCurve curve_lsRotQuat_w;
-        public AnimationCurve curve_lsScale_x;
-        public AnimationCurve curve_lsScale_y;
-        public AnimationCurve curve_lsScale_z;
         public float length;
 
         public void Initialize()
@@ -30,9 +27,6 @@ namespace RBPhys
             curve_lsRotQuat_y = null;
             curve_lsRotQuat_z = null;
             curve_lsRotQuat_w = null;
-            curve_lsScale_x = null;
-            curve_lsScale_y = null;
-            curve_lsScale_z = null;
         }
 
         public bool Validate(bool noLog = false)
@@ -172,18 +166,6 @@ namespace RBPhys
                     case "m_LocalRotation.w":
                         curve_lsRotQuat_w = new AnimationCurve(AnimationUtility.GetEditorCurve(clip, c).keys);
                         return true;
-
-                    case "m_LocalScale.x":
-                        curve_lsScale_x = new AnimationCurve(AnimationUtility.GetEditorCurve(clip, c).keys);
-                        return true;
-
-                    case "m_LocalScale.y":
-                        curve_lsScale_y = new AnimationCurve(AnimationUtility.GetEditorCurve(clip, c).keys);
-                        return true;
-
-                    case "m_LocalScale.z":
-                        curve_lsScale_z = new AnimationCurve(AnimationUtility.GetEditorCurve(clip, c).keys);
-                        return true;
                 }
             }
 
@@ -192,7 +174,7 @@ namespace RBPhys
 
 #endif
 
-        public void SampleTRSAnimation(float time, Vector3 pos, Quaternion rot, RBPhysAnimationType animType, out Vector3 lsPos, out Quaternion lsRot)
+        public void SampleTRSAnimation(float time, Vector3 pos, Quaternion rot, out Vector3 lsPos, out Quaternion lsRot)
         {
             float cTime = EvaluateTime(time, RBPhysAnimationType.Once);
 
@@ -207,28 +189,6 @@ namespace RBPhys
             lsRot.y = GetFloatValue(curve_lsRotQuat_y, cTime, lsRot.y);
             lsRot.z = GetFloatValue(curve_lsRotQuat_z, cTime, lsRot.z);
             lsRot.w = GetFloatValue(curve_lsRotQuat_w, cTime, lsRot.w);
-        }
-
-        public void SampleTRSAnimation(float time, Vector3 pos, Quaternion rot, Vector3 scale, RBPhysAnimationType animType, out Vector3 lsPos, out Quaternion lsRot, out Vector3 lsScale)
-        {
-            float cTime = EvaluateTime(time, RBPhysAnimationType.Once);
-
-            lsPos = pos;
-            lsRot = rot;
-            lsScale = scale;
-
-            lsPos.x = GetFloatValue(curve_lsPos_x, cTime, lsPos.x);
-            lsPos.y = GetFloatValue(curve_lsPos_y, cTime, lsPos.y);
-            lsPos.z = GetFloatValue(curve_lsPos_z, cTime, lsPos.z);
-
-            lsRot.x = GetFloatValue(curve_lsRotQuat_x, cTime, lsRot.x);
-            lsRot.y = GetFloatValue(curve_lsRotQuat_y, cTime, lsRot.y);
-            lsRot.z = GetFloatValue(curve_lsRotQuat_z, cTime, lsRot.z);
-            lsRot.w = GetFloatValue(curve_lsRotQuat_w, cTime, lsRot.w);
-
-            lsScale.x = GetFloatValue(curve_lsScale_x, cTime, lsScale.x);
-            lsScale.y = GetFloatValue(curve_lsScale_y, cTime, lsScale.y);
-            lsScale.z = GetFloatValue(curve_lsScale_z, cTime, lsScale.z);
         }
 
         float GetFloatValue(AnimationCurve curve, float time, float v)

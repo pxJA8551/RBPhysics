@@ -1,11 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using UnityEditor;
-using UnityEditor.Build.Content;
-using UnityEditor.Experimental.GraphView;
-using UnityEngine;
 using RBPhys;
+using UnityEditor;
+using UnityEngine;
 
 namespace RBPhysEditor
 {
@@ -64,7 +59,7 @@ namespace RBPhysEditor
 
             sleepDefault.boolValue = EditorGUILayout.Toggle("Sleep until interaction", sleepDefault.boolValue);
 
-            if (sleepDefault.boolValue) 
+            if (sleepDefault.boolValue)
             {
                 sleepGrace.intValue = 5;
                 sleeping.boolValue = true;

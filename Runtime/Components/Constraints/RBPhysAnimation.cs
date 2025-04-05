@@ -85,7 +85,6 @@ namespace RBPhys
         protected override RBVirtualComponent CreateVirtual(GameObject obj)
         {
             var rba = obj.AddComponent<RBPhysAnimation>();
-            rba.CopyPhysAnimation(this);
             return rba;
         }
 
@@ -96,15 +95,6 @@ namespace RBPhys
             if (rba == null) throw new Exception();
             CopyPhysAnimation(rba);
             SetParentTransformOffset();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void Init()
-        {
-            var vp = BaseVComponent as RBPhysAnimation;
-            if (vp == null) return;
-
-            rbRigidbody = vp.rbRigidbody.FindOrCreateVirtualComponent(PhysComputer) as RBRigidbody;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -123,6 +113,8 @@ namespace RBPhys
             ctrlSpeed = anim.ctrlSpeed;
             linker = anim.linker;
             animationType = anim.animationType;
+
+            rbRigidbody = (anim.rbRigidbody?.FindOrCreateVirtualComponent(PhysComputer) as RBRigidbody) ?? null;
 
             playing = anim.playing;
             enablePhysProceduralAnimation = anim.enablePhysProceduralAnimation;
@@ -147,7 +139,6 @@ namespace RBPhys
             PhysComputer.AddStdSolver(StdSolverInit, StdSolverIteration);
             PhysComputer.AddPhysObject(BeforeSolver, AfterSolver);
 
-            Init();
             _validatorSrcGuid = Guid.NewGuid();
             if (rbRigidbody != null) rbRigidbody.ExpObjectTrajectory.forceSleeping = true;
         }
@@ -384,7 +375,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void SampleSetTRSAnimation(float time, Vector3 basePos, Quaternion baseRot)
         {
-            trsCurve.SampleTRSAnimation(time, basePos, baseRot, animationType, out Vector3 targetLsPos, out Quaternion targetLsRot);
+            trsCurve.SampleTRSAnimation(time, basePos, baseRot, out Vector3 targetLsPos, out Quaternion targetLsRot);
             LsToWs(targetLsPos, targetLsRot, out _targetWsPos, out _targetWsRot);
         }
 
@@ -481,7 +472,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         float CalcAnimLambda(float time, float invMass, Vector3 invInertiaTensor, out Vector3 dPos, out Vector3 dRot)
         {
-            trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, animationType, out Vector3 intgTargetPos, out Quaternion intgTargetRot);
+            trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, out Vector3 intgTargetPos, out Quaternion intgTargetRot);
             LsToWs(intgTargetPos, intgTargetRot, out Vector3 intgTargetPosWs, out Quaternion intgTargetRotWs);
             CalcDPosTarget(intgTargetPosWs, intgTargetRotWs, out dPos, out dRot);
 
@@ -524,11 +515,10 @@ namespace RBPhys
         void CalcTRSAnimFrame(float time)
         {
             SetBasePos();
-            Vector3 lsBaseScale = VTransform.WsLossyScale;
 
             if (trsCurve != null)
             {
-                trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, lsBaseScale, animationType, out Vector3 lsPos, out Quaternion lsRot, out Vector3 lsScale);
+                trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, out Vector3 lsPos, out Quaternion lsRot);
                 LsToWs(lsPos, lsRot, out Vector3 wsPos, out Quaternion wsRot);
 
                 VTransform.SetWsPositionAndRotation(wsPos, wsRot);
@@ -538,7 +528,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float CalcLinkedAnimLambda(float time, float linkedInvMass, Vector3 linkedInvInertiaTensorWs)
         {
-            trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, animationType, out Vector3 intgTargetPos, out Quaternion intgTargetRot);
+            trsCurve.SampleTRSAnimation(time, _lsBasePos, _lsBaseRot, out Vector3 intgTargetPos, out Quaternion intgTargetRot);
             LsToWs(intgTargetPos, intgTargetRot, out Vector3 intgTargetPosWs, out Quaternion intgTargetRotWs);
             CalcDPosTarget(intgTargetPosWs, intgTargetRotWs, out Vector3 dPos, out Vector3 dRot);
 

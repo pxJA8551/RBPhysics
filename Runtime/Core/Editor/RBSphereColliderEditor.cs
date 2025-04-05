@@ -1,8 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
+using RBPhys;
 using UnityEditor;
 using UnityEngine;
-using RBPhys;
 
 namespace RBPhysEditor
 {

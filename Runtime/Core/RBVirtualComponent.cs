@@ -105,6 +105,8 @@ namespace RBPhys
             vc.SetVirtualTransform(vt);
 
             _derivedChildren.Add(vc);
+
+            vc.SyncVirtual(this);
             return vc;
         }
 

@@ -159,7 +159,6 @@ namespace RBPhys
         protected override RBVirtualComponent CreateVirtual(GameObject obj)
         {
             var rb = obj.AddComponent<RBRigidbody>();
-            rb.CopyRigidbody(this);
             return rb;
         }
 

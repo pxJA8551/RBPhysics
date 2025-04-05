@@ -14,7 +14,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBTrajectoryValidator(RBTrajectory traj) : base(Guid.Empty, traj.activeTraj)
+        public RBTrajectoryValidator(RBTrajectory traj) : base(Guid.Empty, traj.iregularTraj)
         {
             Debug.Assert(!traj.IsIgnoredTrajectory);
 

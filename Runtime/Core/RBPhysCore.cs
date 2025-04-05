@@ -1426,9 +1426,10 @@ namespace RBPhys
                                 if (!targetTraj.IsIgnoredTrajectory)
                                 {
                                     bool isTrigger = IsTriggerLayer(activeTraj.Layer) ^ IsTriggerLayer(targetTraj.Layer);
-                                    bool isAwake = !isTrigger && (!activeTraj.IsStaticOrSleeping || !targetTraj.IsStaticOrSleeping);
+                                    bool isAwake = !isTrigger && !(activeTraj.IsStaticOrSleeping && targetTraj.IsStaticOrSleeping);
 
-                                    isAwake &= !activeTraj.IsLimitedSleepingOrStatic || !targetTraj.IsLimitedSleepingOrStatic;
+                                    isAwake &= !(activeTraj.IsLimitedSleepingOrStatic && targetTraj.IsLimitedSleepingOrStatic);
+                                    isAwake &= !(activeTraj.IsStatic && targetTraj.IsStatic);
 
                                     if (isAwake || isTrigger)
                                     {
@@ -1907,6 +1908,8 @@ namespace RBPhys
 
             Profiler.EndSample();
 
+            Profiler.BeginSample(name: "Physics-CollisionResolution-OnCollision");
+
             foreach (var rbc in _collisionsInSolver)
             {
                 RBCollisionInfo info_a, info_b;
@@ -1922,8 +1925,8 @@ namespace RBPhys
 
                     Vector3 relVel = rbc.solverCache_velAdd_a - rbc.solverCache_velAdd_b;
 
-                    info_a = new RBCollisionInfo(rbc.rigidbody_a, contact, -rbc.penetration, -relVel, rbc.ContactNormal, rbc.isStaticOrSleeping, rbc.layer_b);
-                    info_b = new RBCollisionInfo(rbc.rigidbody_b, contact, rbc.penetration, relVel, -rbc.ContactNormal, rbc.isStaticOrSleeping, rbc.layer_a);
+                    info_a = new RBCollisionInfo(rbc.rigidbody_b, contact, -rbc.penetration, -relVel, rbc.ContactNormal, rbc.isStaticOrSleeping, rbc.layer_b);
+                    info_b = new RBCollisionInfo(rbc.rigidbody_a, contact, rbc.penetration, relVel, -rbc.ContactNormal, rbc.isStaticOrSleeping, rbc.layer_a);
                 }
 
                 rbc.rigidbody_a?.OnCollision(rbc.collider_b, info_a);
@@ -1931,6 +1934,8 @@ namespace RBPhys
                 rbc.rigidbody_b?.OnCollision(rbc.collider_a, info_b);
                 rbc.collider_b?.OnCollision(rbc.collider_a, info_b);
             }
+
+            Profiler.EndSample();
 
             _collisions.RemoveAll(item => item.cacCount > COLLISION_AS_CONTINUOUS_FRAMES);
             _collisions.AddRange(_collisionsInSolver);
@@ -2369,17 +2374,17 @@ namespace RBPhys
         Jacobian _jT = new Jacobian(Jacobian.Type.Tangent); //Tangent
         //Jacobian _jB = new Jacobian(Jacobian.Type.Tangent); //Bi-Tangent
 
-        public Vector3 Velocity_a { get { return rigidbody_a?.Velocity ?? Vector3.zero; } }
-        public Vector3 AngularVelocity_a { get { return rigidbody_a?.AngularVelocity ?? Vector3.zero; } }
-        public Vector3 ExpVelocity_a { get { return rigidbody_a?.ExpVelocity ?? Vector3.zero; } }
-        public Vector3 ExpAngularVelocity_a { get { return rigidbody_a?.ExpAngularVelocity ?? Vector3.zero; } }
+        public Vector3 Velocity_a { get { return rigidbody_a?.Velocity ?? (collider_a?.ExpTrajectory.StaticVelocity ?? Vector3.zero); } }
+        public Vector3 AngularVelocity_a { get { return rigidbody_a?.AngularVelocity ?? (collider_a?.ExpTrajectory.StaticAngularVelocity ?? Vector3.zero); } }
+        public Vector3 ExpVelocity_a { get { return rigidbody_a?.ExpVelocity ?? (collider_a?.ExpTrajectory.StaticVelocity ?? Vector3.zero); } }
+        public Vector3 ExpAngularVelocity_a { get { return rigidbody_a?.ExpAngularVelocity ?? (collider_a?.ExpTrajectory.StaticAngularVelocity ?? Vector3.zero); } }
         public float InverseMass_a { get { return rigidbody_a?.InverseMass ?? 0; } }
         public Vector3 InverseInertiaWs_a { get { return rigidbody_a?.InverseInertiaWs ?? Vector3.zero; } }
 
-        public Vector3 Velocity_b { get { return rigidbody_b?.Velocity ?? Vector3.zero; } }
-        public Vector3 AngularVelocity_b { get { return rigidbody_b?.AngularVelocity ?? Vector3.zero; } }
-        public Vector3 ExpVelocity_b { get { return rigidbody_b?.ExpVelocity ?? Vector3.zero; } }
-        public Vector3 ExpAngularVelocity_b { get { return rigidbody_b?.ExpAngularVelocity ?? Vector3.zero; } }
+        public Vector3 Velocity_b { get { return rigidbody_b?.Velocity ?? (collider_b?.ExpTrajectory.StaticVelocity ?? Vector3.zero); } }
+        public Vector3 AngularVelocity_b { get { return rigidbody_b?.AngularVelocity ?? (collider_b?.ExpTrajectory.StaticAngularVelocity ?? Vector3.zero); } }
+        public Vector3 ExpVelocity_b { get { return rigidbody_b?.ExpVelocity ?? (collider_b?.ExpTrajectory.StaticVelocity ?? Vector3.zero); } }
+        public Vector3 ExpAngularVelocity_b { get { return rigidbody_b?.ExpAngularVelocity ?? (collider_b?.ExpTrajectory.StaticAngularVelocity ?? Vector3.zero); } }
         public float InverseMass_b { get { return rigidbody_b?.InverseMass ?? 0; } }
         public Vector3 InverseInertiaWs_b { get { return rigidbody_b?.InverseInertiaWs ?? Vector3.zero; } }
 
@@ -3043,16 +3048,23 @@ namespace RBPhys
         public RBCollider Collider { get { return _collider; } }
         public RBCollider[] Colliders { get { return _colliders; } }
 
-        public bool IsStaticOrSleeping { get { return ((Rigidbody?.IsStaticOrSleeping ?? true) && !limitedSleeping) || forceSleeping || IsStatic || IsIgnoredTrajectory; } }
+        public bool IsStaticOrSleeping { get { return ((Rigidbody?.IsStaticOrSleeping ?? !activeStatic) && !limitedSleeping) || forceSleeping || (IsStatic && !activeStatic) || IsIgnoredTrajectory; } }
         public bool IsLimitedSleeping { get { return !forceSleeping && limitedSleeping; } }
-        public bool IsLimitedSleepingOrStatic { get { return (!forceSleeping && limitedSleeping) || IsStatic || IsIgnoredTrajectory; } }
+        public bool IsLimitedSleepingOrStatic { get { return (!forceSleeping && limitedSleeping) || (IsStatic && !activeStatic) || IsIgnoredTrajectory; } }
         public bool IsIgnoredTrajectory { get { return _ignoreTrajectory; } }
 
         public int Layer { get { return _layer; } }
 
         public bool forceSleeping = false;
         public bool limitedSleeping = false;
-        public bool activeTraj = false;
+        public bool iregularTraj = false;
+
+        public bool activeStatic = false;
+        Vector3 _staticVelocity;
+        Vector3 _staticAngularVelocity;
+
+        public Vector3 StaticVelocity { get { return activeStatic ? _staticVelocity : Vector3.zero; } set { _staticVelocity = value; } }
+        public Vector3 StaticAngularVelocity { get { return activeStatic ? _staticAngularVelocity : Vector3.zero; } set { _staticAngularVelocity = value; } }
 
         bool _ignoreTrajectory = false;
         bool _setIgnoreTrajectory = false;

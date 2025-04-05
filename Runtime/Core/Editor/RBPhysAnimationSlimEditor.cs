@@ -5,29 +5,20 @@ using UnityEngine;
 
 namespace RBPhys
 {
-    [CustomEditor(typeof(RBPhysAnimation))]
+    [CustomEditor(typeof(RBPhysAnimationSlim))]
     [CanEditMultipleObjects]
-    public class RBPhysAnimationEditor : Editor
+    public class RBPhysAnimationSlimEditor : Editor
     {
         SerializedProperty baseAnimationClip;
+
         SerializedProperty animationClip;
         SerializedProperty trsCurve;
-        SerializedProperty linker;
-        SerializedProperty animationType;
 
-        SerializedProperty parentTransform;
-        SerializedProperty playing;
-        SerializedProperty enablePhysProceduralAnimation;
+        SerializedProperty fixedParent;
 
-        SerializedProperty rbRigidbody;
-
-        SerializedProperty interp;
-        SerializedProperty velocityInterp;
-        SerializedProperty interpMultiplier;
-        SerializedProperty ext_lambda_compensation;
-
-        SerializedProperty destabilizeSpd;
-        SerializedProperty destabilizeSpdSlop;
+        SerializedProperty physColliders;
+        SerializedProperty enablePhysProcedualAnim;
+        SerializedProperty lambda_time_factor;
 
         private void OnEnable()
         {
@@ -35,29 +26,18 @@ namespace RBPhys
 
             animationClip = serializedObject.FindProperty("_animationClip");
             trsCurve = serializedObject.FindProperty("trsCurve");
-            linker = serializedObject.FindProperty("linker");
-            animationType = serializedObject.FindProperty("animationType");
 
-            parentTransform = serializedObject.FindProperty("parentTransform");
-            playing = serializedObject.FindProperty("playing");
-            enablePhysProceduralAnimation = serializedObject.FindProperty("enablePhysProceduralAnimation");
+            fixedParent = serializedObject.FindProperty("fixedParent");
 
-            rbRigidbody = serializedObject.FindProperty("rbRigidbody");
-
-            interp = serializedObject.FindProperty("interp");
-            velocityInterp = serializedObject.FindProperty("velocityInterp");
-            interpMultiplier = serializedObject.FindProperty("interpMultiplier");
-            ext_lambda_compensation = serializedObject.FindProperty("ext_lambda_compensation");
-
-            destabilizeSpd = serializedObject.FindProperty("destabilizeSpd");
-            destabilizeSpdSlop = serializedObject.FindProperty("destabilizeSpdSlop");
+            physColliders = serializedObject.FindProperty("physColliders");
+            enablePhysProcedualAnim = serializedObject.FindProperty("enablePhysProcedualAnim");
+            lambda_time_factor = serializedObject.FindProperty("lambda_time_factor");
         }
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
 
-            EditorGUILayout.PropertyField(rbRigidbody);
             EditorGUILayout.PropertyField(baseAnimationClip);
 
             if (baseAnimationClip.objectReferenceValue != null)
@@ -73,22 +53,12 @@ namespace RBPhys
             GUIValidateAnimation(baseAnimationClip.objectReferenceValue as AnimationClip, animationClip.objectReferenceValue as AnimationClip, trsCurve.objectReferenceValue as RBPhysTRSAnimationCurve);
 
             EditorGUILayout.Space();
-            EditorGUILayout.PropertyField(animationType);
-
+            EditorGUILayout.PropertyField(fixedParent);
             EditorGUILayout.Space();
-            EditorGUILayout.PropertyField(parentTransform);
+            EditorGUILayout.PropertyField(enablePhysProcedualAnim);
+            EditorGUILayout.PropertyField(lambda_time_factor);
             EditorGUILayout.Space();
-            EditorGUILayout.PropertyField(playing);
-            EditorGUILayout.PropertyField(enablePhysProceduralAnimation);
-            EditorGUILayout.PropertyField(linker);
-            EditorGUILayout.Space();
-            EditorGUILayout.PropertyField(ext_lambda_compensation);
-
-            EditorGUILayout.Space();
-            EditorGUILayout.PropertyField(destabilizeSpd);
-            GUI.enabled = destabilizeSpd.boolValue;
-            EditorGUILayout.PropertyField(destabilizeSpdSlop);
-            GUI.enabled = true;
+            EditorGUILayout.PropertyField(physColliders);
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -203,6 +173,8 @@ namespace RBPhys
                 }
             }
 
+            EditorUtility.SetDirty(anim);
+
             AssetDatabase.SaveAssets();
         }
 
@@ -228,6 +200,8 @@ namespace RBPhys
                     AssetDatabase.CreateAsset(trsCurve, savePath);
                 }
             }
+
+            EditorUtility.SetDirty(trsCurve);
 
             AssetDatabase.SaveAssets();
         }

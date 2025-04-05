@@ -1,12 +1,6 @@
-using Microsoft.Win32.SafeHandles;
-using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.InteropServices;
-using UnityEditor;
-using UnityEditor.Build.Content;
-using UnityEditor.Experimental.GraphView;
-using UnityEngine;
 using RBPhys;
+using UnityEditor;
+using UnityEngine;
 
 namespace RBPhysEditor
 {
@@ -139,7 +133,7 @@ namespace RBPhysEditor
                     Handles.DrawLine(xSize + ySize + zSize, xSize + ySize - zSize, lineThickness);
                     Handles.DrawLine(-xSize + ySize - zSize, -xSize + ySize + zSize, lineThickness);
                     Handles.DrawLine(-xSize + ySize - zSize, xSize + ySize - zSize, lineThickness);
-                    Handles.DrawLine(xSize -ySize + zSize, -xSize - ySize + zSize, lineThickness);
+                    Handles.DrawLine(xSize - ySize + zSize, -xSize - ySize + zSize, lineThickness);
                     Handles.DrawLine(xSize - ySize + zSize, xSize - ySize - zSize, lineThickness);
                     Handles.DrawLine(-xSize - ySize - zSize, -xSize - ySize + zSize, lineThickness);
                     Handles.DrawLine(-xSize - ySize - zSize, xSize - ySize - zSize, lineThickness);
@@ -303,7 +297,7 @@ namespace RBPhysEditor
                     EditorGUI.BeginChangeCheck();
                     Handles.matrix = Matrix4x4.TRS(pos + rot * collider.Center, rot, Vector3.one);
                     Quaternion q = Handles.RotationHandle(collider.LocalRot, Vector3.zero);
-                    if (EditorGUI.EndChangeCheck()) 
+                    if (EditorGUI.EndChangeCheck())
                     {
                         Undo.RecordObject(target, "Changed Collider LocalRotation");
                         collider.LocalRot = q;
