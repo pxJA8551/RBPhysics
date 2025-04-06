@@ -28,7 +28,7 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
 
     public List<RBCollider> physColliders;
     public bool enablePhysProcedualAnim = true;
-    public float lambda_time_factor = .001f;
+    public float lambda_time_factor = .3f;
 
     Matrix4x4 _animPrevTRS;
     Vector3 _animVel;
@@ -139,12 +139,18 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
     {
         if (!VEnabled) return;
 
-        float vNeg = Vector3.Dot(_animVel.normalized, _prevImpulseVel);
-        float avNeg = Vector3.Dot(_animAngVel.normalized, _prevImpulseAngVel);
+        float vL = _animVel.magnitude;
+        float avL = _animAngVel.magnitude;
 
-        float extLambda = vNeg + avNeg;
+        float vFactor = 0;
+        if(vL > 0) vFactor = Vector3.Dot(_animVel / vL, _prevImpulseVel) / vL;
 
-        //Debug.Log((extLambda * lambda_time_factor * dt, extLambda, vNeg, avNeg, _prevImpulseVel, _prevImpulseAngVel, _animVel, _animAngVel));
+        float avFactor = 0;
+        if(avL > 0) avFactor = Vector3.Dot(_animAngVel / avL, _prevImpulseAngVel) / avL;
+
+        float extLambda = vFactor + avFactor;
+
+        //Debug.Log((extLambda * lambda_time_factor * dt, extLambda, vFactor, avFactor, _prevImpulseVel, _prevImpulseAngVel, _animVel, _animAngVel));
 
         if (enablePhysProcedualAnim)
         {
