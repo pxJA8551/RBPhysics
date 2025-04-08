@@ -30,7 +30,6 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
     public bool enablePhysProcedualAnim = true;
     public float lambda_time_factor = .3f;
 
-    Matrix4x4 _animPrevTRS;
     Vector3 _animVel;
     Vector3 _animAngVel;
     Vector3 _prevImpulseVel;
@@ -165,7 +164,6 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
         _ctrlTime += dt * ctrlSpeed;
         _ctrlTime = ClampAnimTime(_ctrlTime);
 
-        _animPrevTRS = VTransform.WsTRS;
         _prevImpulseVel = Vector3.zero;
         _prevImpulseAngVel = Vector3.zero;
 

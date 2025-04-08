@@ -14,9 +14,7 @@ namespace RBPhys
 
         public abstract RBGeometryType GeometryType { get; }
 
-        [NonSerialized] public float cr_kp = .45f; //Õ“Ë‰ğÁˆ— PƒQƒCƒ“
-        [NonSerialized] public float cr_ki = .03f; //Õ“Ë‰ğÁˆ— IƒQƒCƒ“
-        [NonSerialized] public float cr_kd = .005f; //Õ“Ë‰ğÁˆ— DƒQƒCƒ“
+        [NonSerialized] public float beta = .45f;
 
         [NonSerialized] public float restitution = 0.7f; //”½”­ŒW”
         [NonSerialized] public float friction = 0.5f; //–€CŒW”

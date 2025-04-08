@@ -2548,7 +2548,6 @@ namespace RBPhys
             Vector3 _wb;
 
             float _bias;
-            float _restitutionBias;
             float _totalLambda;
             float _effectiveMass;
 
@@ -2573,7 +2572,6 @@ namespace RBPhys
                 _wb = Vector3.zero;
 
                 _bias = 0;
-                _restitutionBias = 0;
                 _totalLambda = 0;
                 _effectiveMass = 0;
 
@@ -2594,7 +2592,6 @@ namespace RBPhys
                 if (initBias)
                 {
                     _bias = 0;
-                    _restitutionBias = 0;
                     _totalLambda = 0;
                     _ie = 0;
                     _eLast = -1;
@@ -2609,10 +2606,6 @@ namespace RBPhys
 
                 if (_type == Type.Normal)
                 {
-                    float cr_kp = (col.collider_a.cr_kp + col.collider_b.cr_kp) / 2f;
-                    float cr_ki = (col.collider_a.cr_ki + col.collider_b.cr_ki) / 2f;
-                    float cr_kd = (col.collider_a.cr_kd + col.collider_b.cr_kd) / 2f;
-
                     float restitution = col.collider_a.restitution * col.collider_b.restitution;
 
                     if (tMode.IsRetg())
@@ -2637,15 +2630,9 @@ namespace RBPhys
 
                     float closingVelocity = Vector3.Dot(relVel, dirN);
 
-                    float vp = (e / dt) * cr_kp;
-                    _ie += (e + _eLast) * dt / 2;
-                    float vi = _ie * cr_ki;
-                    float vd = ((e - _eLast) / dt) * cr_kd;
+                    float beta = col.collider_a.beta * col.collider_b.beta;
 
-                    _bias = vp + vi + vd;
-                    _restitutionBias = restitution * closingVelocity;
-
-                    if (Mathf.Abs(closingVelocity) <= GROUND_IGNORE_RESTITUTION_VEL_MAX) _restitutionBias = 0; //接地補助
+                    _bias = -(beta / dt) * Mathf.Max(0, col.penetration.magnitude - COLLISION_ERROR_SLOP) + restitution * closingVelocity;
 
                     _useSoftClip = col.useSoftClip;
 
@@ -2661,7 +2648,7 @@ namespace RBPhys
                 jv += Vector3.Dot(_vb, col.ExpVelocity_b);
                 jv += Vector3.Dot(_wb, col.ExpAngularVelocity_b);
 
-                float lambda = _effectiveMass * (-(jv + Mathf.Min(_bias, _restitutionBias)));
+                float lambda = _effectiveMass * (-(jv + _bias));
                 float oldTotalLambda = _totalLambda;
 
                 if (_useSoftClip)
