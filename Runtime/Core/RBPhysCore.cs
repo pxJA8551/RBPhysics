@@ -17,9 +17,9 @@ namespace RBPhys
     {
         // dt = .01 ms
 
-        public const int CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION = 5;
-        public const float CPU_SOLVER_ABORT_VELADD_SQRT = .005f * .005f;
-        public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = .002f * .002f;
+        public const int CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION = 3;
+        public const float CPU_SOLVER_ABORT_VELADD_SQRT = .02f * .02f;
+        public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = .1f * .1f;
         public const float COLLISION_AS_CONTINUOUS_FRAMES = 3;
         public const float RETROGRADE_PHYS_RESTITUTION_MULTIPLIER = .6f;
         public const float RETROGRADE_PHYS_RESTITUTION_MIN = 1.1f;
@@ -1891,6 +1891,8 @@ namespace RBPhys
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-SolveCollisions/StdSolver");
 
+            //Debug.Log(cpu_std_solver_internal_sync_per_iteration);
+
             for (int i = 0; i < cpu_std_solver_internal_sync_per_iteration; i++)
             {
                 Profiler.BeginSample(name: "SolveConstraints");
@@ -1898,10 +1900,23 @@ namespace RBPhys
                 var solverInfo = GetSolverInfo(i);
                 if (_stdSolverIter != null) _stdSolverIter(solverInfo);
 
-                Parallel.For(0, _collisionsInSolver.Count, i =>
+                Parallel.For(0, _collisionsInSolver.Count, j =>
                 {
-                    if (!_collisionsInSolver[i].skipInSolver) SolveCollisionPair(_collisionsInSolver[i]);
+                    if (!_collisionsInSolver[j].skipInSolver)
+                    {
+                        SolveCollisionPair(_collisionsInSolver[j]);
+                        _collisionsInSolver[j].InitVelocityConstraint(dt, _timeScaleMode, false);
+                    }
                 });
+
+                //for (int j = 0; j < _collisionsInSolver.Count; j++)
+                //{
+                //    if (!_collisionsInSolver[j].skipInSolver)
+                //    {
+                //        SolveCollisionPair(_collisionsInSolver[j]);
+                //        _collisionsInSolver[j].InitVelocityConstraint(dt, _timeScaleMode, false);
+                //    }
+                //}
 
                 Profiler.EndSample();
             }
@@ -2079,9 +2094,10 @@ namespace RBPhys
 
         void SolveCollisionPair(RBCollision col)
         {
-            if (!col.skipInSolver && col.penetration != Vector3.zero)
+            if (col.penetration != Vector3.zero)
             {
                 (Vector3 velAdd_a, Vector3 angVelAdd_a, Vector3 velAdd_b, Vector3 angVelAdd_b) = SolveCollision(col);
+                //Debug.Log((velAdd_a, angVelAdd_a, velAdd_b, angVelAdd_b, velAdd_b.magnitude, angVelAdd_b.magnitude, col.rigidbody_b.ExpVelocity, col.rigidbody_b.ExpAngularVelocity));
 
                 if (col.rigidbody_a != null)
                 {
@@ -2512,14 +2528,14 @@ namespace RBPhys
             cacCount = 0;
         }
 
-        public void InitVelocityConstraint(float dt, TimeScaleMode tMode, bool initBias = true)
+        public void InitVelocityConstraint(float dt, TimeScaleMode tMode, bool initLambda = true)
         {
             Vector3 contactNormal = ContactNormal;
             Vector3 tangent = Vector3.ProjectOnPlane(ExpVelocity_b - ExpVelocity_a, contactNormal).normalized;
             //Vector3.OrthoNormalize(ref contactNormal, ref tangent, ref bitangent);
 
-            _jN.Init(this, contactNormal, dt, tMode, initBias);
-            _jT.Init(this, tangent, dt, tMode, initBias);
+            _jN.Init(this, contactNormal, dt, tMode, initLambda);
+            _jT.Init(this, tangent, dt, tMode, initLambda);
         }
 
         public void SolveVelocityConstraints(out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b, TimeScaleMode tMode)
@@ -2580,7 +2596,7 @@ namespace RBPhys
                 _useSoftClip = false;
             }
 
-            public void Init(RBCollision col, Vector3 dir, float dt, TimeScaleMode tMode, bool initBias = true)
+            public void Init(RBCollision col, Vector3 dir, float dt, TimeScaleMode tMode, bool initLambda = true)
             {
                 Vector3 dirN = dir;
 
@@ -2589,7 +2605,7 @@ namespace RBPhys
                 _vb = -dirN;
                 _wb = Vector3.Cross(col.rB, -dirN);
 
-                if (initBias)
+                if (initLambda)
                 {
                     _bias = 0;
                     _totalLambda = 0;
@@ -2637,6 +2653,8 @@ namespace RBPhys
                     _useSoftClip = col.useSoftClip;
 
                     _eLast = e;
+
+                    //Debug.Log((col.collider_a.beta, col.collider_b.beta, beta, dt, closingVelocity, restitution, e, col.penetration.magnitude - COLLISION_ERROR_SLOP, -(beta / dt) * Mathf.Max(0, col.penetration.magnitude - COLLISION_ERROR_SLOP), restitution * closingVelocity));
                 }
             }
 
@@ -2650,6 +2668,8 @@ namespace RBPhys
 
                 float lambda = _effectiveMass * (-(jv + _bias));
                 float oldTotalLambda = _totalLambda;
+
+                //Debug.Log((_va, _wa, _vb, _wb, jv, _bias, _effectiveMass, lambda, oldTotalLambda));
 
                 if (_useSoftClip)
                 {
