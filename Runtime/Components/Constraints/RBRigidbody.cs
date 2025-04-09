@@ -10,10 +10,10 @@ namespace RBPhys
 {
     public class RBRigidbody : RBVirtualComponent
     {
-        const float SLEEP_VEL_MAX_SQRT = 0.05f * 0.05f;
-        const float SLEEP_ANGVEL_MAX_SQRT = .1f * .1f;
-        protected const float XZ_VELOCITY_MIN_CUTOUT = .01f;
-        protected const float ANG_VELOCITY_MIN_CUTOUT = .05f;
+        const float SLEEP_VEL_MAX_SQRT = .02f * .02f;
+        const float SLEEP_ANGVEL_MAX_SQRT = .04f * .04f;
+        protected const float XZ_VELOCITY_MIN_CUTOUT = 0;
+        protected const float ANG_VELOCITY_MIN_CUTOUT = 0;
         const float SLEEP_VEL_ADD_SQRT = .2f * .2f;
         const int SLEEP_GRACE_FRAMES = 5; //, of no practical use
 

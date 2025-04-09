@@ -179,6 +179,12 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void CalcNearest(Vector3 beginA, Vector3 endA, Vector3 beginB, Vector3 endB, out Vector3 nearestA, out Vector3 nearestB)
+        {
+            CalcNearest(beginA, endA, beginB, endB, out nearestA, out nearestB, out _);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CalcNearest(Vector3 beginA, Vector3 endA, Vector3 beginB, Vector3 endB, out Vector3 nearestA, out Vector3 nearestB, out bool parallel)
         {
             parallel = false;

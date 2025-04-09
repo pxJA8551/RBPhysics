@@ -1952,7 +1952,8 @@ namespace RBPhys
                 if (col_a.GeometryType == RBGeometryType.OBB && col_b.GeometryType == RBGeometryType.OBB)
                 {
                     //OBB-OBB衝突
-                    (p, pA, pB) = RBDetailCollision.DetailCollisionOBBOBB.CalcDetailCollisionLighter(col_a.CalcExpOBB(delta), col_b.CalcExpOBB(delta), info);
+                    var pc = RBDetailCollision.DetailCollisionOBBOBB.CalcDetailCollisionInfo(col_a.CalcExpOBB(delta), col_b.CalcExpOBB(delta));
+                    (p, pA, pB) = (pc.p, pc.pA, pc.pB);
                     return true;
                 }
                 else if (col_a.GeometryType == RBGeometryType.OBB && col_b.GeometryType == RBGeometryType.Sphere)
