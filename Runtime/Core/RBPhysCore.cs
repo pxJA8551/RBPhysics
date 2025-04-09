@@ -17,7 +17,7 @@ namespace RBPhys
     {
         // dt = .01 ms
 
-        public const int CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION = 3;
+        public const int CPU_STD_SOLVER_INTERNAL_SYNC_PER_ITERATION = 5;
         public const float CPU_SOLVER_ABORT_VELADD_SQRT = .02f * .02f;
         public const float CPU_SOLVER_ABORT_ANGVELADD_SQRT = .1f * .1f;
         public const float COLLISION_AS_CONTINUOUS_FRAMES = 3;
@@ -1538,7 +1538,7 @@ namespace RBPhys
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-PrepareSolveCollisions");
 
-            Parallel.For(0, _obb_obb_cols.Count, i =>
+            for (int i = 0; i < _obb_obb_cols.Count; i++)
             {
                 var pair = _obb_obb_cols[i];
 
@@ -1580,7 +1580,7 @@ namespace RBPhys
 
                     _obb_obb_cols[i] = (default, default, default, rbc);
                 }
-            });
+            }
 
             foreach (var c in _obb_obb_cols)
             {
@@ -1590,7 +1590,7 @@ namespace RBPhys
                 }
             }
 
-            Parallel.For(0, _obb_sphere_cols.Count, i =>
+            for (int i = 0; i < _obb_sphere_cols.Count; i++)
             {
                 var pair = _obb_sphere_cols[i];
 
@@ -1632,7 +1632,7 @@ namespace RBPhys
 
                     _obb_sphere_cols[i] = (default, default, default, rbc);
                 }
-            });
+            }
 
             foreach (var c in _obb_sphere_cols)
             {
@@ -1642,7 +1642,7 @@ namespace RBPhys
                 }
             }
 
-            Parallel.For(0, _sphere_sphere_cols.Count, i =>
+            for (int i = 0; i < _sphere_sphere_cols.Count; i++)
             {
                 var pair = _sphere_sphere_cols[i];
 
@@ -1684,7 +1684,7 @@ namespace RBPhys
 
                     _sphere_sphere_cols[i] = (default, default, default, rbc);
                 }
-            });
+            }
 
             foreach (var c in _sphere_sphere_cols)
             {
@@ -1694,7 +1694,7 @@ namespace RBPhys
                 }
             }
 
-            Parallel.For(0, _obb_capsule_cols.Count, i =>
+            for (int i = 0; i < _obb_capsule_cols.Count; i++)
             {
                 var pair = _obb_capsule_cols[i];
 
@@ -1736,7 +1736,7 @@ namespace RBPhys
 
                     _obb_capsule_cols[i] = (default, default, default, rbc);
                 }
-            });
+            }
 
             foreach (var c in _obb_capsule_cols)
             {
@@ -1746,7 +1746,7 @@ namespace RBPhys
                 }
             }
 
-            Parallel.For(0, _sphere_capsule_cols.Count, i =>
+            for (int i = 0; i < _sphere_capsule_cols.Count; i++)
             {
                 var pair = _sphere_capsule_cols[i];
 
@@ -1788,7 +1788,7 @@ namespace RBPhys
 
                     _sphere_capsule_cols[i] = (default, default, default, rbc);
                 }
-            });
+            }
 
             foreach (var c in _sphere_capsule_cols)
             {
@@ -1798,7 +1798,7 @@ namespace RBPhys
                 }
             }
 
-            Parallel.For(0, _capsule_capsule_cols.Count, i =>
+            for (int i = 0; i < _capsule_capsule_cols.Count; i++)
             {
                 var pair = _capsule_capsule_cols[i];
 
@@ -1840,7 +1840,7 @@ namespace RBPhys
 
                     _capsule_capsule_cols[i] = (default, default, default, rbc);
                 }
-            });
+            }
 
             foreach (var c in _capsule_capsule_cols)
             {
@@ -1900,23 +1900,23 @@ namespace RBPhys
                 var solverInfo = GetSolverInfo(i);
                 if (_stdSolverIter != null) _stdSolverIter(solverInfo);
 
-                Parallel.For(0, _collisionsInSolver.Count, j =>
-                {
-                    if (!_collisionsInSolver[j].skipInSolver)
-                    {
-                        SolveCollisionPair(_collisionsInSolver[j]);
-                        _collisionsInSolver[j].InitVelocityConstraint(dt, _timeScaleMode, false);
-                    }
-                });
-
-                //for (int j = 0; j < _collisionsInSolver.Count; j++)
+                //Parallel.For(0, _collisionsInSolver.Count, j =>
                 //{
                 //    if (!_collisionsInSolver[j].skipInSolver)
                 //    {
                 //        SolveCollisionPair(_collisionsInSolver[j]);
                 //        _collisionsInSolver[j].InitVelocityConstraint(dt, _timeScaleMode, false);
                 //    }
-                //}
+                //});
+
+                for (int j = 0; j < _collisionsInSolver.Count; j++)
+                {
+                    if (!_collisionsInSolver[j].skipInSolver)
+                    {
+                        SolveCollisionPair(_collisionsInSolver[j]);
+                        _collisionsInSolver[j].InitVelocityConstraint(dt, _timeScaleMode, false);
+                    }
+                }
 
                 Profiler.EndSample();
             }

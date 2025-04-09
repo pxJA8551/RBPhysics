@@ -17,7 +17,7 @@ namespace RBPhys
         [NonSerialized] public float beta = .4f;
 
         [NonSerialized] public float restitution = 0.35f; //”½”­ŒW”
-        [NonSerialized] public float friction = 0.5f; //–€CŒW”
+        [NonSerialized] public float friction = 0.55f; //–€CŒW”
 
         public RBTrajectory ExpTrajectory { get { return _expTrajectory; } }
 
