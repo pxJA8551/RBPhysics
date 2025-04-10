@@ -62,32 +62,39 @@ namespace RBPhys
                 return (sub > 0 ? pdN * sub : Vector3.zero, pA, pB);
             }
 
-            public static Penetration CalcDetailCollisionInfoCCD(float delta, RBColliderOBB obb_a, RBColliderSphere sphere_b, Vector3 lastVelocity)
+            public static Penetration CalcDetailCollisionInfoCCD(float delta, RBColliderOBB obb_a, RBColliderSphere sphere_b, Vector3 vel_a, Vector3 vel_b)
             {
-                lastVelocity *= delta;
-                float length = lastVelocity.magnitude;
+                var vd_a = vel_a;
+                var vd_b = vel_b;
 
-                if (length == 0)
-                {
-                    var r = CalcDetailCollision(obb_a, sphere_b);
-                    return new Penetration(r.p, r.pA, r.pB, default);
-                }
+                var relVel = vd_b - vd_a;
 
-                Vector3 dirN = lastVelocity / length;
-                Vector3 org = sphere_b.pos - lastVelocity;
-                var p = RBSphereCast.SphereCastOBB.CalcSphereCollision(obb_a, org, dirN, length, sphere_b.radius, false);
+                float length = relVel.magnitude;
+                Vector3 dirN = relVel / length;
+
+                if (length == 0) return CalcDetailCollisionInfo(obb_a, sphere_b);
+
+                RBColliderOBB vlObb = obb_a;
+                vlObb.pos -= vd_a;
+
+                Vector3 org = sphere_b.pos - vd_b;
+                var p = RBSphereCast.SphereCastOBB.CalcSphereCollision(vlObb, org, dirN, length, sphere_b.radius, false);
 
                 if (!p.IsValidHit || length < p.length)
                 {
-                    var r = CalcDetailCollision(obb_a, sphere_b);
-                    return new Penetration(r.p, r.pA, r.pB, default);
+                    return default;
                 }
 
-                Vector3 pA = p.position;
-                Vector3 pB = p.position + dirN * (length - p.length);
+                float vr = (p.length / length);
+
+                Vector3 vlCa = p.position;
+                Vector3 vlCb = p.position - relVel * vr;
+
+                Vector3 pA = vlCa + vd_a * vr;
+                Vector3 pB = vlCb + vd_b * vr;
 
                 float t = Vector3.Dot(pB - pA, p.normal);
-                return new Penetration(p.normal * Mathf.Min(t, 0), pA, pB, default);
+                return new Penetration(p.normal * t, pA, pB, default);
             }
         }
     }

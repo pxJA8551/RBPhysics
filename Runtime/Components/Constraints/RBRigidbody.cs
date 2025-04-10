@@ -10,12 +10,10 @@ namespace RBPhys
 {
     public class RBRigidbody : RBVirtualComponent
     {
-        const float SLEEP_VEL_MAX_SQRT = .02f * .02f;
-        const float SLEEP_ANGVEL_MAX_SQRT = .04f * .04f;
-        protected const float XZ_VELOCITY_MIN_CUTOUT = 0;
-        protected const float ANG_VELOCITY_MIN_CUTOUT = 0;
+        const float SLEEP_VEL_MAX_SQRT = .05f * .05f;
+        const float SLEEP_ANGVEL_MAX_SQRT = .1f * .1f;
         const float SLEEP_VEL_ADD_SQRT = .2f * .2f;
-        const int SLEEP_GRACE_FRAMES = 5; //, of no practical use
+        const int SLEEP_GRACE_FRAMES = 5;
 
         protected const float DRAG_RETG_MULTIPLIER = 0f;
         protected const float ANGULAR_DRAG_RETG_MULTIPLIER = 0f;
@@ -28,9 +26,17 @@ namespace RBPhys
         [NonSerialized] public Vector3 inertiaTensor;
         [NonSerialized] public Quaternion inertiaTensorRotation;
 
-        public bool IsStaticOrSleeping { get { return isSleeping || _expObjTrajectory.IsIgnoredTrajectory; } }
+        public bool IsStaticOrSleeping { get { return isSleeping || _objTrajectory.IsIgnoredTrajectory; } }
 
         Vector3 _centerOfGravity;
+
+        Vector3 _frameWsPos;
+        Quaternion _frameWsRot;
+
+        Vector3 _subtickVelocity;
+        Vector3 _subtickAngularVelocity;
+        Vector3 _subtickVelocitySum;
+        Vector3 _subtickAngularVelocitySum;
 
         Vector3 _velocity;
         Vector3 _angularVelocity;
@@ -38,11 +44,15 @@ namespace RBPhys
         Vector3 _expAngularVelocity;
 
         List<RBCollider> _colliders;
+        public int ColliderCount { get { return _colliders?.Count ?? 0; } }
 
         public Vector3 Velocity { get { return _velocity; } }
         public Vector3 AngularVelocity { get { return _angularVelocity; } }
         public Vector3 ExpVelocity { get { return _expVelocity; } set { _expVelocity = value; } }
         public Vector3 ExpAngularVelocity { get { return _expAngularVelocity; } set { _expAngularVelocity = value; } }
+
+        public Vector3 SubtickVelocity { get { return _subtickVelocity; } set { _subtickVelocity = value; } }
+        public Vector3 SubtickAngularVelocity { get { return _subtickAngularVelocity; } set { _subtickAngularVelocity = value; } }
 
         public Vector3 CenterOfGravity { get { return _centerOfGravity; } set { _centerOfGravity = value; } }
         public Vector3 CenterOfGravityWorld { get { return VTransform.WsPosition + VTransform.WsRotation * _centerOfGravity; } }
@@ -71,9 +81,9 @@ namespace RBPhys
         [NonSerialized] public RBCollider[] colliding = new RBCollider[2];
         [NonSerialized] public int collidingCount = 0;
 
-        public RBTrajectory ExpObjectTrajectory { get { return _expObjTrajectory; } }
+        public RBTrajectory ObjectTrajectory { get { return _objTrajectory; } }
 
-        protected RBTrajectory _expObjTrajectory;
+        protected RBTrajectory _objTrajectory;
 
         public OnCollision onCollision;
 
@@ -203,7 +213,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBRigidbody()
         {
-            _expObjTrajectory = new RBTrajectory();
+            _objTrajectory = new RBTrajectory();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -274,9 +284,21 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBCollider[] GetColliders()
+        public RBCollider GetCollider(int index)
         {
-            return _colliders.ToArray();
+            return _colliders[index];
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IEnumerable<RBCollider> GetColliders()
+        {
+            if (_colliders != null)
+            {
+                foreach (var c in _colliders)
+                {
+                    yield return c;
+                }
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -300,7 +322,7 @@ namespace RBPhys
 
         internal virtual void ApplyTransform(float dt, TimeScaleMode physTimeScaleMode)
         {
-            if (!_expObjTrajectory.IsIgnoredTrajectory)
+            if (!_objTrajectory.IsIgnoredTrajectory)
             {
                 float vm = _expVelocity.magnitude;
                 float avm = _expAngularVelocity.magnitude;
@@ -319,18 +341,18 @@ namespace RBPhys
                 _expVelocity = Vector3.ClampMagnitude(_expVelocity, rbRigidbody_velocity_max);
                 _expAngularVelocity = Vector3.ClampMagnitude(_expAngularVelocity, rbRigidbody_ang_velocity_max);
 
-                if (Mathf.Abs(_expVelocity.x) < XZ_VELOCITY_MIN_CUTOUT) _expVelocity.x = 0;
-                if (Mathf.Abs(_expVelocity.z) < XZ_VELOCITY_MIN_CUTOUT) _expVelocity.z = 0;
-                if (Mathf.Abs(_expAngularVelocity.x) < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.x = 0;
-                if (Mathf.Abs(_expAngularVelocity.y) < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.y = 0;
-                if (Mathf.Abs(_expAngularVelocity.z) < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.z = 0;
+                //if (Mathf.Abs(_expVelocity.x) < XZ_VELOCITY_MIN_CUTOUT) _expVelocity.x = 0;
+                //if (Mathf.Abs(_expVelocity.z) < XZ_VELOCITY_MIN_CUTOUT) _expVelocity.z = 0;
+                //if (Mathf.Abs(_expAngularVelocity.x) < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.x = 0;
+                //if (Mathf.Abs(_expAngularVelocity.y) < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.y = 0;
+                //if (Mathf.Abs(_expAngularVelocity.z) < ANG_VELOCITY_MIN_CUTOUT) _expAngularVelocity.z = 0;
 
                 _velocity = _expVelocity;
                 _angularVelocity = _expAngularVelocity;
 
                 PushInterpTraj(VTransform.WsPosition, VTransform.WsRotation);
 
-                CalcVel2Ws(_velocity, _angularVelocity, dt, out var wsPos, out var wsRot);
+                IntergradeWs(_frameWsPos, _frameWsRot, _velocity, _angularVelocity, dt, out var wsPos, out var wsRot);
                 VTransform.SetWsPositionAndRotation(wsPos, wsRot);
             }
             else
@@ -339,7 +361,37 @@ namespace RBPhys
                 _angularVelocity = _expAngularVelocity;
             }
 
-            UpdateExpTrajectory(dt);
+            UpdateTransform(dt);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal virtual void ApplySolverVelocity(SolverInfo info, float sdt, TimeScaleMode physTimeScalemode)
+        {
+            IntergradeWs(VTransform.WsPosition, VTransform.WsRotation, _subtickVelocity, _subtickAngularVelocity, sdt, out var wsPos, out var wsRot);
+            VTransform.SetWsPositionAndRotation(wsPos, wsRot);
+
+            _subtickVelocitySum += _subtickVelocity / info.solverSubtick;
+            _subtickAngularVelocitySum += _subtickAngularVelocity / info.solverSubtick;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void PrepareSubtick()
+        {
+            _frameWsPos = VTransform.WsPosition;
+            _frameWsRot = VTransform.WsRotation;
+
+            _subtickVelocity = _expVelocity;
+            _subtickAngularVelocity = _expAngularVelocity;
+
+            _subtickVelocitySum = Vector3.zero;
+            _subtickAngularVelocitySum = Vector3.zero;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void ApplySubtick()
+        {
+            _expVelocity = _subtickVelocitySum;
+            _expAngularVelocity = _subtickAngularVelocitySum;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -357,13 +409,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void CalcVel2Ws(Vector3 vel, Vector3 angVel, float dt, out Vector3 wsPosOut, out Quaternion wsRotOut)
-        {
-            CalcVel2Ws(VTransform.WsPosition, VTransform.WsRotation, vel, angVel, dt, out wsPosOut, out wsRotOut);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void CalcVel2Ws(Vector3 wsPos, Quaternion wsRot, Vector3 vel, Vector3 angVel, float dt, out Vector3 wsPosOut, out Quaternion wsRotOut)
+        public void IntergradeWs(Vector3 wsPos, Quaternion wsRot, Vector3 vel, Vector3 angVel, float dt, out Vector3 wsPosOut, out Quaternion wsRotOut)
         {
             float length = angVel.magnitude;
             var rot = Quaternion.AngleAxis(length * Mathf.Rad2Deg * dt, angVel / length);
@@ -383,30 +429,14 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal virtual void UpdateExpTrajectory(float dt, bool updateColliders = true)
+        internal virtual void UpdateTransform(float dt)
         {
-            (Vector3 pos, Quaternion rot) r = GetIntergrated(0);
-
-            if (updateColliders)
+            foreach (RBCollider c in _colliders)
             {
-                foreach (RBCollider c in _colliders)
-                {
-                    c.UpdateExpTrajectory(dt, VTransform.WsPosition, VTransform.WsRotation, r.pos, r.rot);
-                }
+                c.UpdateTransform(dt);
             }
 
-            _expObjTrajectory.Update(this, VTransform.Layer);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal void UpdateColliderExpTrajectory(float dt)
-        {
-            (Vector3 pos, Quaternion rot) r = GetIntergrated(0);
-
-            for (int i = 0; i < _colliders.Count; i++)
-            {
-                _colliders[i].UpdateExpTrajectory(dt, VTransform.WsPosition, VTransform.WsRotation, r.pos, r.rot);
-            }
+            _objTrajectory.Update(this, VTransform.Layer);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -477,7 +507,7 @@ namespace RBPhys
         {
             if (IsExpUnderSleepLevel())
             {
-                if (sleepGrace < SLEEP_GRACE_FRAMES && _expVelocity.sqrMagnitude < _velocity.sqrMagnitude + SLEEP_VEL_ADD_SQRT)
+                if (sleepGrace < SLEEP_GRACE_FRAMES && (_expVelocity - _velocity).sqrMagnitude < SLEEP_VEL_ADD_SQRT)
                 {
                     sleepGrace++;
                 }

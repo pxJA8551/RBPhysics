@@ -39,19 +39,22 @@ namespace RBPhys
                 return (penetration, pA, pB);
             }
 
-            public static Penetration CalcDetailCollisionInfoCCD(float delta, RBColliderSphere sphere_a, RBColliderCapsule capsule_b, Vector3 lastVelocity)
+            public static Penetration CalcDetailCollisionInfoCCD(float delta, RBColliderSphere sphere_a, RBColliderCapsule capsule_b, Vector3 vel_a, Vector3 vel_b)
             {
-                lastVelocity *= delta;
+                var vd_a = vel_a * delta;
+                var vd_b = vel_b * delta;
 
-                float length = lastVelocity.magnitude;
-                Vector3 dirN = lastVelocity / length;
+                Vector3 relVel = vd_a - vd_b;
 
-                if (length == 0)
-                {
-                    return CalcDetailCollisionInfo(sphere_a, capsule_b);
-                }
+                float length = relVel.magnitude;
+                Vector3 dirN = relVel / length;
 
-                Vector3 org = sphere_a.pos - lastVelocity;
+                if (length == 0) return CalcDetailCollisionInfo(sphere_a, capsule_b);
+
+                RBColliderCapsule vlCapsule = capsule_b;
+                vlCapsule.pos -= vd_b;
+
+                Vector3 org = sphere_a.pos - vd_a;
                 var p = RBSphereCast.SphereCastCapsule.CalcSphereCollision(capsule_b, org, dirN, length, sphere_a.radius, false);
 
                 if (!p.IsValidHit || length < p.length)
@@ -59,11 +62,16 @@ namespace RBPhys
                     return default;
                 }
 
-                Vector3 pA = p.position;
-                Vector3 pB = p.position + dirN * (length - p.length);
+                float vr = (p.length / length);
+
+                Vector3 vlCa = p.position - relVel * vr;
+                Vector3 vlCb = p.position;
+
+                Vector3 pA = vlCa + vd_a * vr;
+                Vector3 pB = vlCb + vd_b * vr;
 
                 float t = Vector3.Dot(pB - pA, p.normal);
-                return new Penetration(p.normal * Mathf.Min(t, 0), pA, pB, default);
+                return new Penetration(p.normal * t, pA, pB, default);
             }
         }
     }

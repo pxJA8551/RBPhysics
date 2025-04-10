@@ -22,12 +22,15 @@ namespace RBPhys
                 return (penetration, sphere_a.pos - dN * sphere_a.radius, sphere_b.pos + dN * sphere_b.radius);
             }
 
-            public static Penetration CalcDetailCollisionInfoCCD(float delta, RBColliderSphere sphere_a, RBColliderSphere sphere_b, Vector3 lastVelocityA, Vector3 lastVelocityB)
+            public static Penetration CalcDetailCollisionInfoCCD(float delta, RBColliderSphere sphere_a, RBColliderSphere sphere_b, Vector3 vel_a, Vector3 vel_b)
             {
-                Vector3 relLastVelocity = lastVelocityB - lastVelocityA;
+                var vd_a = vel_a * delta;
+                var vd_b = vel_b * delta;
 
-                float length = relLastVelocity.magnitude;
-                Vector3 dirN = relLastVelocity / length;
+                Vector3 relVel = vd_b - vd_a;
+
+                float length = relVel.magnitude;
+                Vector3 dirN = relVel / length;
 
                 if (length == 0)
                 {
@@ -35,9 +38,9 @@ namespace RBPhys
                 }
 
                 var sphere_a_org = sphere_a;
-                sphere_a_org.pos -= lastVelocityA;
+                sphere_a_org.pos -= vd_a;
 
-                Vector3 org = sphere_b.pos - lastVelocityB;
+                Vector3 org = sphere_b.pos - vd_b;
                 var p = RBSphereCast.SphereCastSphere.CalcSphereCollision(sphere_a_org, org, dirN, length, sphere_b.radius, false);
 
                 if (!p.IsValidHit || length < p.length)
@@ -45,12 +48,15 @@ namespace RBPhys
                     return default;
                 }
 
-                float tr = 1 - (p.length / length);
+                float vr = (p.length / length);
 
-                Vector3 pA = (p.position - lastVelocityA) + lastVelocityA * tr;
-                Vector3 pB = (p.position - lastVelocityA) + lastVelocityB * tr;
+                Vector3 lvCa = p.position;
+                Vector3 lvCb = p.position - relVel * vr;
 
-                float t = Vector3.Dot(pB - pA, p.normal);
+                Vector3 pA = lvCa + vd_a * vr;
+                Vector3 pB = lvCa + vd_b * vr;
+
+                float t = (pB - pA).magnitude;
                 return new Penetration(p.normal * t, pA, pB, default);
             }
         }

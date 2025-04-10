@@ -14,22 +14,19 @@ namespace RBPhys
 
         public abstract RBGeometryType GeometryType { get; }
 
-        [NonSerialized] public float beta = .4f;
+        [NonSerialized] public float beta = .23f;
 
-        [NonSerialized] public float restitution = 0.35f; //îΩî≠åWêî
+        [NonSerialized] public float restitution = 0.45f; //îΩî≠åWêî
         [NonSerialized] public float friction = 0.55f; //ñÄéCåWêî
 
-        public RBTrajectory ExpTrajectory { get { return _expTrajectory; } }
+        public RBTrajectory Trajectory { get { return _trajectory; } }
 
         [NonSerialized] public float colliderSizeMultiplier = 1f;
 
         public bool useCCD;
         public bool allowSoftClip;
 
-        protected RBTrajectory _expTrajectory;
-
-        protected Vector3 _expPos;
-        protected Quaternion _expRot;
+        protected RBTrajectory _trajectory;
 
         public OnCollision onCollision;
 
@@ -63,7 +60,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBCollider()
         {
-            _expTrajectory = new RBTrajectory();
+            _trajectory = new RBTrajectory();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -111,27 +108,8 @@ namespace RBPhys
             var pos = VTransform.WsPosition;
             var rot = VTransform.WsRotation;
 
-            _expPos = pos;
-            _expRot = rot;
-
-            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, pos, rot, VTransform.Layer, delta);
-            else _expTrajectory.Update(this, _expPos, _expRot, VTransform.Layer, delta);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UpdateExpTrajectory(float delta, Vector3 rbPos, Quaternion rbRot, Vector3 intergratedPos, Quaternion intergratedRot)
-        {
-            var pos = VTransform.WsPosition;
-            var rot = VTransform.WsRotation;
-
-            Vector3 relPos = pos - rbPos;
-            Quaternion relRot = rot * Quaternion.Inverse(rbRot);
-
-            _expPos = intergratedPos + relPos;
-            _expRot = intergratedRot * relRot;
-
-            if (GeometryType == RBGeometryType.Sphere && useCCD) _expTrajectory.Update(this, pos, rot, VTransform.Layer, delta);
-            else _expTrajectory.Update(this, _expPos, _expRot, VTransform.Layer, delta);
+            if (GeometryType == RBGeometryType.Sphere && useCCD) _trajectory.Update(this, pos, rot, VTransform.Layer, delta);
+            else _trajectory.Update(this, pos, rot, VTransform.Layer, delta);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -178,42 +156,6 @@ namespace RBPhys
         public virtual Vector3 GetColliderCenter()
         {
             return GetColliderCenter(VTransform.WsPosition, VTransform.WsRotation);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public virtual RBColliderSphere CalcExpSphere(float delta)
-        {
-            return CalcSphere(_expPos, _expRot, delta);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public virtual RBColliderAABB CalcExpAABB(float delta)
-        {
-            return CalcAABB(_expPos, _expRot, delta);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public virtual RBColliderOBB CalcExpOBB(float delta)
-        {
-            return CalcOBB(_expPos, _expRot, delta);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public virtual RBColliderCapsule CalcExpCapsule(float delta)
-        {
-            return CalcCapsule(_expPos, _expRot, delta);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector3 ExpToCurrent(Vector3 expPos)
-        {
-            return VTransform.WsPosition + VTransform.WsRotation * (Quaternion.Inverse(_expRot) * (expPos - _expPos));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector3 ExpToCurrentVector(Vector3 expVector)
-        {
-            return VTransform.WsRotation * (Quaternion.Inverse(_expRot) * expVector);
         }
     }
 }

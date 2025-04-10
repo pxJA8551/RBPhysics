@@ -1,10 +1,6 @@
 using System;
-using System.Linq.Expressions;
-using System.Runtime.InteropServices.WindowsRuntime;
 using Unity.IL2CPP.CompilerServices;
-using UnityEditor.Build;
 using UnityEngine;
-using UnityEngine.Video;
 using static RBPhys.RBPhysUtil;
 using static RBPhys.RBVectorUtil;
 
@@ -12,13 +8,11 @@ namespace RBPhys
 {
     [Il2CppSetOption(Option.ArrayBoundsChecks, false)]
     [Il2CppSetOption(Option.NullChecks, false)]
-    [Il2CppSetOption(Option.DivideByZeroChecks, false)]
+    [Il2CppSetOption(Option.DivideByZeroChecks, true)]
     public static partial class RBDetailCollision
     {
         public static class DetailCollisionOBBOBB
         {
-            const float FACE_PARALLEL_DOT_EPSILON = 0.0001f;
-
             enum AxisType
             {
                 X,
@@ -99,14 +93,6 @@ namespace RBPhys
                 info.obb_obb_penetration = OBB_OBB_PenetrationType.None;
 
                 Vector3 d = obb_b.Center - obb_a.Center;
-
-                Vector3 aFwd = obb_a.rot * new Vector3(0, 0, obb_a.size.z);
-                Vector3 aRight = obb_a.rot * new Vector3(obb_a.size.x, 0, 0);
-                Vector3 aUp = obb_a.rot * new Vector3(0, obb_a.size.y, 0);
-
-                Vector3 bFwd = obb_b.rot * new Vector3(0, 0, obb_b.size.z);
-                Vector3 bRight = obb_b.rot * new Vector3(obb_b.size.x, 0, 0);
-                Vector3 bUp = obb_b.rot * new Vector3(0, obb_b.size.y, 0);
 
                 Vector3 aFwdN = obb_a.rot * Vector3.forward;
                 Vector3 aRightN = obb_a.rot * Vector3.right;
@@ -454,7 +440,7 @@ namespace RBPhys
 
                     if ((int)info.obb_obb_penetration <= 5)
                     {
-                        if((int)info.obb_obb_penetration <= 2)
+                        if ((int)info.obb_obb_penetration <= 2)
                         {
                             //F(A)-V(B)
 

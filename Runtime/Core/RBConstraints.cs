@@ -1,4 +1,5 @@
 using System;
+using UnityEditor;
 
 namespace RBPhys
 {
@@ -18,13 +19,19 @@ namespace RBPhys
 
         public struct SolverInfo
         {
-            public readonly int solver_sync_max;
-            public readonly int solver_sync_count;
+            public readonly int solverSubtick;
+            public readonly int solverMaxIter;
 
-            public SolverInfo(in RBPhysComputer computer, int syncCount)
+            public readonly int subtickCount;
+            public readonly int iterCount;
+
+            public SolverInfo(RBPhysComputer comp, int subtick, int iter)
             {
-                solver_sync_max = computer.cpu_std_solver_internal_sync_per_iteration;
-                solver_sync_count = syncCount;
+                this.solverSubtick = comp.solver_subtick;
+                this.solverMaxIter = comp.solver_iter_per_subtick;
+
+                this.subtickCount = subtick;
+                this.iterCount = iter;
             }
         }
 

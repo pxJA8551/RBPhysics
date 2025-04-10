@@ -57,9 +57,9 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
         {
             if (c == null) continue;
 
-            c.ExpTrajectory.activeStatic = active;
-            c.ExpTrajectory.StaticVelocity = Vector3.zero;
-            c.ExpTrajectory.StaticAngularVelocity = Vector3.zero;
+            c.Trajectory.activeStatic = active;
+            c.Trajectory.StaticVelocity = Vector3.zero;
+            c.Trajectory.StaticAngularVelocity = Vector3.zero;
         }
     }
 
@@ -142,10 +142,10 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
         float avL = _animAngVel.magnitude;
 
         float vFactor = 0;
-        if(vL > 0) vFactor = Vector3.Dot(_animVel / vL, _prevImpulseVel) / vL;
+        if (vL > 0) vFactor = Vector3.Dot(_animVel / vL, _prevImpulseVel) / vL;
 
         float avFactor = 0;
-        if(avL > 0) avFactor = Vector3.Dot(_animAngVel / avL, _prevImpulseAngVel) / avL;
+        if (avL > 0) avFactor = Vector3.Dot(_animAngVel / avL, _prevImpulseAngVel) / avL;
 
         float extLambda = vFactor + avFactor;
 
@@ -171,8 +171,8 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
 
         foreach (var c in physColliders)
         {
-            c.ExpTrajectory.StaticVelocity = _animVel + Vector3.Cross(c.GetColliderCenter() - VTransform.WsPosition, _animAngVel);
-            c.ExpTrajectory.StaticAngularVelocity = _animAngVel;
+            c.Trajectory.StaticVelocity = _animVel + Vector3.Cross(c.GetColliderCenter() - VTransform.WsPosition, _animAngVel);
+            c.Trajectory.StaticAngularVelocity = _animAngVel;
         }
     }
 

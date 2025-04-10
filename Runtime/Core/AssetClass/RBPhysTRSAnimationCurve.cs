@@ -220,5 +220,12 @@ namespace RBPhys
 
             return t;
         }
+
+        public enum RBPhysAnimationType
+        {
+            Once,
+            Loop,
+            Ping_Pong
+        }
     }
 }
