@@ -90,12 +90,15 @@ namespace RBPhys
 
         public readonly bool isPredictionComputer;
 
+        RBPhysDiagnostics _diagnostics = new RBPhysDiagnostics();
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBPhysComputer(bool isPredictionComputer)
         {
             physComputerTime = new PhysComputerTime(this);
             timeParams = ComputerTimeParams.GetDefault();
             this.isPredictionComputer = isPredictionComputer;
+            _diagnostics = new RBPhysDiagnostics();
 
             ReInitializeComputer();
         }
@@ -106,6 +109,7 @@ namespace RBPhys
             physComputerTime = new PhysComputerTime(this);
             timeParams = new ComputerTimeParams(deltaTime, 1, false);
             this.isPredictionComputer = isPredictionComputer;
+            _diagnostics = new RBPhysDiagnostics();
 
             ReInitializeComputer();
         }
@@ -448,6 +452,20 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public async Task<RBPhysStats> GetStatsAsync()
+        {
+            RBPhysStats stats = default;
+
+            if (await _solverIterationSemaphore.WaitAsync(500))
+            {
+                stats = _diagnostics.GetStats();
+                _solverIterationSemaphore.Release();
+            }
+
+            return stats;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task PhysicsFrameAsync()
         {
             await PhysFrame();
@@ -465,6 +483,9 @@ namespace RBPhys
                 try
                 {
                     SyncTrajectories();
+
+                    _diagnostics.CountObjects(_rigidbodies, _colliders);
+                    _diagnostics.CountCallbacks(_beforeSolver?.GetInvocationList(), _afterSolver?.GetInvocationList(), _stdSolverInit?.GetInvocationList(), _stdSolverIter?.GetInvocationList(), _colliders);
 
                     if (_validatorPreBeforeSolver != null) _validatorPreBeforeSolver(dt, _timeScaleMode);
                     if (_validatorBeforeSolver != null) _validatorBeforeSolver(dt, _timeScaleMode);
