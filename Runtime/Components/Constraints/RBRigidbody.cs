@@ -301,15 +301,6 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void SetColliderSizeMultiplier(float multiplier)
-        {
-            foreach (var c in _colliders)
-            {
-                c.colliderSizeMultiplier = multiplier;
-            }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void InvertVelocity()
         {
             _velocity = -_velocity;
@@ -317,6 +308,14 @@ namespace RBPhys
 
             _expVelocity = -_expVelocity;
             _expAngularVelocity = -_expAngularVelocity;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3 GetInvInertiaTensor(float multiplier = 1)
+        {
+            Vector3 i = inertiaTensor * inertiaTensorMultiplier * multiplier;
+            Quaternion r = VTransform.WsRotation * inertiaTensorRotation;
+            return Vector3.Scale(r * (Quaternion.Inverse(r) * V3Rcp(i)), _invInertiaWsScale);
         }
 
         internal virtual void ApplyTransform(float dt, TimeScaleMode physTimeScaleMode)

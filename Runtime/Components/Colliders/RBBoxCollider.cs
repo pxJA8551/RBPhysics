@@ -18,9 +18,6 @@ namespace RBPhys
         public Vector3 Size { get { return _size; } set { _size = RBPhysUtil.V3Abs(value); } }
         public Quaternion LocalRot { get { return Quaternion.Euler(_rotationEuler); } set { _rotationEuler = value.eulerAngles; } }
 
-        public Vector3 MutipliedSize { get { return _size * colliderSizeMultiplier; } }
-        public Vector3 MutipliedCenter { get { return _center * colliderSizeMultiplier; } }
-
         public override int Layer { get { return gameObject.layer; } }
 
         protected override RBVirtualComponent CreateVirtual(GameObject obj)
@@ -48,7 +45,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override float CalcVolume()
         {
-            return Mathf.Abs(MutipliedSize.x * MutipliedSize.y * MutipliedSize.z);
+            return Mathf.Abs(Size.x * Size.y * Size.z);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -60,7 +57,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot)
         {
-            return new RBColliderSphere(pos + rot * MutipliedCenter, Mathf.Sqrt(Mathf.Pow(MutipliedSize.x, 2) + Mathf.Pow(MutipliedSize.y, 2) + Mathf.Pow(MutipliedSize.z, 2)) / 2f);
+            return new RBColliderSphere(pos + rot * Center, Mathf.Sqrt(Mathf.Pow(Size.x, 2) + Mathf.Pow(Size.y, 2) + Mathf.Pow(Size.z, 2)) / 2f);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -68,24 +65,24 @@ namespace RBPhys
         {
             Quaternion r = rot * LocalRot;
 
-            float size_prjX = RBPhysUtil.GetOBBAxisSize(MutipliedSize, r, Vector3.right);
-            float size_prjY = RBPhysUtil.GetOBBAxisSize(MutipliedSize, r, Vector3.up);
-            float size_prjZ = RBPhysUtil.GetOBBAxisSize(MutipliedSize, r, Vector3.forward);
+            float size_prjX = RBPhysUtil.GetOBBAxisSize(Size, r, Vector3.right);
+            float size_prjY = RBPhysUtil.GetOBBAxisSize(Size, r, Vector3.up);
+            float size_prjZ = RBPhysUtil.GetOBBAxisSize(Size, r, Vector3.forward);
 
-            RBColliderAABB aabb = new RBColliderAABB(pos + rot * MutipliedCenter, new Vector3(size_prjX, size_prjY, size_prjZ));
+            RBColliderAABB aabb = new RBColliderAABB(pos + rot * Center, new Vector3(size_prjX, size_prjY, size_prjZ));
             return aabb;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot)
         {
-            return new RBColliderOBB(pos + rot * (MutipliedCenter - LocalRot * MutipliedSize / 2f), rot * LocalRot, MutipliedSize);
+            return new RBColliderOBB(pos + rot * (Center - LocalRot * Size / 2f), rot * LocalRot, Size);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override Vector3 GetColliderCenter(Vector3 pos, Quaternion rot)
         {
-            return pos + rot * MutipliedCenter;
+            return pos + rot * Center;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

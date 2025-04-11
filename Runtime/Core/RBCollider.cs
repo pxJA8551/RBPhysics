@@ -29,8 +29,6 @@ namespace RBPhys
 
         public RBTrajectory Trajectory { get { return _trajectory; } }
 
-        [NonSerialized] public float colliderSizeMultiplier = 1f;
-
         public bool useCCD;
         public bool allowSoftClip;
 

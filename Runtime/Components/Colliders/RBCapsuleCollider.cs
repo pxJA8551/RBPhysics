@@ -20,10 +20,6 @@ namespace RBPhys
         public float Radius { get { return _radius; } set { _radius = Mathf.Abs(value); } }
         public float Height { get { return _height; } set { _height = Mathf.Abs(value); } }
 
-        public float MutipliedRadius { get { return _radius * colliderSizeMultiplier; } }
-        public float MutipliedHeight { get { return _height * colliderSizeMultiplier; } }
-        public Vector3 MutipliedCenter { get { return _center * colliderSizeMultiplier; } }
-
         public override int Layer { get { return gameObject.layer; } }
 
         protected override RBVirtualComponent CreateVirtual(GameObject obj)
@@ -52,9 +48,9 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override float CalcVolume()
         {
-            float r = MutipliedRadius;
+            float r = Radius;
             float vSphere = (4f * Mathf.PI * r * r * r) / 3f;
-            float vCylinder = (Mathf.PI * r * r) * MutipliedHeight;
+            float vCylinder = (Mathf.PI * r * r) * Height;
 
             return vSphere + vCylinder;
         }
@@ -72,7 +68,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot)
         {
-            return new RBColliderSphere(pos + MutipliedCenter, MutipliedHeight / 2f + MutipliedRadius);
+            return new RBColliderSphere(pos + Center, Height / 2f + Radius);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -80,7 +76,7 @@ namespace RBPhys
         {
             var p = GetEdge(pos, rot);
 
-            Vector3 r = Vector3.one * MutipliedRadius;
+            Vector3 r = Vector3.one * Radius;
 
             Vector3 min = Vector3.Min(p.begin, p.end) - r;
             Vector3 max = Vector3.Max(p.begin, p.end) + r;
@@ -91,28 +87,28 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot)
         {
-            Vector3 extents = new Vector3(MutipliedRadius * 2, MutipliedRadius, MutipliedRadius * 2);
-            return new RBColliderOBB(pos + MutipliedCenter - extents, rot * LocalRot, extents * 2f);
+            Vector3 extents = new Vector3(Radius * 2, Radius, Radius * 2);
+            return new RBColliderOBB(pos + Center - extents, rot * LocalRot, extents * 2f);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override Vector3 GetColliderCenter(Vector3 pos, Quaternion rot)
         {
-            return pos + MutipliedCenter;
+            return pos + Center;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public (Vector3 begin, Vector3 end) GetEdge(Vector3 pos, Quaternion rot)
         {
             Quaternion r = rot * LocalRot;
-            Vector3 v = r * new Vector3(0, MutipliedHeight / 2f, 0);
-            return (pos + MutipliedCenter + v, pos + MutipliedCenter - v);
+            Vector3 v = r * new Vector3(0, Height / 2f, 0);
+            return (pos + Center + v, pos + Center - v);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot)
         {
-            return new RBColliderCapsule(pos + MutipliedCenter, rot * LocalRot, MutipliedRadius, MutipliedHeight);
+            return new RBColliderCapsule(pos + Center, rot * LocalRot, Radius, Height);
         }
 
         private void Reset()

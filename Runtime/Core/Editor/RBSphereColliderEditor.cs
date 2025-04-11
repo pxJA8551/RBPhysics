@@ -177,7 +177,7 @@ namespace RBPhysEditor
                     if (selected_xp)
                     {
                         Ray r = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + rot * (xSize * 2), pos + rot * collider.Center + rot * (-xSize * 2), r.origin, r.origin + r.direction * 10000f);
+                        Vector3 p = RBVectorUtil.CalcNearestUnclamped(pos + rot * collider.Center + rot * (xSize * 2), pos + rot * collider.Center + rot * (-xSize * 2), r.origin, r.origin + r.direction * 10000f);
                         float newXSize = (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) - rot * -xSize)).x;
                         Undo.RecordObject(target, "Changed Collider Center/Radius");
                         collider.Center += (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) + rot * -xSize)) / 2f;
@@ -192,7 +192,7 @@ namespace RBPhysEditor
                     else if (selected_xn)
                     {
                         Ray r = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + rot * (xSize * 2), pos + rot * collider.Center + rot * (-xSize * 2), r.origin, r.origin + r.direction * 10000f);
+                        Vector3 p = RBVectorUtil.CalcNearestUnclamped(pos + rot * collider.Center + rot * (xSize * 2), pos + rot * collider.Center + rot * (-xSize * 2), r.origin, r.origin + r.direction * 10000f);
                         float newXSize = -(Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) - rot * xSize)).x;
                         Undo.RecordObject(target, "Changed Collider Center/Radius");
                         collider.Center += (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) + rot * xSize)) / 2f;
@@ -207,7 +207,7 @@ namespace RBPhysEditor
                     else if (selected_yp)
                     {
                         Ray r = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + rot * (ySize * 2), pos + rot * collider.Center + rot * (-ySize * 2), r.origin, r.origin + r.direction * 10000f);
+                        Vector3 p = RBVectorUtil.CalcNearestUnclamped(pos + rot * collider.Center + rot * (ySize * 2), pos + rot * collider.Center + rot * (-ySize * 2), r.origin, r.origin + r.direction * 10000f);
                         float newYSize = (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) - rot * -ySize)).y;
                         Undo.RecordObject(target, "Changed Collider Center/Radius");
                         collider.Center += (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) + rot * -ySize)) / 2f;
@@ -222,7 +222,7 @@ namespace RBPhysEditor
                     else if (selected_yn)
                     {
                         Ray r = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + rot * (ySize * 2), pos + rot * collider.Center + rot * (-ySize * 2), r.origin, r.origin + r.direction * 10000f);
+                        Vector3 p = RBVectorUtil.CalcNearestUnclamped(pos + rot * collider.Center + rot * (ySize * 2), pos + rot * collider.Center + rot * (-ySize * 2), r.origin, r.origin + r.direction * 10000f);
                         float newYSize = -(Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) - rot * ySize)).y;
                         Undo.RecordObject(target, "Changed Collider Center/Radius");
                         collider.Center += (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) + rot * ySize)) / 2f;
@@ -237,7 +237,7 @@ namespace RBPhysEditor
                     else if (selected_zp)
                     {
                         Ray r = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + rot * (zSize * 2), pos + rot * collider.Center + rot * (-zSize * 2), r.origin, r.origin + r.direction * 10000f);
+                        Vector3 p = RBVectorUtil.CalcNearestUnclamped(pos + rot * collider.Center + rot * (zSize * 2), pos + rot * collider.Center + rot * (-zSize * 2), r.origin, r.origin + r.direction * 10000f);
                         float newzSize = (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) - rot * -zSize)).z;
                         Undo.RecordObject(target, "Changed Collider Center/Radius");
                         collider.Center += (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) + rot * -zSize)) / 2f;
@@ -252,7 +252,7 @@ namespace RBPhysEditor
                     else if (selected_zn)
                     {
                         Ray r = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition);
-                        Vector3 p = RBVectorUtil.CalcNearestLine(pos + rot * collider.Center + rot * (zSize * 2), pos + rot * collider.Center + rot * (-zSize * 2), r.origin, r.origin + r.direction * 10000f);
+                        Vector3 p = RBVectorUtil.CalcNearestUnclamped(pos + rot * collider.Center + rot * (zSize * 2), pos + rot * collider.Center + rot * (-zSize * 2), r.origin, r.origin + r.direction * 10000f);
                         float newzSize = -(Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) - rot * zSize)).z;
                         Undo.RecordObject(target, "Changed Collider Center/Radius");
                         collider.Center += (Quaternion.Inverse(rot) * (p - (pos + rot * collider.Center) + rot * zSize)) / 2f;

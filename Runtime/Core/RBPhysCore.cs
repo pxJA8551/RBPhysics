@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
-using UnityEngine.Assertions.Must;
 using UnityEngine.Profiling;
 
 namespace RBPhys
@@ -28,6 +27,7 @@ namespace RBPhys
         public const float RETROGRADE_PHYS_FRICTION_MULTIPLIER = .35f;
 
         public const float SOFTCLIP_LAMBDA_MULTIPLIER = .2f;
+        public const float INERTIA_TENSOR_MULTIPLIER = 1f;
 
         public const float VELOCITY_MAX = 50f;
         public const float ANG_VELOCITY_MAX = 20f;
@@ -37,11 +37,12 @@ namespace RBPhys
         public float solver_abort_veladd_sqrt = SOLVER_ABORT_VELADD_SQRT;
         public float solver_abort_angveladd_sqrt = SOLVER_ABORT_ANGVELADD_SQRT;
 
-        public static float retrograde_phys_restitution_multiplier = RETROGRADE_PHYS_RESTITUTION_MULTIPLIER;
-        public static float retrograde_phys_restitution_min = RETROGRADE_PHYS_RESTITUTION_MIN;
+        public float retrograde_phys_restitution_multiplier = RETROGRADE_PHYS_RESTITUTION_MULTIPLIER;
+        public float retrograde_phys_restitution_min = RETROGRADE_PHYS_RESTITUTION_MIN;
+        public float retrograde_phys_friction_multiplier = RETROGRADE_PHYS_FRICTION_MULTIPLIER;
 
-        public static float retrograde_phys_friction_multiplier = RETROGRADE_PHYS_FRICTION_MULTIPLIER;
-        public static float softClip_lambda_multiplier = SOFTCLIP_LAMBDA_MULTIPLIER;
+        public float softClip_lambda_multiplier = SOFTCLIP_LAMBDA_MULTIPLIER;
+        public float inertia_tensor_multiplier = INERTIA_TENSOR_MULTIPLIER;
 
         public Vector3 gravityAcceleration = new Vector3(0, -9.81f, 0);
 
@@ -116,9 +117,22 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBPhysComputer.SolverInfo GetSolverInfo(int subtick = -1, int iter = -1)
+        public RBPhysComputer.SolverInfo PackSolverInfo(int subtick = -1, int iter = -1)
         {
             return new SolverInfo(this, subtick, iter);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public RBCollision.SolverOption PackSolverOption()
+        {
+            var option = RBCollision.SolverOption.GetDefault();
+            option.retrograde_phys_restitution_multiplier = this.retrograde_phys_restitution_multiplier;
+            option.retrograde_phys_restitution_min = this.retrograde_phys_restitution_min;
+            option.retrograde_phys_friction_multiplier = this.retrograde_phys_friction_multiplier;
+            option.softClip_lambda_multiplier = this.softClip_lambda_multiplier;
+            option.inertia_tensor_multiplier = this.inertia_tensor_multiplier;
+
+            return option;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1609,12 +1623,14 @@ namespace RBPhys
 
             //Debug.Log(cpu_std_solver_internal_sync_per_iteration);
 
+            var solverOption = PackSolverOption();
+
             PrepareSubtick();
 
             float sdt = dt / solver_subtick;
 
             {
-                var solverInfo = GetSolverInfo();
+                var solverInfo = PackSolverInfo();
                 if (_stdSolverInit != null) _stdSolverInit(sdt, solverInfo);
             }
 
@@ -1625,7 +1641,7 @@ namespace RBPhys
 
                 for (int j = 0; j < solver_iter_per_subtick; j++)
                 {
-                    var solverInfo = GetSolverInfo(i, j);
+                    var solverInfo = PackSolverInfo(i, j);
 
                     if (_stdSolverIter != null) _stdSolverIter(solverInfo);
 
@@ -1635,7 +1651,7 @@ namespace RBPhys
 
                         if (col.penetration != Vector3.zero && !col.skipInSolver && !col.triggerCollision)
                         {
-                            col.InitVelocityConstraint(sdt, _timeScaleMode, j == 0);
+                            col.InitVelocityConstraint(sdt, _timeScaleMode, solverOption, j == 0);
                             SolveCollisionPair(col);
                         }
                     }
@@ -1647,7 +1663,7 @@ namespace RBPhys
                 Profiler.BeginSample(name: "SolveConstraints/Subticks/DetailTest");
                 Profiler.BeginSample(name: "SolveConstraints/Subticks" + (i + 1) + "/DetailTest");
 
-                ApplySolverVelocity(GetSolverInfo(i), sdt);
+                ApplySolverVelocity(PackSolverInfo(i), sdt);
 
                 if (i < solver_subtick - 1)
                 {
@@ -1655,7 +1671,7 @@ namespace RBPhys
                     {
                         var col = _collisionsInSolver[k];
 
-                        if (col.triggerCollision)
+                        if (!col.triggerCollision)
                         {
                             var p = RecalcCollision(col);
                             col.Update(p.p, p.pA, p.pB);
@@ -2166,14 +2182,14 @@ namespace RBPhys
             triggerCollision = false;
         }
 
-        public void InitVelocityConstraint(float dt, TimeScaleMode tMode, bool initLambda = true)
+        public void InitVelocityConstraint(float dt, TimeScaleMode tMode, SolverOption option, bool initLambda = true)
         {
             Vector3 contactNormal = ContactNormal;
             Vector3 tangent = Vector3.ProjectOnPlane(SubtickVelocity_b - SubtickVelocity_a, contactNormal).normalized;
             //Vector3.OrthoNormalize(ref contactNormal, ref tangent, ref bitangent);
 
-            _jN.Init(this, contactNormal, dt, tMode, initLambda);
-            _jT.Init(this, tangent, dt, tMode, initLambda);
+            _jN.Init(this, contactNormal, dt, tMode, option, initLambda);
+            _jT.Init(this, tangent, dt, tMode, option, initLambda);
         }
 
         public void SolveVelocityConstraints(out Vector3 vAdd_a, out Vector3 avAdd_a, out Vector3 vAdd_b, out Vector3 avAdd_b, TimeScaleMode tMode)
@@ -2249,9 +2265,39 @@ namespace RBPhys
             else return default;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        Vector3 GetInvInertiaWs(RBRigidbody rb, float inertiaTensorMultiplier)
+        {
+            if (rb != null) return rb.GetInvInertiaTensor(inertiaTensorMultiplier);
+            else return default;
+        }
+
         const float COLLISION_ERROR_SLOP = 0;
 
-        struct Jacobian
+        public struct SolverOption
+        {
+            public float retrograde_phys_restitution_multiplier;
+            public float retrograde_phys_restitution_min;
+            public float retrograde_phys_friction_multiplier;
+            public float softClip_lambda_multiplier;
+            public float inertia_tensor_multiplier;
+
+            public static SolverOption GetDefault()
+            {
+                var option = new SolverOption();
+
+                option.retrograde_phys_restitution_multiplier = RBPhysComputer.RETROGRADE_PHYS_RESTITUTION_MULTIPLIER;
+                option.retrograde_phys_restitution_min = RBPhysComputer.RETROGRADE_PHYS_RESTITUTION_MIN;
+                option.retrograde_phys_friction_multiplier = RBPhysComputer.RETROGRADE_PHYS_FRICTION_MULTIPLIER;
+
+                option.softClip_lambda_multiplier = RBPhysComputer.SOFTCLIP_LAMBDA_MULTIPLIER;
+                option.inertia_tensor_multiplier = RBPhysComputer.INERTIA_TENSOR_MULTIPLIER;
+
+                return option;
+            }
+        }
+
+        class Jacobian
         {
             // Jv + b >= 0
 
@@ -2267,6 +2313,8 @@ namespace RBPhys
             float _effectiveMass;
 
             bool _useSoftClip;
+
+            SolverOption _solverOption;
 
             public enum Type
             {
@@ -2290,8 +2338,10 @@ namespace RBPhys
                 _useSoftClip = false;
             }
 
-            public void Init(RBCollision col, Vector3 dir, float dt, TimeScaleMode tMode, bool initLambda = true)
+            public void Init(RBCollision col, Vector3 dir, float dt, TimeScaleMode tMode, SolverOption solverOption, bool initLambda = true)
             {
+                _solverOption = solverOption;
+
                 Vector3 dirN = dir;
 
                 _va = dirN;
@@ -2305,11 +2355,17 @@ namespace RBPhys
                     _totalLambda = 0;
                 }
 
+                const float EPSILON = .000001f;
+                if (_solverOption.inertia_tensor_multiplier < EPSILON) throw new Exception();
+
+                var invInertiaWs_a = col.GetInvInertiaWs(col.rigidbody_a, _solverOption.inertia_tensor_multiplier);
+                var invInertiaWs_b = col.GetInvInertiaWs(col.rigidbody_b, _solverOption.inertia_tensor_multiplier);
+
                 float k = 0;
                 k += col.InverseMass_a;
-                k += Vector3.Dot(_wa, Vector3.Scale(col.InverseInertiaWs_a, _wa));
+                k += Vector3.Dot(_wa, Vector3.Scale(invInertiaWs_a, _wa));
                 k += col.InverseMass_b;
-                k += Vector3.Dot(_wb, Vector3.Scale(col.InverseInertiaWs_b, _wb));
+                k += Vector3.Dot(_wb, Vector3.Scale(invInertiaWs_b, _wb));
                 _effectiveMass = 1 / k;
 
                 if (_type == Type.Normal)
@@ -2319,8 +2375,8 @@ namespace RBPhys
                     if (tMode.IsRetg())
                     {
                         restitution = (restitution != 0) ? 1 / restitution : 0;
-                        restitution *= RBPhysComputer.retrograde_phys_restitution_multiplier;
-                        restitution = (restitution != 0) ? Mathf.Max(restitution, RBPhysComputer.retrograde_phys_restitution_min) : 0;
+                        restitution *= _solverOption.retrograde_phys_restitution_multiplier;
+                        restitution = (restitution != 0) ? Mathf.Max(restitution, _solverOption.retrograde_phys_restitution_min) : 0;
                     }
 
                     Vector3 relVel = Vector3.zero;
@@ -2352,7 +2408,7 @@ namespace RBPhys
 
                 if (_useSoftClip)
                 {
-                    lambda *= RBPhysComputer.softClip_lambda_multiplier;
+                    lambda *= _solverOption.softClip_lambda_multiplier;
                 }
 
                 if (_type == Type.Normal)
@@ -2364,7 +2420,7 @@ namespace RBPhys
                     float friction = col.collider_a.friction * col.collider_b.friction;
                     if (tMode.IsRetg())
                     {
-                        friction *= RBPhysComputer.retrograde_phys_friction_multiplier;
+                        friction *= _solverOption.retrograde_phys_friction_multiplier;
                     }
 
                     float maxFriction = friction * col._jN._totalLambda;
@@ -2381,10 +2437,16 @@ namespace RBPhys
 
                 lambda = _totalLambda - oldTotalLambda;
 
+                const float EPSILON = .000001f;
+                if (_solverOption.inertia_tensor_multiplier < EPSILON) throw new Exception();
+
+                var invInertiaWs_a = col.GetInvInertiaWs(col.rigidbody_a, _solverOption.inertia_tensor_multiplier);
+                var invInertiaWs_b = col.GetInvInertiaWs(col.rigidbody_b, _solverOption.inertia_tensor_multiplier);
+
                 vAdd_a += col.InverseMass_a * _va * lambda;
-                avAdd_a += Vector3.Scale(col.InverseInertiaWs_a, _wa) * lambda;
+                avAdd_a += Vector3.Scale(invInertiaWs_a, _wa) * lambda;
                 vAdd_b += col.InverseMass_b * _vb * lambda;
-                avAdd_b += Vector3.Scale(col.InverseInertiaWs_b, _wb) * lambda;
+                avAdd_b += Vector3.Scale(invInertiaWs_b, _wb) * lambda;
 
                 return (vAdd_a, avAdd_a, vAdd_b, avAdd_b);
             }
