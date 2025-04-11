@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.Design;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -8,7 +7,6 @@ using System.Threading.Tasks;
 using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
 using UnityEngine.Profiling;
-using static UnityEditor.ShaderData;
 
 namespace RBPhys
 {

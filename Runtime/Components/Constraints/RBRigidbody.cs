@@ -455,7 +455,7 @@ namespace RBPhys
 
             foreach (var c in _colliders)
             {
-                if(c != null) c.OnCollision(col, info);
+                if (c != null) c.OnCollision(col, info);
             }
         }
 
