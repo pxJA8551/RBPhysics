@@ -1772,7 +1772,7 @@ namespace RBPhys
             {
                 //OBB-Capsule
 
-                return RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(col_a.CalcOBB(), col_b.CalcCapsule());
+                return RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(col_a.CalcOBB(), col_b.CalcCapsule()); ;
             }
             else if (geomType_a == RBGeometryType.Capsule && geomType_b == RBGeometryType.OBB)
             {

@@ -10,8 +10,6 @@ namespace RBPhys
     {
         public static class DetailCollisionOBBCapsule
         {
-            const float FACE_PARALLEL_DOT_EPSILON = 0.000001f;
-
             public static Penetration CalcDetailCollisionInfo(RBColliderOBB obb_a, RBColliderCapsule capsule_b)
             {
                 var r = CalcDetailCollision(obb_a, capsule_b);
@@ -37,11 +35,11 @@ namespace RBPhys
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            static Vector3 ExtractCapsuleRadius(Vector3 vCapsule, Vector3 vContactObb, Vector3 wsSepHplnN, float radius)
+            static Vector3 ExtrudeCapsuleRadius(Vector3 vCapsule, Vector3 vContactObb, Vector3 wsSepHplnN, float radius)
             {
                 var rN = (vCapsule - vContactObb).normalized;
                 float sign = Vector3.Dot(wsSepHplnN, rN) >= 0 ? 1 : -1;
-                return vCapsule + rN * -sign * radius;
+                return rN * -sign * radius;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -150,6 +148,18 @@ namespace RBPhys
                 else throw new NotImplementedException();
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            static bool ObbContains(RBColliderOBB obb, Vector3 vtxWs)
+            {
+                Vector3 vtxLs = Quaternion.Inverse(obb.rot) * (vtxWs - obb.pos);
+
+                bool cx = 0 <= vtxLs.x && vtxLs.x <= obb.size.x;
+                bool cy = 0 <= vtxLs.y && vtxLs.y <= obb.size.y;
+                bool cz = 0 <= vtxLs.z && vtxLs.z <= obb.size.z;
+
+                return cx && cy && cz;
+            }
+
             public static (Vector3 p, Vector3 pA, Vector3 pB) CalcDetailCollision(RBColliderOBB obb_a, RBColliderCapsule capsule_b)
             {
                 PenetrationType penetrationType = PenetrationType.None;
@@ -192,7 +202,7 @@ namespace RBPhys
                         return (penetration, aDp, bDp);
                     }
 
-                    Vector3 p = aFwdN * (dp / 2) * F32Sign11(dd);
+                    Vector3 p = (dp / 2) * F32Sign11(dd) * aFwdN;
 
                     penetration = p;
                     pSqrMag = p.sqrMagnitude;
@@ -214,7 +224,7 @@ namespace RBPhys
                         return (penetration, aDp, bDp);
                     }
 
-                    Vector3 p = aRightN * (dp / 2) * F32Sign11(dd);
+                    Vector3 p = (dp / 2) * F32Sign11(dd) * aRightN;
 
                     bool pMin = p.sqrMagnitude < pSqrMag;
                     penetration = pMin ? p : penetration;
@@ -237,7 +247,7 @@ namespace RBPhys
                         return (penetration, aDp, bDp);
                     }
 
-                    Vector3 p = aUpN * (dp / 2) * F32Sign11(dd);
+                    Vector3 p = (dp / 2) * F32Sign11(dd) * aUpN;
 
                     bool pMin = p.sqrMagnitude < pSqrMag;
                     penetration = pMin ? p : penetration;
@@ -264,7 +274,7 @@ namespace RBPhys
                             return (penetration, aDp, bDp);
                         }
 
-                        Vector3 p = c * (dp / 2) * F32Sign11(dd);
+                        Vector3 p = (dp / 2) * F32Sign11(dd) * c;
 
                         bool pMin = p.sqrMagnitude < pSqrMag;
                         penetration = pMin ? p : penetration;
@@ -292,7 +302,7 @@ namespace RBPhys
                             return (penetration, aDp, bDp);
                         }
 
-                        Vector3 p = c * (dp / 2) * F32Sign11(dd);
+                        Vector3 p = (dp / 2) * F32Sign11(dd) * c;
 
                         bool pMin = p.sqrMagnitude < pSqrMag;
                         penetration = pMin ? p : penetration;
@@ -320,7 +330,7 @@ namespace RBPhys
                             return (penetration, aDp, bDp);
                         }
 
-                        Vector3 p = c * (dp / 2) * F32Sign11(dd);
+                        Vector3 p = (dp / 2) * F32Sign11(dd) * c;
 
                         bool pMin = p.sqrMagnitude < pSqrMag;
                         penetration = pMin ? p : penetration;
@@ -344,12 +354,18 @@ namespace RBPhys
 
                         var cpWs = PickCapsuleVtxWs(capsuleEdge.begin, capsuleEdge.end, -vAB);
                         var contactWs_obb = ProjectPointToOBBFace(obb_a, cpWs, vAB, hplnAxis);
-                        var contactWs_capsule = ExtractCapsuleRadius(cpWs, contactWs_obb, vAB, capsule_b.radius);
+                        Vector3 vr = ExtrudeCapsuleRadius(cpWs, contactWs_obb, vAB, capsule_b.radius);
+                        var contactWs_capsule = cpWs + vr;
 
-                        var p = contactWs_capsule - contactWs_obb;
-                        float sign = Vector3.Dot(p, penetration) > 0 ? 1 : -1;
+                        var p = cpWs - contactWs_obb;
 
-                        return (p * sign, contactWs_obb, contactWs_capsule);
+                        float pL = p.magnitude;
+                        if (capsule_b.radius < pL && !ObbContains(obb_a, cpWs)) return default;
+
+                        float pR = Mathf.Abs(capsule_b.radius - p.magnitude);
+                        if (pR < .0000001f) return default;
+
+                        return (vr.normalized * pR, contactWs_obb, contactWs_capsule);
                     }
                     else
                     {
@@ -364,12 +380,18 @@ namespace RBPhys
                         if (penetrationType == PenetrationType.Cross_Fwd_CapsuleAxis) (ws0_obb, ws1_obb) = PickOBBEdgeWs(obb_a, vAB, AxisType.Z);
 
                         CalcNearest(ws0_obb, ws1_obb, ws0_capsule, ws1_capsule, out var contactWs_obb, out var cpWs);
-                        var contactWs_capsule = ExtractCapsuleRadius(cpWs, contactWs_obb, vAB, capsule_b.radius);
+                        Vector3 vr = ExtrudeCapsuleRadius(cpWs, contactWs_obb, vAB, capsule_b.radius);
+                        var contactWs_capsule = cpWs + vr;
 
-                        var p = contactWs_capsule - contactWs_obb;
-                        float sign = Vector3.Dot(p, penetration) > 0 ? 1 : -1;
+                        var p = cpWs - contactWs_obb;
 
-                        return (p * sign, contactWs_obb, contactWs_capsule);
+                        float pL = p.magnitude;
+                        if (capsule_b.radius < pL && !ObbContains(obb_a, cpWs)) return default;
+
+                        float pR = Mathf.Abs(capsule_b.radius - p.magnitude);
+                        if (pR < .0000001f) return default;
+
+                        return (vr.normalized * pR, contactWs_obb, contactWs_capsule);
                     }
                 }
 
