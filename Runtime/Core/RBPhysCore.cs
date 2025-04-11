@@ -44,6 +44,9 @@ namespace RBPhys
         public float softClip_lambda_multiplier = SOFTCLIP_LAMBDA_MULTIPLIER;
         public float inertia_tensor_multiplier = INERTIA_TENSOR_MULTIPLIER;
 
+        public float rbRigidbody_velocity_max = VELOCITY_MAX;
+        public float rbRigidbody_ang_velocity_max = ANG_VELOCITY_MAX;
+
         public Vector3 gravityAcceleration = new Vector3(0, -9.81f, 0);
 
         public TimeScaleMode PhysTimeScaleMode { get { return _timeScaleMode; } set { SetTimeScale(value); } }
@@ -81,9 +84,6 @@ namespace RBPhys
 
         int[] _collisionIgnoreLayers = new int[32];
         RBCollisionLayerOption[] _layerOptions = new RBCollisionLayerOption[32];
-
-        public static float rbRigidbody_velocity_max = VELOCITY_MAX;
-        public static float rbRigidbody_ang_velocity_max = ANG_VELOCITY_MAX;
 
         public ComputerTimeParams timeParams;
         public PhysComputerTime physComputerTime;
@@ -131,6 +131,16 @@ namespace RBPhys
             option.retrograde_phys_friction_multiplier = this.retrograde_phys_friction_multiplier;
             option.softClip_lambda_multiplier = this.softClip_lambda_multiplier;
             option.inertia_tensor_multiplier = this.inertia_tensor_multiplier;
+
+            return option;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public RBRigidbody.VelocityOption PackVelocityOption()
+        {
+            var option = RBRigidbody.VelocityOption.GetDefault();
+            option.velocity_max = VELOCITY_MAX;
+            option.angularVelocity_max = ANG_VELOCITY_MAX;
 
             return option;
         }
@@ -532,7 +542,9 @@ namespace RBPhys
                     TrySleepRigidbodies();
                     TryAwakeRigidbodies();
 
-                    ApplyPhysFrame(dt);
+                    var velocityOption = PackVelocityOption();
+
+                    ApplyPhysFrame(dt, velocityOption);
                     ClearValidators();
                 }
                 catch
@@ -1219,7 +1231,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void ApplyPhysFrame(float dt)
+        void ApplyPhysFrame(float dt, RBRigidbody.VelocityOption velocityOption)
         {
             //FixedUpdate�I�����Ɏ��s
 
@@ -1227,7 +1239,7 @@ namespace RBPhys
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                rb.ApplyTransform(dt, _timeScaleMode);
+                rb.ApplyTransform(dt, _timeScaleMode, velocityOption);
             }
         }
 

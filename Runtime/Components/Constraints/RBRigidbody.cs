@@ -318,7 +318,7 @@ namespace RBPhys
             return Vector3.Scale(r * (Quaternion.Inverse(r) * V3Rcp(i)), _invInertiaWsScale);
         }
 
-        internal virtual void ApplyTransform(float dt, TimeScaleMode physTimeScaleMode)
+        internal virtual void ApplyTransform(float dt, TimeScaleMode physTimeScaleMode, VelocityOption velocityOption)
         {
             if (!_objTrajectory.IsIgnoredTrajectory)
             {
@@ -336,8 +336,8 @@ namespace RBPhys
                     _expAngularVelocity = (avm > 0 ? _expAngularVelocity / avm : Vector3.zero) * Mathf.Max(0, avm + angularDrag * ANGULAR_DRAG_RETG_MULTIPLIER);
                 }
 
-                _expVelocity = Vector3.ClampMagnitude(_expVelocity, rbRigidbody_velocity_max);
-                _expAngularVelocity = Vector3.ClampMagnitude(_expAngularVelocity, rbRigidbody_ang_velocity_max);
+                _expVelocity = Vector3.ClampMagnitude(_expVelocity, velocityOption.velocity_max);
+                _expAngularVelocity = Vector3.ClampMagnitude(_expAngularVelocity, velocityOption.angularVelocity_max);
 
                 //if (Mathf.Abs(_expVelocity.x) < XZ_VELOCITY_MIN_CUTOUT) _expVelocity.x = 0;
                 //if (Mathf.Abs(_expVelocity.z) < XZ_VELOCITY_MIN_CUTOUT) _expVelocity.z = 0;
@@ -660,6 +660,7 @@ namespace RBPhys
             public Quaternion RotationLast2 { get { return _rotationLast2; } }
             public bool PushedLast2 { get { return _pushedLast2; } }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void PushLast(Vector3 pos, Quaternion rot)
             {
                 _pushedLast2 = _pushedLast;
@@ -669,6 +670,23 @@ namespace RBPhys
                 _pushedLast = true;
                 _positionLast = pos;
                 _rotationLast = rot;
+            }
+        }
+
+        public struct VelocityOption
+        {
+            public float velocity_max;
+            public float angularVelocity_max;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static VelocityOption GetDefault()
+            {
+                var option = new VelocityOption();
+
+                option.velocity_max = RBPhysComputer.VELOCITY_MAX;
+                option.angularVelocity_max = RBPhysComputer.ANG_VELOCITY_MAX;
+
+                return option;
             }
         }
     }
