@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.UIElements;
 using static RBPhys.RBPhysComputer;
 
 namespace RBPhys
@@ -9,7 +10,15 @@ namespace RBPhys
     {
         protected RBRigidbody _parent;
 
-        public bool HasEnabledParent { get { return _parent?.VEnabled ?? false; } }
+        public bool HasEnabledParent
+        {
+            get
+            {
+                if (_parent != null) return _parent.VEnabled;
+                else return false;
+            }
+        }
+
         public RBRigidbody ParentRigidbody { get { return HasEnabledParent ? _parent : null; } }
 
         public abstract RBGeometryType GeometryType { get; }
@@ -32,15 +41,22 @@ namespace RBPhys
 
         public virtual int Layer { get; }
 
+        public Vector3 CCDOffset { get { return _ccdOffset; } }
+        protected Vector3 _ccdOffset;
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override void ComponentAwake()
         {
-            UpdateTransform(0);
+            _ccdOffset = Vector3.zero;
+
+            UpdateTransform();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override void ComponentOnEnable()
         {
+            _ccdOffset = Vector3.zero;
+
             PhysComputer.AddCollider(this);
 
             FindParent();
@@ -103,13 +119,19 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public virtual void UpdateTransform(float delta)
+        public void PushCCD(Vector3 offset)
+        {
+            _ccdOffset = offset;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public virtual void UpdateTransform()
         {
             var pos = VTransform.WsPosition;
             var rot = VTransform.WsRotation;
 
-            if (GeometryType == RBGeometryType.Sphere && useCCD) _trajectory.Update(this, pos, rot, VTransform.Layer, delta);
-            else _trajectory.Update(this, pos, rot, VTransform.Layer, delta);
+            if (GeometryType == RBGeometryType.Sphere && useCCD) _trajectory.Update(this, pos, rot, VTransform.Layer);
+            else _trajectory.Update(this, pos, rot, VTransform.Layer);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -120,33 +142,33 @@ namespace RBPhys
 
         public abstract float CalcVolume();
         public abstract float CalcUnscaledVolume();
-        public abstract RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot, float delta);
-        public abstract RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot, float delta);
-        public abstract RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot, float delta);
-        public abstract RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot, float delta);
+        public abstract RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot);
+        public abstract RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot);
+        public abstract RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot);
+        public abstract RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public virtual RBColliderSphere CalcSphere(float delta)
+        public virtual RBColliderSphere CalcSphere()
         {
-            return CalcSphere(VTransform.WsPosition, VTransform.WsRotation, delta);
+            return CalcSphere(VTransform.WsPosition, VTransform.WsRotation);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public virtual RBColliderAABB CalcAABB(float delta)
+        public virtual RBColliderAABB CalcAABB()
         {
-            return CalcAABB(VTransform.WsPosition, VTransform.WsRotation, delta);
+            return CalcAABB(VTransform.WsPosition, VTransform.WsRotation);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public virtual RBColliderOBB CalcOBB(float delta)
+        public virtual RBColliderOBB CalcOBB()
         {
-            return CalcOBB(VTransform.WsPosition, VTransform.WsRotation, delta);
+            return CalcOBB(VTransform.WsPosition, VTransform.WsRotation);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public virtual RBColliderCapsule CalcCapsule(float delta)
+        public virtual RBColliderCapsule CalcCapsule()
         {
-            return CalcCapsule(VTransform.WsPosition, VTransform.WsRotation, delta);
+            return CalcCapsule(VTransform.WsPosition, VTransform.WsRotation);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

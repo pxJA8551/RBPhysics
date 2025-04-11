@@ -13,10 +13,25 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
 
     [SerializeField] AnimationClip _animationClip;
     public AnimationClip AnimationClip { get { return _animationClip; } }
-    public float AnimationLength { get { return _animationClip?.length ?? 0; } }
+
+    public float AnimationLength
+    {
+        get
+        {
+            if (_animationClip != null) return _animationClip.length;
+            else return 0;
+        }
+    }
 
     public RBPhysTRSAnimationCurve trsCurve;
-    public float TRSCurveLength { get { return trsCurve?.length ?? 0; } }
+    public float TRSCurveLength
+    {
+        get
+        {
+            if (trsCurve != null) return trsCurve.length;
+            else return 0;
+        }
+    }
 
     [SerializeField] public Transform fixedParent;
     Matrix4x4 _fixedParentTrs;

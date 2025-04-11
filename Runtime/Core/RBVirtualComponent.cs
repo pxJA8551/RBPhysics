@@ -49,7 +49,7 @@ namespace RBPhys
             var physComp = GetPhysComputer();
             if (physComp != null) physComp.RemoveVirtualComponent(this);
 
-            _baseVComponent?.RemoveChild(this);
+            if (_baseVComponent != null) _baseVComponent.RemoveChild(this);
             _vTransform.RemoveVComponent(this);
         }
 

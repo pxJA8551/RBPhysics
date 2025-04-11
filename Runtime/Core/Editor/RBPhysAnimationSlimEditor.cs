@@ -6,7 +6,6 @@ using UnityEngine;
 namespace RBPhys
 {
     [CustomEditor(typeof(RBPhysAnimationSlim))]
-    [CanEditMultipleObjects]
     public class RBPhysAnimationSlimEditor : Editor
     {
         SerializedProperty baseAnimationClip;

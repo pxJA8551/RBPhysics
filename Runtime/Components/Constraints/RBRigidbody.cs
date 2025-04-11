@@ -10,9 +10,8 @@ namespace RBPhys
 {
     public class RBRigidbody : RBVirtualComponent
     {
-        const float SLEEP_VEL_MAX_SQRT = .05f * .05f;
+        const float SLEEP_VEL_MAX_SQRT = .1f * .1f;
         const float SLEEP_ANGVEL_MAX_SQRT = .1f * .1f;
-        const float SLEEP_VEL_ADD_SQRT = .2f * .2f;
         const int SLEEP_GRACE_FRAMES = 5;
 
         protected const float DRAG_RETG_MULTIPLIER = 0f;
@@ -147,7 +146,7 @@ namespace RBPhys
             foreach (var c in _colliders)
             {
                 PhysComputer.SwitchToRigidbody(c);
-                c.UpdateTransform(0);
+                c.UpdateTransform();
             }
         }
 
@@ -158,7 +157,7 @@ namespace RBPhys
             foreach (var c in _colliders)
             {
                 PhysComputer.SwitchToCollider(c);
-                c.UpdateTransform(0);
+                c.UpdateTransform();
                 c.ClearParentRigidbody();
             }
 
@@ -240,7 +239,7 @@ namespace RBPhys
             }
 
             PhysComputer.SwitchToRigidbody(collider);
-            collider.UpdateTransform(0);
+            collider.UpdateTransform();
 
             RecalculateInertiaTensor();
         }
@@ -361,7 +360,8 @@ namespace RBPhys
                 _angularVelocity = _expAngularVelocity;
             }
 
-            UpdateTransform(dt);
+            UpdateTransform();
+            PushCCD(VTransform.WsPosition - _frameWsPos);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -429,14 +429,23 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal virtual void UpdateTransform(float dt)
+        internal virtual void UpdateTransform()
         {
             foreach (RBCollider c in _colliders)
             {
-                c.UpdateTransform(dt);
+                c.UpdateTransform();
             }
 
             _objTrajectory.Update(this, VTransform.Layer);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal virtual void PushCCD(Vector3 offset)
+        {
+            foreach (RBCollider c in _colliders)
+            {
+                c.PushCCD(offset);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -446,7 +455,7 @@ namespace RBPhys
 
             foreach (var c in _colliders)
             {
-                c?.OnCollision(col, info);
+                if(c != null) c.OnCollision(col, info);
             }
         }
 
@@ -507,7 +516,7 @@ namespace RBPhys
         {
             if (IsExpUnderSleepLevel())
             {
-                if (sleepGrace < SLEEP_GRACE_FRAMES && (_expVelocity - _velocity).sqrMagnitude < SLEEP_VEL_ADD_SQRT)
+                if (sleepGrace < SLEEP_GRACE_FRAMES)
                 {
                     sleepGrace++;
                 }
@@ -528,7 +537,10 @@ namespace RBPhys
 
                 for (int i = 0; i < collidingCount; i++)
                 {
-                    sMin = Mathf.Min(sMin, colliding[i].ParentRigidbody?.sleepGrace ?? SLEEP_GRACE_FRAMES);
+                    int sgf = SLEEP_GRACE_FRAMES;
+                    if (colliding[i].ParentRigidbody != null) sgf = colliding[i].ParentRigidbody.sleepGrace;
+
+                    sMin = Mathf.Min(sMin, sgf);
                 }
 
                 if (sMin >= SLEEP_GRACE_FRAMES)
@@ -590,14 +602,14 @@ namespace RBPhys
                             Vector3 relPos = VTransform.InverseTransformPoint(box.GetColliderCenter());
                             Quaternion relRot = (box.VTransform.WsRotation * box.LocalRot) * Quaternion.Inverse(VTransform.WsRotation);
 
-                            geometryIt.SetInertiaOBB(box.CalcOBB(0), relPos, relRot);
+                            geometryIt.SetInertiaOBB(box.CalcOBB(), relPos, relRot);
                         }
                         break;
 
                     case RBGeometryType.Sphere:
                         {
                             Vector3 relPos = VTransform.InverseTransformPoint(c.GetColliderCenter());
-                            geometryIt.SetInertiaSphere(c.CalcSphere(0), relPos, Quaternion.identity);
+                            geometryIt.SetInertiaSphere(c.CalcSphere(), relPos, Quaternion.identity);
                         }
                         break;
 
@@ -608,7 +620,7 @@ namespace RBPhys
                             Vector3 relPos = VTransform.InverseTransformPoint(capsule.GetColliderCenter());
                             Quaternion relRot = (capsule.VTransform.WsRotation * capsule.LocalRot) * Quaternion.Inverse(VTransform.WsRotation);
 
-                            geometryIt.SetInertiaCapsule(capsule.CalcCapsule(0), relPos, relRot);
+                            geometryIt.SetInertiaCapsule(capsule.CalcCapsule(), relPos, relRot);
                         }
                         break;
                 }

@@ -21,7 +21,7 @@ namespace RBPhys
         public Vector3 MutipliedSize { get { return _size * colliderSizeMultiplier; } }
         public Vector3 MutipliedCenter { get { return _center * colliderSizeMultiplier; } }
 
-        public override int Layer { get { return gameObject?.layer ?? 0; } }
+        public override int Layer { get { return gameObject.layer; } }
 
         protected override RBVirtualComponent CreateVirtual(GameObject obj)
         {
@@ -58,13 +58,13 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot, float delta)
+        public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot)
         {
             return new RBColliderSphere(pos + rot * MutipliedCenter, Mathf.Sqrt(Mathf.Pow(MutipliedSize.x, 2) + Mathf.Pow(MutipliedSize.y, 2) + Mathf.Pow(MutipliedSize.z, 2)) / 2f);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot, float delta)
+        public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot)
         {
             Quaternion r = rot * LocalRot;
 
@@ -77,7 +77,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot, float delta)
+        public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot)
         {
             return new RBColliderOBB(pos + rot * (MutipliedCenter - LocalRot * MutipliedSize / 2f), rot * LocalRot, MutipliedSize);
         }
@@ -89,7 +89,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot, float delta)
+        public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot)
         {
             throw new System.NotImplementedException();
         }

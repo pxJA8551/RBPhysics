@@ -24,7 +24,7 @@ namespace RBPhys
         public float MutipliedHeight { get { return _height * colliderSizeMultiplier; } }
         public Vector3 MutipliedCenter { get { return _center * colliderSizeMultiplier; } }
 
-        public override int Layer { get { return gameObject?.layer ?? 0; } }
+        public override int Layer { get { return gameObject.layer; } }
 
         protected override RBVirtualComponent CreateVirtual(GameObject obj)
         {
@@ -70,13 +70,13 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot, float delta)
+        public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot)
         {
             return new RBColliderSphere(pos + MutipliedCenter, MutipliedHeight / 2f + MutipliedRadius);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot, float delta)
+        public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot)
         {
             var p = GetEdge(pos, rot);
 
@@ -89,7 +89,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot, float delta)
+        public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot)
         {
             Vector3 extents = new Vector3(MutipliedRadius * 2, MutipliedRadius, MutipliedRadius * 2);
             return new RBColliderOBB(pos + MutipliedCenter - extents, rot * LocalRot, extents * 2f);
@@ -110,7 +110,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot, float delta)
+        public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot)
         {
             return new RBColliderCapsule(pos + MutipliedCenter, rot * LocalRot, MutipliedRadius, MutipliedHeight);
         }

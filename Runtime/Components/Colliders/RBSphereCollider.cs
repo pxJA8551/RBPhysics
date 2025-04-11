@@ -19,7 +19,7 @@ namespace RBPhys
         public float MultipliedRadius { get { return _radius * colliderSizeMultiplier; } }
         public Vector3 MultipliedCenter { get { return _center * colliderSizeMultiplier; } }
 
-        public override int Layer { get { return gameObject?.layer ?? 0; } }
+        public override int Layer { get { return gameObject.layer; } }
 
         protected override RBVirtualComponent CreateVirtual(GameObject obj)
         {
@@ -55,18 +55,18 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot, float delta)
+        public override RBColliderSphere CalcSphere(Vector3 pos, Quaternion rot)
         {
             return new RBColliderSphere((pos) + MultipliedCenter, MultipliedRadius);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot, float delta)
+        public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot)
         {
             if (useCCD)
             {
                 Vector3 pos_current = pos;
-                Vector3 pos_last = pos - ((ParentRigidbody?.Velocity * delta) ?? Vector3.zero);
+                Vector3 pos_last = pos - _ccdOffset;
 
                 Vector3 size = RBPhysUtil.V3Abs(pos_last - pos_current) + Vector3.one * MultipliedRadius * 2;
                 Vector3 avgPos = (pos_current + pos_last) / 2f;
@@ -80,26 +80,9 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot, float delta)
+        public override RBColliderOBB CalcOBB(Vector3 pos, Quaternion rot)
         {
-            if (useCCD)
-            {
-                Vector3 pos_current = pos;
-                Vector3 pos_exp = pos + ((ParentRigidbody?.Velocity * delta) ?? Vector3.zero);
-
-                Vector3 avgPos = (pos_current + pos_exp) / 2f;
-                Vector3 sizeFwd = Vector3.one * MultipliedRadius * 2;
-                sizeFwd.z += (pos_current - pos_exp).magnitude;
-
-                Quaternion qRot = Quaternion.FromToRotation(Vector3.forward, pos_exp - pos_current);
-
-                return new RBColliderOBB(avgPos - (qRot * sizeFwd / 2f), qRot, sizeFwd);
-            }
-            else
-            {
-                Vector3 size = Vector3.one * MultipliedRadius * 2;
-                return new RBColliderOBB((pos) + MultipliedCenter - size / 2f, rot, size);
-            }
+            throw new System.NotImplementedException();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -109,7 +92,7 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot, float delta)
+        public override RBColliderCapsule CalcCapsule(Vector3 pos, Quaternion rot)
         {
             throw new System.NotImplementedException();
         }
@@ -139,6 +122,7 @@ namespace RBPhys
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetValidate()
         {
             _radius = Mathf.Abs(_radius);

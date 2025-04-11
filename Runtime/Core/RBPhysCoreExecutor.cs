@@ -50,7 +50,7 @@ namespace RBPhys
 
             await RBPhysController.MainComputer.ApplyObjectTransformsAsync();
 
-            if(enableStats)
+            if (enableStats)
             {
                 var pcStats = await RBPhysController.MainComputer.GetStatsAsync();
 

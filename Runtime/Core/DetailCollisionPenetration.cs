@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace RBPhys
@@ -6,17 +7,31 @@ namespace RBPhys
     {
         public struct Penetration
         {
+            public Penetration inverted { get { return GetInverted(); } }
+
             public Vector3 p;
             public Vector3 pA;
             public Vector3 pB;
-            public DetailCollisionInfo info;
 
-            public Penetration(Vector3 p, Vector3 pA, Vector3 pB, DetailCollisionInfo info)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public Penetration(Vector3 p, Vector3 pA, Vector3 pB)
             {
                 this.p = p;
                 this.pA = pA;
                 this.pB = pB;
-                this.info = info;
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Invert()
+            {
+                p = -p;
+                (pA, pB) = (pB, pA);
+            }
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public Penetration GetInverted()
+            {
+                return new Penetration(-p, pB, pA);
             }
         }
     }

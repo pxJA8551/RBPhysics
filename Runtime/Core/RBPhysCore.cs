@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
 using UnityEngine.Profiling;
+using static UnityEditor.ShaderData;
 
 namespace RBPhys
 {
@@ -17,7 +19,7 @@ namespace RBPhys
     {
         // dt = .01 ms
 
-        public const int SOLVER_SUBTICKS = 10;
+        public const int SOLVER_SUBTICKS = 12;
         public const int SOLVER_ITER_PER_SUBTICKS = 6;
         public const float SOLVER_ABORT_VELADD_SQRT = .00005f * .00005f;
         public const float SOLVER_ABORT_ANGVELADD_SQRT = .0005f * .0005f;
@@ -494,7 +496,7 @@ namespace RBPhys
                     if (_beforeSolver != null) _beforeSolver(dt, _timeScaleMode);
 
                     UpdateTransform();
-                    UpdateObjTrajectory(dt);
+                    UpdateObjTrajectory();
                     SortTrajectories();
 
                     if (_trajectories_orderByXMin.Length > 0)
@@ -744,7 +746,7 @@ namespace RBPhys
                 {
                     case RBGeometryType.OBB:
                         {
-                            var info = RBRaycast.RaycastOBB.CalcRayCollision(t.collider.CalcOBB(_solverDeltaTimeAsFloat), org, dir, d, ignoreBackFaceCollision);
+                            var info = RBRaycast.RaycastOBB.CalcRayCollision(t.collider.CalcOBB(), org, dir, d, ignoreBackFaceCollision);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
@@ -752,7 +754,7 @@ namespace RBPhys
                         break;
                     case RBGeometryType.Sphere:
                         {
-                            var info = RBRaycast.RaycastSphere.CalcRayCollision(t.collider.CalcSphere(_solverDeltaTimeAsFloat), org, dir, d, ignoreBackFaceCollision);
+                            var info = RBRaycast.RaycastSphere.CalcRayCollision(t.collider.CalcSphere(), org, dir, d, ignoreBackFaceCollision);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
@@ -760,7 +762,7 @@ namespace RBPhys
                         break;
                     case RBGeometryType.Capsule:
                         {
-                            var info = RBRaycast.RaycastCaspule.CalcRayCollision(t.collider.CalcCapsule(_solverDeltaTimeAsFloat), org, dir, d, ignoreBackFaceCollision);
+                            var info = RBRaycast.RaycastCaspule.CalcRayCollision(t.collider.CalcCapsule(), org, dir, d, ignoreBackFaceCollision);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
@@ -839,7 +841,7 @@ namespace RBPhys
                 {
                     case RBGeometryType.OBB:
                         {
-                            var info = RBSphereCast.SphereCastOBB.CalcSphereCollision(t.collider.CalcOBB(delta), org, dir, length, radius, allowNegativeValue);
+                            var info = RBSphereCast.SphereCastOBB.CalcSphereCollision(t.collider.CalcOBB(), org, dir, length, radius, allowNegativeValue);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
@@ -847,7 +849,7 @@ namespace RBPhys
                         break;
                     case RBGeometryType.Sphere:
                         {
-                            var info = RBSphereCast.SphereCastSphere.CalcSphereCollision(t.collider.CalcSphere(delta), org, dir, length, radius, allowNegativeValue);
+                            var info = RBSphereCast.SphereCastSphere.CalcSphereCollision(t.collider.CalcSphere(), org, dir, length, radius, allowNegativeValue);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
@@ -855,7 +857,7 @@ namespace RBPhys
                         break;
                     case RBGeometryType.Capsule:
                         {
-                            var info = RBSphereCast.SphereCastCapsule.CalcSphereCollision(t.collider.CalcCapsule(delta), org, dir, length, radius, allowNegativeValue);
+                            var info = RBSphereCast.SphereCastCapsule.CalcSphereCollision(t.collider.CalcCapsule(), org, dir, length, radius, allowNegativeValue);
                             if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
@@ -906,7 +908,7 @@ namespace RBPhys
                 {
                     case RBGeometryType.OBB:
                         {
-                            var p = RBDetailCollision.DetailCollisionOBBOBB.CalcDetailCollisionInfo(t.collider.CalcOBB(0), obb);
+                            var p = RBDetailCollision.DetailCollisionOBBOBB.CalcDetailCollisionInfo(t.collider.CalcOBB(), obb);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
                             RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
@@ -914,7 +916,7 @@ namespace RBPhys
                         break;
                     case RBGeometryType.Sphere:
                         {
-                            var p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(obb, t.collider.CalcSphere(0));
+                            var p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(obb, t.collider.CalcSphere());
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, -p.p.normalized);
                             RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
@@ -922,7 +924,7 @@ namespace RBPhys
                         break;
                     case RBGeometryType.Capsule:
                         {
-                            var p = RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(obb, t.collider.CalcCapsule(0));
+                            var p = RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(obb, t.collider.CalcCapsule());
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, -p.p.normalized);
                             RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
@@ -971,7 +973,7 @@ namespace RBPhys
                 {
                     case RBGeometryType.OBB:
                         {
-                            var p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(t.collider.CalcOBB(0), sphere);
+                            var p = RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(t.collider.CalcOBB(), sphere);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
                             RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
@@ -979,7 +981,7 @@ namespace RBPhys
                         break;
                     case RBGeometryType.Sphere:
                         {
-                            var p = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfo(t.collider.CalcSphere(0), sphere);
+                            var p = RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfo(t.collider.CalcSphere(), sphere);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, p.p.normalized);
                             RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
@@ -987,7 +989,7 @@ namespace RBPhys
                         break;
                     case RBGeometryType.Capsule:
                         {
-                            var p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(sphere, t.collider.CalcCapsule(0));
+                            var p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(sphere, t.collider.CalcCapsule());
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, -p.p.normalized);
                             RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
@@ -1037,7 +1039,7 @@ namespace RBPhys
                 {
                     case RBGeometryType.OBB:
                         {
-                            var p = RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(t.collider.CalcOBB(0), capsule);
+                            var p = RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(t.collider.CalcOBB(), capsule);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pB, p.p.normalized);
                             RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
@@ -1045,7 +1047,7 @@ namespace RBPhys
                         break;
                     case RBGeometryType.Sphere:
                         {
-                            var p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(t.collider.CalcSphere(0), capsule);
+                            var p = RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(t.collider.CalcSphere(), capsule);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, p.p.normalized);
                             RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
@@ -1053,7 +1055,7 @@ namespace RBPhys
                         break;
                     case RBGeometryType.Capsule:
                         {
-                            var p = RBDetailCollision.DetailCollisionCapsuleCapsule.CalcDetailCollisionInfo(t.collider.CalcCapsule(0), capsule);
+                            var p = RBDetailCollision.DetailCollisionCapsuleCapsule.CalcDetailCollisionInfo(t.collider.CalcCapsule(), capsule);
                             if (p.p != Vector3.zero) t.SetOverlap(p.pA, p.p.normalized);
                             RBPhysDebugging.IsOverlapValidAssert(t);
                             overlappings[i] = t;
@@ -1268,7 +1270,7 @@ namespace RBPhys
 
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                rb.UpdateTransform(_solverDeltaTimeAsFloat);
+                rb.UpdateTransform();
             }
 
             Profiler.EndSample();
@@ -1281,7 +1283,7 @@ namespace RBPhys
 
             foreach (RBCollider c in _colliders)
             {
-                if (c.ParentRigidbody == null) c.UpdateTransform(_solverDeltaTimeAsFloat);
+                if (c.ParentRigidbody == null) c.UpdateTransform();
             }
 
             Profiler.EndSample();
@@ -1334,11 +1336,11 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void UpdateObjTrajectory(float dt)
+        void UpdateObjTrajectory()
         {
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                rb.UpdateTransform(dt);
+                rb.UpdateTransform();
             }
         }
 
@@ -1529,7 +1531,7 @@ namespace RBPhys
             {
                 var c = _detailCollisions[i];
 
-                var p = CalcDetailCollision(ccdDelta, c.col_a, c.col_b);
+                var p = CalcDetailCollision(c.col_a, c.col_b);
                 _detailCollisions[i] = (c.col_a, c.col_b, p, null);
             }
 
@@ -1543,16 +1545,26 @@ namespace RBPhys
 
                 if (pair.p.p != Vector3.zero)
                 {
-                    var traj_a = pair.col_a.ParentRigidbody?.ObjectTrajectory ?? pair.col_a.Trajectory;
-                    var traj_b = pair.col_b.ParentRigidbody?.ObjectTrajectory ?? pair.col_b.Trajectory;
+                    var traj_a = pair.col_a.Trajectory;
+                    var traj_b = pair.col_b.Trajectory;
+
+                    if (pair.col_a.ParentRigidbody != null) traj_a = pair.col_a.ParentRigidbody.ObjectTrajectory;
+                    if (pair.col_b.ParentRigidbody != null) traj_a = pair.col_b.ParentRigidbody.ObjectTrajectory;
 
                     var rbc = new RBCollision(pair.col_a, pair.col_b, pair.p.p, traj_a.Layer, traj_b.Layer);
 
                     rbc.isStaticOrSleeping = traj_a.IsStaticOrSleeping && traj_b.IsStaticOrSleeping;
                     rbc.useSoftClip = rbc.collider_a.allowSoftClip && rbc.collider_b.allowSoftClip;
 
-                    if (!traj_b.IsStatic || traj_b.IsLimitedRetrogradeVaild) rbc.rigidbody_a?.AddValidator(new RBCollisionValidator(traj_b));
-                    if (!traj_a.IsStatic || traj_a.IsLimitedRetrogradeVaild) rbc.rigidbody_b?.AddValidator(new RBCollisionValidator(traj_a));
+                    if (!traj_b.IsStatic || traj_b.IsLimitedRetrogradeVaild)
+                    {
+                        if (rbc.rigidbody_a != null) rbc.rigidbody_a.AddValidator(new RBCollisionValidator(traj_b));
+                    }
+
+                    if (!traj_a.IsStatic || traj_a.IsLimitedRetrogradeVaild)
+                    {
+                        if (rbc.rigidbody_b != null) rbc.rigidbody_b.AddValidator(new RBCollisionValidator(traj_a));
+                    }
 
                     rbc.Update(pair.p.p, pair.p.pA, pair.p.pB);
 
@@ -1622,7 +1634,7 @@ namespace RBPhys
                     {
                         var col = _collisionsInSolver[k];
 
-                        if (col.penetration != Vector3.zero && !col.skipInSolver) 
+                        if (col.penetration != Vector3.zero && !col.skipInSolver)
                         {
                             col.InitVelocityConstraint(sdt, _timeScaleMode, j == 0);
                             SolveCollisionPair(col);
@@ -1642,7 +1654,7 @@ namespace RBPhys
                 {
                     var col = _collisionsInSolver[k];
 
-                    var p = RecalcCollision(ccdDelta, col);
+                    var p = RecalcCollision(col);
                     col.Update(p.p, p.pA, p.pB);
                     col.skipInSolver = false;
                 }
@@ -1676,10 +1688,10 @@ namespace RBPhys
                     info_b = new RBCollisionInfo(rbc.rigidbody_a, contact, rbc.penetration, relVel, -rbc.ContactNormal, rbc.isStaticOrSleeping, rbc.layer_a);
                 }
 
-                rbc.rigidbody_a?.OnCollision(rbc.collider_b, info_a);
-                rbc.collider_a?.OnCollision(rbc.collider_b, info_a);
-                rbc.rigidbody_b?.OnCollision(rbc.collider_a, info_b);
-                rbc.collider_b?.OnCollision(rbc.collider_a, info_b);
+                if (rbc.rigidbody_a != null) rbc.rigidbody_a.OnCollision(rbc.collider_b, info_a);
+                if (rbc.collider_a != null) rbc.collider_a.OnCollision(rbc.collider_b, info_a);
+                if (rbc.rigidbody_b != null) rbc.rigidbody_b.OnCollision(rbc.collider_a, info_b);
+                if (rbc.collider_a != null) rbc.collider_b.OnCollision(rbc.collider_a, info_b);
             }
 
             Profiler.EndSample();
@@ -1688,43 +1700,43 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        RBDetailCollision.Penetration RecalcCollision(float ccdDelta, RBCollision col)
+        RBDetailCollision.Penetration RecalcCollision(RBCollision col)
         {
-            return CalcDetailCollision(ccdDelta, col.collider_a, col.rigidbody_a, col.collider_b, col.rigidbody_b);
+            return CalcDetailCollision(col.collider_a, col.rigidbody_a, col.collider_b, col.rigidbody_b);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        RBDetailCollision.Penetration CalcDetailCollision(float ccdDelta, RBCollider col_a, RBCollider col_b)
+        RBDetailCollision.Penetration CalcDetailCollision(RBCollider col_a, RBCollider col_b)
         {
-            return CalcDetailCollision(ccdDelta, col_a, col_a.ParentRigidbody, col_b, col_b.ParentRigidbody);
+            return CalcDetailCollision(col_a, col_a.ParentRigidbody, col_b, col_b.ParentRigidbody);
         }
 
-        RBDetailCollision.Penetration CalcDetailCollision(float ccdDelta, RBCollider col_a, RBRigidbody rb_a, RBCollider col_b, RBRigidbody rb_b)
+        RBDetailCollision.Penetration CalcDetailCollision(RBCollider col_a, RBRigidbody rb_a, RBCollider col_b, RBRigidbody rb_b)
         {
             var geomType_a = col_a.GeometryType;
             var geomType_b = col_b.GeometryType;
 
-            var vel_a = Vector3.zero;
-            var vel_b = Vector3.zero;
+            var offset_a = Vector3.zero;
+            var offset_b = Vector3.zero;
 
-            if (rb_a != null) vel_a = rb_a.ExpVelocity;
-            if (rb_b != null) vel_b = rb_b.ExpVelocity;
+            if (rb_a != null) offset_a = col_a.CCDOffset;
+            if (rb_b != null) offset_b = col_b.CCDOffset;
 
             if (geomType_a == RBGeometryType.OBB && geomType_b == RBGeometryType.OBB)
             {
                 //OBB-OBB
-                return RBDetailCollision.DetailCollisionOBBOBB.CalcDetailCollisionInfo(col_a.CalcOBB(ccdDelta), col_b.CalcOBB(ccdDelta));
+                return RBDetailCollision.DetailCollisionOBBOBB.CalcDetailCollisionInfo(col_a.CalcOBB(), col_b.CalcOBB());
             }
             else if (geomType_a == RBGeometryType.OBB && geomType_b == RBGeometryType.Sphere)
             {
                 //OBB-Sphere
                 if (col_b.useCCD)
                 {
-                    return RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(ccdDelta, col_a.CalcOBB(ccdDelta), col_b.CalcSphere(ccdDelta), vel_a, vel_b);
+                    return RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(col_a.CalcOBB(), col_b.CalcSphere(), offset_a, offset_b);
                 }
                 else
                 {
-                    return RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(col_a.CalcOBB(ccdDelta), col_b.CalcSphere(ccdDelta));
+                    return RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(col_a.CalcOBB(), col_b.CalcSphere());
                 }
             }
             else if (geomType_a == RBGeometryType.Sphere && geomType_b == RBGeometryType.OBB)
@@ -1732,36 +1744,36 @@ namespace RBPhys
                 //Sphere-OBB
                 if (col_a.useCCD)
                 {
-                    return RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(ccdDelta, col_b.CalcOBB(ccdDelta), col_a.CalcSphere(ccdDelta), vel_b, vel_a);
+                    return RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(col_b.CalcOBB(), col_a.CalcSphere(), offset_b, offset_a).inverted;
                 }
                 else
                 {
-                    return RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(col_b.CalcOBB(ccdDelta), col_a.CalcSphere(ccdDelta));
+                    return RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(col_b.CalcOBB(), col_a.CalcSphere()).inverted;
                 }
             }
             else if (geomType_a == RBGeometryType.Sphere && geomType_b == RBGeometryType.Sphere)
             {
                 //Sphere-Sphere
-                if (col_a.useCCD && col_b.useCCD)
+                if (col_a.useCCD || col_b.useCCD)
                 {
-                    return RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfoCCD(ccdDelta, col_a.CalcSphere(ccdDelta), col_b.CalcSphere(ccdDelta), vel_a, vel_b);
+                    return RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfoCCD(col_a.CalcSphere(), col_b.CalcSphere(), offset_a, offset_b);
                 }
                 else
                 {
-                    return RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfo(col_a.CalcSphere(ccdDelta), col_b.CalcSphere(ccdDelta));
+                    return RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfo(col_a.CalcSphere(), col_b.CalcSphere());
                 }
             }
             else if (geomType_a == RBGeometryType.OBB && geomType_b == RBGeometryType.Capsule)
             {
                 //OBB-Capsule
 
-                return RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(col_a.CalcOBB(ccdDelta), col_b.CalcCapsule(ccdDelta));
+                return RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(col_a.CalcOBB(), col_b.CalcCapsule());
             }
             else if (geomType_a == RBGeometryType.Capsule && geomType_b == RBGeometryType.OBB)
             {
                 //Capsule-OBB
 
-                return RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(col_b.CalcOBB(ccdDelta), col_a.CalcCapsule(ccdDelta));
+                return RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(col_b.CalcOBB(), col_a.CalcCapsule()).inverted;
             }
             else if (geomType_a == RBGeometryType.Sphere && geomType_b == RBGeometryType.Capsule)
             {
@@ -1769,11 +1781,11 @@ namespace RBPhys
 
                 if (col_a.useCCD)
                 {
-                    RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(ccdDelta, col_a.CalcSphere(ccdDelta), col_b.CalcCapsule(ccdDelta), vel_a, vel_b);
+                    return RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(col_a.CalcSphere(), col_b.CalcCapsule(), offset_a, offset_b);
                 }
                 else
                 {
-                    RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(col_a.CalcSphere(ccdDelta), col_b.CalcCapsule(ccdDelta));
+                    return RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(col_a.CalcSphere(), col_b.CalcCapsule());
                 }
             }
             else if (geomType_a == RBGeometryType.Capsule && geomType_b == RBGeometryType.Sphere)
@@ -1782,21 +1794,20 @@ namespace RBPhys
 
                 if (col_b.useCCD)
                 {
-                    RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(ccdDelta, col_b.CalcSphere(ccdDelta), col_a.CalcCapsule(ccdDelta), vel_b, vel_a);
+                    return RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(col_b.CalcSphere(), col_a.CalcCapsule(), offset_b, offset_a).inverted;
                 }
                 else
                 {
-                    RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(col_b.CalcSphere(ccdDelta), col_a.CalcCapsule(ccdDelta));
+                    return RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(col_b.CalcSphere(), col_a.CalcCapsule()).inverted;
                 }
             }
             else if (geomType_a == RBGeometryType.Capsule && geomType_b == RBGeometryType.Capsule)
             {
                 //Capsule-Capsule
 
-                return RBDetailCollision.DetailCollisionCapsuleCapsule.CalcDetailCollisionInfo(col_a.CalcCapsule(ccdDelta), col_b.CalcCapsule(ccdDelta));
+                return RBDetailCollision.DetailCollisionCapsuleCapsule.CalcDetailCollisionInfo(col_a.CalcCapsule(), col_b.CalcCapsule());
             }
-
-            throw new Exception();
+            else throw new Exception();
         }
 
         void AddCollision(RBRigidbody rb, RBCollider collider)
@@ -2025,8 +2036,23 @@ namespace RBPhys
         public float InverseMass_b { get { return GetInvMass(rigidbody_b); } }
         public Vector3 InverseInertiaWs_b { get { return GetInvInertiaWs(rigidbody_b); } }
 
-        public bool IsSleeping_a { get { return rigidbody_a?.isSleeping ?? true; } }
-        public bool IsSleeping_b { get { return rigidbody_b?.isSleeping ?? true; } }
+        public bool IsSleeping_a
+        {
+            get
+            {
+                if (rigidbody_a != null) return rigidbody_a.isSleeping;
+                else return false;
+            }
+        }
+
+        public bool IsSleeping_b
+        {
+            get
+            {
+                if (rigidbody_b != null) return rigidbody_b.isSleeping;
+                else return false;
+            }
+        }
 
         Vector3 _contactNormal;
 
@@ -2037,8 +2063,11 @@ namespace RBPhys
             collider_b = col_b;
             rigidbody_b = col_b.ParentRigidbody;
 
-            cg_a = rigidbody_a?.CenterOfGravityWorld ?? col_a.GetColliderCenter();
-            cg_b = rigidbody_b?.CenterOfGravityWorld ?? col_b.GetColliderCenter();
+            cg_a = col_a.GetColliderCenter();
+            cg_b = col_b.GetColliderCenter();
+
+            if (rigidbody_a != null) cg_a = rigidbody_a.CenterOfGravityWorld;
+            if (rigidbody_b != null) cg_b = rigidbody_b.CenterOfGravityWorld;
 
             this.penetration = penetration;
             _contactNormal = penetration.normalized;
@@ -2119,8 +2148,11 @@ namespace RBPhys
             this.penetration = penetration;
             _contactNormal = penetration.normalized;
 
-            cg_a = rigidbody_a?.CenterOfGravityWorld ?? collider_a.GetColliderCenter();
-            cg_b = rigidbody_b?.CenterOfGravityWorld ?? collider_b.GetColliderCenter();
+            cg_a = collider_a.GetColliderCenter();
+            cg_b = collider_b.GetColliderCenter();
+
+            if (rigidbody_a != null) cg_a = rigidbody_a.CenterOfGravityWorld;
+            if (rigidbody_b != null) cg_b = rigidbody_b.CenterOfGravityWorld;
 
             rA = aNearest - cg_a;
             rB = bNearest - cg_b;
@@ -2228,7 +2260,7 @@ namespace RBPhys
             float _bias;
             float _totalLambda;
             float _effectiveMass;
-            
+
             bool _useSoftClip;
 
             public enum Type
@@ -2373,7 +2405,10 @@ namespace RBPhys
         public RBCollisionInfo(RBRigidbody rbRigidbody, Vector3 contactPoint, Vector3 penetration, Vector3 velAddRelative, Vector3 normal, bool isStaticOrSleeping, int layer_other)
         {
             vDiff = Vector3.Project(velAddRelative, normal).magnitude;
-            impulse = (vDiff * rbRigidbody?.mass) ?? 0;
+
+            impulse = 0;
+            if (rbRigidbody != null) impulse = vDiff * rbRigidbody.mass;
+
             isTriggerCollision = false;
             this.isStaticOrSleeping = isStaticOrSleeping;
 
@@ -2670,7 +2705,17 @@ namespace RBPhys
         public bool IsStatic { get { return _isStatic; } }
         public RBCollider Collider { get { return _collider; } }
 
-        public bool IsStaticOrSleeping { get { return ((Rigidbody?.IsStaticOrSleeping ?? !activeStatic) && !limitedSleeping) || forceSleeping || (IsStatic && !activeStatic) || IsIgnoredTrajectory; } }
+        public bool IsStaticOrSleeping
+        {
+            get
+            {
+                bool sleep = !activeStatic;
+                if (Rigidbody != null) sleep = Rigidbody.IsStaticOrSleeping;
+
+                return (sleep && !limitedSleeping) || forceSleeping || (IsStatic && !activeStatic) || IsIgnoredTrajectory;
+            }
+        }
+
         public bool IsLimitedSleeping { get { return !forceSleeping && limitedSleeping; } }
         public bool IsLimitedSleepingOrStatic { get { return (!forceSleeping && limitedSleeping) || (IsStatic && !activeStatic) || IsIgnoredTrajectory; } }
         public bool IsIgnoredTrajectory { get { return _ignoreTrajectory; } }
@@ -2803,9 +2848,9 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public RBTrajectory(RBCollider collider, int layer, float delta)
+        public RBTrajectory(RBCollider collider, int layer)
         {
-            trajectoryAABB = collider.CalcAABB(collider.VTransform.WsPosition, collider.VTransform.WsRotation, delta);
+            trajectoryAABB = collider.CalcAABB(collider.VTransform.WsPosition, collider.VTransform.WsRotation);
             _rigidbody = null;
             _collider = collider;
             _isStatic = true;
@@ -2847,9 +2892,9 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Update(RBCollider collider, Vector3 pos, Quaternion rot, int layer, float delta)
+        public void Update(RBCollider collider, Vector3 pos, Quaternion rot, int layer)
         {
-            trajectoryAABB = collider.CalcAABB(pos, rot, delta);
+            trajectoryAABB = collider.CalcAABB(pos, rot);
             _rigidbody = null;
             _collider = collider;
             _isStatic = true;

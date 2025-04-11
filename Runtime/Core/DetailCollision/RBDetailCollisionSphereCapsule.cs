@@ -10,7 +10,7 @@ namespace RBPhys
             public static Penetration CalcDetailCollisionInfo(RBColliderSphere sphere_a, RBColliderCapsule capsule_b)
             {
                 var r = CalcDetailCollision(sphere_a, capsule_b);
-                return new Penetration(r.p, r.pA, r.pB, default);
+                return new Penetration(r.p, r.pA, r.pB);
             }
 
             public static (Vector3 p, Vector3 pA, Vector3 pB) CalcDetailCollision(RBColliderSphere sphere_a, RBColliderCapsule capsule_b)
@@ -39,17 +39,19 @@ namespace RBPhys
                 return (penetration, pA, pB);
             }
 
-            public static Penetration CalcDetailCollisionInfoCCD(float delta, RBColliderSphere sphere_a, RBColliderCapsule capsule_b, Vector3 vel_a, Vector3 vel_b)
+            public static Penetration CalcDetailCollisionInfoCCD(RBColliderSphere sphere_a, RBColliderCapsule capsule_b, Vector3 ccdOffset_a, Vector3 ccdOffset_b)
             {
-                var vd_a = vel_a * delta;
-                var vd_b = vel_b * delta;
+                var vd_a = ccdOffset_a;
+                var vd_b = ccdOffset_b;
 
-                Vector3 relVel = vd_a - vd_b;
+                Vector3 relOffset = vd_a - vd_b;
 
-                float length = relVel.magnitude;
-                Vector3 dirN = relVel / length;
+                const float EPSILON = .00001f;
 
-                if (length == 0) return CalcDetailCollisionInfo(sphere_a, capsule_b);
+                float length = relOffset.magnitude;
+                if (length < EPSILON) return CalcDetailCollisionInfo(sphere_a, capsule_b);
+
+                Vector3 dirN = relOffset / length;
 
                 RBColliderCapsule vlCapsule = capsule_b;
                 vlCapsule.pos -= vd_b;
@@ -57,21 +59,21 @@ namespace RBPhys
                 Vector3 org = sphere_a.pos - vd_a;
                 var p = RBSphereCast.SphereCastCapsule.CalcSphereCollision(capsule_b, org, dirN, length, sphere_a.radius, false);
 
-                if (!p.IsValidHit || length < p.length)
+                if (!p.IsValidHit || length < p.length || Vector3.Dot(p.normal, dirN) >= 0)
                 {
-                    return default;
+                    return CalcDetailCollisionInfo(sphere_a, capsule_b);
                 }
 
                 float vr = (p.length / length);
 
-                Vector3 vlCa = p.position - relVel * vr;
+                Vector3 vlCa = p.position - relOffset * vr;
                 Vector3 vlCb = p.position;
 
-                Vector3 pA = vlCa + vd_a * vr;
-                Vector3 pB = vlCb + vd_b * vr;
+                Vector3 pA = vlCa + vd_a;
+                Vector3 pB = vlCb + vd_b;
 
                 float t = Vector3.Dot(pB - pA, p.normal);
-                return new Penetration(p.normal * t, pA, pB, default);
+                return new Penetration(p.normal * t, pA, pB);
             }
         }
     }

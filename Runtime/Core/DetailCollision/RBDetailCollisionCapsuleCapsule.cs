@@ -10,7 +10,7 @@ namespace RBPhys
             public static Penetration CalcDetailCollisionInfo(RBColliderCapsule capsule_a, RBColliderCapsule capsule_b)
             {
                 var r = CalcDetailCollision(capsule_a, capsule_b);
-                return new Penetration(r.p, r.pA, r.pB, default);
+                return new Penetration(r.p, r.pA, r.pB);
             }
 
             public static (Vector3 p, Vector3 pA, Vector3 pB) CalcDetailCollision(RBColliderCapsule capsule_a, RBColliderCapsule capsule_b)

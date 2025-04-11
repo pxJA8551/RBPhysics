@@ -17,7 +17,9 @@ namespace RBPhys
         public RBPhysAnimationSlimValidator(RBPhysAnimationSlim physAnim) : base(physAnim?.ValidatorSrcGuid ?? Guid.Empty)
         {
             vPhysAnimation = physAnim;
-            animCtrlSpeed = physAnim?.AnimSpeed ?? 0;
+
+            animCtrlSpeed = 0;
+            if (physAnim != null) animCtrlSpeed = physAnim.AnimSpeed;
         }
 
         public readonly RBPhysAnimationSlim vPhysAnimation;

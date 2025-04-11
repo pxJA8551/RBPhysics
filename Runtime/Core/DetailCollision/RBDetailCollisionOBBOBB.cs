@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
 using static RBPhys.RBPhysUtil;
@@ -13,6 +14,26 @@ namespace RBPhys
     {
         public static class DetailCollisionOBBOBB
         {
+            enum PenetrationType
+            {
+                None = -1,
+                ARight = 0,
+                AUp = 1,
+                AFwd = 2,
+                BRight = 3,
+                BUp = 4,
+                BFwd = 5,
+                Cross_ARight_BRight = 6,
+                Cross_AUp_BRight = 7,
+                Cross_AFwd_BRight = 8,
+                Cross_ARight_BUp = 9,
+                Cross_AUp_BUp = 10,
+                Cross_AFwd_BUp = 11,
+                Cross_ARight_BFwd = 12,
+                Cross_AUp_BFwd = 13,
+                Cross_AFwd_BFwd = 14,
+            }
+
             enum AxisType
             {
                 X,
@@ -20,6 +41,7 @@ namespace RBPhys
                 Z
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             static Vector3 PickVtxWs(RBColliderOBB obb, Vector3 wsSepHplnN)
             {
                 var lsSepHplnN = Quaternion.Inverse(obb.rot) * wsSepHplnN;
@@ -32,6 +54,7 @@ namespace RBPhys
                 return obb.pos + obb.rot * vLs;
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             static (Vector3 v0, Vector3 v1) PickEdgeWs(RBColliderOBB obb, Vector3 wsSepHplnN, AxisType lsSepHplnAxis)
             {
                 var lsSepHplnN = Quaternion.Inverse(obb.rot) * wsSepHplnN;
@@ -89,8 +112,7 @@ namespace RBPhys
                 Vector3 penetration;
                 float pSqrMag;
 
-                DetailCollisionInfo info = new DetailCollisionInfo();
-                info.obb_obb_penetration = OBB_OBB_PenetrationType.None;
+                PenetrationType penetrationType = PenetrationType.None;
 
                 Vector3 d = obb_b.Center - obb_a.Center;
 
@@ -117,7 +139,7 @@ namespace RBPhys
 
                     penetration = p;
                     pSqrMag = p.sqrMagnitude;
-                    info.obb_obb_penetration = OBB_OBB_PenetrationType.AFwd;
+                    penetrationType = PenetrationType.AFwd;
                 }
 
                 //Separating Axis 2: aRight
@@ -137,7 +159,7 @@ namespace RBPhys
                     penetration = pMin ? p : penetration;
                     pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
 
-                    info.obb_obb_penetration = pMin ? OBB_OBB_PenetrationType.ARight : info.obb_obb_penetration;
+                    penetrationType = pMin ? PenetrationType.ARight : penetrationType;
                 }
 
                 //Separating Axis 3: aUp
@@ -156,7 +178,7 @@ namespace RBPhys
                     bool pMin = p.sqrMagnitude < pSqrMag;
                     penetration = pMin ? p : penetration;
                     pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-                    info.obb_obb_penetration = pMin ? OBB_OBB_PenetrationType.AUp : info.obb_obb_penetration;
+                    penetrationType = pMin ? PenetrationType.AUp : penetrationType;
                 }
 
                 //Separating Axis 4: bFwd
@@ -175,7 +197,7 @@ namespace RBPhys
                     bool pMin = p.sqrMagnitude < pSqrMag;
                     penetration = pMin ? p : penetration;
                     pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-                    info.obb_obb_penetration = pMin ? OBB_OBB_PenetrationType.BFwd : info.obb_obb_penetration;
+                    penetrationType = pMin ? PenetrationType.BFwd : penetrationType;
                 }
 
                 //Separating Axis 5: bRight
@@ -194,7 +216,7 @@ namespace RBPhys
                     bool pMin = p.sqrMagnitude < pSqrMag;
                     penetration = pMin ? p : penetration;
                     pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-                    info.obb_obb_penetration = pMin ? OBB_OBB_PenetrationType.BRight : info.obb_obb_penetration;
+                    penetrationType = pMin ? PenetrationType.BRight : penetrationType;
                 }
 
                 //Separating Axis 6: bUp
@@ -213,7 +235,7 @@ namespace RBPhys
                     bool pMin = p.sqrMagnitude < pSqrMag;
                     penetration = pMin ? p : penetration;
                     pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-                    info.obb_obb_penetration = pMin ? OBB_OBB_PenetrationType.BUp : info.obb_obb_penetration;
+                    penetrationType = pMin ? PenetrationType.BUp : penetrationType;
                 }
 
                 //Separating Axis 7: aFwd x bFwd
@@ -236,7 +258,7 @@ namespace RBPhys
                         bool pMin = p.sqrMagnitude < pSqrMag;
                         penetration = pMin ? p : penetration;
                         pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-                        info.obb_obb_penetration = pMin ? OBB_OBB_PenetrationType.Cross_AFwd_BFwd : info.obb_obb_penetration;
+                        penetrationType = pMin ? PenetrationType.Cross_AFwd_BFwd : penetrationType;
                     }
                 }
 
@@ -260,7 +282,7 @@ namespace RBPhys
                         bool pMin = p.sqrMagnitude < pSqrMag;
                         penetration = pMin ? p : penetration;
                         pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-                        info.obb_obb_penetration = pMin ? OBB_OBB_PenetrationType.Cross_AFwd_BRight : info.obb_obb_penetration;
+                        penetrationType = pMin ? PenetrationType.Cross_AFwd_BRight : penetrationType;
                     }
                 }
 
@@ -284,7 +306,7 @@ namespace RBPhys
                         bool pMin = p.sqrMagnitude < pSqrMag;
                         penetration = pMin ? p : penetration;
                         pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-                        info.obb_obb_penetration = pMin ? OBB_OBB_PenetrationType.Cross_AFwd_BUp : info.obb_obb_penetration;
+                        penetrationType = pMin ? PenetrationType.Cross_AFwd_BUp : penetrationType;
                     }
                 }
 
@@ -308,7 +330,7 @@ namespace RBPhys
                         bool pMin = p.sqrMagnitude < pSqrMag;
                         penetration = pMin ? p : penetration;
                         pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-                        info.obb_obb_penetration = pMin ? OBB_OBB_PenetrationType.Cross_ARight_BFwd : info.obb_obb_penetration;
+                        penetrationType = pMin ? PenetrationType.Cross_ARight_BFwd : penetrationType;
                     }
                 }
 
@@ -332,7 +354,7 @@ namespace RBPhys
                         bool pMin = p.sqrMagnitude < pSqrMag;
                         penetration = pMin ? p : penetration;
                         pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-                        info.obb_obb_penetration = pMin ? OBB_OBB_PenetrationType.Cross_ARight_BRight : info.obb_obb_penetration;
+                        penetrationType = pMin ? PenetrationType.Cross_ARight_BRight : penetrationType;
                     }
                 }
 
@@ -356,7 +378,7 @@ namespace RBPhys
                         bool pMin = p.sqrMagnitude < pSqrMag;
                         penetration = pMin ? p : penetration;
                         pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-                        info.obb_obb_penetration = pMin ? OBB_OBB_PenetrationType.Cross_ARight_BUp : info.obb_obb_penetration;
+                        penetrationType = pMin ? PenetrationType.Cross_ARight_BUp : penetrationType;
                     }
                 }
 
@@ -380,7 +402,7 @@ namespace RBPhys
                         bool pMin = p.sqrMagnitude < pSqrMag;
                         penetration = pMin ? p : penetration;
                         pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-                        info.obb_obb_penetration = pMin ? OBB_OBB_PenetrationType.Cross_AUp_BFwd : info.obb_obb_penetration;
+                        penetrationType = pMin ? PenetrationType.Cross_AUp_BFwd : penetrationType;
                     }
                 }
 
@@ -404,7 +426,7 @@ namespace RBPhys
                         bool pMin = p.sqrMagnitude < pSqrMag;
                         penetration = pMin ? p : penetration;
                         pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-                        info.obb_obb_penetration = pMin ? OBB_OBB_PenetrationType.Cross_AUp_BRight : info.obb_obb_penetration;
+                        penetrationType = pMin ? PenetrationType.Cross_AUp_BRight : penetrationType;
                     }
                 }
 
@@ -428,19 +450,19 @@ namespace RBPhys
                         bool pMin = p.sqrMagnitude < pSqrMag;
                         penetration = pMin ? p : penetration;
                         pSqrMag = pMin ? p.sqrMagnitude : pSqrMag;
-                        info.obb_obb_penetration = pMin ? OBB_OBB_PenetrationType.Cross_AUp_BUp : info.obb_obb_penetration;
+                        penetrationType = pMin ? PenetrationType.Cross_AUp_BUp : penetrationType;
                     }
                 }
 
                 if (pSqrMag != -1)
                 {
-                    if (info.obb_obb_penetration == OBB_OBB_PenetrationType.None) throw new System.Exception();
+                    if (penetrationType == PenetrationType.None) throw new System.Exception();
 
                     Vector3 pDirN = -penetration.normalized;
 
-                    if ((int)info.obb_obb_penetration <= 5)
+                    if ((int)penetrationType <= 5)
                     {
-                        if ((int)info.obb_obb_penetration <= 2)
+                        if ((int)penetrationType <= 2)
                         {
                             //F(A)-V(B)
 
@@ -450,7 +472,7 @@ namespace RBPhys
                             var centerWs_a = PickVtxWs(obb_a, -vBA);
                             var contactWs_a = ProjectPointToPlane(contactWs_b, -vBA, centerWs_a);
 
-                            return new Penetration(penetration, contactWs_a, contactWs_b, info);
+                            return new Penetration(penetration, contactWs_a, contactWs_b);
                         }
                         else
                         {
@@ -462,14 +484,14 @@ namespace RBPhys
                             var centerWs_b = PickVtxWs(obb_b, -vAB);
                             var contactWs_b = ProjectPointToPlane(contactWs_a, -vAB, centerWs_b);
 
-                            return new Penetration(penetration, contactWs_a, contactWs_b, info);
+                            return new Penetration(penetration, contactWs_a, contactWs_b);
                         }
                     }
                     else
                     {
                         //E-E
 
-                        if (info.obb_obb_penetration == OBB_OBB_PenetrationType.Cross_ARight_BRight)
+                        if (penetrationType == PenetrationType.Cross_ARight_BRight)
                         {
                             var vBA = -pDirN;
 
@@ -478,9 +500,9 @@ namespace RBPhys
 
                             CalcNearest(ws0_a, ws1_a, ws0_b, ws1_b, out var contactWs_a, out var contactWs_b);
 
-                            return new Penetration(penetration, contactWs_a, contactWs_b, info);
+                            return new Penetration(penetration, contactWs_a, contactWs_b);
                         }
-                        else if (info.obb_obb_penetration == OBB_OBB_PenetrationType.Cross_AUp_BRight)
+                        else if (penetrationType == PenetrationType.Cross_AUp_BRight)
                         {
                             var vBA = -pDirN;
 
@@ -489,9 +511,9 @@ namespace RBPhys
 
                             CalcNearest(ws0_a, ws1_a, ws0_b, ws1_b, out var contactWs_a, out var contactWs_b);
 
-                            return new Penetration(penetration, contactWs_a, contactWs_b, info);
+                            return new Penetration(penetration, contactWs_a, contactWs_b);
                         }
-                        else if (info.obb_obb_penetration == OBB_OBB_PenetrationType.Cross_AFwd_BRight)
+                        else if (penetrationType == PenetrationType.Cross_AFwd_BRight)
                         {
                             var vBA = -pDirN;
 
@@ -500,9 +522,9 @@ namespace RBPhys
 
                             CalcNearest(ws0_a, ws1_a, ws0_b, ws1_b, out var contactWs_a, out var contactWs_b);
 
-                            return new Penetration(penetration, contactWs_a, contactWs_b, info);
+                            return new Penetration(penetration, contactWs_a, contactWs_b);
                         }
-                        else if (info.obb_obb_penetration == OBB_OBB_PenetrationType.Cross_ARight_BUp)
+                        else if (penetrationType == PenetrationType.Cross_ARight_BUp)
                         {
                             var vBA = -pDirN;
 
@@ -511,9 +533,9 @@ namespace RBPhys
 
                             CalcNearest(ws0_a, ws1_a, ws0_b, ws1_b, out var contactWs_a, out var contactWs_b);
 
-                            return new Penetration(penetration, contactWs_a, contactWs_b, info);
+                            return new Penetration(penetration, contactWs_a, contactWs_b);
                         }
-                        else if (info.obb_obb_penetration == OBB_OBB_PenetrationType.Cross_AUp_BUp)
+                        else if (penetrationType == PenetrationType.Cross_AUp_BUp)
                         {
                             var vBA = -pDirN;
 
@@ -522,9 +544,9 @@ namespace RBPhys
 
                             CalcNearest(ws0_a, ws1_a, ws0_b, ws1_b, out var contactWs_a, out var contactWs_b);
 
-                            return new Penetration(penetration, contactWs_a, contactWs_b, info);
+                            return new Penetration(penetration, contactWs_a, contactWs_b);
                         }
-                        else if (info.obb_obb_penetration == OBB_OBB_PenetrationType.Cross_AFwd_BUp)
+                        else if (penetrationType == PenetrationType.Cross_AFwd_BUp)
                         {
                             var vBA = -pDirN;
 
@@ -533,9 +555,9 @@ namespace RBPhys
 
                             CalcNearest(ws0_a, ws1_a, ws0_b, ws1_b, out var contactWs_a, out var contactWs_b);
 
-                            return new Penetration(penetration, contactWs_a, contactWs_b, info);
+                            return new Penetration(penetration, contactWs_a, contactWs_b);
                         }
-                        else if (info.obb_obb_penetration == OBB_OBB_PenetrationType.Cross_ARight_BFwd)
+                        else if (penetrationType == PenetrationType.Cross_ARight_BFwd)
                         {
                             var vBA = -pDirN;
 
@@ -544,9 +566,9 @@ namespace RBPhys
 
                             CalcNearest(ws0_a, ws1_a, ws0_b, ws1_b, out var contactWs_a, out var contactWs_b);
 
-                            return new Penetration(penetration, contactWs_a, contactWs_b, info);
+                            return new Penetration(penetration, contactWs_a, contactWs_b);
                         }
-                        else if (info.obb_obb_penetration == OBB_OBB_PenetrationType.Cross_AUp_BFwd)
+                        else if (penetrationType == PenetrationType.Cross_AUp_BFwd)
                         {
                             var vBA = -pDirN;
 
@@ -555,9 +577,9 @@ namespace RBPhys
 
                             CalcNearest(ws0_a, ws1_a, ws0_b, ws1_b, out var contactWs_a, out var contactWs_b);
 
-                            return new Penetration(penetration, contactWs_a, contactWs_b, info);
+                            return new Penetration(penetration, contactWs_a, contactWs_b);
                         }
-                        else if (info.obb_obb_penetration == OBB_OBB_PenetrationType.Cross_AFwd_BFwd)
+                        else if (penetrationType == PenetrationType.Cross_AFwd_BFwd)
                         {
                             var vBA = -pDirN;
 
@@ -566,7 +588,7 @@ namespace RBPhys
 
                             CalcNearest(ws0_a, ws1_a, ws0_b, ws1_b, out var contactWs_a, out var contactWs_b);
 
-                            return new Penetration(penetration, contactWs_a, contactWs_b, info);
+                            return new Penetration(penetration, contactWs_a, contactWs_b);
                         }
                     }
                 }

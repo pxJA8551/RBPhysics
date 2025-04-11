@@ -36,7 +36,15 @@ namespace RBPhys
         public RBVirtualTransform Parent { get { return _parent; } }
 
         public GameObject BaseObject { get { return _baseObject; } }
-        public Transform BaseTransform { get { return _baseObject?.transform; } }
+
+        public Transform BaseTransform
+        {
+            get
+            {
+                if (_baseObject != null) return _baseObject.transform;
+                else return null;
+            }
+        }
 
         public RBVirtualTransform BaseVTransform { get { return _baseVTransform; } }
         RBVirtualTransform _baseVTransform;
@@ -47,7 +55,15 @@ namespace RBPhys
 
         List<RBVirtualTransform> _children;
 
-        public int VComponentCount { get { return _vComponents?.Count ?? 0; } }
+        public int VComponentCount
+        {
+            get
+            {
+                if (_vComponents != null) return _vComponents.Count;
+                else return 0;
+            }
+        }
+
         List<RBVirtualComponent> _vComponents;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -166,7 +182,10 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         void OnCreate()
         {
-            var parent = _baseObject.transform.parent?.GetComponentInParent<RBVirtualTransform>(true);
+            var parentTransform = _baseObject.transform.parent;
+            RBVirtualTransform parent = null;
+
+            if (parentTransform != null) parent = parentTransform.GetComponentInParent<RBVirtualTransform>(true);
             if (parent != null) parent.FindChildren();
 
             FindChildren();
@@ -421,8 +440,8 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsDuplicatingVTransform(RBVirtualTransform vt0, RBVirtualTransform vt1)
         {
-            if (vt0?.BaseTransform == null) throw new NotImplementedException();
-            if (vt1?.BaseTransform == null) throw new NotImplementedException();
+            if (vt0 == null || vt0.BaseTransform == null) throw new NotImplementedException();
+            if (vt1 == null || vt1.BaseTransform == null) throw new NotImplementedException();
 
             if (vt0.BaseTransform != vt1.BaseTransform) return false;
             if (vt0.PhysComputer != vt1.PhysComputer) return false;
@@ -434,7 +453,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsDuplicatingVTransform(RBVirtualTransform vt, Transform baseTransform, RBPhysComputer physComputer, RBVirtualTransform baseVTransform)
         {
-            if (vt?.BaseTransform == null) throw new NotImplementedException();
+            if (vt == null || vt.BaseTransform == null) throw new NotImplementedException();
             if (baseTransform == null) throw new NotImplementedException();
 
             if (vt.BaseTransform != baseTransform) return false;
