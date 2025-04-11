@@ -27,8 +27,6 @@ public static partial class RBSphereCast
             float t1 = b - s;
             float t2 = b + s;
 
-            bool isBackface = (t1 > 0 && t2 > 0) || allowNegativeDist;
-
             float t = t1;
 
             if (!((t > 0 || allowNegativeDist) && t <= length) || ((t2 > 0 || allowNegativeDist) && t2 <= length && t2 < t))
@@ -43,7 +41,6 @@ public static partial class RBSphereCast
 
                 RBColliderCastHitInfo info = new RBColliderCastHitInfo();
                 info.SetHit(pos - n * radius, n, t);
-                info.backFaceCollision = isBackface;
 
                 return info;
             }

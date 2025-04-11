@@ -346,7 +346,10 @@ namespace RBPhys
                         var contactWs_obb = ProjectPointToOBBFace(obb_a, cpWs, vAB, hplnAxis);
                         var contactWs_capsule = ExtractCapsuleRadius(cpWs, contactWs_obb, vAB, capsule_b.radius);
 
-                        return (contactWs_capsule - contactWs_obb, contactWs_obb, contactWs_capsule);
+                        var p = contactWs_capsule - contactWs_obb;
+                        float sign = Vector3.Dot(p, penetration) > 0 ? 1 : -1;
+
+                        return (p * sign, contactWs_obb, contactWs_capsule);
                     }
                     else
                     {
@@ -363,7 +366,10 @@ namespace RBPhys
                         CalcNearest(ws0_obb, ws1_obb, ws0_capsule, ws1_capsule, out var contactWs_obb, out var cpWs);
                         var contactWs_capsule = ExtractCapsuleRadius(cpWs, contactWs_obb, vAB, capsule_b.radius);
 
-                        return (contactWs_capsule - contactWs_obb, contactWs_obb, contactWs_capsule);
+                        var p = contactWs_capsule - contactWs_obb;
+                        float sign = Vector3.Dot(p, penetration) > 0 ? 1 : -1;
+
+                        return (p * sign, contactWs_obb, contactWs_capsule);
                     }
                 }
 

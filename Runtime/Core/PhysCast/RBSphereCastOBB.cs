@@ -410,7 +410,6 @@ public static partial class RBSphereCast
 
                     var info = new RBColliderCastHitInfo();
                     info.SetHit(ws_pos, ws_normal, hitPoints_t[0].t);
-                    info.backFaceCollision = false;
                     return info;
                 }
                 if (pd2)
@@ -424,7 +423,6 @@ public static partial class RBSphereCast
 
                     var info = new RBColliderCastHitInfo();
                     info.SetHit(ws_pos, ws_normal, hitPoints_t[1].t);
-                    info.backFaceCollision = true;
                     return info;
                 }
 

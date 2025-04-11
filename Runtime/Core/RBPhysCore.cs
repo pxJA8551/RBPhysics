@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
+using UnityEngine.Assertions.Must;
 using UnityEngine.Profiling;
 
 namespace RBPhys
@@ -840,7 +841,7 @@ namespace RBPhys
                     case RBGeometryType.OBB:
                         {
                             var info = RBSphereCast.SphereCastOBB.CalcSphereCollision(t.collider.CalcOBB(), org, dir, length, radius, allowNegativeValue);
-                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
+                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, false);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
                         }
@@ -848,7 +849,7 @@ namespace RBPhys
                     case RBGeometryType.Sphere:
                         {
                             var info = RBSphereCast.SphereCastSphere.CalcSphereCollision(t.collider.CalcSphere(), org, dir, length, radius, allowNegativeValue);
-                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
+                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, false);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
                         }
@@ -856,7 +857,7 @@ namespace RBPhys
                     case RBGeometryType.Capsule:
                         {
                             var info = RBSphereCast.SphereCastCapsule.CalcSphereCollision(t.collider.CalcCapsule(), org, dir, length, radius, allowNegativeValue);
-                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, info.backFaceCollision);
+                            if (info.IsValidHit) t.SetHit(info.position, info.normal, info.length, false);
                             RBPhysDebugging.IsCastHitValidAssert(t);
                             hitList[i] = t;
                         }
@@ -1632,7 +1633,7 @@ namespace RBPhys
                     {
                         var col = _collisionsInSolver[k];
 
-                        if (col.penetration != Vector3.zero && !col.skipInSolver)
+                        if (col.penetration != Vector3.zero && !col.skipInSolver && !col.triggerCollision)
                         {
                             col.InitVelocityConstraint(sdt, _timeScaleMode, j == 0);
                             SolveCollisionPair(col);
@@ -1648,13 +1649,19 @@ namespace RBPhys
 
                 ApplySolverVelocity(GetSolverInfo(i), sdt);
 
-                for (int k = 0; k < _collisionsInSolver.Count; k++)
+                if (i < solver_subtick - 1)
                 {
-                    var col = _collisionsInSolver[k];
+                    for (int k = 0; k < _collisionsInSolver.Count; k++)
+                    {
+                        var col = _collisionsInSolver[k];
 
-                    var p = RecalcCollision(col);
-                    col.Update(p.p, p.pA, p.pB);
-                    col.skipInSolver = false;
+                        if (col.triggerCollision)
+                        {
+                            var p = RecalcCollision(col);
+                            col.Update(p.p, p.pA, p.pB);
+                            col.skipInSolver = false;
+                        }
+                    }
                 }
 
                 Profiler.EndSample();
