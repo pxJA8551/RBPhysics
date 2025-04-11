@@ -24,7 +24,7 @@ namespace RBPhys
 
         [NonSerialized] public float beta = .23f;
 
-        [NonSerialized] public float restitution = 0.45f; //”½”­ŒW”
+        [NonSerialized] public float restitution = 0.5f; //”½”­ŒW”
         [NonSerialized] public float friction = 0.55f; //–€CŒW”
 
         public RBTrajectory Trajectory { get { return _trajectory; } }

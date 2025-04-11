@@ -21,10 +21,10 @@ namespace RBPhys
         public const int SOLVER_ITER_PER_SUBTICKS = 6;
         public const float SOLVER_ABORT_VELADD_SQRT = .00005f * .00005f;
         public const float SOLVER_ABORT_ANGVELADD_SQRT = .0005f * .0005f;
-        public const float RETROGRADE_PHYS_RESTITUTION_MULTIPLIER = .6f;
+        public const float RETROGRADE_PHYS_RESTITUTION_MULTIPLIER = .525f;
         public const float RETROGRADE_PHYS_RESTITUTION_MIN = 1.1f;
 
-        public const float RETROGRADE_PHYS_FRICTION_MULTIPLIER = .35f;
+        public const float RETROGRADE_PHYS_FRICTION_MULTIPLIER = .5f;
 
         public const float SOFTCLIP_LAMBDA_MULTIPLIER = .2f;
         public const float INERTIA_TENSOR_MULTIPLIER = 1f;
@@ -1574,7 +1574,7 @@ namespace RBPhys
                     var traj_b = pair.col_b.Trajectory;
 
                     if (pair.col_a.ParentRigidbody != null) traj_a = pair.col_a.ParentRigidbody.ObjectTrajectory;
-                    if (pair.col_b.ParentRigidbody != null) traj_a = pair.col_b.ParentRigidbody.ObjectTrajectory;
+                    if (pair.col_b.ParentRigidbody != null) traj_b = pair.col_b.ParentRigidbody.ObjectTrajectory;
 
                     var rbc = new RBCollision(pair.col_a, pair.col_b, pair.p.p, traj_a.Layer, traj_b.Layer);
 
@@ -1661,7 +1661,7 @@ namespace RBPhys
                     {
                         var col = _collisionsInSolver[k];
 
-                        if (col.penetration != Vector3.zero && !col.skipInSolver && !col.triggerCollision)
+                        if (col.penetration != Vector3.zero && !col.skipInSolver)
                         {
                             col.InitVelocityConstraint(sdt, _timeScaleMode, solverOption, j == 0);
                             SolveCollisionPair(col);
@@ -2321,6 +2321,7 @@ namespace RBPhys
             Vector3 _wb;
 
             float _bias;
+            float _restitutionBias;
             float _totalLambda;
             float _effectiveMass;
 
@@ -2344,6 +2345,7 @@ namespace RBPhys
                 _wb = Vector3.zero;
 
                 _bias = 0;
+                _restitutionBias = 0;
                 _totalLambda = 0;
                 _effectiveMass = 0;
 
@@ -2364,6 +2366,7 @@ namespace RBPhys
                 if (initLambda)
                 {
                     _bias = 0;
+                    _restitutionBias = 0;
                     _totalLambda = 0;
                 }
 
@@ -2378,30 +2381,34 @@ namespace RBPhys
                 k += Vector3.Dot(_wa, Vector3.Scale(invInertiaWs_a, _wa));
                 k += col.InverseMass_b;
                 k += Vector3.Dot(_wb, Vector3.Scale(invInertiaWs_b, _wb));
+
                 _effectiveMass = 1 / k;
 
                 if (_type == Type.Normal)
                 {
-                    float restitution = col.collider_a.restitution * col.collider_b.restitution;
-
-                    if (tMode.IsRetg())
-                    {
-                        restitution = (restitution != 0) ? 1 / restitution : 0;
-                        restitution *= _solverOption.retrograde_phys_restitution_multiplier;
-                        restitution = (restitution != 0) ? Mathf.Max(restitution, _solverOption.retrograde_phys_restitution_min) : 0;
-                    }
-
-                    Vector3 relVel = Vector3.zero;
-                    relVel += col.SubtickVelocity_a;
-                    relVel += Vector3.Cross(col.SubtickAngularVelocity_a, col.rA);
-                    relVel -= col.SubtickVelocity_b;
-                    relVel -= Vector3.Cross(col.SubtickAngularVelocity_b, col.rB);
-
-                    float closingVelocity = Vector3.Dot(relVel, dirN);
-
                     float beta = col.collider_a.beta * col.collider_b.beta;
+                    _bias = -(beta / dt) * Mathf.Max(0, col.penetration.magnitude - COLLISION_ERROR_SLOP);
 
-                    _bias = -(beta / dt) * Mathf.Max(0, col.penetration.magnitude - COLLISION_ERROR_SLOP) + restitution * closingVelocity;
+                    if (initLambda)
+                    {
+                        float restitution = col.collider_a.restitution * col.collider_b.restitution;
+
+                        if (tMode.IsRetg())
+                        {
+                            restitution = (restitution != 0) ? 1 / restitution : 0;
+                            restitution *= _solverOption.retrograde_phys_restitution_multiplier;
+                            restitution = (restitution != 0) ? Mathf.Max(restitution, _solverOption.retrograde_phys_restitution_min) : 0;
+                        }
+
+                        Vector3 relVel = Vector3.zero;
+                        relVel += col.ExpVelocity_a;
+                        relVel += Vector3.Cross(col.ExpAngularVelocity_a, col.rA);
+                        relVel -= col.ExpVelocity_b;
+                        relVel -= Vector3.Cross(col.ExpAngularVelocity_b, col.rB);
+
+                        float closingVelocity = Vector3.Dot(relVel, -dirN);
+                        _restitutionBias = -restitution * closingVelocity;
+                    }
 
                     _useSoftClip = col.useSoftClip;
                 }
@@ -2415,7 +2422,7 @@ namespace RBPhys
                 jv += Vector3.Dot(_vb, col.SubtickVelocity_b);
                 jv += Vector3.Dot(_wb, col.SubtickAngularVelocity_b);
 
-                float lambda = _effectiveMass * (-(jv + _bias));
+                float lambda = _effectiveMass * (-(jv + Mathf.Min(_bias, _restitutionBias)));
                 float oldTotalLambda = _totalLambda;
 
                 if (_useSoftClip)
@@ -2430,21 +2437,12 @@ namespace RBPhys
                 else if (_type == Type.Tangent)
                 {
                     float friction = col.collider_a.friction * col.collider_b.friction;
-                    if (tMode.IsRetg())
-                    {
-                        friction *= _solverOption.retrograde_phys_friction_multiplier;
-                    }
+                    if (tMode.IsRetg()) friction *= _solverOption.retrograde_phys_friction_multiplier;
 
                     float maxFriction = friction * col._jN._totalLambda;
 
-                    if (tMode.IsProg())
-                    {
-                        _totalLambda = Mathf.Clamp(_totalLambda + lambda, -maxFriction, maxFriction);
-                    }
-                    else
-                    {
-                        _totalLambda = Mathf.Clamp(_totalLambda - lambda, -maxFriction, maxFriction);
-                    }
+                    if (tMode.IsProg()) _totalLambda = Mathf.Clamp(_totalLambda + lambda, -maxFriction, maxFriction);
+                    else _totalLambda = Mathf.Clamp(_totalLambda - lambda, -maxFriction, maxFriction);
                 }
 
                 lambda = _totalLambda - oldTotalLambda;
