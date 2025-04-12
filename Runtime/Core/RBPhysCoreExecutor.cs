@@ -13,7 +13,7 @@ namespace RBPhys
         [HideInInspector][NonSerialized] public bool enableStats = false;
 
         public RBPhysStats Stats { get { return _stats; } }
-        RBPhysStats _stats;
+        RBPhysStats _stats = new RBPhysStats(default, default);
 
         private void Awake()
         {
@@ -53,7 +53,6 @@ namespace RBPhys
 
                 lock (_stats)
                 {
-                    _stats = new RBPhysStats(default, default);
                     _stats.CopyStats(pcStats);
                 }
             }
