@@ -133,7 +133,7 @@ namespace RBPhys
             {
                 _infInertiaTensorX = true;
                 _infInertiaTensorY = true;
-                _infInertiaTensorZ = true;
+                _infInertiaTensorZ = true; 
             }
         }
 
@@ -164,6 +164,8 @@ namespace RBPhys
             }
 
             _colliders.Clear();
+
+            RecalculateInertiaTensor();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

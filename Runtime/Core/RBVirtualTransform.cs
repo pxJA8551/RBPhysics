@@ -297,6 +297,8 @@ namespace RBPhys
                 _wsTrsInv = _baseVTransform._wsTrsInv;
 
                 _layer = _baseVTransform._layer;
+
+                Debug.Assert(ValidTRS());
             }
         }
 
@@ -408,7 +410,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool ValidTRS()
         {
-            return _rawTrs.ValidTRS() && _wsTrs.ValidTRS();
+            return _rawTrs.ValidTRS() && _wsTrs.ValidTRS() && _wsTrsInv.ValidTRS();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
