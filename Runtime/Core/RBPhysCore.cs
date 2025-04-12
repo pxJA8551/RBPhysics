@@ -88,7 +88,8 @@ namespace RBPhys
         public ComputerTimeParams timeParams;
         public PhysComputerTime physComputerTime;
 
-        SemaphoreSlim _solverIterationSemaphore = new SemaphoreSlim(1, 1);
+        SemaphoreSlim _solverSemaphore = new SemaphoreSlim(1, 1);
+        SemaphoreSlim _physObjSemaphore = new SemaphoreSlim(1, 1);
 
         public readonly bool isPredictionComputer;
         public bool enableStats = false;
@@ -163,6 +164,8 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetTimeScale(TimeScaleMode tsm)
         {
+            WaitPhysObjSemaphore();
+
             if ((int)_timeScaleMode + (int)tsm == 1)
             {
                 foreach (var rb in _rigidbodies)
@@ -172,125 +175,193 @@ namespace RBPhys
             }
 
             _timeScaleMode = tsm;
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddVirtualTransform(RBVirtualTransform vt)
         {
+            WaitPhysObjSemaphore();
+
             if (!_vTransforms.Contains(vt)) _vTransforms.Add(vt);
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveVirtualTransform(RBVirtualTransform vt)
         {
+            WaitPhysObjSemaphore();
+
             _vTransforms.Remove(vt);
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddVirtualComponent(RBVirtualComponent vc)
         {
+            WaitPhysObjSemaphore();
+
             if (!_vComponents.Contains(vc)) _vComponents.Add(vc);
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveVirtualComponent(RBVirtualComponent vc)
         {
+            WaitPhysObjSemaphore();
+
             _vComponents.Remove(vc);
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddRigidbody(RBRigidbody rb)
         {
+            WaitPhysObjSemaphore();
+
             if (!_rigidbodies.Contains(rb)) _rigidbodies.Add(rb);
             if (!_rbAddQueue.Contains(rb)) _rbAddQueue.Add(rb);
             _rbRemoveQueue.Remove(rb);
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveRigidbody(RBRigidbody rb)
         {
+            WaitPhysObjSemaphore();
+
             _rigidbodies.Remove(rb);
             _rbAddQueue.Remove(rb);
             if (!_rbRemoveQueue.Contains(rb)) _rbRemoveQueue.Add(rb);
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddCollider(RBCollider c)
         {
+            WaitPhysObjSemaphore();
+
             if (!_colliders.Contains(c)) _colliders.Add(c);
             if (!_colAddQueue.Contains(c)) _colAddQueue.Add(c);
             _colRemoveQueue.Remove(c);
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveCollider(RBCollider c)
         {
+            WaitPhysObjSemaphore();
+
             _colliders.Remove(c);
             _colAddQueue.Remove(c);
             if (!_colRemoveQueue.Contains(c)) _colRemoveQueue.Add(c);
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SwitchToCollider(RBCollider c)
         {
+            WaitPhysObjSemaphore();
+
             if (!_colAddQueue.Contains(c)) _colAddQueue.Add(c);
             _colRemoveQueue.Remove(c);
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SwitchToRigidbody(RBCollider c)
         {
+            WaitPhysObjSemaphore();
+
             _colAddQueue.Remove(c);
             if (!_colRemoveQueue.Contains(c)) _colRemoveQueue.Add(c);
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddStdSolver(StdSolverInit stdInit, StdSolverIteration stdIter)
         {
+            WaitPhysObjSemaphore();
+
             if (stdInit != null) _stdSolverInit += stdInit;
             if (stdIter != null) _stdSolverIter += stdIter;
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemoveStdSolver(StdSolverInit stdInit, StdSolverIteration stdIter)
         {
+            WaitPhysObjSemaphore();
+
             if (stdInit != null) _stdSolverInit -= stdInit;
             if (stdIter != null) _stdSolverIter -= stdIter;
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddPhysObject(BeforeSolver beforeSolver, AfterSolver afterSolver)
         {
+            WaitPhysObjSemaphore();
+
             if (beforeSolver != null) _beforeSolver += beforeSolver;
             if (afterSolver != null) _afterSolver += afterSolver;
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemovePhysObject(BeforeSolver beforeSolver, AfterSolver afterSolver)
         {
+            WaitPhysObjSemaphore();
+
             if (beforeSolver != null) _beforeSolver -= beforeSolver;
             if (afterSolver != null) _afterSolver -= afterSolver;
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void AddPhysValidatorObject(ValidatorPreBeforeSolver preBeforeSolver, ValidatorBeforeSolver beforeSolver, ValidatorAfterSolver afterSolver)
         {
+            WaitPhysObjSemaphore();
+
             if (preBeforeSolver != null) _validatorPreBeforeSolver += preBeforeSolver;
             if (beforeSolver != null) _validatorBeforeSolver += beforeSolver;
             if (afterSolver != null) _validatorAfterSolver += afterSolver;
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RemovePhysValidatorObject(ValidatorPreBeforeSolver preBeforeSolver, ValidatorBeforeSolver beforeSolver, ValidatorAfterSolver afterSolver)
         {
+            WaitPhysObjSemaphore();
+
             if (preBeforeSolver != null) _validatorPreBeforeSolver -= preBeforeSolver;
             if (beforeSolver != null) _validatorBeforeSolver -= beforeSolver;
             if (afterSolver != null) _validatorAfterSolver -= afterSolver;
+
+            ReleasePhysObjSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetCollisionOption(int layer_a, int layer_b, RBCollisionOption option)
         {
+            WaitSemaphore();
+
             switch (option)
             {
                 case RBCollisionOption.Ignore:
@@ -303,15 +374,21 @@ namespace RBPhys
                     _collisionIgnoreLayers[layer_b] &= ~(1 << layer_a);
                     break;
             }
+
+            ReleaseSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetCollisionLayerOption(int layer, RBCollisionLayerOption option, bool state)
         {
+            WaitSemaphore();
+
             int p0 = (int)_layerOptions[layer];
             int sel = (int)option;
 
             _layerOptions[layer] = (RBCollisionLayerOption)((p0 & ~sel) | (state ? sel : 0));
+
+            ReleaseSemaphore();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -338,31 +415,61 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void WaitSemaphore()
         {
-            _solverIterationSemaphore.Wait();
+            _solverSemaphore.Wait();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool WaitSemaphore(int timeoutMs)
         {
-            return _solverIterationSemaphore.Wait(timeoutMs);
+            return _solverSemaphore.Wait(timeoutMs);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task WaitSemaphoreAsync()
         {
-            await _solverIterationSemaphore.WaitAsync();
+            await _solverSemaphore.WaitAsync();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task<bool> WaitSemaphoreAsync(int timeoutMs)
         {
-            return await _solverIterationSemaphore.WaitAsync(timeoutMs);
+            return await _solverSemaphore.WaitAsync(timeoutMs);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void ReleaseSemaphore()
         {
-            _solverIterationSemaphore.Release();
+            _solverSemaphore.Release();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void WaitPhysObjSemaphore()
+        {
+            _physObjSemaphore.Wait();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool WaitPhysObjSemaphore(int timeoutMs)
+        {
+            return _physObjSemaphore.Wait(timeoutMs);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public async Task WaitPhysObjSemaphoreAsync()
+        {
+            await _physObjSemaphore.WaitAsync();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public async Task<bool> WaitPhysObjSemaphoreAsync(int timeoutMs)
+        {
+            return await _physObjSemaphore.WaitAsync(timeoutMs);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ReleasePhysObjSemaphore()
+        {
+            _physObjSemaphore.Release();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -499,55 +606,102 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         async Task PhysFrame()
         {
-            _diagnostics.Clear();
+            if (!enableStats) _diagnostics.Clear();
 
             float dt = _solverDeltaTimeAsFloat;
 
             if (dt == 0) return;
 
-            if (await _solverIterationSemaphore.WaitAsync(500))
+            const int SEMAPHORE_TIMEOUT = 500;
+
+            if (await _solverSemaphore.WaitAsync(SEMAPHORE_TIMEOUT))
             {
                 try
                 {
-                    SyncTrajectories();
+                    if (await _physObjSemaphore.WaitAsync(SEMAPHORE_TIMEOUT))
+                    {
+                        try
+                        {
+                            SyncTrajectories();
 
-                    if (enableStats) _diagnostics.CountObjects(_rigidbodies, _colliders);
-                    if (enableStats) _diagnostics.CountCallbacks(_beforeSolver?.GetInvocationList(), _afterSolver?.GetInvocationList(), _stdSolverInit?.GetInvocationList(), _stdSolverIter?.GetInvocationList(), _colliders);
+                            if (enableStats) _diagnostics.CountObjects(_rigidbodies, _colliders);
+                            if (enableStats) _diagnostics.CountCallbacks(_beforeSolver?.GetInvocationList(), _afterSolver?.GetInvocationList(), _stdSolverInit?.GetInvocationList(), _stdSolverIter?.GetInvocationList(), _colliders);
+
+                            ClearCollisions();
+                        }
+                        catch
+                        {
+                            throw;
+                        }
+                        finally
+                        {
+                            _physObjSemaphore.Release();
+                        }
+                    }
+                    else throw new SemaphoreFullException();
 
                     if (_validatorPreBeforeSolver != null) _validatorPreBeforeSolver(dt, _timeScaleMode);
                     if (_validatorBeforeSolver != null) _validatorBeforeSolver(dt, _timeScaleMode);
-                    ClearCollisions();
-
                     if (_beforeSolver != null) _beforeSolver(dt, _timeScaleMode);
-
-                    UpdateTransform();
-                    UpdateObjTrajectory();
-                    SortTrajectories();
-
-                    if (_trajectories_orderByXMin.Length > 0)
+                    
+                    if (await _physObjSemaphore.WaitAsync(SEMAPHORE_TIMEOUT))
                     {
-                        foreach (RBRigidbody rb in _rigidbodies)
+                        try
                         {
-                            var expTraj = rb.ObjectTrajectory;
-                            if (!(expTraj.IsStaticOrSleeping || expTraj.IsLimitedSleeping) && rb.useGravity && !rb.ObjectTrajectory.IsIgnoredTrajectory)
+                            UpdateTransform();
+                            UpdateObjTrajectory();
+                            SortTrajectories();
+
+                            if (_trajectories_orderByXMin.Length > 0)
                             {
-                                rb.ExpVelocity += gravityAcceleration * dt;
+                                foreach (RBRigidbody rb in _rigidbodies)
+                                {
+                                    var expTraj = rb.ObjectTrajectory;
+                                    if (!(expTraj.IsStaticOrSleeping || expTraj.IsLimitedSleeping) && rb.useGravity && !rb.ObjectTrajectory.IsIgnoredTrajectory)
+                                    {
+                                        rb.ExpVelocity += gravityAcceleration * dt;
+                                    }
+                                }
+
+                                SolveConstraints(dt);
                             }
                         }
-
-                        SolveConstraints(dt);
+                        catch
+                        {
+                            throw;
+                        }
+                        finally
+                        {
+                            _physObjSemaphore.Release();
+                        }
                     }
+                    else throw new SemaphoreFullException();
 
                     if (_afterSolver != null) _afterSolver(dt, _timeScaleMode);
                     if (_validatorAfterSolver != null) _validatorAfterSolver(dt, _timeScaleMode);
 
-                    TrySleepRigidbodies();
-                    TryAwakeRigidbodies();
+                    if (await _physObjSemaphore.WaitAsync(SEMAPHORE_TIMEOUT))
+                    {
+                        try
+                        {
+                            TrySleepRigidbodies();
+                            TryAwakeRigidbodies();
 
-                    var velocityOption = PackVelocityOption();
+                            var velocityOption = PackVelocityOption();
 
-                    ApplyPhysFrame(dt, velocityOption);
-                    ClearValidators();
+                            ApplyPhysFrame(dt, velocityOption);
+                            ClearValidators();
+                        }
+                        catch
+                        {
+                            throw;
+                        }
+                        finally
+                        {
+                            _physObjSemaphore.Release();
+                        }
+                    }
+                    else throw new SemaphoreFullException();
                 }
                 catch
                 {
@@ -555,12 +709,13 @@ namespace RBPhys
                 }
                 finally
                 {
-                    _solverIterationSemaphore.Release();
+                    _solverSemaphore.Release();
                 }
             }
             else
             {
-                throw new Exception();
+                _diagnostics.Clear();
+                throw new SemaphoreFullException();
             }
 
             //OnClosePhysicsFrame��
