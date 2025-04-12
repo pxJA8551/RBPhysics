@@ -154,6 +154,8 @@ namespace RBPhys
         {
             PhysComputer.RemoveRigidbody(this);
 
+            if (_colliders == null) return;
+
             foreach (var c in _colliders)
             {
                 PhysComputer.SwitchToCollider(c);
