@@ -11,8 +11,16 @@ namespace RBPhys
     {
         class RBPhysDiagnostics
         {
-            ObjectStats _objStats = new ObjectStats();
-            CallbackStats _callbackStats = new CallbackStats();
+            object _lock = new object();
+            ObjectStats _objStats = default;
+            CallbackStats _callbackStats = default;
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Clear()
+            {
+                _objStats = default;
+                _callbackStats = default;
+            }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void CountObjects(List<RBRigidbody> rigidbodies, List<RBCollider> colliders)
@@ -24,11 +32,14 @@ namespace RBPhys
                 int sleeping = rigidbodyCount - active;
                 int colliderCount = colliders?.Count ?? 0;
 
-                _objStats = default;
-                _objStats.rigidbodies = rigidbodyCount;
-                _objStats.activeRigidbodies = active;
-                _objStats.sleepingRigidbodies = sleeping;
-                _objStats.colliders = colliderCount;
+                lock (_lock)
+                {
+                    _objStats = default;
+                    _objStats.rigidbodies = rigidbodyCount;
+                    _objStats.activeRigidbodies = active;
+                    _objStats.sleepingRigidbodies = sleeping;
+                    _objStats.colliders = colliderCount;
+                }
 
                 Profiler.EndSample();
             }
@@ -38,26 +49,33 @@ namespace RBPhys
             {
                 Profiler.BeginSample("RBPhysDiagnostics-CountCallbacks");
 
-                _callbackStats = default;
-                _callbackStats.physObj_beforeSolver = beforeSolver?.Length ?? 0;
-                _callbackStats.physObj_afterSolver = afterSolver?.Length ?? 0;
-                _callbackStats.solvers_init = solverInit?.Length ?? 0;
-                _callbackStats.solvers_iter = solverIter?.Length ?? 0;
-                _callbackStats.onCollision = colliders?.Sum(c => c.onCollision?.GetInvocationList()?.Length ?? 0) ?? 0;
+                lock (_lock)
+                {
+                    _callbackStats = default;
+                    _callbackStats.physObj_beforeSolver = beforeSolver?.Length ?? 0;
+                    _callbackStats.physObj_afterSolver = afterSolver?.Length ?? 0;
+                    _callbackStats.solvers_init = solverInit?.Length ?? 0;
+                    _callbackStats.solvers_iter = solverIter?.Length ?? 0;
+                    _callbackStats.onCollision = colliders?.Sum(c => c.onCollision?.GetInvocationList()?.Length ?? 0) ?? 0;
+                }
 
                 Profiler.EndSample();
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public RBPhysStats GetStats()
+            public RBPhysStats PackStates()
             {
-                return new RBPhysStats(_objStats, _callbackStats);
+                lock (_lock)
+                {
+                    return new RBPhysStats(_objStats, _callbackStats);
+                }
             }
         }
     }
 
-    public class RBPhysStats
+    public struct RBPhysStats
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public RBPhysStats(ObjectStats objStats, CallbackStats callbackStats)
         {
             this.objStats = objStats;
@@ -80,6 +98,15 @@ namespace RBPhys
             public int sleepingRigidbodies;
             public int activeRigidbodies;
             public int colliders;
+
+            bool _validate;
+
+            public void MarkAsValid()
+            {
+                _validate = true;
+            }
+
+            public bool IsValid { get { return _validate; } }
         }
 
         public struct CallbackStats
@@ -89,6 +116,21 @@ namespace RBPhys
             public int physObj_beforeSolver;
             public int physObj_afterSolver;
             public int onCollision;
+
+            bool _validate;
+
+            public void MarkAsValid()
+            {
+                _validate = true;
+            }
+
+            public bool IsValid { get { return _validate; } }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool Validate()
+        {
+            return objStats.IsValid && callbackStats.IsValid;
         }
     }
 }

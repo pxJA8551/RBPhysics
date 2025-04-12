@@ -91,6 +91,7 @@ namespace RBPhys
         SemaphoreSlim _solverIterationSemaphore = new SemaphoreSlim(1, 1);
 
         public readonly bool isPredictionComputer;
+        public bool enableStats = false;
 
         RBPhysDiagnostics _diagnostics = new RBPhysDiagnostics();
 
@@ -477,16 +478,9 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public async Task<RBPhysStats> GetStatsAsync()
+        public RBPhysStats GetStats()
         {
-            RBPhysStats stats = default;
-
-            if (await _solverIterationSemaphore.WaitAsync(500))
-            {
-                stats = _diagnostics.GetStats();
-                _solverIterationSemaphore.Release();
-            }
-
+            RBPhysStats stats = _diagnostics.PackStates();
             return stats;
         }
 
@@ -499,6 +493,8 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         async Task PhysFrame()
         {
+            _diagnostics.Clear();
+
             float dt = _solverDeltaTimeAsFloat;
 
             if (dt == 0) return;
@@ -509,8 +505,8 @@ namespace RBPhys
                 {
                     SyncTrajectories();
 
-                    _diagnostics.CountObjects(_rigidbodies, _colliders);
-                    _diagnostics.CountCallbacks(_beforeSolver?.GetInvocationList(), _afterSolver?.GetInvocationList(), _stdSolverInit?.GetInvocationList(), _stdSolverIter?.GetInvocationList(), _colliders);
+                    if (enableStats) _diagnostics.CountObjects(_rigidbodies, _colliders);
+                    if (enableStats) _diagnostics.CountCallbacks(_beforeSolver?.GetInvocationList(), _afterSolver?.GetInvocationList(), _stdSolverInit?.GetInvocationList(), _stdSolverIter?.GetInvocationList(), _colliders);
 
                     if (_validatorPreBeforeSolver != null) _validatorPreBeforeSolver(dt, _timeScaleMode);
                     if (_validatorBeforeSolver != null) _validatorBeforeSolver(dt, _timeScaleMode);
