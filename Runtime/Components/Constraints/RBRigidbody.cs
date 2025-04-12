@@ -143,6 +143,7 @@ namespace RBPhys
 
             UpdateColliders();
             RecalculateInertiaTensor();
+
             foreach (var c in _colliders)
             {
                 PhysComputer.SwitchToRigidbody(c);

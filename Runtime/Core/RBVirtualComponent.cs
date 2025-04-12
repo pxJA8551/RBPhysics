@@ -83,8 +83,9 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void FindOrCreateVirtualTransform()
         {
+            if (_vTransform != null) return;
+
             _vTransform = RBVirtualTransform.FindOrCreate(gameObject);
-            _vTransform.AddVComponent(this);
 
             if (_vTransform == null) throw new Exception();
         }
