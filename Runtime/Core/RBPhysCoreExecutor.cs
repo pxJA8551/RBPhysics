@@ -17,9 +17,6 @@ namespace RBPhys
 
         private void Awake()
         {
-            Debug.Log(string.Format("CPU: {0} / {1}cores", SystemInfo.processorType, SystemInfo.processorCount));
-            Debug.Log(string.Format("GPU: {0} / {1}MB API: {2}", SystemInfo.graphicsDeviceName, SystemInfo.graphicsMemorySize, SystemInfo.graphicsDeviceType));
-
             Application.targetFrameRate = -1;
         }
 
@@ -56,6 +53,7 @@ namespace RBPhys
 
                 lock (_stats)
                 {
+                    _stats = new RBPhysStats(default, default);
                     _stats.CopyStats(pcStats);
                 }
             }
