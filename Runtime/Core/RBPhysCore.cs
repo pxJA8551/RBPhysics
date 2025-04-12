@@ -485,6 +485,12 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void ClearStats()
+        {
+            _diagnostics.Clear();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task PhysicsFrameAsync()
         {
             await PhysFrame();
@@ -597,8 +603,10 @@ namespace RBPhys
             }
             else
             {
-                _solverTime += timeParams.fixedDeltaTime * timeParams.timeScale;
-                _solverDeltaTime = timeParams.fixedDeltaTime * timeParams.timeScale;
+                double delta = Math.Round(timeParams.fixedDeltaTime * timeParams.timeScale, 6);
+
+                _solverTime += delta;
+                _solverDeltaTime = delta;
                 _solverUnscaledTime = timeParams.fixedDeltaTime;
                 _solverUnscaledDeltaTime = timeParams.fixedDeltaTime;
 

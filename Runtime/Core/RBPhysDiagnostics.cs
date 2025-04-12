@@ -18,8 +18,11 @@ namespace RBPhys
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Clear()
             {
-                _objStats = default;
-                _callbackStats = default;
+                lock (_lock)
+                {
+                    _objStats = default;
+                    _callbackStats = default;
+                }
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -28,7 +31,7 @@ namespace RBPhys
                 Profiler.BeginSample("RBPhysDiagnostics-CountObjects");
 
                 int rigidbodyCount = rigidbodies?.Count ?? 0;
-                int active = rigidbodies?.Count(item => item.IsStaticOrSleeping) ?? 0;
+                int active = rigidbodies?.Count(item => !item.IsStaticOrSleeping) ?? 0;
                 int sleeping = rigidbodyCount - active;
                 int colliderCount = colliders?.Count ?? 0;
 
