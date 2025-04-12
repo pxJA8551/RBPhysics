@@ -58,10 +58,12 @@ namespace RBPhys
         {
             if (vTransform == null) throw new NotImplementedException();
 
-            OnDisable();
+            bool vEnabled = _vEnabled;
 
+            OnDisable();
             _vTransform = vTransform;
-            OnEnable();
+
+            if (vEnabled) OnEnable();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
