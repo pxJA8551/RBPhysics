@@ -39,6 +39,7 @@ namespace RBPhys
                     _objStats.activeRigidbodies = active;
                     _objStats.sleepingRigidbodies = sleeping;
                     _objStats.colliders = colliderCount;
+                    _objStats.MarkAsValid();
                 }
 
                 Profiler.EndSample();
@@ -57,6 +58,7 @@ namespace RBPhys
                     _callbackStats.solvers_init = solverInit?.Length ?? 0;
                     _callbackStats.solvers_iter = solverIter?.Length ?? 0;
                     _callbackStats.onCollision = colliders?.Sum(c => c.onCollision?.GetInvocationList()?.Length ?? 0) ?? 0;
+                    _callbackStats.MarkAsValid();
                 }
 
                 Profiler.EndSample();
