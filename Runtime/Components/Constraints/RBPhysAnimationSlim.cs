@@ -75,7 +75,11 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
 
         if (_pushedLast && _pushedLast2) 
         {
+            var wsPos = Vector3.Lerp(_positionLast2, _positionLast, t);
+            var wsRot = Quaternion.Lerp(_rotationLast2, _rotationLast, t);
 
+            transform.position = wsPos;
+            transform.rotation = wsRot;
         }
     }
 
