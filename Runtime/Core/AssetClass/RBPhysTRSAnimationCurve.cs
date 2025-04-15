@@ -191,6 +191,30 @@ namespace RBPhys
             lsRot.w = GetFloatValue(curve_lsRotQuat_w, cTime, lsRot.w);
         }
 
+        public void SampleDeltaTRSAnimation(float time, Vector3 pos, Quaternion rot, out Vector3 lsPos, out Quaternion lsRot, out Vector3 lsDeltaPos, out Quaternion lsDeltaRot, float delta = .001f)
+        {
+            SampleTRSAnimation(time, pos, rot, out lsPos, out lsRot);
+
+            if (time - delta <= 0) 
+            {
+                SampleTRSAnimation(time - delta, pos, rot, out Vector3 lsPos_d, out Quaternion lsRot_d);
+
+                lsDeltaPos = lsPos - lsPos_d;
+                lsDeltaRot = Quaternion.Inverse(lsRot_d) * lsRot;
+            }
+            else if(time + delta >= length)
+            {
+                SampleTRSAnimation(time - delta, pos, rot, out Vector3 lsPos_d, out Quaternion lsRot_d);
+
+                lsDeltaPos = lsPos_d - lsPos;
+                lsDeltaRot = Quaternion.Inverse(lsRot) * lsRot_d;
+            }
+            else
+            {
+                throw new System.Exception();
+            }
+        }
+
         float GetFloatValue(AnimationCurve curve, float time, float v)
         {
             if (curve != null && curve.length > 0) // curve.length = keys.Length ‚Ç‚¤‚µ‚Ä

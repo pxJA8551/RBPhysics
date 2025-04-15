@@ -22,10 +22,10 @@ namespace RBPhys
 
         public abstract RBGeometryType GeometryType { get; }
 
-        [NonSerialized] public float beta = .15f;
+        [NonSerialized] public float beta = .23f;
 
         [NonSerialized] public float restitution = 0.5f; //”½”­ŒW”
-        [NonSerialized] public float friction = 0.55f; //–€CŒW”
+        [NonSerialized] public float friction = 0.85f; //–€CŒW”
 
         public RBTrajectory Trajectory { get { return _trajectory; } }
 

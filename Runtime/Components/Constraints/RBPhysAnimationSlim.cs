@@ -73,8 +73,6 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
             if (c == null) continue;
 
             c.Trajectory.activeStatic = active;
-            c.Trajectory.StaticVelocity = Vector3.zero;
-            c.Trajectory.StaticAngularVelocity = Vector3.zero;
         }
     }
 
@@ -183,12 +181,6 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
         _prevImpulseAngVel = Vector3.zero;
 
         SampleAndApplyTRS(_ctrlTime, dt);
-
-        foreach (var c in physColliders)
-        {
-            c.Trajectory.StaticVelocity = _animVel + Vector3.Cross(c.GetColliderCenter() - VTransform.WsPosition, _animAngVel);
-            c.Trajectory.StaticAngularVelocity = _animAngVel;
-        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -200,12 +192,11 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void SampleAndApplyTRS(float time, float dt)
     {
-        trsCurve.SampleTRSAnimation(time, VTransform.RawPosition, VTransform.RawRotation, out Vector3 lsPos, out Quaternion lsRot);
+        trsCurve.SampleDeltaTRSAnimation(time, VTransform.RawPosition, VTransform.RawRotation, out var lsPos, out var lsRot, out var lsPos_d, out var lsRot_d);
         LsToWs(lsPos, lsRot, out Vector3 wsPos, out Quaternion wsRot);
+        LsToWs(lsPos_d, lsRot_d, out Vector3 wsPos_d, out Quaternion wsRot_d);
 
-        var deltaPos = wsPos - VTransform.WsPosition;
-        var deltaRot = Quaternion.Inverse(VTransform.WsRotation) * wsRot;
-        Delta2Velocity(dt, deltaPos, deltaRot, out _animVel, out _animAngVel);
+        Delta2Velocity(dt, wsPos_d, wsRot_d, out _animVel, out _animAngVel);
 
         VTransform.SetWsPositionAndRotation(wsPos, wsRot);
     }
