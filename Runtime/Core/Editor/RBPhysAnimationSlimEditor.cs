@@ -18,6 +18,7 @@ namespace RBPhys
         SerializedProperty physColliders;
         SerializedProperty enablePhysProcedualAnim;
         SerializedProperty lambda_time_factor;
+        SerializedProperty interp;
 
         private void OnEnable()
         {
@@ -31,6 +32,7 @@ namespace RBPhys
             physColliders = serializedObject.FindProperty("physColliders");
             enablePhysProcedualAnim = serializedObject.FindProperty("enablePhysProcedualAnim");
             lambda_time_factor = serializedObject.FindProperty("lambda_time_factor");
+            interp = serializedObject.FindProperty("interp");
         }
 
         public override void OnInspectorGUI()
@@ -58,6 +60,8 @@ namespace RBPhys
             EditorGUILayout.PropertyField(lambda_time_factor);
             EditorGUILayout.Space();
             EditorGUILayout.PropertyField(physColliders);
+            EditorGUILayout.Space();
+            EditorGUILayout.PropertyField(interp);
 
             serializedObject.ApplyModifiedProperties();
         }

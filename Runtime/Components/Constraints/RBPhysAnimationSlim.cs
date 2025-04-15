@@ -1,6 +1,7 @@
 using RBPhys;
 using System;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
@@ -11,8 +12,18 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
     [NonSerialized] float _ctrlTime = 0;
     [NonSerialized] float _ctrlSpeed = 0;
 
+    Vector3 _positionLast;
+    Vector3 _positionLast2;
+    Quaternion _rotationLast;
+    Quaternion _rotationLast2;
+    bool _pushedLast;
+    bool _pushedLast2;
+
     [SerializeField] AnimationClip _animationClip;
     public AnimationClip AnimationClip { get { return _animationClip; } }
+
+    public bool interp;
+    float _lastFixedUpdate;
 
     public float AnimationLength
     {
@@ -49,6 +60,24 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
     Vector3 _animAngVel;
     Vector3 _prevImpulseVel;
     Vector3 _prevImpulseAngVel;
+
+    public void FixedUpdate()
+    {
+        _lastFixedUpdate = Time.time;
+    }
+
+    void LateUpdate()
+    {
+        if (!interp) return;
+
+        float elapsed = Time.time - _lastFixedUpdate;
+        float t = (float)(elapsed / RBPhysController.MainComputer.timeParams.fixedDeltaTime);
+
+        if (_pushedLast && _pushedLast2) 
+        {
+
+        }
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetCtrlTime(float ctrlTime)
@@ -192,6 +221,8 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     void SampleAndApplyTRS(float time, float dt)
     {
+        PushInterp(VTransform.WsPosition, VTransform.WsRotation);
+
         trsCurve.SampleDeltaTRSAnimation(time, VTransform.RawPosition, VTransform.RawRotation, out var lsPos, out var lsRot, out var lsPos_d, out var lsRot_d);
         LsToWs(lsPos, lsRot, out Vector3 wsPos, out Quaternion wsRot);
         LsToWs(lsPos_d, lsRot_d, out Vector3 wsPos_d, out Quaternion wsRot_d);
@@ -224,9 +255,22 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
         _ctrlSpeed = speed;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void StopAnim()
     {
         _ctrlSpeed = 0;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    void PushInterp(Vector3 pos, Quaternion rot)
+    {
+        _positionLast2 = _positionLast;
+        _rotationLast2 = _rotationLast;
+        _pushedLast2 = _pushedLast;
+
+        _positionLast = pos;
+        _rotationLast = rot;
+        _pushedLast = true;
     }
 
     public void OnCollision(RBCollider col, RBCollisionInfo info)

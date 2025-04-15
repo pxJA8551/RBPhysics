@@ -195,14 +195,14 @@ namespace RBPhys
         {
             SampleTRSAnimation(time, pos, rot, out lsPos, out lsRot);
 
-            if (time - delta <= 0) 
+            if (time - delta >= 0) 
             {
                 SampleTRSAnimation(time - delta, pos, rot, out Vector3 lsPos_d, out Quaternion lsRot_d);
 
                 lsDeltaPos = lsPos - lsPos_d;
                 lsDeltaRot = Quaternion.Inverse(lsRot_d) * lsRot;
             }
-            else if(time + delta >= length)
+            else if(time + delta <= length)
             {
                 SampleTRSAnimation(time - delta, pos, rot, out Vector3 lsPos_d, out Quaternion lsRot_d);
 

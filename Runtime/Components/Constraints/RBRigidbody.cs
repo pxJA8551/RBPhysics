@@ -69,7 +69,10 @@ namespace RBPhys
         Vector3 _invInertiaWsScale = Vector3.one;
 
         public bool isSleeping = false;
-        public int sleepGrace = 0;
+
+        public int SleepCount { get { return _sleepCount; } }
+        int _sleepCount = 0;
+
         public bool useGravity = true;
 
         public bool sleepUntilInteraction;
@@ -114,10 +117,10 @@ namespace RBPhys
 
         protected override void ComponentAwake()
         {
-            if (!isSleeping || sleepGrace > 0)
+            if (!isSleeping || _sleepCount > 0)
             {
                 isSleeping = false;
-                sleepGrace = 0;
+                _sleepCount = 0;
             }
 
             if (sleepUntilInteraction)
@@ -208,7 +211,7 @@ namespace RBPhys
             _invInertiaWsScale = rb._invInertiaWsScale;
 
             isSleeping = rb.isSleeping;
-            sleepGrace = rb.sleepGrace;
+            _sleepCount = rb._sleepCount;
             useGravity = rb.useGravity;
 
             interpTraj = rb.interpTraj;
@@ -492,7 +495,7 @@ namespace RBPhys
         public void PhysAwakeForce()
         {
             isSleeping = false;
-            sleepGrace = 0;
+            _sleepCount = 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -501,7 +504,7 @@ namespace RBPhys
             _expVelocity = Vector3.zero;
             _expAngularVelocity = Vector3.zero;
             isSleeping = true;
-            sleepGrace = SLEEP_GRACE_FRAMES;
+            _sleepCount = SLEEP_GRACE_FRAMES;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -509,29 +512,30 @@ namespace RBPhys
         {
             if (IsExpUnderSleepLevel())
             {
-                if (sleepGrace < SLEEP_GRACE_FRAMES)
+                if (_sleepCount < SLEEP_GRACE_FRAMES)
                 {
-                    sleepGrace++;
+                    _sleepCount++;
                 }
             }
             else
             {
                 PhysAwake();
-                sleepGrace = 0;
+                _sleepCount = 0;
             }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void TryPhysSleep()
         {
-            if (!isSleeping && sleepGrace >= SLEEP_GRACE_FRAMES)
+            if (!isSleeping && _sleepCount >= SLEEP_GRACE_FRAMES)
             {
                 int sMin = SLEEP_GRACE_FRAMES;
 
                 for (int i = 0; i < collidingCount; i++)
                 {
                     int sgf = SLEEP_GRACE_FRAMES;
-                    if (colliding[i].ParentRigidbody != null) sgf = colliding[i].ParentRigidbody.sleepGrace;
+                    if (colliding[i].ParentRigidbody != null) sgf = colliding[i].ParentRigidbody._sleepCount;
+                    else if (colliding[i].Trajectory.activeStatic) sgf = 0;
 
                     sMin = Mathf.Min(sMin, sgf);
                 }
