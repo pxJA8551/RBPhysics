@@ -1424,18 +1424,7 @@ namespace RBPhys
             Profiler.BeginSample(name: "Physics-CollisionResolution-RigidbodyAwakeTest");
             foreach (RBRigidbody rb in _rigidbodies)
             {
-                if (rb.isSleeping && !rb.ObjectTrajectory.IsIgnoredTrajectory)
-                {
-                    for (int i = 0; i < rb.collidingCount; i++)
-                    {
-                        var c = rb.colliding[i];
-                        if (c.ParentRigidbody != null && ((c.ParentRigidbody.VEnabled && !c.ParentRigidbody.IsStaticOrSleeping) || !c.ParentRigidbody.VEnabled))
-                        {
-                            rb.PhysAwake();
-                            break;
-                        }
-                    }
-                }
+                rb.TryPhysAwake();
             }
             Profiler.EndSample();
         }
@@ -1678,10 +1667,7 @@ namespace RBPhys
 
                                             if (activeTraj.trajectoryAABB.OverlapAABB(targetTraj.trajectoryAABB))
                                             {
-                                                lock (collidingTrajs)
-                                                {
-                                                    collidingTrajs.Add((activeTraj, targetTraj));
-                                                }
+                                                collidingTrajs.Add((activeTraj, targetTraj));
                                             }
                                         }
                                     }
@@ -2443,7 +2429,7 @@ namespace RBPhys
             else return default;
         }
 
-        const float COLLISION_ERROR_SLOP = 0;
+        const float COLLISION_ERROR_SLOP = 0.001f;
 
         public struct SolverOption
         {

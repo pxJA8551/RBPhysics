@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.Video;
 using static RBPhys.RBPhysComputer;
 using static RBPhys.RBPhysUtil;
 
@@ -10,8 +11,8 @@ namespace RBPhys
 {
     public class RBRigidbody : RBVirtualComponent
     {
-        const float SLEEP_VEL_MAX_SQRT = .16f * .16f;
-        const float SLEEP_ANGVEL_MAX_SQRT = .2f * .2f;
+        const float SLEEP_VEL_MAX_SQRT = .15f * .15f;
+        const float SLEEP_ANGVEL_MAX_SQRT = .1f * .1f;
         const int SLEEP_GRACE_FRAMES = 5;
 
         protected const float DRAG_RETG_MULTIPLIER = 0f;
@@ -71,7 +72,7 @@ namespace RBPhys
         public bool isSleeping = false;
 
         public int SleepCount { get { return _sleepCount; } }
-        int _sleepCount = 0;
+        [SerializeField] int _sleepCount = 0;
 
         public bool useGravity = true;
 
@@ -544,6 +545,38 @@ namespace RBPhys
                 {
                     PhysSleep();
                 }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void TryPhysAwake()
+        {
+            if (isSleeping && !ObjectTrajectory.IsIgnoredTrajectory)
+            {
+                for (int i = 0; i < collidingCount; i++)
+                {
+                    var c = colliding[i];
+
+                    if (c.ParentRigidbody != null)
+                    {
+                        if (!(c.ParentRigidbody.VEnabled && c.ParentRigidbody.IsStaticOrSleeping)) PhysAwake();
+                        break;
+                    }
+                    else
+                    {
+                        if (c.Trajectory.activeStatic) PhysAwake();
+                        break;
+                    }
+                }
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public IEnumerable<RBCollider> GetCollidings()
+        {
+            for (int i = 0; i < collidingCount; i++)
+            {
+                yield return colliding[i];
             }
         }
 

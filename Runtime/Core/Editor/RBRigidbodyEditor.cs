@@ -12,7 +12,7 @@ namespace RBPhysEditor
         SerializedProperty drag;
         SerializedProperty angularDrag;
         SerializedProperty sleeping;
-        SerializedProperty sleepGrace;
+        SerializedProperty sleepCount;
         SerializedProperty useGravity;
         SerializedProperty sleepDefault;
         SerializedProperty infInertiaTensor;
@@ -25,7 +25,7 @@ namespace RBPhysEditor
             mass = serializedObject.FindProperty("mass");
             inertiaTensorMultiplier = serializedObject.FindProperty("inertiaTensorMultiplier");
             sleeping = serializedObject.FindProperty("isSleeping");
-            sleepGrace = serializedObject.FindProperty("sleepGrace");
+            sleepCount = serializedObject.FindProperty("_sleepCount");
             useGravity = serializedObject.FindProperty("useGravity");
             drag = serializedObject.FindProperty("drag");
             angularDrag = serializedObject.FindProperty("angularDrag");
@@ -37,7 +37,7 @@ namespace RBPhysEditor
         {
             serializedObject.Update();
 
-            if (sleeping.boolValue == true && sleepGrace.intValue == 5)
+            if (sleeping.boolValue == true && sleepCount.intValue == 5)
             {
                 sleepDefault.boolValue = true;
             }
@@ -61,16 +61,16 @@ namespace RBPhysEditor
 
             if (sleepDefault.boolValue)
             {
-                sleepGrace.intValue = 5;
+                sleepCount.intValue = 5;
                 sleeping.boolValue = true;
             }
             else
             {
-                sleepGrace.intValue = 0;
+                sleepCount.intValue = 0;
                 sleeping.boolValue = false;
             }
 
-            EditorGUILayout.LabelField(string.Format("Sleep:{0}({1})", sleeping.boolValue ? "TRUE" : "FALSE", sleepGrace.intValue));
+            EditorGUILayout.LabelField(string.Format("Sleep:{0}({1})", sleeping.boolValue ? "TRUE" : "FALSE", sleepCount.intValue));
 
             EditorGUILayout.PropertyField(infInertiaTensor);
 

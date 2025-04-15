@@ -99,9 +99,7 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
     {
         foreach (var c in physColliders)
         {
-            if (c == null) continue;
-
-            c.Trajectory.activeStatic = active;
+            if (c != null) c.Trajectory.activeStatic = active;
         }
     }
 
@@ -161,6 +159,11 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
 
         _animationClip = anim._animationClip;
         trsCurve = anim.trsCurve;
+
+        interp = false;
+
+        _pushedLast = false;
+        _pushedLast2 = false;
 
         fixedParent = anim.fixedParent;
 
