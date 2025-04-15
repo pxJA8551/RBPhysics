@@ -10,8 +10,8 @@ namespace RBPhys
 {
     public class RBRigidbody : RBVirtualComponent
     {
-        const float SLEEP_VEL_MAX_SQRT = .1f * .1f;
-        const float SLEEP_ANGVEL_MAX_SQRT = .1f * .1f;
+        const float SLEEP_VEL_MAX_SQRT = .16f * .16f;
+        const float SLEEP_ANGVEL_MAX_SQRT = .2f * .2f;
         const int SLEEP_GRACE_FRAMES = 5;
 
         protected const float DRAG_RETG_MULTIPLIER = 0f;
