@@ -1478,7 +1478,7 @@ namespace RBPhys
             {
                 if (!rb.isSleeping)
                 {
-                    ClearCollision(rb);
+                    rb.ClearCollision();
                 }
             }
         }
@@ -1490,22 +1490,6 @@ namespace RBPhys
             {
                 traj.SyncTrajectory();
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void ClearCollision(RBRigidbody rb)
-        {
-            for (int i = 0; i < rb.collidingCount; i++)
-            {
-                rb.colliding[i] = null;
-            }
-
-            if (Mathf.Max(2, rb.collidingCount) != rb.colliding.Length)
-            {
-                Array.Resize(ref rb.colliding, rb.collidingCount);
-            }
-
-            rb.collidingCount = 0;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1752,20 +1736,22 @@ namespace RBPhys
                 {
                     if (col.rigidbody_a.isSleeping)
                     {
-                        ClearCollision(col.rigidbody_a);
+                        col.rigidbody_a.ClearCollision();
                     }
+
                     col.rigidbody_a.PhysAwake();
-                    AddCollision(col.rigidbody_a, col.collider_b);
+                    col.rigidbody_a.AddCollision(col.collider_b);
                 }
 
                 if (col.rigidbody_b != null)
                 {
                     if (col.rigidbody_b.isSleeping)
                     {
-                        ClearCollision(col.rigidbody_b);
+                        col.rigidbody_b.ClearCollision();
                     }
+
                     col.rigidbody_b.PhysAwake();
-                    AddCollision(col.rigidbody_b, col.collider_a);
+                    col.rigidbody_b.AddCollision(col.collider_a);
                 }
 
                 if (IsTriggerLayer(col.layer_a) || IsTriggerLayer(col.layer_b))
@@ -1986,17 +1972,6 @@ namespace RBPhys
                 return RBDetailCollision.DetailCollisionCapsuleCapsule.CalcDetailCollisionInfo(col_a.CalcCapsule(), col_b.CalcCapsule());
             }
             else throw new Exception();
-        }
-
-        void AddCollision(RBRigidbody rb, RBCollider collider)
-        {
-            if (rb.colliding.Length <= rb.collidingCount)
-            {
-                Array.Resize(ref rb.colliding, rb.collidingCount + 1);
-            }
-
-            rb.colliding[rb.collidingCount] = collider;
-            rb.collidingCount++;
         }
 
         void SolveCollisionPair(RBCollision col)

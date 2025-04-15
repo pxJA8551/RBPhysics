@@ -247,12 +247,12 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool RangeOverlap(float a_x1, float a_x2, float b_x1, float b_x2, float epsilonHalf)
+        public static bool RangeOverlap(float a_x1, float a_x2, float b_x1, float b_x2, float slop)
         {
-            float a_min = Mathf.Min(a_x1, a_x2) - epsilonHalf;
-            float a_max = Mathf.Max(a_x1, a_x2) + epsilonHalf;
-            float b_min = Mathf.Min(b_x1, b_x2) - epsilonHalf;
-            float b_max = Mathf.Max(b_x1, b_x2) + epsilonHalf;
+            float a_min = Mathf.Min(a_x1, a_x2) - slop;
+            float a_max = Mathf.Max(a_x1, a_x2) + slop;
+            float b_min = Mathf.Min(b_x1, b_x2) - slop;
+            float b_max = Mathf.Max(b_x1, b_x2) + slop;
 
             return !(a_max < b_min || b_max < a_min);
         }

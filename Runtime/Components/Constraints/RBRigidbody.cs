@@ -18,6 +18,8 @@ namespace RBPhys
         protected const float DRAG_RETG_MULTIPLIER = 0f;
         protected const float ANGULAR_DRAG_RETG_MULTIPLIER = 0f;
 
+        const int COLLIDING_ARRAY_INIT_LENGTH = 2;
+
         public float mass = 1;
         public float inertiaTensorMultiplier = 1;
         public float drag = 0.0001f;
@@ -81,8 +83,10 @@ namespace RBPhys
 
         public InterpTrajectory interpTraj;
 
-        [NonSerialized] public RBCollider[] colliding = new RBCollider[2];
-        [NonSerialized] public int collidingCount = 0;
+        [NonSerialized] RBCollider[] _colliding = new RBCollider[COLLIDING_ARRAY_INIT_LENGTH];
+        int _collidingCount;
+
+        public int CollidingCount { get { return _collidingCount; } }
 
         public RBTrajectory ObjectTrajectory { get { return _objTrajectory; } }
 
@@ -457,6 +461,35 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void ClearCollision()
+        {
+            for (int i = 0; i < _collidingCount; i++)
+            {
+                _colliding[i] = null;
+            }
+
+            int count = Mathf.Max(COLLIDING_ARRAY_INIT_LENGTH, _collidingCount);
+            if (count != _colliding.Length) 
+            {
+                Array.Resize(ref _colliding, count);
+            }
+
+            _collidingCount = 0;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void AddCollision(RBCollider collider)
+        {
+            if (_colliding.Length <= _collidingCount) 
+            {
+                Array.Resize(ref _colliding, _colliding.Length + 1);
+            }
+
+            _colliding[_collidingCount] = collider;
+            _collidingCount++;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public (Vector3 pos, Quaternion rot) GetIntergrated(float dt)
         {
             return (VTransform.WsPosition + _expVelocity * dt, Quaternion.AngleAxis(_expAngularVelocity.magnitude * Mathf.Rad2Deg * dt, _expAngularVelocity.normalized) * VTransform.WsRotation);
@@ -511,17 +544,24 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void UpdatePhysSleepGrace()
         {
-            if (IsExpUnderSleepLevel())
+            if (_colliders.Any(item => item.Trajectory.activeStatic))
             {
-                if (_sleepCount < SLEEP_GRACE_FRAMES)
-                {
-                    _sleepCount++;
-                }
+                PhysAwakeForce();
+                _sleepCount = 0;
             }
             else
             {
-                PhysAwake();
-                _sleepCount = 0;
+                if (IsExpUnderSleepLevel())
+                {
+                    if (_sleepCount < SLEEP_GRACE_FRAMES)
+                    {
+                        _sleepCount++;
+                    }
+                }
+                else
+                {
+                    PhysAwakeForce();
+                }
             }
         }
 
@@ -530,21 +570,7 @@ namespace RBPhys
         {
             if (!isSleeping && _sleepCount >= SLEEP_GRACE_FRAMES)
             {
-                int sMin = SLEEP_GRACE_FRAMES;
-
-                for (int i = 0; i < collidingCount; i++)
-                {
-                    int sgf = SLEEP_GRACE_FRAMES;
-                    if (colliding[i].ParentRigidbody != null) sgf = colliding[i].ParentRigidbody._sleepCount;
-                    else if (colliding[i].Trajectory.activeStatic) sgf = 0;
-
-                    sMin = Mathf.Min(sMin, sgf);
-                }
-
-                if (sMin >= SLEEP_GRACE_FRAMES)
-                {
-                    PhysSleep();
-                }
+                PhysSleep();
             }
         }
 
@@ -553,9 +579,9 @@ namespace RBPhys
         {
             if (isSleeping && !ObjectTrajectory.IsIgnoredTrajectory)
             {
-                for (int i = 0; i < collidingCount; i++)
+                for (int i = 0; i < CollidingCount; i++)
                 {
-                    var c = colliding[i];
+                    var c = _colliding[i];
 
                     if (c.ParentRigidbody != null)
                     {
@@ -574,9 +600,10 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IEnumerable<RBCollider> GetCollidings()
         {
-            for (int i = 0; i < collidingCount; i++)
+            for (int i = 0; i < CollidingCount; i++)
             {
-                yield return colliding[i];
+                var c = _colliding[i];
+                if (c != null) yield return c;
             }
         }
 
