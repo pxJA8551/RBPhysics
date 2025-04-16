@@ -544,10 +544,9 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void UpdatePhysSleepGrace()
         {
-            if (_colliders.Any(item => item.Trajectory.activeStatic))
+            if (GetCollidings().Any(item => item.Trajectory.activeStatic))
             {
                 PhysAwakeForce();
-                _sleepCount = 0;
             }
             else
             {

@@ -125,8 +125,6 @@ public class RBPhysAnimationSlim : RBVirtualComponent, IRBPhysAnimControllable
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     protected override void ComponentOnEnable()
     {
-        SetCtrlSpeed(1);
-
         PhysComputer.AddPhysObject(BeforeSolver, AfterSolver);
         _validatorSrcGuid = Guid.NewGuid();
 
