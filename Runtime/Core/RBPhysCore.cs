@@ -1679,7 +1679,7 @@ namespace RBPhys
 
             Profiler.BeginSample(name: "Physics-CollisionResolution-DetailTest");
 
-            float ccdDelta = _solverDeltaTimeAsFloat;
+            float delta = _solverDeltaTimeAsFloat;
 
             for (int i = 0; i < _detailCollisions.Count; i++)
             {
@@ -1880,12 +1880,6 @@ namespace RBPhys
             var geomType_a = col_a.GeometryType;
             var geomType_b = col_b.GeometryType;
 
-            var offset_a = Vector3.zero;
-            var offset_b = Vector3.zero;
-
-            if (rb_a != null) offset_a = col_a.CCDOffset;
-            if (rb_b != null) offset_b = col_b.CCDOffset;
-
             if (geomType_a == RBGeometryType.OBB && geomType_b == RBGeometryType.OBB)
             {
                 //OBB-OBB
@@ -1894,38 +1888,17 @@ namespace RBPhys
             else if (geomType_a == RBGeometryType.OBB && geomType_b == RBGeometryType.Sphere)
             {
                 //OBB-Sphere
-                if (col_b.useCCD)
-                {
-                    return RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(col_a.CalcOBB(), col_b.CalcSphere(), offset_a, offset_b);
-                }
-                else
-                {
-                    return RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(col_a.CalcOBB(), col_b.CalcSphere());
-                }
+                return RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(col_a.CalcOBB(), col_b.CalcSphere());
             }
             else if (geomType_a == RBGeometryType.Sphere && geomType_b == RBGeometryType.OBB)
             {
                 //Sphere-OBB
-                if (col_a.useCCD)
-                {
-                    return RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfoCCD(col_b.CalcOBB(), col_a.CalcSphere(), offset_b, offset_a).inverted;
-                }
-                else
-                {
-                    return RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(col_b.CalcOBB(), col_a.CalcSphere()).inverted;
-                }
+                return RBDetailCollision.DetailCollisionOBBSphere.CalcDetailCollisionInfo(col_b.CalcOBB(), col_a.CalcSphere()).inverted;
             }
             else if (geomType_a == RBGeometryType.Sphere && geomType_b == RBGeometryType.Sphere)
             {
                 //Sphere-Sphere
-                if (col_a.useCCD || col_b.useCCD)
-                {
-                    return RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfoCCD(col_a.CalcSphere(), col_b.CalcSphere(), offset_a, offset_b);
-                }
-                else
-                {
-                    return RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfo(col_a.CalcSphere(), col_b.CalcSphere());
-                }
+                return RBDetailCollision.DetailCollisionSphereSphere.CalcDetailCollisionInfo(col_a.CalcSphere(), col_b.CalcSphere());
             }
             else if (geomType_a == RBGeometryType.OBB && geomType_b == RBGeometryType.Capsule)
             {
@@ -1942,28 +1915,12 @@ namespace RBPhys
             else if (geomType_a == RBGeometryType.Sphere && geomType_b == RBGeometryType.Capsule)
             {
                 //Sphere-Capsule
-
-                if (col_a.useCCD)
-                {
-                    return RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(col_a.CalcSphere(), col_b.CalcCapsule(), offset_a, offset_b);
-                }
-                else
-                {
-                    return RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(col_a.CalcSphere(), col_b.CalcCapsule());
-                }
+                return RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(col_a.CalcSphere(), col_b.CalcCapsule());
             }
             else if (geomType_a == RBGeometryType.Capsule && geomType_b == RBGeometryType.Sphere)
             {
                 //Capsule-Sphere
-
-                if (col_b.useCCD)
-                {
-                    return RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfoCCD(col_b.CalcSphere(), col_a.CalcCapsule(), offset_b, offset_a).inverted;
-                }
-                else
-                {
-                    return RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(col_b.CalcSphere(), col_a.CalcCapsule()).inverted;
-                }
+                return RBDetailCollision.DetailCollisionSphereCapsule.CalcDetailCollisionInfo(col_b.CalcSphere(), col_a.CalcCapsule()).inverted;
             }
             else if (geomType_a == RBGeometryType.Capsule && geomType_b == RBGeometryType.Capsule)
             {

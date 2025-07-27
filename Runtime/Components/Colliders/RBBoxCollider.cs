@@ -35,7 +35,6 @@ namespace RBPhys
 
         public void CopyCollider(RBBoxCollider c)
         {
-            useCCD = c.useCCD;
             allowSoftClip = c.allowSoftClip;
             _size = c._size;
             _center = c._center;

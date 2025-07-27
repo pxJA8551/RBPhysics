@@ -29,7 +29,6 @@ namespace RBPhys
 
         public RBTrajectory Trajectory { get { return _trajectory; } }
 
-        public bool useCCD;
         public bool allowSoftClip;
 
         protected RBTrajectory _trajectory;
@@ -38,22 +37,15 @@ namespace RBPhys
 
         public virtual int Layer { get; }
 
-        public Vector3 CCDOffset { get { return _ccdOffset; } }
-        protected Vector3 _ccdOffset;
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override void ComponentAwake()
         {
-            _ccdOffset = Vector3.zero;
-
             UpdateTransform();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override void ComponentOnEnable()
         {
-            _ccdOffset = Vector3.zero;
-
             PhysComputer.AddCollider(this);
 
             FindParent();
@@ -116,19 +108,12 @@ namespace RBPhys
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void PushCCD(Vector3 offset)
-        {
-            _ccdOffset = offset;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public virtual void UpdateTransform()
         {
             var pos = VTransform.WsPosition;
             var rot = VTransform.WsRotation;
 
-            if (GeometryType == RBGeometryType.Sphere && useCCD) _trajectory.Update(this, pos, rot, VTransform.Layer);
-            else _trajectory.Update(this, pos, rot, VTransform.Layer);
+            _trajectory.Update(this, pos, rot, VTransform.Layer);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

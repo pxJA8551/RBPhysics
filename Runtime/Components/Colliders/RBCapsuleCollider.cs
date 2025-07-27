@@ -37,7 +37,6 @@ namespace RBPhys
 
         public void CopyCollider(RBCapsuleCollider c)
         {
-            useCCD = c.useCCD;
             allowSoftClip = c.allowSoftClip;
             _center = c._center;
             _rotationEuler = c._rotationEuler;

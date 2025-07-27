@@ -61,44 +61,6 @@ namespace RBPhys
 
                 return (sub > 0 ? pdN * sub : Vector3.zero, pA, pB);
             }
-
-            public static Penetration CalcDetailCollisionInfoCCD(RBColliderOBB obb_a, RBColliderSphere sphere_b, Vector3 ccdOffset_a, Vector3 ccdOffset_b)
-            {
-                var vd_a = ccdOffset_a;
-                var vd_b = ccdOffset_b;
-
-                var relOffset = vd_b - vd_a;
-
-                const float EPSILON = .00001f;
-
-                float length = relOffset.magnitude;
-                if (length < EPSILON) return CalcDetailCollisionInfo(obb_a, sphere_b);
-
-                Vector3 dirN = relOffset / length;
-
-                RBColliderOBB vlObb = obb_a;
-                vlObb.pos -= vd_a;
-
-                Vector3 org = sphere_b.pos - vd_b;
-                var p = RBSphereCast.SphereCastOBB.CalcSphereCollision(vlObb, org, dirN, length, sphere_b.radius, false);
-
-                if (!p.IsValidHit || length < p.length || Vector3.Dot(p.normal, dirN) >= 0)
-                {
-                    return CalcDetailCollisionInfo(obb_a, sphere_b);
-                }
-
-                float vr = (p.length / length);
-
-                Vector3 vlCa = p.position;
-                Vector3 vlCb = p.position - relOffset * vr;
-
-                Vector3 pA = vlCa + vd_a;
-                Vector3 pB = vlCb + vd_b;
-
-                float t = Vector3.Dot(pB - pA, p.normal);
-
-                return new Penetration(p.normal * t, pA, pB);
-            }
         }
     }
 }

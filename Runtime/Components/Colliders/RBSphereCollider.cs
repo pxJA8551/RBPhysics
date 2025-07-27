@@ -33,7 +33,6 @@ namespace RBPhys
 
         public void CopyCollider(RBSphereCollider c)
         {
-            useCCD = c.useCCD;
             allowSoftClip = c.allowSoftClip;
             _center = c._center;
             _radius = c._radius;
@@ -60,20 +59,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override RBColliderAABB CalcAABB(Vector3 pos, Quaternion rot)
         {
-            if (useCCD)
-            {
-                Vector3 pos_current = pos;
-                Vector3 pos_last = pos - _ccdOffset;
-
-                Vector3 size = RBPhysUtil.V3Abs(pos_last - pos_current) + Vector3.one * Radius * 2;
-                Vector3 avgPos = (pos_current + pos_last) / 2f;
-
-                return new RBColliderAABB(avgPos, size);
-            }
-            else
-            {
-                return new RBColliderAABB((pos) + Center, Vector3.one * Radius * 2);
-            }
+            return new RBColliderAABB((pos) + Center, Vector3.one * Radius * 2);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
