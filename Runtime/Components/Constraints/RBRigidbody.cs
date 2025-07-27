@@ -362,7 +362,6 @@ namespace RBPhys
             }
 
             UpdateTransform();
-            PushCCD(VTransform.WsPosition - _frameWsPos);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -438,15 +437,6 @@ namespace RBPhys
             }
 
             _objTrajectory.Update(this, VTransform.Layer);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal virtual void PushCCD(Vector3 offset)
-        {
-            foreach (RBCollider c in _colliders)
-            {
-                c.PushCCD(offset);
-            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
