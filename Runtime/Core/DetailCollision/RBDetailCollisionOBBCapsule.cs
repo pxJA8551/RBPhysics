@@ -354,6 +354,8 @@ namespace RBPhys
 
                         var cpWs = PickCapsuleVtxWs(capsuleEdge.begin, capsuleEdge.end, -vAB);
                         var contactWs_obb = ProjectPointToOBBFace(obb_a, cpWs, vAB, hplnAxis);
+                        cpWs = ProjectPointToEdge(contactWs_obb, capsuleEdge.begin, capsuleEdge.end);
+
                         Vector3 vr = ExtrudeCapsuleRadius(cpWs, contactWs_obb, vAB, capsule_b.radius);
                         var contactWs_capsule = cpWs + vr;
 

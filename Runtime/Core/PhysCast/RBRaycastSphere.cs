@@ -1,55 +1,57 @@
-﻿using RBPhys;
-using UnityEngine;
+﻿using UnityEngine;
 using static RBPhys.RBPhysComputer;
 
-public static partial class RBRaycast
+namespace RBPhys
 {
-    public static class RaycastSphere
+    public static partial class RBRaycast
     {
-        public static RBColliderCastHitInfo CalcRayCollision(RBColliderSphere sphere, Vector3 org, Vector3 dirN, float length, bool ignoreBackFaceCollision = true)
+        public static class RaycastSphere
         {
-            Vector3 p = sphere.pos - org;
-            float b = Vector3.Dot(dirN, p);
-            float c = Vector3.Dot(p, p) - (sphere.radius * sphere.radius);
-
-            float b2 = b * b;
-            float s = b2 - c;
-            if (s < 0)
+            public static RBColliderCastHitInfo CalcRayCollision(RBColliderSphere sphere, Vector3 org, Vector3 dirN, float length, bool ignoreBackFaceCollision = true)
             {
-                return default;
-            }
+                Vector3 p = sphere.pos - org;
+                float b = Vector3.Dot(dirN, p);
+                float c = Vector3.Dot(p, p) - (sphere.radius * sphere.radius);
 
-            s = Mathf.Sqrt(s);
-
-            float t1 = b - s;
-            float t2 = b + s;
-
-            if (s > 0)
-            {
-                float t = t1;
-
-                if (ignoreBackFaceCollision && (t1 < 0))
+                float b2 = b * b;
+                float s = b2 - c;
+                if (s < 0)
                 {
                     return default;
                 }
 
-                if (!(t > 0 && t <= length) || (t2 > 0 && t2 <= length && t2 < t))
+                s = Mathf.Sqrt(s);
+
+                float t1 = b - s;
+                float t2 = b + s;
+
+                if (s > 0)
                 {
-                    t = t2;
+                    float t = t1;
+
+                    if (ignoreBackFaceCollision && (t1 < 0))
+                    {
+                        return default;
+                    }
+
+                    if (!(t > 0 && t <= length) || (t2 > 0 && t2 <= length && t2 < t))
+                    {
+                        t = t2;
+                    }
+
+                    if (t > 0 && t <= length)
+                    {
+                        Vector3 pos = org + dirN * t;
+
+                        RBColliderCastHitInfo info = new RBColliderCastHitInfo();
+                        info.SetHit(pos, (pos - sphere.pos) / sphere.radius, t, t1 < 0);
+
+                        return info;
+                    }
                 }
 
-                if (t > 0 && t <= length)
-                {
-                    Vector3 pos = org + dirN * t;
-
-                    RBColliderCastHitInfo info = new RBColliderCastHitInfo();
-                    info.SetHit(pos, (pos - sphere.pos) / sphere.radius, t, t1 < 0);
-
-                    return info;
-                }
+                return default;
             }
-
-            return default;
         }
     }
 }
