@@ -392,15 +392,15 @@ namespace RBPhys
 
                                 if (segment.y == LineSegmentType.SlabType.Slab)
                                 {
-                                    v0.x = 0;
-                                    v1.x = obb_a.size.y;
+                                    v0.y = 0;
+                                    v1.y = obb_a.size.y;
                                     return (v0, v1);
                                 }
 
                                 if (segment.z == LineSegmentType.SlabType.Slab)
                                 {
-                                    v0.x = 0;
-                                    v1.x = obb_a.size.z;
+                                    v0.z = 0;
+                                    v1.z = obb_a.size.z;
                                     return (v0, v1);
                                 }
 
