@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 using static RBPhys.FixedSortedAppendList7_Float;
+using static RBPhys.RBDetailCollision;
 using static RBPhys.RBPhysUtil;
 using static RBPhys.RBVectorUtil;
 
@@ -217,7 +218,8 @@ namespace RBPhys
                     if (index != -1)
                     {
                         var seg = segments[index];
-                        if (IsTValid(seg.t0, seg.t1))
+
+                        if (IsTValid(seg.t0, seg.t1)) 
                         {
                             var tp0Ls = T2Ls(0);
                             var tp1Ls = T2Ls(1);
@@ -308,6 +310,8 @@ namespace RBPhys
                     }
                 }
 
+                FixedAppendList7<(Vector3 penetration, Vector3 pA, Vector3 pB)> penetrations = new FixedAppendList7<(Vector3 penetration, Vector3 pA, Vector3 pB)>();
+
                 // Nearest point exists at OBB-Vtx (8)
                 {
                     foreach (var seg in segments.Values.Where(item => item.x != LineSegmentType.SlabType.Slab && item.y != LineSegmentType.SlabType.Slab && item.z != LineSegmentType.SlabType.Slab))
@@ -332,11 +336,11 @@ namespace RBPhys
                             {
                                 penetrationLs = (p / pL) * pD;
                             }
-                            else return default;
+                            else break;
 
                             Vector3 contactLs_capsule = ExtrudeLine(cpLs, p / pL);
 
-                            return CalcContactWs(contactLs_obb, contactLs_capsule, penetrationLs);
+                            penetrations.Append(CalcContactWs(contactLs_obb, contactLs_capsule, penetrationLs));
                         }
                     }
 
@@ -364,10 +368,47 @@ namespace RBPhys
                             var tp1Ls = T2Ls(t1);
                             var edge = Segment2Edge(seg);
 
-                            CalcNearest(edge.v0, edge.v1, tp0Ls, tp1Ls, out Vector3 contactLs_obb, out Vector3 cpLs);
+                            CalcNearest(edge.v0, edge.v1, tp0Ls, tp1Ls, out Vector3 contactLs_obb, out Vector3 cpLs, out bool parallel);
 
-                            Vector3 contactLs_capsule = ExtrudeLine(cpLs, Vector3.forward);
-                            return CalcContactWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs));
+                            if (!parallel)
+                            {
+                                var p = contactLs_obb - cpLs;
+                                var pL = p.magnitude;
+                                var pD = capsule_b.radius - pL;
+
+                                Vector3 penetrationLs;
+
+                                if (pD > 0 && pL > .00001f)
+                                {
+                                    penetrationLs = (p / pL) * pD;
+                                }
+                                else break;
+
+                                Vector3 contactLs_capsule = ExtrudeLine(cpLs, p / pL);
+
+                                penetrations.Append(CalcContactWs(contactLs_obb, contactLs_capsule, penetrationLs));
+                            }
+                            else
+                            {
+                                cpLs = (tp0Ls + tp1Ls) / 2f;
+                                contactLs_obb = ClipOBB(cpLs);
+
+                                var p = contactLs_obb - cpLs;
+                                var pL = p.magnitude;
+                                var pD = capsule_b.radius - pL;
+
+                                Vector3 penetrationLs;
+
+                                if (pD > 0 && pL > .00001f)
+                                {
+                                    penetrationLs = (p / pL) * pD;
+                                }
+                                else break;
+
+                                Vector3 contactLs_capsule = ExtrudeLine(cpLs, p / pL);
+
+                                penetrations.Append(CalcContactWs(contactLs_obb, contactLs_capsule, penetrationLs));
+                            }
 
                             [MethodImpl(MethodImplOptions.AggressiveInlining)]
                             (Vector3 v0, Vector3 v1) Segment2Edge(LineSegmentType segment)
@@ -446,7 +487,7 @@ namespace RBPhys
 
                                 Vector3 contactLs_capsule = ExtrudeLine(cpLs, Vector3.right);
                                 Vector3 contactLs_obb = ClipOBB(cpLs);
-                                return CalcContactWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs));
+                                penetrations.Append(CalcContactWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs)));
                             }
                             else if (seg.x == LineSegmentType.SlabType.Positive)
                             {
@@ -454,7 +495,7 @@ namespace RBPhys
 
                                 Vector3 contactLs_capsule = ExtrudeLine(cpLs, Vector3.left);
                                 Vector3 contactLs_obb = ClipOBB(cpLs);
-                                return CalcContactWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs));
+                                penetrations.Append(CalcContactWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs)));
                             }
                             else if (seg.y == LineSegmentType.SlabType.Negative)
                             {
@@ -462,7 +503,7 @@ namespace RBPhys
 
                                 Vector3 contactLs_capsule = ExtrudeLine(cpLs, Vector3.up);
                                 Vector3 contactLs_obb = ClipOBB(cpLs);
-                                return CalcContactWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs));
+                                penetrations.Append(CalcContactWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs)));
                             }
                             else if (seg.y == LineSegmentType.SlabType.Positive)
                             {
@@ -470,7 +511,7 @@ namespace RBPhys
 
                                 Vector3 contactLs_capsule = ExtrudeLine(cpLs, Vector3.down);
                                 Vector3 contactLs_obb = ClipOBB(cpLs);
-                                return CalcContactWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs));
+                                penetrations.Append(CalcContactWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs)));
                             }
                             else if (seg.z == LineSegmentType.SlabType.Negative)
                             {
@@ -478,7 +519,7 @@ namespace RBPhys
 
                                 Vector3 contactLs_capsule = ExtrudeLine(cpLs, Vector3.forward);
                                 Vector3 contactLs_obb = ClipOBB(cpLs);
-                                return CalcContactWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs));
+                                penetrations.Append(CalcContactWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs)));
                             }
                             else if (seg.z == LineSegmentType.SlabType.Positive)
                             {
@@ -486,10 +527,8 @@ namespace RBPhys
 
                                 Vector3 contactLs_capsule = ExtrudeLine(cpLs, Vector3.back);
                                 Vector3 contactLs_obb = ClipOBB(cpLs);
-                                return CalcContactWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs));
+                                penetrations.Append(CalcContactWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs)));
                             }
-
-                            Debug.Assert(false);
                         }
                     }
 
@@ -505,7 +544,11 @@ namespace RBPhys
                     }
                 }
 
-                Debug.Assert(false);
+                foreach (var p in penetrations.Values.Where(p => p.penetration != Vector3.zero).OrderByDescending(p => p.penetration.sqrMagnitude)) 
+                {
+                    return p;
+                }
+
                 return default;
 
                 [MethodImpl(MethodImplOptions.AggressiveInlining)]
