@@ -44,7 +44,6 @@ namespace RBPhysEditor
 
             EditorGUILayout.PropertyField(center);
             EditorGUILayout.PropertyField(radius);
-            EditorGUILayout.PropertyField(useCcd);
 
             if (serializedObject.targetObjects.Length == 1)
             {
