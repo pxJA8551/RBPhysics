@@ -2,6 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using Unity.IL2CPP.CompilerServices;
 using UnityEngine;
+using UnityEngine.Profiling;
 using static RBPhys.RBPhysUtil;
 using static RBPhys.RBVectorUtil;
 
@@ -107,7 +108,18 @@ namespace RBPhys
                 else throw new NotImplementedException();
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static Penetration CalcDetailCollisionInfo(RBColliderOBB obb_a, RBColliderOBB obb_b)
+            {
+                Profiler.BeginSample("DetailTest/OBB-OBB");
+                var p = CalcDetailCollisionInfoInternal(obb_a, obb_b);
+
+                Profiler.EndSample();
+
+                return p;
+            }
+
+            public static Penetration CalcDetailCollisionInfoInternal(RBColliderOBB obb_a, RBColliderOBB obb_b)
             {
                 Vector3 penetration;
                 float pSqrMag;

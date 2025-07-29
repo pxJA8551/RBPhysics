@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace RBPhys
 {
@@ -8,11 +9,15 @@ namespace RBPhys
         {
             public static Penetration CalcDetailCollisionInfo(RBColliderOBB obb_a, RBColliderSphere sphere_b)
             {
-                var r = CalcDetailCollision(obb_a, sphere_b);
-                return new Penetration(r.p, r.pA, r.pB);
+                Profiler.BeginSample("DetailTest/OBB-Sphere");
+                var p = CalcDetailCollision(obb_a, sphere_b);
+
+                Profiler.EndSample();
+
+                return p;
             }
 
-            public static (Vector3 p, Vector3 pA, Vector3 pB) CalcDetailCollision(RBColliderOBB obb_a, RBColliderSphere sphere_b)
+            public static Penetration CalcDetailCollision(RBColliderOBB obb_a, RBColliderSphere sphere_b)
             {
                 Vector3 d = (sphere_b.pos - obb_a.Center);
 
@@ -37,29 +42,29 @@ namespace RBPhys
                     if (Mathf.Abs(vd.x) == vdMin)
                     {
                         var vp = new Vector3(-vd.x, 0, 0);
-                        return (vp, pA, sphere_b.pos);
+                        return new Penetration(vp, pA, sphere_b.pos);
                     }
 
                     if (Mathf.Abs(vd.y) == vdMin)
                     {
                         var vp = new Vector3(0, -vd.y, 0);
-                        return (vp, pA, sphere_b.pos);
+                        return new Penetration(vp, pA, sphere_b.pos);
                     }
 
                     if (Mathf.Abs(vd.z) == vdMin)
                     {
                         var vp = new Vector3(0, 0, -vd.z);
-                        return (vp, pA, sphere_b.pos);
+                        return new Penetration(vp, pA, sphere_b.pos);
                     }
 
-                    return (Vector3.zero, pA, sphere_b.pos);
+                    return new Penetration(Vector3.zero, pA, sphere_b.pos);
                 }
 
                 Vector3 pdN = pd / pdL;
                 Vector3 pB = sphere_b.pos + pdN * sphere_b.radius;
                 float sub = sphere_b.radius - pdL;
 
-                return (sub > 0 ? pdN * sub : Vector3.zero, pA, pB);
+                return new Penetration(sub > 0 ? pdN * sub : Vector3.zero, pA, pB);
             }
         }
     }

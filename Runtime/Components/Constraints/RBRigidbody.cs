@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.Video;
 using static RBPhys.RBPhysComputer;
 using static RBPhys.RBPhysUtil;
 
@@ -141,7 +140,7 @@ namespace RBPhys
             {
                 _infInertiaTensorX = true;
                 _infInertiaTensorY = true;
-                _infInertiaTensorZ = true; 
+                _infInertiaTensorZ = true;
             }
         }
 
@@ -459,7 +458,7 @@ namespace RBPhys
             }
 
             int count = Mathf.Max(COLLIDING_ARRAY_INIT_LENGTH, _collidingCount);
-            if (count != _colliding.Length) 
+            if (count != _colliding.Length)
             {
                 Array.Resize(ref _colliding, count);
             }
@@ -470,7 +469,7 @@ namespace RBPhys
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal void AddCollision(RBCollider collider)
         {
-            if (_colliding.Length <= _collidingCount) 
+            if (_colliding.Length <= _collidingCount)
             {
                 Array.Resize(ref _colliding, _colliding.Length + 1);
             }

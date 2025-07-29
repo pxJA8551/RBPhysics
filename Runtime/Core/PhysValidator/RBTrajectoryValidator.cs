@@ -44,6 +44,7 @@ namespace RBPhys
                     altnValidator = tvs[0];
                     altnValidators = null;
                 }
+
                 else
                 {
                     altnValidator = null;

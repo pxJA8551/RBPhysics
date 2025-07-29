@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Profiling;
 
 namespace RBPhys
 {
@@ -8,7 +9,11 @@ namespace RBPhys
         {
             public static Penetration CalcDetailCollisionInfo(RBColliderSphere sphere_a, RBColliderSphere sphere_b)
             {
+                Profiler.BeginSample("DetailTest/Sphere-Sphere");
                 var r = CalcDetailCollision(sphere_a, sphere_b);
+
+                Profiler.EndSample();
+
                 return new Penetration(r.p, r.pA, r.pB);
             }
 

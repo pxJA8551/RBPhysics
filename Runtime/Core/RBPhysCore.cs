@@ -643,7 +643,7 @@ namespace RBPhys
                     if (_validatorPreBeforeSolver != null) _validatorPreBeforeSolver(dt, _timeScaleMode);
                     if (_validatorBeforeSolver != null) _validatorBeforeSolver(dt, _timeScaleMode);
                     if (_beforeSolver != null) _beforeSolver(dt, _timeScaleMode);
-                    
+
                     if (await _physObjSemaphore.WaitAsync(SEMAPHORE_TIMEOUT))
                     {
                         try

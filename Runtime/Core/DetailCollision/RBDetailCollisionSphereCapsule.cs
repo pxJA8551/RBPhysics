@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Profiling;
 using static RBPhys.RBVectorUtil;
 
 namespace RBPhys
@@ -9,7 +10,10 @@ namespace RBPhys
         {
             public static Penetration CalcDetailCollisionInfo(RBColliderSphere sphere_a, RBColliderCapsule capsule_b)
             {
+                Profiler.BeginSample("DetailTest/Sphere-Capsule");
                 var r = CalcDetailCollision(sphere_a, capsule_b);
+
+                Profiler.EndSample();
                 return new Penetration(r.p, r.pA, r.pB);
             }
 
