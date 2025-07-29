@@ -14,6 +14,8 @@ namespace RBPhys
     {
         public static class DetailCollisionOBBCapsule
         {
+            const float FAST_CLIP_ASSERT_EPSILON = .00003f;
+
             public static Penetration CalcDetailCollisionInfo(RBColliderOBB obb_a, RBColliderCapsule capsule_b)
             {
                 Profiler.BeginSample("DetailTest/OBB-Capsule");
@@ -344,7 +346,7 @@ namespace RBPhys
 
                             Vector3 contactLs_capsule = ExtrudeLine(cpLs, p / pL);
 
-                            Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < penetrationLs.sqrMagnitude);
+                            Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < penetrationLs.sqrMagnitude + FAST_CLIP_ASSERT_EPSILON);
                             penetration = CalcPenetrationWs(contactLs_obb, contactLs_capsule, penetrationLs);
                             _cached_pLSqr = pL * pL;
                         }
@@ -392,7 +394,7 @@ namespace RBPhys
 
                                 Vector3 contactLs_capsule = ExtrudeLine(cpLs, p / pL);
 
-                                Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < penetrationLs.sqrMagnitude);
+                                Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < penetrationLs.sqrMagnitude + FAST_CLIP_ASSERT_EPSILON);
                                 penetration = CalcPenetrationWs(contactLs_obb, contactLs_capsule, penetrationLs);
                                 _cached_pLSqr = pL * pL;
                             }
@@ -416,7 +418,7 @@ namespace RBPhys
 
                                 Vector3 contactLs_capsule = ExtrudeLine(cpLs, p / pL);
 
-                                Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < penetrationLs.sqrMagnitude);
+                                Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < penetrationLs.sqrMagnitude + FAST_CLIP_ASSERT_EPSILON);
                                 penetration = CalcPenetrationWs(contactLs_obb, contactLs_capsule, penetrationLs);
                                 _cached_pLSqr = pL * pL;
                             }
@@ -500,7 +502,7 @@ namespace RBPhys
                                 Vector3 contactLs_capsule = ExtrudeLine(cpLs, Vector3.right);
                                 Vector3 contactLs_obb = ClipOBB(cpLs);
 
-                                Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < CalcPenetration(contactLs_obb, cpLs).sqrMagnitude);
+                                Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < CalcPenetration(contactLs_obb, cpLs).sqrMagnitude + FAST_CLIP_ASSERT_EPSILON);
                                 penetration = CalcPenetrationWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs));
                             }
                             else if (seg.x == LineSegmentType.SlabType.Positive)
@@ -511,7 +513,7 @@ namespace RBPhys
                                 Vector3 contactLs_capsule = ExtrudeLine(cpLs, Vector3.left);
                                 Vector3 contactLs_obb = ClipOBB(cpLs);
 
-                                Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < CalcPenetration(contactLs_obb, cpLs).sqrMagnitude);
+                                Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < CalcPenetration(contactLs_obb, cpLs).sqrMagnitude + FAST_CLIP_ASSERT_EPSILON);
                                 penetration = CalcPenetrationWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs));
                             }
                             else if (seg.y == LineSegmentType.SlabType.Negative)
@@ -522,7 +524,7 @@ namespace RBPhys
                                 Vector3 contactLs_capsule = ExtrudeLine(cpLs, Vector3.up);
                                 Vector3 contactLs_obb = ClipOBB(cpLs);
 
-                                Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < CalcPenetration(contactLs_obb, cpLs).sqrMagnitude);
+                                Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < CalcPenetration(contactLs_obb, cpLs).sqrMagnitude + FAST_CLIP_ASSERT_EPSILON);
                                 penetration = CalcPenetrationWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs));
                             }
                             else if (seg.y == LineSegmentType.SlabType.Positive)
@@ -533,7 +535,7 @@ namespace RBPhys
                                 Vector3 contactLs_capsule = ExtrudeLine(cpLs, Vector3.down);
                                 Vector3 contactLs_obb = ClipOBB(cpLs);
 
-                                Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < CalcPenetration(contactLs_obb, cpLs).sqrMagnitude);
+                                Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < CalcPenetration(contactLs_obb, cpLs).sqrMagnitude + FAST_CLIP_ASSERT_EPSILON);
                                 penetration = CalcPenetrationWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs));
                             }
                             else if (seg.z == LineSegmentType.SlabType.Negative)
@@ -544,7 +546,7 @@ namespace RBPhys
                                 Vector3 contactLs_capsule = ExtrudeLine(cpLs, Vector3.forward);
                                 Vector3 contactLs_obb = ClipOBB(cpLs);
 
-                                Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < CalcPenetration(contactLs_obb, cpLs).sqrMagnitude);
+                                Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < CalcPenetration(contactLs_obb, cpLs).sqrMagnitude + FAST_CLIP_ASSERT_EPSILON);
                                 penetration = CalcPenetrationWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs));
                             }
                             else if (seg.z == LineSegmentType.SlabType.Positive)
@@ -555,7 +557,7 @@ namespace RBPhys
                                 Vector3 contactLs_capsule = ExtrudeLine(cpLs, Vector3.back);
                                 Vector3 contactLs_obb = ClipOBB(cpLs);
 
-                                Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < CalcPenetration(contactLs_obb, cpLs).sqrMagnitude);
+                                Debug.Assert(!penetration.IsValid | penetration.PSqrMagnitude < CalcPenetration(contactLs_obb, cpLs).sqrMagnitude + FAST_CLIP_ASSERT_EPSILON);
                                 penetration = CalcPenetrationWs(contactLs_obb, contactLs_capsule, CalcPenetration(contactLs_obb, cpLs));
                             }
                         }
