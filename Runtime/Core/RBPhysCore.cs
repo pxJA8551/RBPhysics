@@ -838,14 +838,14 @@ namespace RBPhys
             }
         }
 
-        public RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d, bool ignoreBackFaceCollision = true)
+        public RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d, int layerMask = -1, bool ignoreBackFaceCollision = true)
         {
-            return Raycast(org, dir, d, false, null, null, ignoreBackFaceCollision);
+            return Raycast(org, dir, d, false, layerMask, ignoreBackFaceCollision);
         }
 
-        public RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d, bool allowTriggerCollision, List<RBCollider> ignoreCols, List<RBTrajectory> ignoreTrajs, bool ignoreBackFaceCollision = true)
+        public RBColliderCastHitInfo Raycast(Vector3 org, Vector3 dir, float d, bool allowTriggerCollision, int layerMask = -1, bool ignoreBackFaceCollision = true)
         {
-            var hitList = RaycastAll(org, dir, d, allowTriggerCollision, ignoreCols, ignoreTrajs, ignoreBackFaceCollision);
+            var hitList = RaycastAll(org, dir, d, allowTriggerCollision, layerMask, ignoreBackFaceCollision);
 
             RBColliderCastHitInfo fMinOverlap = default;
 
@@ -860,14 +860,14 @@ namespace RBPhys
             return fMinOverlap;
         }
 
-        public List<RBColliderCastHitInfo> RaycastAll(Vector3 org, Vector3 dir, float d, bool allowTriggerCollision, List<RBCollider> ignoreCols, List<RBTrajectory> ignoreTrajs, bool ignoreBackFaceCollision = true)
+        public List<RBColliderCastHitInfo> RaycastAll(Vector3 org, Vector3 dir, float d, bool allowTriggerCollision, int layerMask = -1, bool ignoreBackFaceCollision = true)
         {
             var hitList = new List<RBColliderCastHitInfo>();
-            RaycastAll(org, dir, d, allowTriggerCollision, ignoreCols, ignoreTrajs, ref hitList, ignoreBackFaceCollision);
+            RaycastAll(org, dir, d, allowTriggerCollision, ref hitList, layerMask, ignoreBackFaceCollision);
             return hitList;
         }
 
-        public void RaycastAll(Vector3 org, Vector3 dir, float d, bool allowTriggerCollision, List<RBCollider> ignoreCols, List<RBTrajectory> ignoreTrajs, ref List<RBColliderCastHitInfo> hitInfos, bool ignoreBackFaceCollision = true)
+        public void RaycastAll(Vector3 org, Vector3 dir, float d, bool allowTriggerCollision, ref List<RBColliderCastHitInfo> hitInfos, int layerMask = -1, bool ignoreBackFaceCollision = true)
         {
             dir = dir.normalized;
 
@@ -886,20 +886,12 @@ namespace RBPhys
             float xMin = Mathf.Min(pos_a.x, pos_b.x);
             float xMax = Mathf.Max(pos_a.x, pos_b.x);
 
-            bool selectTrajs = ignoreTrajs != null;
-            bool selectCols = ignoreCols != null;
-
             for (int i = 0; i < _trajectories_orderByXMin.Length; i++)
             {
                 var t = _trajectories_orderByXMin[i];
                 var f = _trajectories_xMin[i];
 
-                if (selectTrajs && ignoreTrajs.Contains(t))
-                {
-                    continue;
-                }
-
-                if (xMin < t.trajectoryAABB.MaxX)
+                if (xMin < t.trajectoryAABB.MaxX) 
                 {
                     if (t.trajectoryAABB.OverlapAABB(new RBColliderAABB(center, RBPhysUtil.V3Abs(pos_b - pos_a))))
                     {
@@ -907,7 +899,7 @@ namespace RBPhys
                         {
                             if (c.gameObject.activeInHierarchy && c.enabled && !c.Trajectory.IsIgnoredTrajectory)
                             {
-                                if (!(selectCols && ignoreCols.Contains(c)) && !IsIgnorePhysCastLayer(t.Layer) && (!IsTriggerLayer(t.Layer) || allowTriggerCollision))
+                                if (!IsIgnorePhysCastLayer(t.Layer) && (!IsTriggerLayer(t.Layer) || allowTriggerCollision)) 
                                 {
                                     hitList.Add(new RBColliderCastHitInfo(c, t, RBColliderCastHitInfo.PhysCastType.Raycast));
                                 }
@@ -922,9 +914,12 @@ namespace RBPhys
                 }
             }
 
-            for (int i = 0; i < hitList.Count; i++)
+            for (int i = 0; i < hitList.Count; i++) 
             {
                 var t = hitList[i];
+
+                int hLayer = 1 << t.collider.Layer;
+                if ((hLayer & layerMask) == 0) break;
 
                 switch (t.collider.GeometryType)
                 {
@@ -1903,13 +1898,11 @@ namespace RBPhys
             else if (geomType_a == RBGeometryType.OBB && geomType_b == RBGeometryType.Capsule)
             {
                 //OBB-Capsule
-
                 return RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(col_a.CalcOBB(), col_b.CalcCapsule()); ;
             }
             else if (geomType_a == RBGeometryType.Capsule && geomType_b == RBGeometryType.OBB)
             {
                 //Capsule-OBB
-
                 return RBDetailCollision.DetailCollisionOBBCapsule.CalcDetailCollisionInfo(col_b.CalcOBB(), col_a.CalcCapsule()).inverted;
             }
             else if (geomType_a == RBGeometryType.Sphere && geomType_b == RBGeometryType.Capsule)
@@ -1925,7 +1918,6 @@ namespace RBPhys
             else if (geomType_a == RBGeometryType.Capsule && geomType_b == RBGeometryType.Capsule)
             {
                 //Capsule-Capsule
-
                 return RBDetailCollision.DetailCollisionCapsuleCapsule.CalcDetailCollisionInfo(col_a.CalcCapsule(), col_b.CalcCapsule());
             }
             else throw new Exception();
