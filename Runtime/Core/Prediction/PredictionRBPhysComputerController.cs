@@ -33,7 +33,7 @@ namespace RBPhys
 
             if (vComps.Any())
             {
-                foreach (var c in vComps)
+                foreach (var c in vComps) 
                 {
                     if (c.BaseVComponent == null) c.FindOrCreateVirtualComponent(_physComputer);
                 }

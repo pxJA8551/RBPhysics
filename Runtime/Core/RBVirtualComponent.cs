@@ -169,6 +169,12 @@ namespace RBPhys
             return true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool IsMainComputerComponent()
+        {
+            return PhysComputer == RBPhysController.MainComputer;
+        }
+
         protected virtual void ComponentAwake() { }
         protected virtual void ComponentOnEnable() { }
         protected virtual void ComponentOnDisable() { }
