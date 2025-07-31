@@ -2876,7 +2876,7 @@ namespace RBPhys
 
         public bool forceSleeping = false;
         public bool limitedSleeping = false;
-        public bool iregularTraj = false;
+        public bool irregularTraj = false;
 
         public bool activeStatic = false;
         Vector3 _staticVelocity;
