@@ -919,7 +919,7 @@ namespace RBPhys
                 var t = hitList[i];
 
                 int hLayer = 1 << t.collider.Layer;
-                if ((hLayer & layerMask) == 0) break;
+                if ((hLayer & layerMask) == 0) continue;
 
                 switch (t.collider.GeometryType)
                 {
